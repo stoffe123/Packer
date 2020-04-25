@@ -70,14 +70,11 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	return 1;
 }
 
-
-
-
 int main()
 {
-	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/book_unp.txt";
+	//const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/book_unp.txt";
 
-	//const char* src = "C:/test/voc.wav"; const char* dst = "C:/test/voc_unp.wav";
+	const char* src = "C:/test/voc.wav"; const char* dst = "C:/test/voc_unp.wav";
 
 	const char* packed_name = "c:/test/packed.bin";
 

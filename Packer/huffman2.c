@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 
-typedef unsigned char byte;
+typedef uint8_t byte;
 
 typedef struct _HuffNode {
     unsigned data;
@@ -90,6 +90,11 @@ void construct_huffman(unsigned* freq_in, HuffNode* tree) {
     node[0]->parent = NULL;
 }
 
+void write_8bit(byte c, FILE* f)
+{
+    fwrite(&c, sizeof(byte), 1, f);
+}
+
 void encode_stream(FILE* fin, FILE* fout, HuffNode* tree, unsigned* padding) {
     int n;
     byte ch;
@@ -122,14 +127,18 @@ void encode_stream(FILE* fin, FILE* fout, HuffNode* tree, unsigned* padding) {
             buf |= code[i] << nbuf;
             nbuf++;
             if (nbuf == 8) {
-                fputc(buf, fout);
-                nbuf = buf = 0;
+                write_8bit(buf, fout);
+                nbuf = 0;
+                buf = 0;
             }
         }
     }
-    fputc(buf, fout);
+    write_8bit(buf, fout);
     *padding = 8 - nbuf;
 }
+
+
+
 
 void decode_stream(FILE* fin, FILE* fout, HuffNode* tree, unsigned padding) {
     size_t startpos = ftell(fin); // should be 1028
@@ -175,27 +184,38 @@ void decode_stream(FILE* fin, FILE* fout, HuffNode* tree, unsigned padding) {
     }
 }
 
-void huffman_compress(const char* filename, const char* newname) {
-    FILE* fin = fopen(filename, "rb"),
-        * fout = fopen(newname, "wb");
+void out_array(unsigned* ar) {
+    printf("\n");
+    for (int i = 0; i < 256; i++) {
+        printf("%d,", ar[i]);
+    }
+    printf("\n");
+}
 
-    unsigned freq[256], padding;
+void huffman_compress(const char* filename, const char* newname) {
+    FILE* in_file = fopen(filename, "rb"),
+        * out_file = fopen(newname, "wb");
+
+    unsigned freq[256] = { 0 }, padding;
     HuffNode tree[512];
     size_t padding_pos;
-    count_frequency(fin, freq);
+    count_frequency(in_file, freq);
+
+    out_array(freq);
+
     construct_huffman(freq, tree);
-    rewind(fin);
+    rewind(in_file);
     for (int i = 0; i < 256; i++)
-        fwrite(freq + i, 4, 1, fout);
+        fwrite(freq + i, 4, 1, out_file);
     // Write a placeholder for the padding
-    padding_pos = ftell(fout);
-    fwrite(&padding, 4, 1, fout);
-    encode_stream(fin, fout, tree, &padding);
+    padding_pos = ftell(out_file);
+    fwrite(&padding, 4, 1, out_file);
+    encode_stream(in_file, out_file, tree, &padding);
     // Write the padding to the placeholder
-    fseek(fout, padding_pos, SEEK_SET);
-    fwrite(&padding, 4, 1, fout);
-    fclose(fin);
-    fclose(fout);
+    fseek(out_file, padding_pos, SEEK_SET);
+    fwrite(&padding, 4, 1, out_file);
+    fclose(in_file);
+    fclose(out_file);
 }
 
 void huffman_decompress(const char* filename, const char* newname) {
