@@ -55,7 +55,7 @@ unsigned char read_offset() {
 //------------------------------------------------------------------------------
 void seq_unpack(const char* source_filename, const char* dest_filename)
 {
-	unsigned char window_pages = 2;
+	unsigned char window_pages = 4;
 	seq_lens_file = fopen("c:/test/seqlens", "rb");
 	offsets_file = fopen("c:/test/offsets", "rb");
 

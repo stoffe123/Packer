@@ -60,7 +60,7 @@ unsigned char find_best_code(long* char_freq) {
 		if (char_freq[i] > value) {
 			value = char_freq[i];
 			best = i;
-			
+
 		}
 	}//end for
 	printf("\n Found code: %d that occured: %d times.", best, value);
@@ -83,7 +83,7 @@ void write_offset(unsigned long long c) {
 
 void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass)
 {
-	unsigned char window_pages = 2;
+	unsigned char window_pages = 4;
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
 	printf("\n Sequence packing %s", source_filename);
@@ -124,11 +124,12 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 
 	while ((buffer_endpos - buffer_startpos) >= min_seq_len * 2) {
 		best_seq_len = 2;
-		for (i = 3; i < winsize; i++)
-		{
-			seq_len = 0;
-			// find matching sequence
-			if (pass == 2) {
+		if (pass == 2) {
+			for (i = 3; i < winsize; i++)
+			{
+				seq_len = 0;
+				// find matching sequence
+
 				while (buffer_startpos + i + seq_len < buffer_endpos && buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + i + seq_len] &&
 					seq_len < max_seq_len && seq_len < i)
 				{
@@ -185,7 +186,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 				else {
 					for (long long i = 0; i < window_pages; i++) {
 
-						if (best_seq_offset < (lowest_special + (256 * (i+1)))) {
+						if (best_seq_offset < (lowest_special + (256 * (i + 1)))) {
 							write_offset(best_seq_offset - (lowest_special + (256 * i)));
 							write_offset(255 - i);
 							break;
