@@ -139,6 +139,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="common_tools.c" />
+    <ClCompile Include="huffman2.c" />
     <ClCompile Include="huffman_decode.c" />
     <ClCompile Include="huffman_encode.c" />
     <ClCompile Include="huffman_tools.c" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="common_tools.h" />
     <ClInclude Include="huffman.h" />
+    <ClInclude Include="huffman2.h" />
     <ClInclude Include="huffman_decode.h" />
     <ClInclude Include="huffman_encode.h" />
     <ClInclude Include="huffman_tools.h" />

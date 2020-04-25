@@ -36,6 +36,9 @@
     <ClCompile Include="huffman_decode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="huffman2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -57,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="huffman_decode.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="huffman2.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

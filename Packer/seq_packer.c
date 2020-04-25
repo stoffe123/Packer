@@ -89,7 +89,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
         exit(1);
     }    
     unsigned long total_size = get_file_size(infil);
-    printf("\nLength of source : %d", total_size);    
+    
 
     if (pass == 2) {
         fopen_s(&utfil, dest_filename, "wb");
