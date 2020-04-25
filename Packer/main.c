@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	const char* packed_name2 = "c:/test/packed2.bin";
@@ -98,8 +98,7 @@ int main()
 	long long size_packed = get_file_size_from_name(packed_name);
 	printf("\nLength of packed: %d", size_packed);
 	printf("\nCompression ratio: %f", (double)size_packed / (double)size_org);
-
-	printf("\n unpacking... packed.bin");
+	printf("\n\n unpacking... packed.bin");
 	cl = clock();
 	multi_unpack(packed_name, dst);
 	//seq_unpack(packed_name, dst);	
