@@ -14,7 +14,9 @@
 //Global vars used in unpacker
 unsigned char code;
 static FILE* infil, * utfil;
-static long read_packedfile_pos;
+static long long read_packedfile_pos , 
+                seqlens_file_pos,
+                offsets_file_pos;
 static unsigned char* buf;
 static unsigned long buf_pos = 0;
 static unsigned buf_size = 30000000;
@@ -35,13 +37,35 @@ void put_buf(unsigned char c) {
     buf_pos--;
 }
 
+FILE* seq_lens_file;
+FILE* offsets_file;
+
+unsigned char read_seqlen() {
+    seqlens_file_pos++;
+    fseek(seq_lens_file, -seqlens_file_pos, SEEK_END);
+    return fgetc(seq_lens_file);
+}
+
+unsigned char read_offset() {
+    offsets_file_pos++;
+    fseek(offsets_file, -offsets_file_pos, SEEK_END);
+    return fgetc(offsets_file);
+}
+
 //------------------------------------------------------------------------------
 void seq_unpack(const char* source_filename, const char* dest_filename)
 {
+
+    seq_lens_file = fopen("c:/test/seqlens", "rb");
+    offsets_file = fopen("c:/test/offsets", "rb");
+
     printf("\n\n Unpacking %s", source_filename);
     unsigned long i, cc;
 
     read_packedfile_pos = 0;
+    seqlens_file_pos = 0;
+    offsets_file_pos = 0;
+       
 
     fopen_s(&infil, source_filename, "rb");
     if (!infil) {
@@ -66,7 +90,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
     while (total_size > read_packedfile_pos) {
         cc = read_byte_from_file();
         if (cc == code) {
-            unsigned long long seq_len = read_byte_from_file(), offset;
+            unsigned long long seq_len = read_seqlen(), offset;
 
             if (cc == code && seq_len == 0) {
                 //occurrence of code in original
@@ -77,13 +101,13 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
             else {
                
                     seq_len += 2;
-                    offset = read_byte_from_file();
+                    offset = read_offset();
                
                 if (offset == 255) {
-                   offset = (unsigned long long)254 + (unsigned long long)read_byte_from_file();
+                    offset = (unsigned long long)254 + (unsigned long long)read_offset();
                 }
                 else if (offset == 254) {
-                    offset = (unsigned long long)510 + (unsigned long long)read_byte_from_file();
+                    offset = (unsigned long long)510 + (unsigned long long)read_offset();
                 }
                 
                 unsigned long match_index = buf_pos + offset + seq_len;
@@ -101,6 +125,8 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 
     fclose(infil);
     fclose(utfil);
+    fclose(seq_lens_file);
+    fclose(offsets_file);
 }
 
 

@@ -68,10 +68,23 @@ unsigned char find_best_code(long* char_freq) {
     return best;
 }
 
+FILE* seq_lens_file;
+FILE* offsets_file;
+
+void write_seqlen(unsigned long long c) {
+    fwrite(&c, 1, 1, seq_lens_file);
+}
+
+void write_offset(unsigned long long c) {
+    fwrite(&c, 1, 1, offsets_file);
+}
+
 //--------------------------------------------------------------------------------------------------------
 
 void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass)
 {
+    seq_lens_file = fopen("c:/test/seqlens", "wb");
+    offsets_file = fopen("c:/test/offsets", "wb");
     printf("\n Sequence packing %s", source_filename);
     unsigned long long i, winsize = 1024, max_seq_len = 257, seq_len, best_seq_len,
                  best_seq_offset = 0,
@@ -138,7 +151,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
           } else {
               // occurence of code in original is handled by {code, 0} pair
               if (buffer[buffer_startpos] == code) {
-                  WRITE(0);
+                  write_seqlen(0);
                   WRITE(code);
               }
               else
@@ -158,20 +171,20 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
               // write offset i.e. distance from end of match
               // now handles offsets from 0..765
               if (best_seq_offset < 254) {
-                  WRITE(best_seq_offset); 
+                  write_offset(best_seq_offset); 
               }
               else if (best_seq_offset < 510) {
-                  WRITE(best_seq_offset - 254); 
-                  WRITE(255);
+                  write_offset(best_seq_offset - 254); 
+                  write_offset(255);
               }
               else {
-                  WRITE(best_seq_offset - 510); 
-                  WRITE(254);
+                  write_offset(best_seq_offset - 510); 
+                  write_offset(254);
               }
         
                   //subtract to so smallest will be 3 -2 = 1
                   //lens 0 and 1 are used for code occurences
-                  WRITE(best_seq_len - 2);  /* seqlen */
+                  write_seqlen(best_seq_len - 2);  /* seqlen */
                   WRITE(code);  /* note file is read backwards during unpack! */            
           }
           move_buffer(best_seq_len);
@@ -203,6 +216,8 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
         fclose(utfil);
     }
     fclose(infil);
+    fclose(seq_lens_file);
+    fclose(offsets_file);
 }
 
 void seq_pack(const char* source_filename, const char* dest_filename)

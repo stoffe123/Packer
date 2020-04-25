@@ -148,6 +148,7 @@
     <ClCompile Include="huffman_tools.c" />
     <ClCompile Include="huflocal.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="multi_packer.c" />
     <ClCompile Include="seq_packer.c" />
     <ClCompile Include="seq_unpacker.c" />
   </ItemGroup>
@@ -162,6 +163,7 @@
     <ClInclude Include="huffman_encode.h" />
     <ClInclude Include="huffman_tools.h" />
     <ClInclude Include="huflocal.h" />
+    <ClInclude Include="multi_packer.h" />
     <ClInclude Include="seq_packer.h" />
     <ClInclude Include="seq_unpacker.h" />
   </ItemGroup>
