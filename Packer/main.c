@@ -6,8 +6,8 @@
 #include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "common_tools.h"
-#include "huffman2.h"
-//#include "canonical.h"
+//#include "huffman2.h"
+#include "canonical.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -72,12 +72,11 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 }
 
 int main()
-{
-	//const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/book_unp.txt";
-
-	const char* src = "C:/test/voc.wav"; const char* dst = "C:/test/voc_unp.wav";
+{	
+	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
+	const char* packed_name2 = "c:/test/packed2.bin";
 
 	int cl = clock();
 	//printf("\nRLE packing... ");
@@ -89,16 +88,23 @@ int main()
 
 	//pack(src, "c:/test/packed.bin");
 	printf("\nHuffman packing... %s", src);
-	huffman_compress(src, packed_name);
+	seq_pack(src, packed_name2);
+	CanonicalEncode(packed_name2, packed_name);	
 
-	printf("\n Packing finished time it took: %d", (clock() - cl));
+	int pack_time = (clock() - cl);
+	printf("\n Packing finished time it took: %d", pack_time);
 	long long size_packed = get_file_size_from_name(packed_name);
 	printf("\nLength of packed: %d", size_packed);
 	printf("\nCompression ratio: %f", (double)size_packed / (double)size_org);
 
 	printf("\nHuffman unpacking... packed.bin");
-	huffman_decompress(packed_name, dst);
-	printf("\nUnpacking finished to: %s" , dst);
+	cl = clock();
+	CanonicalDecode(packed_name, packed_name2);
+	seq_unpack(packed_name2, dst);	
+
+	int unpack_time = (clock() - cl);
+	printf("\n Unpacking finished time it took: %d", unpack_time);
+	printf("\n Total time %d", pack_time + unpack_time);
 	//unpack("C:/test/packed.bin", dst);
 	//printf("\nRLE unpacking... ");
 	//rle_unpack("c:/test/unpackedrle.bin", dst);

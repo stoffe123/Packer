@@ -15,7 +15,7 @@
 
 FILE* infil, * utfil;
 
-unsigned char code, code3;
+unsigned char code;
 
 void WRITE(unsigned long long c)
 {
@@ -142,12 +142,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
                   WRITE(code);
               }
               else
-                  // occurence of code3 in original is handled by {code, 1} pair
-                  if (buffer[buffer_startpos] == code3) {
-                      WRITE(1);
-                      WRITE(code);
-                  }
-                  else {
+                 {
                       WRITE(buffer[buffer_startpos]);
                   }
           }
@@ -173,16 +168,11 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
                   WRITE(best_seq_offset - 510); 
                   WRITE(254);
               }
-
-              if (best_seq_len == 3) {
-                  WRITE(code3);
-              }
-              else {
-                  //subtract to so smallest will be 4 -2 = 2
+        
+                  //subtract to so smallest will be 3 -2 = 1
                   //lens 0 and 1 are used for code occurences
                   WRITE(best_seq_len - 2);  /* seqlen */
-                  WRITE(code);  /* note file is read backwards during unpack! */
-              }
+                  WRITE(code);  /* note file is read backwards during unpack! */            
           }
           move_buffer(best_seq_len);
       }//end if
@@ -192,7 +182,6 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
     if (pass == 1) {
        
         code = find_best_code(char_freq);
-        code3 = find_best_code(char_freq);
 #if true
         printf("\n\n SEQ_LEN frequency:\n");
         for (int i = 0; i < 257; i++) {
@@ -210,14 +199,13 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
         for (i = buffer_startpos; i < buffer_endpos; i++) {
             WRITE(buffer[i]);
         }
-        WRITE(code3);
         WRITE(code);
         fclose(utfil);
     }
     fclose(infil);
 }
 
-void pack(const char* source_filename, const char* dest_filename)
+void seq_pack(const char* source_filename, const char* dest_filename)
 {
     buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
     pack_internal(source_filename, dest_filename, 1);

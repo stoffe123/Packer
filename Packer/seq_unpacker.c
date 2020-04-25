@@ -12,7 +12,7 @@
 // Unpacker stuff below !!
 
 //Global vars used in unpacker
-unsigned char code, code3;
+unsigned char code;
 static FILE* infil, * utfil;
 static long read_packedfile_pos;
 static unsigned char* buf;
@@ -36,7 +36,7 @@ void put_buf(unsigned char c) {
 }
 
 //------------------------------------------------------------------------------
-void unpack(const char* source_filename, const char* dest_filename)
+void seq_unpack(const char* source_filename, const char* dest_filename)
 {
     printf("\n\n Unpacking %s", source_filename);
     unsigned long i, cc;
@@ -62,31 +62,23 @@ void unpack(const char* source_filename, const char* dest_filename)
 
     buf_pos = buf_size - 1;
     code = read_byte_from_file();
-    code3 = read_byte_from_file();
 
     while (total_size > read_packedfile_pos) {
         cc = read_byte_from_file();
-        if (cc == code || cc == code3) {
+        if (cc == code) {
             unsigned long long seq_len = read_byte_from_file(), offset;
 
-            if (cc == code && seq_len <= 1) {
+            if (cc == code && seq_len == 0) {
                 //occurrence of code in original
-                if (seq_len == 0) {
+                
                     put_buf(code);
-                }
-                else {
-                    put_buf(code3);
-                }
+                
             }
             else {
-                if (cc == code3) {
-                    offset = seq_len;
-                    seq_len = 3;
-                }
-                else {
+               
                     seq_len += 2;
                     offset = read_byte_from_file();
-                }
+               
                 if (offset == 255) {
                    offset = (unsigned long long)254 + (unsigned long long)read_byte_from_file();
                 }

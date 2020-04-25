@@ -2,6 +2,6 @@
 #define SEQ_UNPACKER_H
 
 
-void unpack(const char* source_filename, const char* dest_filename);
+void seq_unpack(const char* source_filename, const char* dest_filename);
 
 #endif
