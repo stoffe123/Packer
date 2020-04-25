@@ -7,6 +7,7 @@
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "huffman2.h"
+//#include "canonical.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -90,22 +91,24 @@ int main()
 	printf("\nHuffman packing... %s", src);
 	huffman_compress(src, packed_name);
 
-	printf("\n Successful! \n Time of pack: %d", (clock() - cl));
+	printf("\n Packing finished time it took: %d", (clock() - cl));
 	long long size_packed = get_file_size_from_name(packed_name);
 	printf("\nLength of packed: %d", size_packed);
 	printf("\nCompression ratio: %f", (double)size_packed / (double)size_org);
 
 	printf("\nHuffman unpacking... packed.bin");
-	huffman_decompress("C:/test/packed.bin", dst);
+	huffman_decompress(packed_name, dst);
+	printf("\nUnpacking finished to: %s" , dst);
 	//unpack("C:/test/packed.bin", dst);
 	//printf("\nRLE unpacking... ");
 	//rle_unpack("c:/test/unpackedrle.bin", dst);
 
+	printf("\n\n Comparing files!");
 	if (files_equal(src, dst)) {
-		printf("\n ***** SUCCESS , files equal *****\n");
+		printf("\n ***** SUCCESS ***** (files equal)\n");
 	}
 	else {
-		printf("\n FILES NOT EQUAL!!");
+		printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
 	}
 	return 0;
 }

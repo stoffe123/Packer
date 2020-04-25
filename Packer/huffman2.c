@@ -205,8 +205,8 @@ void huffman_compress(const char* filename, const char* newname) {
 
     construct_huffman(freq, tree);
     rewind(in_file);
-    for (int i = 0; i < 256; i++)
-        fwrite(freq + i, 4, 1, out_file);
+    fwrite(freq, 4, 256, out_file);
+
     // Write a placeholder for the padding
     padding_pos = ftell(out_file);
     fwrite(&padding, 4, 1, out_file);

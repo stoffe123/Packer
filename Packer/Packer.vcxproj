@@ -138,22 +138,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bitarray.c" />
+    <ClCompile Include="bitfile.c" />
+    <ClCompile Include="canonical.c" />
     <ClCompile Include="common_tools.c" />
     <ClCompile Include="huffman2.c" />
     <ClCompile Include="huffman_decode.c" />
     <ClCompile Include="huffman_encode.c" />
     <ClCompile Include="huffman_tools.c" />
+    <ClCompile Include="huflocal.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="seq_packer.c" />
     <ClCompile Include="seq_unpacker.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bitarray.h" />
+    <ClInclude Include="bitfile.h" />
+    <ClInclude Include="canonical.h" />
     <ClInclude Include="common_tools.h" />
     <ClInclude Include="huffman.h" />
     <ClInclude Include="huffman2.h" />
     <ClInclude Include="huffman_decode.h" />
     <ClInclude Include="huffman_encode.h" />
     <ClInclude Include="huffman_tools.h" />
+    <ClInclude Include="huflocal.h" />
     <ClInclude Include="seq_packer.h" />
     <ClInclude Include="seq_unpacker.h" />
   </ItemGroup>

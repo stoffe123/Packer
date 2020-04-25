@@ -39,6 +39,18 @@
     <ClCompile Include="huffman2.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="canonical.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="huflocal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bitarray.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bitfile.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -63,6 +75,18 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="huffman2.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="huflocal.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bitarray.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bitfile.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="canonical.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
