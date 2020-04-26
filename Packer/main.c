@@ -10,6 +10,8 @@
 //#include "canonical.h"
 #include "multi_packer.h"
 
+#include "RLE_packer_advanced.h"
+
 #define TRUE 1
 #define FALSE 0
 #define END 999
@@ -90,8 +92,8 @@ int main()
 	//pack(src, "c:/test/packed.bin");
 	printf("\n packing... %s", src);
 	
-	//seq_pack(src, packed_name);
-	multi_pack(src, packed_name);	
+	RLE_advanced_pack(src, packed_name);
+	//multi_pack(src, packed_name);	
 
 	int pack_time = (clock() - cl);
 	printf("\n Packing finished time it took: %d", pack_time);
@@ -100,12 +102,14 @@ int main()
 	printf("\nCompression ratio: %f", (double)size_packed / (double)size_org);
 	printf("\n\n unpacking... packed.bin");
 	cl = clock();
-	multi_unpack(packed_name, dst);
-	//seq_unpack(packed_name, dst);	
+
+	//multi_unpack(packed_name, dst);
+	RLE_advanced_unpack(packed_name, dst);	
 
 	int unpack_time = (clock() - cl);
 	printf("\n Unpacking finished time it took: %d", unpack_time);
 	printf("\n Total time %d", pack_time + unpack_time);
+	
 	//unpack("C:/test/packed.bin", dst);
 	//printf("\nRLE unpacking... ");
 	//rle_unpack("c:/test/unpackedrle.bin", dst);
