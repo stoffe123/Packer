@@ -5,7 +5,7 @@
 #include <time.h>
 #define TRUE 1
 #define FALSE 0
-#define VERBOSE 
+
 #define WRITE(x) putc(x, utfil)
 
 /* runlength packer and unpacker */
@@ -266,7 +266,9 @@ int find_optimal_MAX_SUPPLEN(int seq_len[])
                 best_res = bytes_gained;
                 best_len = seq_len[i];
             }
+#ifdef VERBOSE
             printf("\nlen=%d bytes_gained=%d", seq_len[i], bytes_gained);
+#endif
             bytes_gained -= (seq_len[i + 1] - seq_len[i]);
         }
         i++;
