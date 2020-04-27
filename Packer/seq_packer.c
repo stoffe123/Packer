@@ -123,14 +123,18 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 
 	while ((buffer_endpos - buffer_startpos) >= min_seq_len * 2) {
 		best_seq_len = 2;
+		unsigned int highest_seq_len;
 		if (pass == 2) {
 			for (i = 3; i < winsize; i++)
 			{
 				seq_len = 0;
-				// find matching sequence
+				// find matching sequence				
 
-				while (buffer_startpos + i + seq_len < buffer_endpos && buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + i + seq_len] &&
+				while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + i + seq_len] && buffer_startpos + i + seq_len < buffer_endpos &&
 					seq_len < max_seq_len && seq_len < i)
+
+				
+
 				{
 					seq_len++;
 				}
@@ -151,7 +155,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 		}
 		/* now we found the longest sequence in the window! */
 
-		if (best_seq_len <= 2)
+		if (best_seq_len <= 2 || (best_seq_offset >= lowest_special && best_seq_len <=3))
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
 				char_freq[buffer[buffer_startpos]]++;

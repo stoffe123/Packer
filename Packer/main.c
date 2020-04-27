@@ -75,13 +75,15 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	const char* packed_name2 = "c:/test/packed2.bin";
 	unsigned long int best_size = 999999999;
 	unsigned char best_page = 0;
-	for (int i = 20; i < 200; i++) {
+	 
+	//for (int i = 20; i < 200; i++) {
+	int i = 106; {
 
 		int cl = clock();
 		

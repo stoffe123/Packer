@@ -110,6 +110,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 				}
 
 				unsigned long match_index = buf_pos + offset + seq_len;
+				//write the sequence at the right place!
 				for (i = 0; i < seq_len; i++) {
 					put_buf(buf[match_index - i]); ;
 				}
