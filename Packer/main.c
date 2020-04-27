@@ -82,8 +82,8 @@ int main()
 	unsigned long int best_size = 999999999;
 	unsigned char best_page = 0;
 	 
-	//for (int i = 20; i < 200; i++) {
-	int i = 106; {
+	for (int i = 106; i < 200; i++) {
+	//int i = 106; {
 
 		int cl = clock();
 		
