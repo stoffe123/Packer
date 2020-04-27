@@ -44,10 +44,10 @@ unsigned char untar(const char* src) {
 	uint32_t size2 = 0;
 	fread(&size2, 4, 1, in);
 	//printf("\n untar size1=%d, size2=%d\n", size1, size2);
-	copy(in, pack_type ? "c:/test/huffman_seqlens" : "c:/test/seqlens", size1);
-	copy(in, pack_type ? "c:/test/huffman_offsets" : "c:/test/offsets", size2);
-	copy(in, pack_type ? "c:/test/huffman_main" : "c:/test/main", 0); //the rest
-	
+	copy(in, "c:/test/seqlens", size1);
+	copy(in, "c:/test/offsets", size2);
+	copy(in, "c:/test/main", 0); //the rest
+
 	fclose(in);
 	return pack_type;
 }
@@ -67,51 +67,107 @@ void tar(const char* dst, unsigned char pack_type) {
 
 	fwrite(&pack_type, 1, 1, out_file);
 	//printf("\ntar packtype=%d", pack_type);
-	FILE* seqlens = fopen(pack_type ? "c:/test/huffman_seqlens" : "c:/test/seqlens", "rb");
+	FILE* seqlens = fopen("c:/test/seqlens", "rb");
 	uint32_t size1 = get_file_size(seqlens);
 	fclose(seqlens);
 	fwrite(&size1, 4, 1, out_file);
 
-	FILE* offsets = fopen(pack_type ? "c:/test/huffman_offsets" : "c:/test/offsets", "rb");
+	FILE* offsets = fopen("c:/test/offsets", "rb");
 	uint32_t size2 = get_file_size(offsets);
 	fclose(offsets);
 	fwrite(&size2, 4, 1, out_file);
 
-	append_to(out_file, pack_type ? "c:/test/huffman_seqlens" : "c:/test/seqlens");
-	append_to(out_file, pack_type ? "c:/test/huffman_offsets" : "c:/test/offsets");
-	append_to(out_file, pack_type ? "c:/test/huffman_main" : "c:/test/main");
+	append_to(out_file, "c:/test/seqlens");
+	append_to(out_file, "c:/test/offsets");
+	append_to(out_file, "c:/test/main");
 
 	fclose(out_file);
 }
+
+void my_rename(const char* f_old, const char* f_new) {
+	remove(f_new);
+	rename(f_old, f_new);
+}
+
+
+unsigned char isKthBitSet(unsigned char value, unsigned char bit)
+{
+	return (value & (1 << bit));
+}
+
+unsigned char setKthBit(unsigned char value, unsigned char bit)
+{
+	// kth bit of n is being set by this operation 
+	return ((1 << bit) | value);
+}
+
+int CanonicalEncodeAndTest(const char* src) {
+	CanonicalEncode(src, "tmp383754");
+	int size_org = get_file_size_from_name(src);
+	int size_packed = get_file_size_from_name("tmp383754");
+	int res = (size_packed < size_org);
+	if (res) {
+		remove(src);
+		rename("tmp383754", src);
+	}
+	else {
+		remove("tmp383754");
+	}
+	return res;
+}
+
+void CanonicalDecodeAndReplace(const char* src) {
+	CanonicalDecode(src, "tmp675839");
+	remove(src);
+	rename("tmp675839", src);
+}
+
+
 
 //----------------------------------------------------------------------------------------
 
 void multi_pack(const char* src, const char* dst, unsigned char pages) {
 
 	unsigned long long src_size = get_file_size_from_name(src);
-	char huffman = (src_size > 10000);
+	unsigned char pack_type = 0;
 	seq_pack(src, "c:/test/main", pages);
 	// now we have three files to huffman pack
 
-	//printf("\nHuffman packing 3 files...");
+	//try to huffman pack and check sizes!
 
-	if (huffman) {
-		CanonicalEncode("c:/test/main", "c:/test/huffman_main");
-		CanonicalEncode("c:/test/seqlens", "c:/test/huffman_seqlens");
-		CanonicalEncode("c:/test/offsets", "c:/test/huffman_offsets");
+	unsigned long long size_org, size_packed;
+
+	int worked = CanonicalEncodeAndTest("c:/test/main");
+	if (worked) {
+		pack_type = setKthBit(pack_type, 0);
 	}
-
-	tar(dst, huffman);
+	worked = CanonicalEncodeAndTest("c:/test/seqlens");
+	if (worked) {
+		pack_type = setKthBit(pack_type, 1);
+	}
+	worked = CanonicalEncodeAndTest("c:/test/offsets");
+	if (worked) {
+		pack_type = setKthBit(pack_type, 2);
+	}
+	printf("\npack_type = %d", pack_type);
+	tar(dst, pack_type);
 }
 
+
 void multi_unpack(const char* src, const char* dst) {
-	
+
 	unsigned char pack_type = untar(src);
 
-	if (pack_type) {
-		CanonicalDecode("c:/test/huffman_main", "c:/test/main");
-		CanonicalDecode("c:/test/huffman_seqlens", "c:/test/seqlens");
-		CanonicalDecode("c:/test/huffman_offsets", "c:/test/offsets");
+	if (isKthBitSet(pack_type, 0)) {
+		CanonicalDecodeAndReplace("c:/test/main");
 	}
+	if (isKthBitSet(pack_type, 1)) {
+		CanonicalDecodeAndReplace("c:/test/seqlens");
+	}
+	if (isKthBitSet(pack_type, 2)) {
+		CanonicalDecodeAndReplace("c:/test/offsets");
+	}
+
 	seq_unpack("c:/test/main", dst);
+
 }
