@@ -113,7 +113,9 @@ int RLE_advanced_pack_and_test(const char* src) {
 	RLE_advanced_pack(src, "tmp383754");
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name("tmp383754");
-	int res = (size_packed < size_org);
+	double ratio = (double)size_packed / (double)size_org;
+	printf("\n ratio with RLE_advanced:%f", ratio);
+	int res = (ratio < 0.93);
 	if (res) {
 		remove(src);
 		rename("tmp383754", src);
