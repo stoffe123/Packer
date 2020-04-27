@@ -576,13 +576,9 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
 
 void RLE_advanced_unpack(const char* source_filename, const char* dest_filename)
 {
-    int i, j, k, seq_len[256], cc, lcnt, one_escape, two_escape, three_escape;
-    int seq_chars[256], esc, rl_char, rl_count, MAX_SUPPLEN, no_of_codes[100];
-    for (i = 0; i < 256; i++)
-    {
-        seq_len[i] = 0;
-    }
-
+    int i, j, k, seq_len[256] = { 0 }, cc, lcnt, one_escape, two_escape, three_escape;
+    int seq_chars[256] = { 0 }, esc, rl_char, rl_count, MAX_SUPPLEN, no_of_codes[100] = { 0 };
+    
     infil = fopen(source_filename, "rb");
     if (!infil) {
         printf("Can't create output file: %s\n", source_filename);

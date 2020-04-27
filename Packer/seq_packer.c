@@ -80,7 +80,7 @@ void write_offset(unsigned long long c) {
 
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass, unsigned char window_pages)
+void pack_internal(const char* src, const char* dest_filename, unsigned char pass, unsigned char window_pages)
 {
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
@@ -99,9 +99,9 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 	//printf("\nwinsize=%d", winsize);
 	//printf("\nwindow_pages=%d", window_pages);
 
-	fopen_s(&infil, source_filename, "rb");
+	infil = fopen(src, "rb");
 	if (!infil) {
-		puts("Hittade inte infil!");
+		printf("Hittade inte infil: %s", infil);
 		getchar();
 		exit(1);
 	}

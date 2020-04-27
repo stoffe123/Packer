@@ -75,7 +75,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/pazera.exe"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book1_short2.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	const char* packed_name2 = "c:/test/packed2.bin";
@@ -86,8 +86,8 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-	for (int i = 1; i < 100; i++) {
-	//int i = 106; {
+	//for (int i = 1; i < 100; i++) {
+	int i = 73; {
 
 		int cl = clock();
 		

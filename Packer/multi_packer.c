@@ -7,6 +7,7 @@
 #include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "common_tools.h"
+#include "RLE_packer_advanced.h"
 //#include "huffman2.h"
 #include "canonical.h"
 
@@ -62,6 +63,13 @@ void append_to(FILE* main_file, const char* append_filename) {
 	fclose(append_file);
 }
 
+void copy_file(const char* src, const char* dst) {	
+	FILE* f = fopen(src, "rb");
+	copy(f, dst, 0);
+}
+
+
+
 void tar(const char* dst, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
 
@@ -101,6 +109,21 @@ unsigned char setKthBit(unsigned char value, unsigned char bit)
 	return ((1 << bit) | value);
 }
 
+int RLE_advanced_pack_and_test(const char* src) {
+	RLE_advanced_pack(src, "tmp383754");
+	int size_org = get_file_size_from_name(src);
+	int size_packed = get_file_size_from_name("tmp383754");
+	int res = (size_packed < size_org);
+	if (res) {
+		remove(src);
+		rename("tmp383754", src);
+	}
+	else {
+		remove("tmp383754");
+	}
+	return res;
+}
+
 int CanonicalEncodeAndTest(const char* src) {
 	CanonicalEncode(src, "tmp383754");
 	int size_org = get_file_size_from_name(src);
@@ -122,22 +145,29 @@ void CanonicalDecodeAndReplace(const char* src) {
 	rename("tmp675839", src);
 }
 
-
-
 //----------------------------------------------------------------------------------------
 
 void multi_pack(const char* src, const char* dst, unsigned char pages) {
 
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
-	seq_pack(src, "c:/test/main", pages);
+	char worked;
+	copy_file(src, "tmp451");
+	worked = RLE_advanced_pack_and_test("tmp451");
+	if (worked) {
+		pack_type = setKthBit(pack_type, 3);
+	}
+
+	seq_pack("tmp451", "c:/test/main", pages);
 	// now we have three files to huffman pack
+
+	remove("tmp451");
 
 	//try to huffman pack and check sizes!
 
 	unsigned long long size_org, size_packed;
 
-	int worked = CanonicalEncodeAndTest("c:/test/main");
+	worked = CanonicalEncodeAndTest("c:/test/main");
 	if (worked) {
 		pack_type = setKthBit(pack_type, 0);
 	}
@@ -168,6 +198,15 @@ void multi_unpack(const char* src, const char* dst) {
 		CanonicalDecodeAndReplace("c:/test/offsets");
 	}
 
-	seq_unpack("c:/test/main", dst);
+	
+
+	if (isKthBitSet(pack_type, 3)) {
+		seq_unpack("c:/test/main", "tmp457");
+		RLE_advanced_unpack("tmp457", dst);
+		remove("tmp457");
+	}
+	else {
+		seq_unpack("c:/test/main", dst);
+	}
 
 }
