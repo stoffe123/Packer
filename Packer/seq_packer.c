@@ -6,7 +6,6 @@
 #include "common_tools.h"
 #define TRUE 1
 #define FALSE 0
-#define END 999
 
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
@@ -194,7 +193,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 					}
 				}
 				//subtract to so smallest will be 3 -2 = 1
-				//lens 0 and 1 are used for code occurences
+				//len = 0 is used for code occurence
 				write_seqlen(best_seq_len - 2);  /* seqlen */
 				WRITE(code);  /* note file is read backwards during unpack! */
 			}

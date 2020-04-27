@@ -14,7 +14,6 @@
 
 #define TRUE 1
 #define FALSE 0
-#define END 999
 
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
@@ -84,16 +83,10 @@ int main()
 	int cl = clock();
 	//printf("\n packing... ");
 
-	long long size_org = get_file_size_from_name(src);
-	printf("\nLength of source : %d", size_org);
-
-	//rle_pack(src, "C:/test/packed.rle");
-
-	//pack(src, "c:/test/packed.bin");
-	printf("\n packing... %s", src);
-	
-	RLE_advanced_pack(src, packed_name);
-	//multi_pack(src, packed_name);	
+	long long size_org = get_file_size_from_name(src);	
+		
+	printf("\n Packing... %s with length:%d", src, size_org);		
+	multi_pack(src, packed_name);	
 
 	int pack_time = (clock() - cl);
 	printf("\n Packing finished time it took: %d", pack_time);
@@ -103,8 +96,7 @@ int main()
 	printf("\n\n unpacking... packed.bin");
 	cl = clock();
 
-	//multi_unpack(packed_name, dst);
-	RLE_advanced_unpack(packed_name, dst);	
+	multi_unpack(packed_name, dst);	
 
 	int unpack_time = (clock() - cl);
 	printf("\n Unpacking finished time it took: %d", unpack_time);
