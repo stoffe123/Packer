@@ -82,7 +82,7 @@ void write_offset(unsigned long long c) {
 
 void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass)
 {
-	unsigned char window_pages = 4;
+	unsigned char window_pages = 5;
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
 	printf("\n Sequence packing %s", source_filename);
@@ -90,7 +90,9 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 		winsize = (window_pages + 1) * 256 + max_seq_len * 2 + 25,
 		best_seq_offset = 0,
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
-		longest_offset = 765;
+		lowest_special = 256 - window_pages,
+		longest_offset = lowest_special + (256 * window_pages) - 1;
+		
 
 	unsigned long long char_freq[256] = { 0 };
 	buffer_startpos = 0;
@@ -178,18 +180,23 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 			if (pass == 2) {
 				// write offset i.e. distance from end of match
 				// now handles offsets from 0..765
-				unsigned long long lowest_special = 256 - window_pages;
+				
 				if (best_seq_offset < lowest_special) {
 					write_offset(best_seq_offset);
 				}
 				else {
+					int found = 0;
 					for (long long i = 0; i < window_pages; i++) {
 
 						if (best_seq_offset < (lowest_special + (256 * (i + 1)))) {
 							write_offset(best_seq_offset - (lowest_special + (256 * i)));
 							write_offset(255 - i);
+							found = 1;
 							break;
 						}
+					}
+					if (!found) {
+						printf("\n\n >>>>>>>> ERROR no offset coding found for offset = %d", best_seq_offset);
 					}
 				}
 				//subtract to so smallest will be 3 -2 = 1
@@ -223,6 +230,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 		for (i = buffer_startpos; i < buffer_endpos; i++) {
 			WRITE(buffer[i]);
 		}
+		WRITE(window_pages);
 		WRITE(code);
 		fclose(utfil);
 	}

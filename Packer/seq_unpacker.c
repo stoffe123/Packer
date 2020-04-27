@@ -55,7 +55,7 @@ unsigned char read_offset() {
 //------------------------------------------------------------------------------
 void seq_unpack(const char* source_filename, const char* dest_filename)
 {
-	unsigned char window_pages = 4;
+	unsigned char window_pages;
 	seq_lens_file = fopen("c:/test/seqlens", "rb");
 	offsets_file = fopen("c:/test/offsets", "rb");
 
@@ -85,6 +85,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 
 	buf_pos = buf_size - 1;
 	code = read_byte_from_file();
+	window_pages = read_byte_from_file();
 
 	while (total_size > read_packedfile_pos) {
 		cc = read_byte_from_file();
