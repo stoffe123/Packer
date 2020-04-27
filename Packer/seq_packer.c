@@ -84,7 +84,7 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 {
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");	
-	unsigned long long i, max_seq_len = 257, seq_len, best_seq_len,
+	unsigned long long offset, max_seq_len = 257, seq_len, best_seq_len,
 		winsize = (window_pages + 1) * 256 + max_seq_len * 2 + 25,
 		best_seq_offset = 0,
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
@@ -125,28 +125,34 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 		best_seq_len = 2;
 		unsigned int highest_seq_len;
 		if (pass == 2) {
-			for (i = 3; i < winsize; i++)
+			for (offset = 3; offset < winsize; offset++)
 			{
-				seq_len = 0;
 				// find matching sequence				
+				if (buffer[buffer_startpos] != buffer[buffer_startpos + offset]) {
+					continue;
+				}
+				if (buffer[buffer_startpos + 1] != buffer[buffer_startpos + offset + 1]) {
+					continue;
+				}
+				if (buffer[buffer_startpos + 2] != buffer[buffer_startpos + offset + 2]) {
+					continue;
+				}
+				seq_len = 3;
 
-				while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + i + seq_len] && buffer_startpos + i + seq_len < buffer_endpos &&
-					seq_len < max_seq_len && seq_len < i)
-
-				
-
+				while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && buffer_startpos + offset + seq_len < buffer_endpos &&
+					seq_len < max_seq_len && seq_len < offset)
 				{
 					seq_len++;
 				}
 				//check if better than the best!
-				int ok_seq_len = ((i - seq_len) <= longest_offset);
+				int ok_seq_len = ((offset - seq_len) <= longest_offset);
 				if (pass == 1) {
 					ok_seq_len = 1;
 				}
 
 				if (seq_len > best_seq_len && ok_seq_len) {
 					best_seq_len = seq_len;
-					best_seq_offset = i - seq_len;
+					best_seq_offset = offset - seq_len;
 					if (best_seq_len == max_seq_len) {						
 						break;
 					}
@@ -232,8 +238,8 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 	}
 	else {
 		//write remaining buffer
-		for (i = buffer_startpos; i < buffer_endpos; i++) {
-			WRITE(buffer[i]);
+		for (offset = buffer_startpos; offset < buffer_endpos; offset++) {
+			WRITE(buffer[offset]);
 		}
 		WRITE(window_pages);
 		WRITE(code);
