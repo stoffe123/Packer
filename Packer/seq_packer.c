@@ -119,11 +119,9 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 
 	buffer_endpos = fread(buffer, 1, buffer_size * sizeof(unsigned char), infil);
 
-	//realloc(buffer, buffer_endpos * sizeof(unsigned char));
-
 	while ((buffer_endpos - buffer_startpos) >= min_seq_len * 2) {
 		best_seq_len = 2;
-		unsigned int highest_seq_len;
+		
 		if (pass == 2) {
 			for (offset = 3; offset < winsize; offset++)
 			{
@@ -145,12 +143,8 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 					seq_len++;
 				}
 				//check if better than the best!
-				int ok_seq_len = ((offset - seq_len) <= longest_offset);
-				if (pass == 1) {
-					ok_seq_len = 1;
-				}
-
-				if (seq_len > best_seq_len && ok_seq_len) {
+				
+				if (seq_len > best_seq_len && offset - seq_len <= longest_offset) {
 					best_seq_len = seq_len;
 					best_seq_offset = offset - seq_len;
 					if (best_seq_len == max_seq_len) {						
