@@ -54,15 +54,15 @@ void move_buffer(unsigned int steps) {
 
 unsigned char find_best_code(long* char_freq) {
 	unsigned char best;
-	long value = 0;
+	long value = 99999999;
 	for (unsigned int i = 0; i < 256; i++) {
-		if (char_freq[i] > value) {
+		if (char_freq[i] < value) {
 			value = char_freq[i];
 			best = i;
 
 		}
 	}//end for
-	//printf("\n Found code: %d that occured: %d times.", best, value);
+	printf("\n Found code: %d that occured: %d times.", best, value);
 	char_freq[best] = 100000; // mark it as used!
 	return best;
 }

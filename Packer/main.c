@@ -75,23 +75,25 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book1_short2.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	const char* packed_name2 = "c:/test/packed2.bin";
 	unsigned long int best_size = 999999999;
 	unsigned char best_page = 0;
+
+	long long size_org = get_file_size_from_name(src);
+
+	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-	for (int i = 106; i < 200; i++) {
+	for (int i = 1; i < 150; i++) {
 	//int i = 106; {
 
 		int cl = clock();
 		
 		printf("\n------------- Pages %d --------------", i);
 
-		long long size_org = get_file_size_from_name(src);
-
-		//printf("\n Packing... %s with length:%d", src, size_org);		
+		
 		multi_pack(src, packed_name, i);
 
 		int pack_time = (clock() - cl);
