@@ -75,44 +75,59 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	const char* packed_name2 = "c:/test/packed2.bin";
+	unsigned long int best_size = 999999999;
+	unsigned char best_page = 0;
+	for (int i = 20; i < 200; i++) {
 
-	int cl = clock();
-	//printf("\n packing... ");
-
-	long long size_org = get_file_size_from_name(src);	
+		int cl = clock();
 		
-	printf("\n Packing... %s with length:%d", src, size_org);		
-	multi_pack(src, packed_name);	
+		printf("\n------------- Pages %d --------------", i);
 
-	int pack_time = (clock() - cl);
-	printf("\n Packing finished time it took: %d", pack_time);
-	long long size_packed = get_file_size_from_name(packed_name);
-	printf("\nLength of packed: %d", size_packed);
-	printf("\nCompression ratio: %f", (double)size_packed / (double)size_org);
-	printf("\n\n unpacking... packed.bin");
-	cl = clock();
+		long long size_org = get_file_size_from_name(src);
 
-	multi_unpack(packed_name, dst);	
+		//printf("\n Packing... %s with length:%d", src, size_org);		
+		multi_pack(src, packed_name, i);
 
-	int unpack_time = (clock() - cl);
-	printf("\n Unpacking finished time it took: %d", unpack_time);
-	printf("\n Total time %d", pack_time + unpack_time);
-	
-	//unpack("C:/test/packed.bin", dst);
-	//printf("\nRLE unpacking... ");
-	//rle_unpack("c:/test/unpackedrle.bin", dst);
+		int pack_time = (clock() - cl);
+		//printf("\n Packing finished time it took: %d", pack_time);
+		long long size_packed = get_file_size_from_name(packed_name);
+		
+		printf("\nLength of packed: %d", size_packed);
+		printf("  (%f)", (double)size_packed / (double)size_org);
 
-	printf("\n\n Comparing files!");
-	if (files_equal(src, dst)) {
-		printf("\n ***** SUCCESS ***** (files equal)\n");
+
+		if (size_packed < best_size) {
+			best_size = size_packed;
+			best_page = i;
+			printf("\n BEST! ");
+		}
+		//printf("\n\n unpacking... packed.bin");
+		cl = clock();
+
+		multi_unpack(packed_name, dst);
+
+		int unpack_time = (clock() - cl);
+		//printf("\n Unpacking finished time it took: %d", unpack_time);
+		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+
+		//unpack("C:/test/packed.bin", dst);
+		//printf("\nRLE unpacking... ");
+		//rle_unpack("c:/test/unpackedrle.bin", dst);
+
+		//printf("\n\n Comparing files!");
+		if (files_equal(src, dst)) {
+			//printf("\n ***** SUCCESS ***** (files equal)\n");
+		}
+		else {
+			printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
+			return 1;
+		}
 	}
-	else {
-		printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
-	}
+	printf("\n Best page=%d, size=%d", best_page, best_size);
 	return 0;
 }
 

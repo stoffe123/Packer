@@ -62,7 +62,7 @@ unsigned char find_best_code(long* char_freq) {
 
 		}
 	}//end for
-	printf("\n Found code: %d that occured: %d times.", best, value);
+	//printf("\n Found code: %d that occured: %d times.", best, value);
 	char_freq[best] = 100000; // mark it as used!
 	return best;
 }
@@ -80,12 +80,10 @@ void write_offset(unsigned long long c) {
 
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass)
+void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass, unsigned char window_pages)
 {
-	unsigned char window_pages = 90;
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
-	offsets_file = fopen("c:/test/offsets", "wb");
-	printf("\n Sequence packing %s", source_filename);
+	offsets_file = fopen("c:/test/offsets", "wb");	
 	unsigned long long i, max_seq_len = 257, seq_len, best_seq_len,
 		winsize = (window_pages + 1) * 256 + max_seq_len * 2 + 25,
 		best_seq_offset = 0,
@@ -98,8 +96,8 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 	buffer_startpos = 0;
 	buffer_min = 1024;
 
-	printf("\nwinsize=%d", winsize);
-	printf("\nwindow_pages=%d", window_pages);
+	//printf("\nwinsize=%d", winsize);
+	//printf("\nwindow_pages=%d", window_pages);
 
 	fopen_s(&infil, source_filename, "rb");
 	if (!infil) {
@@ -242,10 +240,10 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 	fclose(offsets_file);
 }
 
-void seq_pack(const char* source_filename, const char* dest_filename)
+void seq_pack(const char* source_filename, const char* dest_filename, unsigned char pages)
 {
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-	pack_internal(source_filename, dest_filename, 1);
-	pack_internal(source_filename, dest_filename, 2);
+	pack_internal(source_filename, dest_filename, 1, pages);
+	pack_internal(source_filename, dest_filename, 2, pages);
 }
 

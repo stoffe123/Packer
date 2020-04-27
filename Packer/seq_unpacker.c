@@ -59,7 +59,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 	seq_lens_file = fopen("c:/test/seqlens", "rb");
 	offsets_file = fopen("c:/test/offsets", "rb");
 
-	printf("\n\n Unpacking %s", source_filename);
+	//printf("\n\n Unpacking %s", source_filename);
 	unsigned long i, cc;
 
 	read_packedfile_pos = 0;

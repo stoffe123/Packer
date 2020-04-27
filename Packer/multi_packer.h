@@ -13,7 +13,7 @@
 //#include "huffman2.h"
 #include "canonical.h"
 
-void multi_pack(const char* src, const char* dst);
+void multi_pack(const char* src, const char* dst, unsigned char pages);
 
 void multi_unpack(const char* src, const char* dst);
 
