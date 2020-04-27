@@ -82,7 +82,7 @@ void write_offset(unsigned long long c) {
 
 void pack_internal(const char* source_filename, const char* dest_filename, unsigned char pass)
 {
-	unsigned char window_pages = 5;
+	unsigned char window_pages = 90;
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
 	printf("\n Sequence packing %s", source_filename);
@@ -145,6 +145,9 @@ void pack_internal(const char* source_filename, const char* dest_filename, unsig
 				if (seq_len > best_seq_len && ok_seq_len) {
 					best_seq_len = seq_len;
 					best_seq_offset = i - seq_len;
+					if (best_seq_len == max_seq_len) {						
+						break;
+					}
 				}
 			}
 		}
