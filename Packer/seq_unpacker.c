@@ -13,22 +13,21 @@
 
 //Global vars used in unpacker
 unsigned char code;
-static FILE* infil, * utfil;
-static long long read_packedfile_pos,
+FILE* infil, * utfil;
+long long read_packedfile_pos,
 seqlens_file_pos,
 offsets_file_pos;
-static unsigned char* buf;
-static unsigned long buf_pos = 0;
-static unsigned buf_size = 40000000;
+unsigned char* buf;
+unsigned long buf_pos = 0;
+unsigned buf_size = 40000000;
 FILE* seq_lens_file;
 FILE* offsets_file;
-static unsigned char seqlen_add = 2;
+
 
 unsigned char read_byte_from_file() {
 	read_packedfile_pos++;
 	fseek(infil, -read_packedfile_pos, SEEK_END);
 	return fgetc(infil);
-
 }
 
 void write_byte_to_file(unsigned char cc) {
@@ -54,7 +53,7 @@ unsigned char read_offset() {
 	return fgetc(offsets_file);
 }
 
-unsigned long get_seqlen() {
+unsigned long get_seqlen(unsigned char seqlen_add) {
 	unsigned long seq_len = read_seqlen();
 	if (seq_len == 0 && seqlen_add == 2) {
 		return 0;
@@ -81,7 +80,8 @@ unsigned long get_offset(unsigned char window_pages) {
 //------------------------------------------------------------------------------
 void seq_unpack(const char* source_filename, const char* dest_filename)
 {
-	unsigned char window_pages;
+	unsigned char window_pages,
+	              seqlen_add = 2;
 	seq_lens_file = fopen("c:/test/seqlens", "rb");
 	offsets_file = fopen("c:/test/offsets", "rb");
 
@@ -119,7 +119,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 		cc = read_byte_from_file();
 		if (cc == code) {
 			unsigned long long offset, 
-				               seq_len = get_seqlen();
+				               seq_len = get_seqlen(seqlen_add);
 
 			if (cc == code && seq_len == 0 && seqlen_add == 2) {
 				//occurrence of code in original

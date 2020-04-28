@@ -30,9 +30,9 @@ unsigned long long READ(unsigned char* cptr)
 }
 
 //global variables used in compressor
-static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
-static unsigned char* buffer;
-static unsigned char seqlen_add = 2;
+unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
+unsigned char* buffer;
+unsigned char seqlen_add = 2;
 
 void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
@@ -141,7 +141,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				else {
 					offset_max = winsize;
 				}
-
+				
 				for (offset = 3; offset < offset_max; offset++)
 				{
 					// find matching sequence				

@@ -87,8 +87,8 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-    for (int i = 190; i < 250; i++) {
-	//int i = 57; {
+    //for (int i = 16; i < 250; i++) {
+	int i = 242; {
 
 		int cl = clock();
 		
