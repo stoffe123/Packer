@@ -11,28 +11,9 @@
 //#include "huffman2.h"
 #include "canonical.h"
 
-static const unsigned long BUF_SIZE = 32768;
+static const char* tmpFileName = "c:/test/tmp584583959";
 
-static unsigned char buf[32768];
-
-void copy(FILE* main, const char* s, unsigned long long size) {
-	FILE* out = fopen(s, "wb");
-	unsigned long long total_read = 0, bytes_to_read, bytes_got;
-	do {
-		if (size > 0 && total_read + BUF_SIZE > size) {
-			bytes_to_read = (size - total_read);
-		}
-		else {
-			bytes_to_read = BUF_SIZE;
-		}
-		bytes_got = fread(&buf, 1, bytes_to_read, main);
-		fwrite(&buf, 1, bytes_got, out);
-		total_read += bytes_got;
-	} while (bytes_got == BUF_SIZE);
-
-	fclose(out);
-}
-
+static const char* tmpFileName2 = "c:/test/tmp12389589";
 
 unsigned char untar(const char* src) {
 	FILE* in = fopen(src, "rb");
@@ -40,35 +21,18 @@ unsigned char untar(const char* src) {
 	unsigned char pack_type;
 	fread(&pack_type, 1, 1, in);
 	//printf("untar packtype=%d", pack_type);
-	uint32_t size1 = 0;
-	fread(&size1, 4, 1, in);
-	uint32_t size2 = 0;
-	fread(&size2, 4, 1, in);
+	uint64_t size1 = 0;
+	fread(&size1, 8, 1, in);
+	uint64_t size2 = 0;
+	fread(&size2, 8, 1, in);
 	//printf("\n untar size1=%d, size2=%d\n", size1, size2);
-	copy(in, "c:/test/seqlens", size1);
-	copy(in, "c:/test/offsets", size2);
-	copy(in, "c:/test/main", 0); //the rest
+	copy_chunk(in, "c:/test/seqlens", size1);
+	copy_chunk(in, "c:/test/offsets", size2);
+	copy_the_rest(in, "c:/test/main");
 
 	fclose(in);
 	return pack_type;
 }
-
-void append_to(FILE* main_file, const char* append_filename) {
-	FILE* append_file = fopen(append_filename, "rb");
-	unsigned long long bytes_got;
-	do {
-		bytes_got = fread(&buf, 1, BUF_SIZE, append_file);
-		fwrite(&buf, 1, bytes_got, main_file);
-	} while (bytes_got == BUF_SIZE);
-	fclose(append_file);
-}
-
-void copy_file(const char* src, const char* dst) {	
-	FILE* f = fopen(src, "rb");
-	copy(f, dst, 0);
-}
-
-
 
 void tar(const char* dst, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
@@ -76,18 +40,18 @@ void tar(const char* dst, unsigned char pack_type) {
 	fwrite(&pack_type, 1, 1, out_file);
 	//printf("\ntar packtype=%d", pack_type);
 	FILE* seqlens = fopen("c:/test/seqlens", "rb");
-	uint32_t size1 = get_file_size(seqlens);
+	uint64_t size1 = get_file_size(seqlens);
 	fclose(seqlens);
-	fwrite(&size1, 4, 1, out_file);
+	fwrite(&size1, 8, 1, out_file);
 
 	FILE* offsets = fopen("c:/test/offsets", "rb");
-	uint32_t size2 = get_file_size(offsets);
+	uint64_t size2 = get_file_size(offsets);
 	fclose(offsets);
-	fwrite(&size2, 4, 1, out_file);
+	fwrite(&size2, 8, 1, out_file);
 
-	append_to(out_file, "c:/test/seqlens");
-	append_to(out_file, "c:/test/offsets");
-	append_to(out_file, "c:/test/main");
+	append_to_file(out_file, "c:/test/seqlens");
+	append_to_file(out_file, "c:/test/offsets");
+	append_to_file(out_file, "c:/test/main");
 
 	fclose(out_file);
 }
@@ -97,54 +61,39 @@ void my_rename(const char* f_old, const char* f_new) {
 	rename(f_old, f_new);
 }
 
-
-unsigned char isKthBitSet(unsigned char value, unsigned char bit)
-{
-	return (value & (1 << bit));
-}
-
-unsigned char setKthBit(unsigned char value, unsigned char bit)
-{
-	// kth bit of n is being set by this operation 
-	return ((1 << bit) | value);
-}
-
-int RLE_advanced_pack_and_test(const char* src) {
-	RLE_advanced_pack(src, "tmp383754");
+bool RLE_advanced_pack_and_test(const char* src, const char* dst) {
+	RLE_advanced_pack(src, dst);
 	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name("tmp383754");
+	int size_packed = get_file_size_from_name(dst);
 	double ratio = (double)size_packed / (double)size_org;
 	printf("\n ratio with RLE_advanced:%f", ratio);
-	int res = (ratio < 0.93);
-	if (res) {
-		remove(src);
-		rename("tmp383754", src);
+	bool compression_success = (ratio < 0.93);
+	if (!compression_success) {
+		remove(dst);
+		copy_file(src, dst);
 	}
-	else {
-		remove("tmp383754");
-	}
-	return res;
+	return compression_success;
 }
 
-int CanonicalEncodeAndTest(const char* src) {
-	CanonicalEncode(src, "tmp383754");
+bool CanonicalEncodeAndTest(const char* src) {
+	CanonicalEncode(src, tmpFileName);
 	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name("tmp383754");
-	int res = (size_packed < size_org);
-	if (res) {
+	int size_packed = get_file_size_from_name(tmpFileName);
+	bool compression_success = (size_packed < size_org);
+	if (compression_success) {
 		remove(src);
-		rename("tmp383754", src);
+		rename(tmpFileName, src);
 	}
 	else {
-		remove("tmp383754");
+		remove(tmpFileName);
 	}
-	return res;
+	return compression_success;
 }
 
 void CanonicalDecodeAndReplace(const char* src) {
-	CanonicalDecode(src, "tmp675839");
+	CanonicalDecode(src, tmpFileName);
 	remove(src);
-	rename("tmp675839", src);
+	rename(tmpFileName, src);
 }
 
 //----------------------------------------------------------------------------------------
@@ -153,17 +102,16 @@ void multi_pack(const char* src, const char* dst, unsigned char pages) {
 
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
-	char worked;
-	copy_file(src, "tmp451");
-	worked = RLE_advanced_pack_and_test("tmp451");
+	
+	bool worked = RLE_advanced_pack_and_test(src, tmpFileName2);
 	if (worked) {
 		pack_type = setKthBit(pack_type, 3);
 	}
 
-	seq_pack("tmp451", "c:/test/main", pages);
+	seq_pack(tmpFileName2, "c:/test/main", pages);
 	// now we have three files to huffman pack
 
-	remove("tmp451");
+	remove(tmpFileName2);
 
 	//try to huffman pack and check sizes!
 
@@ -199,13 +147,10 @@ void multi_unpack(const char* src, const char* dst) {
 	if (isKthBitSet(pack_type, 2)) {
 		CanonicalDecodeAndReplace("c:/test/offsets");
 	}
-
-	
-
 	if (isKthBitSet(pack_type, 3)) {
-		seq_unpack("c:/test/main", "tmp457");
-		RLE_advanced_unpack("tmp457", dst);
-		remove("tmp457");
+		seq_unpack("c:/test/main", tmpFileName2);
+		RLE_advanced_unpack(tmpFileName2, dst);
+		remove(tmpFileName2);
 	}
 	else {
 		seq_unpack("c:/test/main", dst);
