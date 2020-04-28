@@ -3,7 +3,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include "seq_packer.h"
-#define VERBOSE true
+#define VERBOSE false
 #include "common_tools.h"
 
 
@@ -100,8 +100,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	buffer_startpos = 0;
 	buffer_min = winsize + max_seq_len * 2 + 1024;
 
-	debug("winsize=%d", winsize);
 	debug("window_pages=%d", window_pages);
+	
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -112,6 +112,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	unsigned long total_size = get_file_size(infil);
 
 	if (pass == 2) {
+		printf("\nwinsize=%d", winsize);
 		fopen_s(&utfil, dest_filename, "wb");
 		if (!utfil) {
 			puts("Hittade inte utfil!"); getchar(); exit(1);
@@ -154,7 +155,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					}
 					seq_len = 3;
 
-					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && buffer_startpos + offset + seq_len < buffer_endpos &&
+					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && 
 						seq_len < max_seq_len && seq_len < offset)
 					{
 						seq_len++;
