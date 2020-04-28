@@ -129,6 +129,11 @@ void multi_pack(const char* src, const char* dst, unsigned char pages) {
 	}
 	printf("\npack_type = %d", pack_type);
 	tar(dst, pack_type);
+
+	//cleanup
+	remove("c:/test/main");
+	remove("c:/test/seqlens");
+	remove("c:/test/offsets");
 }
 
 

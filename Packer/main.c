@@ -80,15 +80,15 @@ int main()
 
 	const char* packed_name = "c:/test/packed.bin";
 	
-	unsigned long int best_size = 999999999;
+	unsigned long int best_size = ULONG_MAX;
 	unsigned char best_page = 0;
 
 	long long size_org = get_file_size_from_name(src);
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-    for (int i = 105; i < 120; i++) {
-	//int i = 106; {
+    //for (int i = 15; i < 120; i++) {
+	int i = 106; {
 
 		int cl = clock();
 		
