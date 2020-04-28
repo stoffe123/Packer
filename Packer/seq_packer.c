@@ -89,7 +89,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 {
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
-	unsigned long long offset, max_seq_len = 257, seq_len, best_seq_len,
+	unsigned long long offset, max_seq_len = 512, seq_len, best_seq_len,
 		winsize = (window_pages + 1) * 256 + max_seq_len * 2 + 25,
 		best_offset = 0,
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
@@ -230,7 +230,13 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				}
 				//subtract to so smallest will be 3 -2 = 1
 				//len = 0 is used for code occurence
-				write_seqlen(best_seq_len - 2);  /* seqlen */
+				if (best_seq_len < 257) {
+					write_seqlen(best_seq_len - 2);  /* seqlen */
+				}
+				else {
+					write_seqlen(best_seq_len - 257);
+					write_seqlen(255);
+				}
 				WRITE(code);  /* note file is read backwards during unpack! */
 			}
 			move_buffer(best_seq_len);

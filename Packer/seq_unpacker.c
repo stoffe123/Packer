@@ -52,6 +52,30 @@ unsigned char read_offset() {
 	return fgetc(offsets_file);
 }
 
+unsigned long get_seqlen() {
+	unsigned long seq_len = read_seqlen();
+	if (seq_len == 0) {
+		return 0;
+	}
+	if (seq_len == 255) {
+		return (unsigned long long)257 + read_seqlen();
+	}
+	else {
+		return seq_len + 2;
+	}
+}
+
+unsigned long get_offset(unsigned char window_pages) {
+	unsigned long offset = read_offset();
+	unsigned long long lowest_special = 256 - window_pages;
+
+	if (offset >= lowest_special && offset <= 255) {
+		unsigned long long page = 255 - offset;
+		offset = (unsigned long long)lowest_special + (page * 256) + (unsigned long long)read_offset();
+	}
+	return offset;
+}
+
 //------------------------------------------------------------------------------
 void seq_unpack(const char* source_filename, const char* dest_filename)
 {
@@ -90,24 +114,16 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 	while (total_size > read_packedfile_pos) {
 		cc = read_byte_from_file();
 		if (cc == code) {
-			unsigned long long seq_len = read_seqlen(), offset;
+			unsigned long long offset, 
+				               seq_len = get_seqlen();
 
 			if (cc == code && seq_len == 0) {
 				//occurrence of code in original
-
 				put_buf(code);
-
 			}
 			else {
-
-				seq_len += 2;
-				offset = read_offset();
-				unsigned long long lowest_special = 256 - window_pages;
 				
-				if (offset >= lowest_special && offset <= 255) {
-					unsigned long long page = 255 - offset;
-					offset = (unsigned long long)lowest_special + (page*256) + (unsigned long long)read_offset();
-				}
+				offset = get_offset(window_pages);		
 
 				unsigned long match_index = buf_pos + offset + seq_len;
 				//write the sequence at the right place!
