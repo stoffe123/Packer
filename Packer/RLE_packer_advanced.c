@@ -3,8 +3,7 @@
 #include <limits.h>
 #include <string.h>
 #include <time.h>
-#define TRUE 1
-#define FALSE 0
+#include <stdbool.h>
 
 #define WRITE(x) putc(x, utfil)
 
@@ -17,6 +16,7 @@ FILE* infil, * utfil;
 #define SUPPLEN_OFFSET 2
 #define SEQMAX 2000
 #define RL_MIN 3
+
 
 enum { RL_REALMAX = RL_MAX + 32768 + 127 };
 
@@ -77,8 +77,9 @@ int get_freelen(void)
 
 void optimize_freelen(int free_lens[], int no_of_freelen)
 {
-    int  new_free_lens[256], start_desc[256], len_desc[256], max, i, flag = 1, j = 0, k = 0;
-    start_desc[0] = no_of_freelen - 1;
+    int  new_free_lens[256] = { 0 }, start_desc[256] = { 0 }, len_desc[256] = { 0 }, 
+        max, i, flag = 1, j = 0, k = 0;
+        start_desc[0] = no_of_freelen - 1;
     for (i = no_of_freelen - 1; i >= 0; i--)
     {
         if (i > 0 && free_lens[i - 1] + 1 == free_lens[i])
@@ -106,7 +107,7 @@ void optimize_freelen(int free_lens[], int no_of_freelen)
         } while (--len_desc[max]);
         /* len_desc[max] is 0 now it has been used */
     }
-    if (k != no_of_freelen) printf("error k=%d, no_of_freelen=%d\n", k, no_of_freelen);
+    if (k != no_of_freelen) printf("ERROR in RLE_advanced: k=%d, no_of_freelen=%d\n", k, no_of_freelen);
     for (i = 0; i < no_of_freelen; i++)
         free_lens[i] = new_free_lens[i];
 }
@@ -279,19 +280,13 @@ int find_optimal_MAX_SUPPLEN(int seq_len[])
 int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
 {
     register int i, j;
-    int freqtable[256], moredata, runlengths[256][RL_MAX + 1], code_len[256][RL_MAX + 1], seq_nn, k, esc;
+    int freqtable[256] = { 0 }, moredata, runlengths[256][RL_MAX + 1] = { 0 }, code_len[256][RL_MAX + 1] = { 0 }, seq_nn, k, esc;
     int last_len, tmp, cc, lastch, real_count, lcount = 1, flag, seq_len[SEQMAX], seq_chars[SEQMAX], code, len, MAX_SUPPLEN;
 
     infil = fopen(source_filename, "rb");
     if (!infil) {
         printf("Input file not found: %s\n", source_filename);
         return 1;
-    }
-
-    for (i = 0; i < 256; i++)
-    {
-        freqtable[i] = 0;
-        for (j = 0; j < RL_MAX + 1; j++) runlengths[i][j] = 0;
     }
 
     lastch = getc(infil);
