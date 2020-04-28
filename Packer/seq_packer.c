@@ -16,6 +16,8 @@ FILE* infil, * utfil;
 
 unsigned char code;
 
+const bool verbose = false;
+
 void WRITE(unsigned long long c)
 {
 	fwrite(&c, 1, 1, utfil);
@@ -37,7 +39,9 @@ void move_buffer(unsigned int steps) {
 		unsigned long long buffer_left = buffer_size - buffer_startpos;
 		if (buffer_left < buffer_min) {
 			//load new buffer!!
-			//printf("\nLoad new buffer of: %d", buffer_size);
+			if (verbose) {
+				printf("\nLoad new buffer of: %d", buffer_size);
+			}
 
 			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 			for (unsigned long i = 0; i < (buffer_size - buffer_startpos); i++) {
@@ -54,17 +58,18 @@ void move_buffer(unsigned int steps) {
 
 unsigned char find_best_code(long* char_freq) {
 	unsigned char best;
-	long value = 99999999;
+	unsigned long value = ULONG_MAX;
 	for (unsigned int i = 0; i < 256; i++) {
 		if (char_freq[i] < value) {
 			value = char_freq[i];
 			best = i;
-
 		}
 	}//end for
-	//printf("\n Found code: %d that occured: %d times.", best, value);
-	char_freq[best] = 100000; // mark it as used!
-	return best;
+	//if (verbose) {
+		printf("\n Found code: %d that occured: %d times.", best, value);
+	//}
+	char_freq[best] = ULONG_MAX; // mark it as used!
+	return best;	
 }
 
 FILE* seq_lens_file;
@@ -86,13 +91,13 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	offsets_file = fopen("c:/test/offsets", "wb");
 	unsigned long long offset, max_seq_len = 257, seq_len, best_seq_len,
 		winsize = (window_pages + 1) * 256 + max_seq_len * 2 + 25,
-		best_seq_offset = 0,
+		best_offset = 0,
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
 		lowest_special = 256 - window_pages,
 		longest_offset = lowest_special + (256 * window_pages) - 1;
 
 
-	unsigned long long char_freq[256] = { 0 };
+	unsigned long char_freq[256] = { 0 };
 	buffer_startpos = 0;
 	buffer_min = 1024;
 
@@ -117,66 +122,71 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	/* start compression */
 
 	buffer_endpos = fread(buffer, 1, buffer_size, infil);
-  
+
 	unsigned long long offset_max;
-	
-	while ((buffer_endpos - buffer_startpos) >= min_seq_len * 2) {
+
+	while (buffer_startpos < buffer_endpos) {
+
 		best_seq_len = 2;
 
 		if (pass == 2) {
-			if (buffer_endpos - (buffer_startpos + winsize) >= min_seq_len * 2) {
-				offset_max = buffer_endpos - buffer_startpos - min_seq_len * 2;			
-			}
-			else {
-				offset_max = winsize;
-			}
+			if ((buffer_endpos - buffer_startpos) >= min_seq_len * 2) {
+				if (buffer_endpos - (buffer_startpos + winsize) >= min_seq_len * 2) {
+					offset_max = buffer_endpos - buffer_startpos - min_seq_len * 2;
+				}
+				else {
+					offset_max = winsize;
+				}
 
-			for (offset = 3; offset < offset_max; offset++)
-			{
-				// find matching sequence				
-				//if (buffer_startpos + offset + min_seq_len * 2 > buffer_endpos) {
-				//	break;
-				//}
-				if (buffer[buffer_startpos] != buffer[buffer_startpos + offset]) {
-					continue;
-				}
-				if (buffer[buffer_startpos + 1] != buffer[buffer_startpos + offset + 1]) {
-					continue;
-				}
-				if (buffer[buffer_startpos + 2] != buffer[buffer_startpos + offset + 2]) {
-					continue;
-				}
-				seq_len = 3;
-
-				while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && buffer_startpos + offset + seq_len < buffer_endpos &&
-					seq_len < max_seq_len && seq_len < offset)
+				for (offset = 3; offset < offset_max; offset++)
 				{
-					seq_len++;
-				}
-				//check if better than the best!
+					// find matching sequence				
+					//if (buffer_startpos + offset + min_seq_len * 2 > buffer_endpos) {
+					//	break;
+					//}
+					if (buffer[buffer_startpos] != buffer[buffer_startpos + offset]) {
+						continue;
+					}
+					if (buffer[buffer_startpos + 1] != buffer[buffer_startpos + offset + 1]) {
+						continue;
+					}
+					if (buffer[buffer_startpos + 2] != buffer[buffer_startpos + offset + 2]) {
+						continue;
+					}
+					seq_len = 3;
 
-				if (seq_len > best_seq_len && offset - seq_len <= longest_offset) {
-					best_seq_len = seq_len;
-					best_seq_offset = offset - seq_len;
-					if (best_seq_len == max_seq_len) {
-						break;
+					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && buffer_startpos + offset + seq_len < buffer_endpos &&
+						seq_len < max_seq_len && seq_len < offset)
+					{
+						seq_len++;
+					}
+					//check if better than the best!
+
+					if (seq_len > best_seq_len && offset - seq_len <= longest_offset) {
+						best_seq_len = seq_len;
+						best_offset = offset - seq_len;
+						if (best_seq_len == max_seq_len) {
+							break;
+						}
 					}
 				}
 			}
 		}
 		/* now we found the longest sequence in the window! */
 
-		if (best_seq_len <= 2 || (best_seq_offset >= lowest_special && best_seq_len <= 3))
+		if (best_seq_len <= 2 || (best_offset >= lowest_special && best_seq_len <= 3))
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
-				char_freq[buffer[buffer_startpos]]++;
-				if (char_freq[buffer[buffer_startpos]] > 9999999) {
-					char_freq[buffer[buffer_startpos]]--;
+				if (char_freq[buffer[buffer_startpos]] < ULONG_MAX) {
+					char_freq[buffer[buffer_startpos]]++;
 				}
 			}
 			else {
 				// occurence of code in original is handled by {code, 0} pair
 				if (buffer[buffer_startpos] == code) {
+					if (verbose) {
+						printf("\nFound code at buffer_startpos=%d", buffer_startpos);
+					}
 					write_seqlen(0);
 					WRITE(code);
 				}
@@ -189,6 +199,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		}
 		else { // insert code triple instead of the matching sequence!
 
+			if (verbose) {
+				printf("\nFound sequence seq_len=%d, offset=%d, at bufferstartpos=%d", best_seq_len, best_offset, buffer_startpos);
+			}
 			if (pass == 1) {
 				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
 				seq_lens[best_seq_len]++;
@@ -197,22 +210,22 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				// write offset i.e. distance from end of match
 				// now handles offsets from 0..765
 
-				if (best_seq_offset < lowest_special) {
-					write_offset(best_seq_offset);
+				if (best_offset < lowest_special) {
+					write_offset(best_offset);
 				}
 				else {
 					int found = 0;
 					for (long long i = 0; i < window_pages; i++) {
 
-						if (best_seq_offset < (lowest_special + (256 * (i + 1)))) {
-							write_offset(best_seq_offset - (lowest_special + (256 * i)));
+						if (best_offset < (lowest_special + (256 * (i + 1)))) {
+							write_offset(best_offset - (lowest_special + (256 * i)));
 							write_offset(255 - i);
 							found = 1;
 							break;
 						}
 					}
 					if (!found) {
-						printf("\n\n >>>>>>>> ERROR no offset coding found for offset = %d", best_seq_offset);
+						printf("\n\n >>>>>>>> ERROR no offset coding found for offset = %d", best_offset);
 					}
 				}
 				//subtract to so smallest will be 3 -2 = 1
@@ -242,10 +255,6 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 	else {
-		//write remaining buffer
-		for (offset = buffer_startpos; offset < buffer_endpos; offset++) {
-			WRITE(buffer[offset]);
-		}
 		WRITE(window_pages);
 		WRITE(code);
 		fclose(utfil);
@@ -253,7 +262,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	fclose(infil);
 	fclose(seq_lens_file);
 	fclose(offsets_file);
-		}
+}
 
 void seq_pack(const char* source_filename, const char* dest_filename, unsigned char pages)
 {

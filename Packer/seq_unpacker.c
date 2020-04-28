@@ -19,7 +19,7 @@ seqlens_file_pos,
 offsets_file_pos;
 static unsigned char* buf;
 static unsigned long buf_pos = 0;
-static unsigned buf_size = 30000000;
+static unsigned buf_size = 40000000;
 
 unsigned char read_byte_from_file() {
 	read_packedfile_pos++;

@@ -18,13 +18,13 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
-#define CMP_N 256
+#define CMP_N 128
 
 
 
-void print_string_rep(const char* tt) {
+void print_string_rep(unsigned char* tt) {
 	printf("\n");
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < CMP_N; i++) {
 		printf("%d, ", tt[i]);
 	}
 }
@@ -47,19 +47,20 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	}
 	long f1_size = get_file_size(f1);
 	long f2_size = get_file_size(f2);
+	int res = 1;
 	if (f1_size != f2_size) {
 		printf("\n File lengths differ! %d, %d", f1_size, f2_size);
-		return 0;
+		res = 0;
 	}
-	char tmp1[CMP_N], tmp2[CMP_N];
+	unsigned char tmp1[CMP_N], tmp2[CMP_N];
 
-	size_t bytes = 0, readsz = sizeof(tmp1);
+	size_t bytes = 0;
 	int count = 0;
 	while (!feof(f1) && !feof(f2)) {
-		fread(tmp1, sizeof * tmp1, readsz, f1);
-		fread(tmp2, sizeof * tmp2, readsz, f2);
-		count += 16;
-		if (memcmp(tmp1, tmp2, readsz)) {
+		fread(tmp1, sizeof * tmp1, CMP_N, f1);
+		fread(tmp2, sizeof * tmp2, CMP_N, f2);
+		count += CMP_N;
+		if (memcmp(tmp1, tmp2, CMP_N)) {
 			printf("\n File contents differ at position %d :", count);
 			printf("\n File1:");
 			print_string_rep(tmp1);
@@ -70,7 +71,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	}
 	fclose(f1);
 	fclose(f2);
-	return 1;
+	return res;
 }
 
 int main()
@@ -78,7 +79,7 @@ int main()
 	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
-	const char* packed_name2 = "c:/test/packed2.bin";
+	
 	unsigned long int best_size = 999999999;
 	unsigned char best_page = 0;
 
@@ -86,14 +87,13 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-	for (int i = 15; i < 80; i++) {
-	//int i = 32; {
+    //for (int i = 100; i < 120; i++) {
+	int i = 106; {
 
 		int cl = clock();
 		
 		printf("\n------------- Pages %d --------------", i);
 
-		
 		multi_pack(src, packed_name, i);
 
 		int pack_time = (clock() - cl);
