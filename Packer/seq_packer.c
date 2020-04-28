@@ -30,8 +30,9 @@ unsigned long long READ(unsigned char* cptr)
 }
 
 //global variables used in compressor
-static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 32768;
+static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
 static unsigned char* buffer;
+static unsigned char seqlen_add = 2;
 
 void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
@@ -69,6 +70,9 @@ unsigned char find_best_code(long* char_freq) {
 		printf("\n Found code: %d that occured: %d times.", best, value);
 	//}
 	char_freq[best] = ULONG_MAX; // mark it as used!
+	if (value == 0) {
+		seqlen_add = 3;
+	}
 	return best;	
 }
 
@@ -89,17 +93,17 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 {
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
-	unsigned long long offset, max_seq_len = 512, seq_len, best_seq_len,
-		winsize = (window_pages + 1) * 256 + max_seq_len * 2 + 25,
+	unsigned long long offset, max_seq_len = 510 + seqlen_add, seq_len,
+		winsize = (window_pages + 1) * (unsigned long long)256 + max_seq_len * 2 + 25,
 		best_offset = 0,
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
 		lowest_special = 256 - window_pages,
-		longest_offset = lowest_special + (256 * window_pages) - 1;
+		longest_offset = lowest_special + ((unsigned long long)256 * window_pages) - 1;
 
 
-	unsigned long char_freq[256] = { 0 };
+	unsigned long char_freq[256] = { 0 }, best_seq_len;
 	buffer_startpos = 0;
-	buffer_min = 1024;
+	buffer_min = winsize + max_seq_len * 2 + 1024;
 
 	//printf("\nwinsize=%d", winsize);
 	//printf("\nwindow_pages=%d", window_pages);
@@ -208,7 +212,6 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			}
 			if (pass == 2) {
 				// write offset i.e. distance from end of match
-				// now handles offsets from 0..765
 
 				if (best_offset < lowest_special) {
 					write_offset(best_offset);
@@ -230,11 +233,11 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				}
 				//subtract to so smallest will be 3 -2 = 1
 				//len = 0 is used for code occurence
-				if (best_seq_len < 257) {
-					write_seqlen(best_seq_len - 2);  /* seqlen */
+				if (best_seq_len < 255 + seqlen_add) {
+					write_seqlen(best_seq_len - seqlen_add);  /* seqlen */
 				}
 				else {
-					write_seqlen(best_seq_len - 257);
+					write_seqlen(best_seq_len - ((unsigned long)255 + seqlen_add));
 					write_seqlen(255);
 				}
 				WRITE(code);  /* note file is read backwards during unpack! */
@@ -261,6 +264,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 	else {
+		WRITE(seqlen_add);
 		WRITE(window_pages);
 		WRITE(code);
 		fclose(utfil);

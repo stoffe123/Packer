@@ -20,6 +20,9 @@ offsets_file_pos;
 static unsigned char* buf;
 static unsigned long buf_pos = 0;
 static unsigned buf_size = 40000000;
+FILE* seq_lens_file;
+FILE* offsets_file;
+static unsigned char seqlen_add = 2;
 
 unsigned char read_byte_from_file() {
 	read_packedfile_pos++;
@@ -37,8 +40,7 @@ void put_buf(unsigned char c) {
 	buf_pos--;
 }
 
-FILE* seq_lens_file;
-FILE* offsets_file;
+
 
 unsigned char read_seqlen() {
 	seqlens_file_pos++;
@@ -54,14 +56,14 @@ unsigned char read_offset() {
 
 unsigned long get_seqlen() {
 	unsigned long seq_len = read_seqlen();
-	if (seq_len == 0) {
+	if (seq_len == 0 && seqlen_add == 2) {
 		return 0;
 	}
 	if (seq_len == 255) {
-		return (unsigned long long)257 + read_seqlen();
+		return (unsigned long long)255 + seqlen_add + read_seqlen();
 	}
 	else {
-		return seq_len + 2;
+		return seq_len + seqlen_add;
 	}
 }
 
@@ -110,6 +112,8 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 	buf_pos = buf_size - 1;
 	code = read_byte_from_file();
 	window_pages = read_byte_from_file();
+	seqlen_add = read_byte_from_file();
+
 
 	while (total_size > read_packedfile_pos) {
 		cc = read_byte_from_file();
@@ -117,7 +121,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 			unsigned long long offset, 
 				               seq_len = get_seqlen();
 
-			if (cc == code && seq_len == 0) {
+			if (cc == code && seq_len == 0 && seqlen_add == 2) {
 				//occurrence of code in original
 				put_buf(code);
 			}
