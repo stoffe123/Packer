@@ -3,9 +3,7 @@
 #include <limits.h>
 #include "common_tools.h"
 
-
 static const unsigned long BUF_SIZE = 32768;
-
 static unsigned char buf[32768];
 
 long long get_file_size(const FILE* f) {
@@ -21,7 +19,6 @@ long long get_file_size_from_name(const char* name) {
     fclose(f);
     return res;
 }
-
 
 unsigned char isKthBitSet(unsigned char value, unsigned char bit)
 {
@@ -76,4 +73,3 @@ void append_to_file(FILE* main_file, const char* append_filename) {
     } while (bytes_got == BUF_SIZE);
     fclose(append_file);
 }
-

@@ -1,6 +1,7 @@
 #ifndef COMMON_TOOLS_H 
 #define COMMON_TOOLS_H
 #include <stdbool.h>
+#define debug if(VERBOSE) printf("\n");if(VERBOSE) printf
 
 long long get_file_size(const FILE* f);
 

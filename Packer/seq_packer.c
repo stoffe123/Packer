@@ -3,9 +3,9 @@
 #include <limits.h>
 #include <stdbool.h>
 #include "seq_packer.h"
+#define VERBOSE true
 #include "common_tools.h"
-#define TRUE 1
-#define FALSE 0
+
 
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
@@ -16,13 +16,10 @@ FILE* infil, * utfil;
 
 unsigned char code;
 
-const bool verbose = false;
-
 void WRITE(unsigned long long c)
 {
 	fwrite(&c, 1, 1, utfil);
 }
-
 
 unsigned long long READ(unsigned char* cptr)
 {
@@ -39,10 +36,8 @@ void move_buffer(unsigned int steps) {
 	if (buffer_endpos == buffer_size) {
 		unsigned long long buffer_left = buffer_size - buffer_startpos;
 		if (buffer_left < buffer_min) {
-			//load new buffer!!
-			if (verbose) {
-				printf("\nLoad new buffer of: %d", buffer_size);
-			}
+			//load new buffer!!			
+			debug("Load new buffer of: %d", buffer_size);
 
 			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 			for (unsigned long i = 0; i < (buffer_size - buffer_startpos); i++) {
@@ -66,14 +61,14 @@ unsigned char find_best_code(long* char_freq) {
 			best = i;
 		}
 	}//end for
-	//if (verbose) {
-		printf("\n Found code: %d that occured: %d times.", best, value);
-	//}
+
+	printf("\n Found code: %d that occured: %d times.", best, value);
+
 	char_freq[best] = ULONG_MAX; // mark it as used!
 	if (value == 0) {
 		seqlen_add = 3;
 	}
-	return best;	
+	return best;
 }
 
 FILE* seq_lens_file;
@@ -105,8 +100,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	buffer_startpos = 0;
 	buffer_min = winsize + max_seq_len * 2 + 1024;
 
-	//printf("\nwinsize=%d", winsize);
-	//printf("\nwindow_pages=%d", window_pages);
+	debug("winsize=%d", winsize);
+	debug("window_pages=%d", window_pages);
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -141,7 +136,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				else {
 					offset_max = winsize;
 				}
-				
+
 				for (offset = 3; offset < offset_max; offset++)
 				{
 					// find matching sequence				
@@ -188,9 +183,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			else {
 				// occurence of code in original is handled by {code, 0} pair
 				if (buffer[buffer_startpos] == code) {
-					if (verbose) {
-						printf("\nFound code at buffer_startpos=%d", buffer_startpos);
-					}
+
+					//debug("Found code at buffer_startpos=%d", buffer_startpos);
+
 					write_seqlen(0);
 					WRITE(code);
 				}
@@ -202,10 +197,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			move_buffer(1);
 		}
 		else { // insert code triple instead of the matching sequence!
-
-			if (verbose) {
-				printf("\nFound sequence seq_len=%d, offset=%d, at bufferstartpos=%d", best_seq_len, best_offset, buffer_startpos);
-			}
+			
+			//debug("Found sequence seq_len=%d, offset=%d, at bufferstartpos=%d", best_seq_len, best_offset, buffer_startpos);
+			
 			if (pass == 1) {
 				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
 				seq_lens[best_seq_len]++;

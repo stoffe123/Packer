@@ -4,6 +4,8 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include "common_tools.h"
+#define VERBOSE false
 
 #define WRITE(x) putc(x, utfil)
 
@@ -53,7 +55,6 @@ void write_freelen(int maxc)
     maxcount--;
     i++;
 }
-
 
 
 int get_freelen(void)
@@ -267,9 +268,8 @@ int find_optimal_MAX_SUPPLEN(int seq_len[])
                 best_res = bytes_gained;
                 best_len = seq_len[i];
             }
-#ifdef VERBOSE
-            printf("\nlen=%d bytes_gained=%d", seq_len[i], bytes_gained);
-#endif
+            debug("len=%d bytes_gained=%d", seq_len[i], bytes_gained);
+
             bytes_gained -= (seq_len[i + 1] - seq_len[i]);
         }
         i++;
@@ -325,9 +325,7 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
     esc = 0;
     for (i = 0; i < 256; i++) if (freqtable[i] < freqtable[esc]) esc = i;
 
-#ifdef VERBOSE
-    printf("\n code-value found='%c', with %d bytes penalty.\n", esc, freqtable[esc]);
-#endif
+    debug(" Code-value found='%c', with %d bytes penalty.\n", esc, freqtable[esc]);
 
     tmp = 0;
     no_of_freelen = 0;
@@ -347,18 +345,20 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
             tmp++;
             free_lens[no_of_freelen++] = i - 4;
         }
-#ifdef VERBOSE
-        else                  printf("length=%u appears total=%u times.\n", i, flag);
-#endif
+
+        else {
+            debug("length=%u appears total=%u times.\n", i, flag);
+        }
+
     }
-#ifdef VERBOSE
-    printf("\n total %d lengths had no occurrences.\n", no_of_freelen);
+    if (VERBOSE) {
+        printf("\n total %d lengths had no occurrences.\n", no_of_freelen);
 
-    printf("\n\n ----- freelen array ------------- \n\n");
+        printf("\n\n ----- freelen array ------------- \n\n");
 
-    for (i = 0; i < no_of_freelen; i++) printf("%u,", free_lens[i]);
-    puts("\n");
-#endif
+        for (i = 0; i < no_of_freelen; i++) printf("%u,", free_lens[i]);
+        puts("\n");
+    }
 
     /* init code_len array */
     for (i = 0; i < 256; i++)
@@ -367,10 +367,7 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
 
     sort2(runlengths, code_len);  /* sort the twodim array , tough job!! */
 
-
-#ifdef VERBOSE
-    printf("\n -------- analayze of BIG matrix ........ \n\n");
-#endif
+    debug("\n -------- Analayze of BIG matrix ........ \n\n");
 
     seq_nn = 0;
     for (i = 0; i < 256; i++) {
@@ -384,9 +381,9 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
             {
                 seq_len[seq_nn] = len;
                 seq_chars[seq_nn] = code;
-#ifdef VERBOSE
-                printf("code=%d rl=%d appears %d times.\n", code, len, runlengths[i][j]);
-#endif
+
+                debug("code=%d rl=%d appears %d times", code, len, runlengths[i][j]);
+
                 seq_nn++;
             }
         }
@@ -396,11 +393,11 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
 
     sort(seq_len, seq_chars, seq_nn);
 
-#ifdef VERBOSE
-    printf("\n\n ---- after sort ----- \n\n");
-    for (i = 0; i < seq_nn; i++) { printf("\n len='%u' char=%u", seq_len[i], seq_chars[i]); }
-    printf("\ntotal no of runlength types >=3 is %u.\n\n", tmp);
-#endif
+    if (VERBOSE) {
+        debug("\n ---- After sort ----- \n");
+        for (i = 0; i < seq_nn; i++) { debug(" len='%u' char=%u", seq_len[i], seq_chars[i]); }
+        debug("Total no of runlength types >=3 is %u.\n\n", tmp);
+    }
 
     optimize_freelen(free_lens, no_of_freelen);
 
@@ -411,10 +408,7 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
         puts("Hittade inte utfil!"); getchar(); exit(1);
     }
 
-
-
     MAX_SUPPLEN = find_optimal_MAX_SUPPLEN(seq_len);
-
 
     /* write header in packed file */
 
@@ -435,9 +429,9 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
     {
         MAX_SUPPLEN++;
     }
-#ifdef VERBOSE
-    printf("\nMAX_SUPPLEN=%d\n", MAX_SUPPLEN);
-#endif
+
+    debug("\nMAX_SUPPLEN=%d\n", MAX_SUPPLEN);
+
     write_halfbyte((MAX_SUPPLEN - SUPPLEN_OFFSET) / 2);
     i = 0;
     for (k = 3; k <= MAX_SUPPLEN; k++)
@@ -450,9 +444,8 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
         write_ext_halfbyte(j);
     }
     write_ext_halfbyte(seq_nn - i);
-#ifdef VERBOSE
-    printf("\nOther codes=%d\n", seq_nn - i);
-#endif
+
+    debug("Other codes=%d\n", seq_nn - i);
 
     write_ext_halfbyte(-2);  /* flush */
 
