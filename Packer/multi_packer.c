@@ -65,7 +65,7 @@ bool RLE_advanced_pack_and_test(const char* src, const char* dst) {
 	int size_packed = get_file_size_from_name(dst);
 	double ratio = (double)size_packed / (double)size_org;
 	printf("\n ratio with RLE_advanced:%f", ratio);
-	bool compression_success = (ratio < 0.53);
+	bool compression_success = (ratio < 0.93);
 	if (!compression_success) {
 		remove(dst);
 		copy_file(src, dst);
