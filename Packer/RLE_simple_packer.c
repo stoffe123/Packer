@@ -126,7 +126,7 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 		}
 		/* now we found the longest sequence in the window! */
 
-		assert(seq_len > 0);
+		assert(seq_len > 0, "seq_len > 0 in RLE_simple_packer.RLE_pack_internal");
 		if (seq_len < min_runlength) {
 			if (pass == 1) {
 				inc_char_freq(buffer[buffer_startpos]);
@@ -140,7 +140,7 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 					if (c == code) {
 						WRITE(utfil, code);
 						WRITE(utfil, 255);
-						assert(code_occurred);
+						assert(code_occurred, "code_occured in RLE_simple_packer.RLE_pack_internal");
 					}
 					else {
 						WRITE(utfil, c);

@@ -66,7 +66,7 @@ void RLE_simple_unpack(const char* source_filename, const char* dest_filename)
 			}
 			else {
 				int br = fread(&cc, 1, 1, infil);
-				assert(br == 1);
+				assert(br == 1, "br == 1  in RLE_simple_unpacker.RLE_simple_unpack");
 				for (i = 0; i < (seq_len + 3); i++) {
 					put_buf(cc); 
 				}

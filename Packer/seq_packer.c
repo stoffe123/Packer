@@ -65,7 +65,7 @@ void write_offset(unsigned long long c) {
 }
 
 void out_seqlen(unsigned long best_seq_len) {
-	assert(best_seq_len >= SEQ_LEN_MIN);
+	assert(best_seq_len >= SEQ_LEN_MIN, "best_seq_len >= SEQ_LEN_MIN in seq_packer.out_seqlen");
 	unsigned long write_len = best_seq_len - SEQ_LEN_MIN;
 
 	//len = 255 is used for code occurence ... len =254 for next block

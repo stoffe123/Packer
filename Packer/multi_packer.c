@@ -17,18 +17,22 @@ struct Pack_info {
 	const char* dir;
 };
 
-char* get_temp_file(char* dir) {
-	const char* tmpFileName = "tmp12";
+char* get_rand() {
 	const char* clk = malloc(50);
 	_itoa(clock(), clk, 10);
-	tmpFileName = concat(tmpFileName, clk);
-	return concat(dir, tmpFileName);
+	int r = (rand() % 100) + 100;
+	const char* ra = malloc(50);
+	_itoa(r, ra, 10);
+	return concat(clk, ra);
+}
+
+char* get_temp_file(char* dir) {	
+	return concat(dir, concat("tmp", get_rand()));
 }
 
 char* get_clock_dir() {
-	const char* clk = malloc(50);
-	_itoa(clock(), clk, 10);
-	const char* dir = concat("multipackfiles", clk);
+	
+	const char* dir = concat("multipack", get_rand());
 	dir = concat(dir, "/");
 	dir = concat("c:/test/", dir);
 	make_dir(dir);
@@ -63,14 +67,16 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
 
 	fwrite(&pack_type, 1, 1, out_file);
-	//printf("\ntar packtype=%d", pack_type);
+	assert(pack_type < 16, concat("pack_type < 16 in multipacker.tar dst=", dst));
 	const char* seqlens_filename = concat(base_dir, "seqlens");	
-	uint64_t size1 = get_file_size_from_name(seqlens_filename);	
-	fwrite(&size1, 8, 1, out_file);
+	uint64_t size_seqlens = get_file_size_from_name(seqlens_filename);	
+	assert(size_seqlens > 0, concat("size_seqlens > 0 in multipacker.tar dst=", dst));
+	fwrite(&size_seqlens, 8, 1, out_file);
 
 	const char* offsets_filename = concat(base_dir, "offsets");	
-	uint64_t size2 = get_file_size_from_name(offsets_filename);	
-	fwrite(&size2, 8, 1, out_file);
+	uint64_t size_offsets = get_file_size_from_name(offsets_filename);	
+	assert(size_offsets > 0, concat("size_offsets > 0 in multipacker.tar dst=", dst));
+	fwrite(&size_offsets, 8, 1, out_file);
 
 	append_to_file(out_file, seqlens_filename);
 	append_to_file(out_file, offsets_filename);
@@ -135,7 +141,7 @@ bool MultiPackAndTest(const char* dir, const char* src) {
 
 void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
-	char* tmp = get_temp_file(dir);
+	const char* tmp = get_temp_file(dir);
 	CanonicalDecode(src, tmp);
 	remove(src);
 	rename(tmp, src);
@@ -144,14 +150,12 @@ void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 
 void MultiUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
-	char* tmp = get_temp_file(dir);
-	multi_unpack(src, tmp);
+	const char* tmp = get_temp_file(dir);
+	multi_unpack(src, tmp, true);
 	remove(src);
 	rename(tmp, src);
 	remove(tmp);
 }
-
-
 
 //----------------------------------------------------------------------------------------
 
@@ -184,8 +188,7 @@ void multi_pack(const char* src, const char* dst, unsigned char pages, bool skip
 		got_smaller = CanonicalEncodeAndTest(base_dir, "seqlens");
 	}
 	else {
-		got_smaller = MultiPackAndTest(base_dir, "seqlens");
-		assert(false);
+		got_smaller = MultiPackAndTest(base_dir, "seqlens");		
 	}
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
@@ -195,23 +198,26 @@ void multi_pack(const char* src, const char* dst, unsigned char pages, bool skip
 	   got_smaller = CanonicalEncodeAndTest(base_dir, "offsets");
 	}
 	else {
-		got_smaller = MultiPackAndTest(base_dir, "offsets");
-		assert(false);
+		got_smaller = MultiPackAndTest(base_dir, "offsets");		
 	}
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 2);
 	}
 	//-------------------------------------
-	printf("\nNow writing destination file with tar, pack_type = %d", pack_type);
+	printf("\nTar writing destination file: %s basedir:%s    , pack_type = %d", dst, base_dir,pack_type);
 	tar(dst, base_dir, pack_type);
 	printf("\n => result: %s  size:%d",dst, get_file_size_from_name(dst));
 	printf("\n-------------------------------------");
 	//cleanup
-	remove(base_dir);	
+	
 }
 
-void multi_unpack(const char* src, const char* dst) {
+// ----------------------------------------------------------------
 
+void multi_unpack(const char* src, const char* dst, bool skip_recursion) {
+
+	printf("\n-----------------------------------------------------");
+	printf("\n multiunpack of %s  =>  %s    skip_rec:%d", src, dst, skip_recursion);
 	struct Pack_info pi = untar(src);
 	unsigned char pack_type = pi.pack_type;
 	char* base_dir = pi.dir;
@@ -219,12 +225,20 @@ void multi_unpack(const char* src, const char* dst) {
 		CanonicalDecodeAndReplace(base_dir, "main");
 	}
 	if (isKthBitSet(pack_type, 1)) {
-		CanonicalDecodeAndReplace(base_dir, "seqlens");
-		//MultiUnpackAndReplace(base_dir, "seqlens");
+		if (skip_recursion) {
+			CanonicalDecodeAndReplace(base_dir, "seqlens");
+		}
+		else {
+			MultiUnpackAndReplace(base_dir, "seqlens");
+		}
 	}
 	if (isKthBitSet(pack_type, 2)) {
-		CanonicalDecodeAndReplace(base_dir, "offsets");
-		//MultiUnpackAndReplace(base_dir, "offsets");
+		if (skip_recursion) {
+			CanonicalDecodeAndReplace(base_dir, "offsets");
+		}
+		else {
+			MultiUnpackAndReplace(base_dir, "offsets");
+		}
 	}
 	if (isKthBitSet(pack_type, 3)) {
 		char* seq_dst = get_temp_file(base_dir);
@@ -235,5 +249,5 @@ void multi_unpack(const char* src, const char* dst) {
 	else {
 		seq_unpack_separate("main", dst, base_dir);
 	}
-	remove(base_dir);
+	
 }

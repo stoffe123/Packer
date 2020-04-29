@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_med.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -86,7 +86,7 @@ int main()
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
     //for (int i = 16; i < 250; i++) {
-	int i = 57; {
+	int i = 119; {
 
 		int cl = clock();
 
@@ -108,7 +108,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		multi_unpack(packed_name, dst);
+		multi_unpack(packed_name, dst, true);
 
 		int unpack_time = (clock() - cl);
 		//printf("\n Unpacking finished time it took: %d", unpack_time);

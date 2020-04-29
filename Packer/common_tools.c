@@ -77,9 +77,11 @@ void append_to_file(FILE* main_file, const char* append_filename) {
 	fclose(append_file);
 }
 
-void assert(int x) {
+void assert(int x, const char* msg) {
 	if (!x) {
 		printf("\n\n ASSERTION FAILURE!");
+		printf("\n\nMessage:   %s", msg);
+		printf("\n\n");
 		exit(0);
 	}
 }
