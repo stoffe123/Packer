@@ -15,6 +15,7 @@ static unsigned char code;
 static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
 static unsigned char* buffer;
 static bool code_occurred = false;
+static const char* base_dir = "c:/test/";
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
@@ -126,12 +127,12 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	unsigned long total_size = get_file_size(infil);
 
 	if (pass == 2) {
-		seq_lens_file = fopen("c:/test/seqlens", "wb");
-		offsets_file = fopen("c:/test/offsets", "wb");
+		seq_lens_file = fopen(concat(base_dir,"seqlens"), "wb");
+		offsets_file = fopen(concat(base_dir, "offsets"), "wb");
 		printf("\nwinsize=%d", winsize);
 		fopen_s(&utfil, dest_filename, "wb");
 		if (!utfil) {
-			puts("Hittade inte utfil!"); getchar(); exit(1);
+			printf("Hittade inte utfil: %s", dest_filename); getchar(); exit(1);
 		}
 	}
 
@@ -267,5 +268,11 @@ void seq_pack(const char* source_filename, const char* dest_filename, unsigned c
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	pack_internal(source_filename, dest_filename, 1, pages);
 	pack_internal(source_filename, dest_filename, 2, pages);
+}
+
+void seq_pack_separate(const char* source_filename, unsigned char pages, const char* dir) {
+	base_dir = dir;
+	const char* dest_filename = concat(base_dir, "main");
+	seq_pack(source_filename, dest_filename, pages);
 }
 

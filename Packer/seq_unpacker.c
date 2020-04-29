@@ -16,6 +16,7 @@ static long long read_packedfile_pos,
 static unsigned char* buf;
 static unsigned long buf_pos = 0;
 static unsigned buf_size = 40000000;
+static const char* base_dir = "c:/test/";
 
 
 static unsigned char read_byte_from_file() {
@@ -76,8 +77,8 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 {
 	unsigned char offset_pages,
 	              code_occurred = 1;
-	seq_lens_file = fopen("c:/test/seqlens", "rb");
-	offsets_file = fopen("c:/test/offsets", "rb");
+	seq_lens_file = fopen(concat(base_dir, "seqlens"), "rb");
+	offsets_file = fopen(concat(base_dir, "offsets"), "rb");
 
 	//printf("\n\n Unpacking %s", source_filename);
 	unsigned long i, cc;
@@ -141,4 +142,11 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 	fclose(utfil);
 	fclose(seq_lens_file);
 	fclose(offsets_file);
+}
+
+void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* dir)
+{
+	base_dir = dir;
+	source_filename = concat(base_dir, source_filename);
+	seq_unpack(source_filename, dest_filename);
 }

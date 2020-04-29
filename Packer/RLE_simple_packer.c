@@ -74,7 +74,7 @@ void inc_char_freq(unsigned char c) {
 
 
 
-void RLE_pack_internal(const char* src, const char* dest_filename, int pass) {
+void RLE_pack_internal(const char* src, const char* dest, int pass) {
 
 	printf("\nRLE_simple_pack pass=%d" , pass);
 	runlengths_file = fopen("c:/test/runlengths", "wb");
@@ -88,16 +88,16 @@ void RLE_pack_internal(const char* src, const char* dest_filename, int pass) {
 
 	infil = fopen(src, "rb");
 	if (!infil) {
-		printf("Hittade inte infil: %s", infil);
+		printf("Hittade inte infil: %s", src);
 		getchar();
 		exit(1);
 	}
 	unsigned long total_size = get_file_size(infil);
 
 	if (pass == 2) {		
-		fopen_s(&utfil, dest_filename, "wb");
+		fopen_s(&utfil, dest, "wb");
 		if (!utfil) {
-			puts("Hittade inte utfil!"); getchar(); exit(1);
+			puts("Hittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
 		WRITE(utfil, code);

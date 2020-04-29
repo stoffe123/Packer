@@ -2,11 +2,14 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "common_tools.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 static const unsigned long BUF_SIZE = 32768;
 static unsigned char buf[32768];
 
-long long get_file_size(const FILE* f) {
+long long get_file_size(const FILE* f) {	
 	fseek(f, 0, SEEK_END);
 	long long res = ftell(f);
 	fseek(f, 0, SEEK_SET);
@@ -84,4 +87,29 @@ void assert(int x) {
 void WRITE(FILE* ut, unsigned long long c)
 {
 	fwrite(&c, 1, 1, ut);
+}
+
+char* concat(const char* s1, const char* s2) {
+
+	const size_t s1_length = strlen(s1);
+	const size_t totalLength = s1_length + strlen(s2);
+
+	char* const strBuf = malloc(totalLength + 1);
+	if (strBuf == NULL) {
+		fprintf(stderr, "malloc failed\n");
+		exit(EXIT_FAILURE);
+	}
+	strcpy(strBuf, s1);
+	strcpy(strBuf + s1_length, s2);
+	return strBuf;
+}
+
+
+
+void make_dir(const char* path) {
+	
+	struct stat st = { 0 };
+	if (stat(path, &st) == -1) {
+		mkdir(path, 0777);
+	}
 }

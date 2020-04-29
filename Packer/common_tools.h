@@ -27,4 +27,9 @@ void assert(int x);
 
 void WRITE(FILE * ut, unsigned long long c);
 
+char* concat(const char* s1, const char* s2);
+
+void make_dir(const char* path);
+
+
 #endif
