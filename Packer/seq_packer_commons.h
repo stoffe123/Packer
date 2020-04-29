@@ -1,0 +1,2 @@
+#define SEQ_LEN_FOR_CODE 255
+#define SEQ_LEN_MIN 3

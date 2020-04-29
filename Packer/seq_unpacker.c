@@ -3,6 +3,7 @@
 #include <limits.h>
 #include "seq_unpacker.h"
 #include "common_tools.h"
+#include "seq_packer_commons.h"
 #define TRUE 1
 #define FALSE 0
 
@@ -53,16 +54,16 @@ unsigned char read_offset() {
 	return fgetc(offsets_file);
 }
 
-unsigned long get_seqlen(unsigned char seqlen_add) {
+unsigned long get_seqlen(bool code_occurred) {
 	unsigned long seq_len = read_seqlen();
-	if (seq_len == 0 && seqlen_add == 2) {
-		return 0;
+	if (code_occurred && seq_len == SEQ_LEN_FOR_CODE) {
+		return seq_len;
 	}
-	if (seq_len == 255) {
-		return (unsigned long long)255 + seqlen_add + read_seqlen();
+	if (seq_len == (code_occurred ? 254 : 255)) {
+		return (unsigned long)(code_occurred ? 254 : 255) + read_seqlen() + SEQ_LEN_MIN;
 	}
 	else {
-		return seq_len + seqlen_add;
+		return seq_len + SEQ_LEN_MIN;
 	}
 }
 
@@ -80,8 +81,8 @@ unsigned long get_offset(unsigned char window_pages) {
 //------------------------------------------------------------------------------
 void seq_unpack(const char* source_filename, const char* dest_filename)
 {
-	unsigned char window_pages,
-	              seqlen_add = 2;
+	unsigned char offset_pages,
+	              code_occurred = 1;
 	seq_lens_file = fopen("c:/test/seqlens", "rb");
 	offsets_file = fopen("c:/test/offsets", "rb");
 
@@ -111,23 +112,23 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 
 	buf_pos = buf_size - 1;
 	code = read_byte_from_file();
-	window_pages = read_byte_from_file();
-	seqlen_add = read_byte_from_file();
+	offset_pages = read_byte_from_file();
+	code_occurred = read_byte_from_file();
 
 
 	while (total_size > read_packedfile_pos) {
 		cc = read_byte_from_file();
 		if (cc == code) {
 			unsigned long long offset, 
-				               seq_len = get_seqlen(seqlen_add);
+				               seq_len = get_seqlen(code_occurred);
 
-			if (cc == code && seq_len == 0 && seqlen_add == 2) {
+			if (cc == code && seq_len == 255 && code_occurred) {
 				//occurrence of code in original
 				put_buf(code);
 			}
 			else {
 				
-				offset = get_offset(window_pages);		
+				offset = get_offset(offset_pages);		
 
 				unsigned long match_index = buf_pos + offset + seq_len;
 				//write the sequence at the right place!

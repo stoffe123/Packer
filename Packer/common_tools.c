@@ -73,3 +73,10 @@ void append_to_file(FILE* main_file, const char* append_filename) {
     } while (bytes_got == BUF_SIZE);
     fclose(append_file);
 }
+
+void assert(int x) {
+    if (!x) {
+        printf("\n\n ASSERTION FAILURE!");
+        exit(0);
+    }
+}

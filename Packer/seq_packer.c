@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include "seq_packer.h"
+#include "seq_packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
 
@@ -29,7 +30,7 @@ unsigned long long READ(unsigned char* cptr)
 //global variables used in compressor
 unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
 unsigned char* buffer;
-unsigned char seqlen_add = 2;
+bool code_occurred = false;
 
 void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
@@ -65,9 +66,7 @@ unsigned char find_best_code(long* char_freq) {
 	printf("\n Found code: %d that occured: %d times.", best, value);
 
 	char_freq[best] = ULONG_MAX; // mark it as used!
-	if (value == 0) {
-		seqlen_add = 3;
-	}
+	code_occurred = (value > 0);			
 	return best;
 }
 
@@ -82,25 +81,59 @@ void write_offset(unsigned long long c) {
 	fwrite(&c, 1, 1, offsets_file);
 }
 
+void out_seqlen(unsigned long best_seq_len) {
+	assert(best_seq_len >= SEQ_LEN_MIN);
+	unsigned long write_len = best_seq_len - SEQ_LEN_MIN;
+
+	//len = 255 is used for code occurence ... len =254 for next block
+	if (write_len <= (code_occurred ? 253 : 254)) {
+		write_seqlen(write_len);  /* seqlen */
+	}
+	else {
+		write_seqlen(write_len - ((unsigned long long)(code_occurred ? 254 : 255)));
+		write_seqlen((code_occurred ? 254 : 255));
+	}
+}
+
+void out_offset(unsigned long long best_offset, unsigned long long lowest_special, unsigned char offset_pages) {
+	if (best_offset < lowest_special) {
+		write_offset(best_offset);
+	}
+	else {	
+		int i = 0;
+		for (; i < offset_pages; i++) {
+
+			if (best_offset < (lowest_special + (256 * (i + 1)))) {
+				write_offset(best_offset - (lowest_special + (256 * i)));
+				write_offset(255 - i);				
+				break;
+			}
+		}
+		if (i == offset_pages) {
+			printf("\n\n >>>>>>>> ERROR no offset coding found for offset = %d", best_offset);
+			exit(0);
+		}
+	}
+}
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const char* src, const char* dest_filename, unsigned char pass, unsigned char window_pages)
+void pack_internal(const char* src, const char* dest_filename, unsigned char pass, unsigned char offset_pages)
 {
 	seq_lens_file = fopen("c:/test/seqlens", "wb");
 	offsets_file = fopen("c:/test/offsets", "wb");
-	unsigned long long offset, max_seq_len = 510 + seqlen_add, seq_len,
-		winsize = (window_pages + 1) * (unsigned long long)256 + max_seq_len * 2 + 25,
+	unsigned long long offset, max_seq_len = (code_occurred ? 512 : 513), seq_len,
+		winsize = (offset_pages + 1) * (unsigned long long)256 + max_seq_len * 2 + 25,
 		best_offset = 0,
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
-		lowest_special = 256 - window_pages,
-		longest_offset = lowest_special + ((unsigned long long)256 * window_pages) - 1;
+		lowest_special = 256 - offset_pages,
+		longest_offset = lowest_special + ((unsigned long long)256 * offset_pages) - 1;
 
 
 	unsigned long char_freq[256] = { 0 }, best_seq_len;
 	buffer_startpos = 0;
 	buffer_min = winsize + max_seq_len * 2 + 1024;
 
-	debug("window_pages=%d", window_pages);
+	debug("window_pages=%d", offset_pages);
 	
 
 	infil = fopen(src, "rb");
@@ -187,7 +220,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 					//debug("Found code at buffer_startpos=%d", buffer_startpos);
 
-					write_seqlen(0);
+					write_seqlen(SEQ_LEN_FOR_CODE);
 					WRITE(code);
 				}
 				else
@@ -208,33 +241,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			if (pass == 2) {
 				// write offset i.e. distance from end of match
 
-				if (best_offset < lowest_special) {
-					write_offset(best_offset);
-				}
-				else {
-					int found = 0;
-					for (long long i = 0; i < window_pages; i++) {
-
-						if (best_offset < (lowest_special + (256 * (i + 1)))) {
-							write_offset(best_offset - (lowest_special + (256 * i)));
-							write_offset(255 - i);
-							found = 1;
-							break;
-						}
-					}
-					if (!found) {
-						printf("\n\n >>>>>>>> ERROR no offset coding found for offset = %d", best_offset);
-					}
-				}
-				//subtract to so smallest will be 3 -2 = 1
-				//len = 0 is used for code occurence
-				if (best_seq_len < 255 + seqlen_add) {
-					write_seqlen(best_seq_len - seqlen_add);  /* seqlen */
-				}
-				else {
-					write_seqlen(best_seq_len - ((unsigned long)255 + seqlen_add));
-					write_seqlen(255);
-				}
+				out_offset(best_offset, lowest_special, offset_pages);
+				
+				out_seqlen(best_seq_len);
 				WRITE(code);  /* note file is read backwards during unpack! */
 			}
 			move_buffer(best_seq_len);
@@ -259,8 +268,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 	else {
-		WRITE(seqlen_add);
-		WRITE(window_pages);
+		WRITE(code_occurred);
+		WRITE(offset_pages);
 		WRITE(code);
 		fclose(utfil);
 	}

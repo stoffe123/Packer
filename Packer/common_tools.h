@@ -19,4 +19,6 @@ void copy_the_rest(FILE* source_file, const char* dest_filename);
 
 void append_to_file(FILE* main_file, const char* append_filename);
 
+void assert(int x);
+
 #endif

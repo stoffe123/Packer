@@ -101,5 +101,8 @@
     <ClInclude Include="RLE_packer_advanced.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="seq_packer_commons.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

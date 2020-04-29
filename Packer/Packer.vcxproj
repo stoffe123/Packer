@@ -167,6 +167,7 @@
     <ClInclude Include="multi_packer.h" />
     <ClInclude Include="RLE_packer_advanced.h" />
     <ClInclude Include="seq_packer.h" />
+    <ClInclude Include="seq_packer_commons.h" />
     <ClInclude Include="seq_unpacker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
