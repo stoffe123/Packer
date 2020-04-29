@@ -3,6 +3,10 @@
 #include <stdbool.h>
 #define debug if(VERBOSE) printf("\n");if(VERBOSE) printf
 
+#define math_max(x,y) ((x) >= (y)) ? (x) : (y)
+#define math_min(x,y) ((x) <= (y)) ? (x) : (y)
+
+
 long long get_file_size(const FILE* f);
 
 long long get_file_size_from_name(const char* name);
@@ -20,5 +24,7 @@ void copy_the_rest(FILE* source_file, const char* dest_filename);
 void append_to_file(FILE* main_file, const char* append_filename);
 
 void assert(int x);
+
+void WRITE(FILE * ut, unsigned long long c);
 
 #endif

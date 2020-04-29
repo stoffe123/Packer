@@ -150,6 +150,8 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="multi_packer.c" />
     <ClCompile Include="RLE_packer_advanced.c" />
+    <ClCompile Include="RLE_simple_packer.c" />
+    <ClCompile Include="RLE_simple_unpacker.c" />
     <ClCompile Include="seq_packer.c" />
     <ClCompile Include="seq_unpacker.c" />
   </ItemGroup>

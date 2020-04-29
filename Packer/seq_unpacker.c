@@ -4,57 +4,50 @@
 #include "seq_unpacker.h"
 #include "common_tools.h"
 #include "seq_packer_commons.h"
-#define TRUE 1
-#define FALSE 0
-
-#define math_max(x,y) ((x) >= (y)) ? (x) : (y)
-#define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
 // Unpacker stuff below !!
 
 //Global vars used in unpacker
-unsigned char code;
-FILE* infil, * utfil;
-long long read_packedfile_pos,
-seqlens_file_pos,
-offsets_file_pos;
-unsigned char* buf;
-unsigned long buf_pos = 0;
-unsigned buf_size = 40000000;
-FILE* seq_lens_file;
-FILE* offsets_file;
+static unsigned char code;
+static FILE *infil, *utfil, *seq_lens_file, *offsets_file;
+static long long read_packedfile_pos,
+	seqlens_file_pos,
+	offsets_file_pos;
+static unsigned char* buf;
+static unsigned long buf_pos = 0;
+static unsigned buf_size = 40000000;
 
 
-unsigned char read_byte_from_file() {
+static unsigned char read_byte_from_file() {
 	read_packedfile_pos++;
 	fseek(infil, -read_packedfile_pos, SEEK_END);
 	return fgetc(infil);
 }
 
-void write_byte_to_file(unsigned char cc) {
+static void write_byte_to_file(unsigned char cc) {
 	putc(cc, utfil);
 }
 
-void put_buf(unsigned char c) {
+static void put_buf(unsigned char c) {
 	buf[buf_pos] = c;
 	buf_pos--;
 }
 
 
 
-unsigned char read_seqlen() {
+static unsigned char read_seqlen() {
 	seqlens_file_pos++;
 	fseek(seq_lens_file, -seqlens_file_pos, SEEK_END);
 	return fgetc(seq_lens_file);
 }
 
-unsigned char read_offset() {
+static unsigned char read_offset() {
 	offsets_file_pos++;
 	fseek(offsets_file, -offsets_file_pos, SEEK_END);
 	return fgetc(offsets_file);
 }
 
-unsigned long get_seqlen(bool code_occurred) {
+static unsigned long get_seqlen(bool code_occurred) {
 	unsigned long seq_len = read_seqlen();
 	if (code_occurred && seq_len == SEQ_LEN_FOR_CODE) {
 		return seq_len;
@@ -149,12 +142,3 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 	fclose(seq_lens_file);
 	fclose(offsets_file);
 }
-
-
-
-
-
-
-
-
-

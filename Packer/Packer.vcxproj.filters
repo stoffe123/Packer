@@ -57,6 +57,12 @@
     <ClCompile Include="RLE_packer_advanced.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RLE_simple_packer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RLE_simple_unpacker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">

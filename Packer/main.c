@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -116,9 +116,6 @@ int main()
 		//printf("\n Unpacking finished time it took: %d", unpack_time);
 		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-		//unpack("C:/test/packed.bin", dst);
-		//printf("\nRLE unpacking... ");
-		//rle_unpack("c:/test/unpackedrle.bin", dst);
 
 		//printf("\n\n Comparing files!");
 		if (files_equal(src, dst)) {

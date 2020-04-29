@@ -7,32 +7,16 @@
 #define VERBOSE false
 #include "common_tools.h"
 
-
-#define math_max(x,y) ((x) >= (y)) ? (x) : (y)
-#define math_min(x,y) ((x) <= (y)) ? (x) : (y)
-
 /* sequence packer */
 
-FILE* infil, * utfil;
-
-unsigned char code;
-
-void WRITE(unsigned long long c)
-{
-	fwrite(&c, 1, 1, utfil);
-}
-
-unsigned long long READ(unsigned char* cptr)
-{
-	return (fread(cptr, 1, 1, infil));
-}
-
 //global variables used in compressor
-unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
-unsigned char* buffer;
-bool code_occurred = false;
+static FILE* infil, * utfil, * seq_lens_file, * offsets_file;
+static unsigned char code;
+static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
+static unsigned char* buffer;
+static bool code_occurred = false;
 
-void move_buffer(unsigned int steps) {
+static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
 	if (buffer_endpos == buffer_size) {
 		unsigned long long buffer_left = buffer_size - buffer_startpos;
@@ -70,8 +54,6 @@ unsigned char find_best_code(long* char_freq) {
 	return best;
 }
 
-FILE* seq_lens_file;
-FILE* offsets_file;
 
 void write_seqlen(unsigned long long c) {
 	fwrite(&c, 1, 1, seq_lens_file);
@@ -119,8 +101,7 @@ void out_offset(unsigned long long best_offset, unsigned long long lowest_specia
 
 void pack_internal(const char* src, const char* dest_filename, unsigned char pass, unsigned char offset_pages)
 {
-	seq_lens_file = fopen("c:/test/seqlens", "wb");
-	offsets_file = fopen("c:/test/offsets", "wb");
+	
 	unsigned long long offset, max_seq_len = (code_occurred ? 512 : 513), seq_len,
 		winsize = (offset_pages + 1) * (unsigned long long)256 + max_seq_len * 2 + 25,
 		best_offset = 0,
@@ -145,6 +126,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	unsigned long total_size = get_file_size(infil);
 
 	if (pass == 2) {
+		seq_lens_file = fopen("c:/test/seqlens", "wb");
+		offsets_file = fopen("c:/test/offsets", "wb");
 		printf("\nwinsize=%d", winsize);
 		fopen_s(&utfil, dest_filename, "wb");
 		if (!utfil) {
@@ -189,6 +172,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					seq_len = 3;
 
 					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && 
+						buffer_startpos + offset + seq_len < buffer_endpos &&
 						seq_len < max_seq_len && seq_len < offset)
 					{
 						seq_len++;
@@ -221,11 +205,11 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					//debug("Found code at buffer_startpos=%d", buffer_startpos);
 
 					write_seqlen(SEQ_LEN_FOR_CODE);
-					WRITE(code);
+					WRITE(utfil, code);
 				}
 				else
 				{
-					WRITE(buffer[buffer_startpos]);
+					WRITE(utfil, buffer[buffer_startpos]);
 				}
 			}
 			move_buffer(1);
@@ -244,7 +228,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				out_offset(best_offset, lowest_special, offset_pages);
 				
 				out_seqlen(best_seq_len);
-				WRITE(code);  /* note file is read backwards during unpack! */
+				WRITE(utfil, code);  /* note file is read backwards during unpack! */
 			}
 			move_buffer(best_seq_len);
 		}//end if
@@ -268,14 +252,14 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 	else {
-		WRITE(code_occurred);
-		WRITE(offset_pages);
-		WRITE(code);
+		WRITE(utfil, code_occurred);
+		WRITE(utfil, offset_pages);
+		WRITE(utfil, code);
 		fclose(utfil);
+		fclose(seq_lens_file);
+		fclose(offsets_file);
 	}
-	fclose(infil);
-	fclose(seq_lens_file);
-	fclose(offsets_file);
+	fclose(infil);	
 }
 
 void seq_pack(const char* source_filename, const char* dest_filename, unsigned char pages)
