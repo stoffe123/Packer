@@ -10,7 +10,7 @@
 //#include "huffman2.h"
 #include "canonical.h"
 
-
+static unsigned long filename_count = 1000;
 
 struct Pack_info {
 	unsigned char pack_type;
@@ -20,9 +20,9 @@ struct Pack_info {
 char* get_rand() {
 	const char* clk = malloc(50);
 	_itoa(clock(), clk, 10);
-	int r = (rand() % 100) + 100;
+	
 	const char* ra = malloc(50);
-	_itoa(r, ra, 10);
+	_itoa(filename_count++, ra, 10);
 	return concat(clk, ra);
 }
 
@@ -31,11 +31,8 @@ char* get_temp_file(char* dir) {
 }
 
 char* get_clock_dir() {
-
-	const char* dir = concat("multipack", get_rand());
-	dir = concat(dir, "/");
-	dir = concat("c:/test/", dir);
-	make_dir(dir);
+	const char* dir = concat("c:/test/", concat("multipack", get_rand()));
+	dir = concat(dir, "_");
 	return dir;
 }
 
@@ -186,6 +183,12 @@ void MultiUnpackAndReplace(const char* dir, const char* src) {
 	remove(tmp);
 }
 
+void remove_meta_files(const char* base_dir) {
+	remove(concat(base_dir, "seqlens"));
+	remove(concat(base_dir, "offsets"));
+	remove(concat(base_dir, "main"));
+}
+
 //----------------------------------------------------------------------------------------
 
 void multi_pack(const char* src, const char* dst, unsigned char pages) {
@@ -239,8 +242,8 @@ void multi_pack(const char* src, const char* dst, unsigned char pages) {
 	tar(dst, base_dir, pack_type);
 	printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 	printf("\n-------------------------------------");
-	//cleanup
 
+	remove_meta_files(base_dir);
 }
 
 // ----------------------------------------------------------------
@@ -276,5 +279,5 @@ void multi_unpack(const char* src, const char* dst) {
 	else {
 		seq_unpack_separate("main", dst, base_dir);
 	}
-
+	remove_meta_files(base_dir);
 }

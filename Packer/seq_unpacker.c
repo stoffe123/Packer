@@ -83,7 +83,8 @@ unsigned long get_offset(unsigned char window_pages) {
 }
 
 //------------------------------------------------------------------------------
-void seq_unpack(const char* source_filename, const char* dest_filename)
+
+void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 {
 	unsigned char offset_pages,
 	              code_occurred = 1;
@@ -137,6 +138,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 				offset = get_offset(offset_pages);		
 
 				unsigned long match_index = buf_pos + offset + seq_len;
+				assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
 				//write the sequence at the right place!
 				for (i = 0; i < seq_len; i++) {
 					put_buf(buf[match_index - i]); ;
@@ -158,10 +160,15 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 	}
 }
 
+void seq_unpack(const char* source_filename, const char* dest_filename) {
+	separate_files = false;
+	seq_unpack_internal(source_filename, dest_filename);
+}
+
 void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* dir)
 {
 	base_dir = dir;
 	source_filename = concat(base_dir, source_filename);
 	separate_files = true;
-	seq_unpack(source_filename, dest_filename);
+	seq_unpack_internal(source_filename, dest_filename);
 }
