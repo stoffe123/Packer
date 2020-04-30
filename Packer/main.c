@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_med.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/tob_pdf_offsets"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -85,12 +85,15 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-    //for (int i = 16; i < 250; i++) {
-	int i = 119; {
+    for (int i = 218; i < 243; i++) {
+	
 
 		int cl = clock();
 
+		printf("\n\n  ------- Pages %d --------- ", i);
+
 		multi_pack(src, packed_name, i, true);
+		//CanonicalEncode(src, packed_name);
 
 		int pack_time = (clock() - cl);
 		//printf("\n Packing finished time it took: %d", pack_time);
@@ -109,6 +112,7 @@ int main()
 		cl = clock();
 
 		multi_unpack(packed_name, dst, true);
+		//CanonicalDecode(packed_name, dst);
 
 		int unpack_time = (clock() - cl);
 		//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -117,7 +121,7 @@ int main()
 
 		//printf("\n\n Comparing files!");
 		if (files_equal(src, dst)) {
-			//printf("\n ***** SUCCESS ***** (files equal)\n");
+			printf("\n ***** SUCCESS ***** (files equal)\n");
 		}
 		else {
 			printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");

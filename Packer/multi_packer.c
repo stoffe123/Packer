@@ -204,7 +204,7 @@ void multi_pack(const char* src, const char* dst, unsigned char pages, bool skip
 		pack_type = setKthBit(pack_type, 2);
 	}
 	//-------------------------------------
-	printf("\nTar writing destination file: %s basedir:%s    , pack_type = %d", dst, base_dir,pack_type);
+	printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir,pack_type);
 	tar(dst, base_dir, pack_type);
 	printf("\n => result: %s  size:%d",dst, get_file_size_from_name(dst));
 	printf("\n-------------------------------------");
