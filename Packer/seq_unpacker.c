@@ -17,6 +17,7 @@ static unsigned char* buf;
 static unsigned long buf_pos = 0;
 static unsigned buf_size = 40000000;
 static const char* base_dir = "c:/test/";
+static bool separate_files = false;
 
 
 static unsigned char read_byte_from_file() {
@@ -35,17 +36,26 @@ static void put_buf(unsigned char c) {
 }
 
 
-
 static unsigned char read_seqlen() {
-	seqlens_file_pos++;
-	fseek(seq_lens_file, -seqlens_file_pos, SEEK_END);
-	return fgetc(seq_lens_file);
+	if (separate_files) {
+		seqlens_file_pos++;
+		fseek(seq_lens_file, -seqlens_file_pos, SEEK_END);
+		return fgetc(seq_lens_file);
+	}
+	else {
+		return read_byte_from_file();
+	}
 }
 
 static unsigned char read_offset() {
-	offsets_file_pos++;
-	fseek(offsets_file, -offsets_file_pos, SEEK_END);
-	return fgetc(offsets_file);
+	if (separate_files) {
+		offsets_file_pos++;
+		fseek(offsets_file, -offsets_file_pos, SEEK_END);
+		return fgetc(offsets_file);
+	}
+	else {
+		return read_byte_from_file();
+	}
 }
 
 static unsigned long get_seqlen(bool code_occurred) {
@@ -77,8 +87,10 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 {
 	unsigned char offset_pages,
 	              code_occurred = 1;
-	seq_lens_file = fopen(concat(base_dir, "seqlens"), "rb");
-	offsets_file = fopen(concat(base_dir, "offsets"), "rb");
+	if (separate_files) {
+		seq_lens_file = fopen(concat(base_dir, "seqlens"), "rb");
+		offsets_file = fopen(concat(base_dir, "offsets"), "rb");
+	}
 
 	//printf("\n\n Unpacking %s", source_filename);
 	unsigned long i, cc;
@@ -101,7 +113,7 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 		exit(1);
 	}
 	long long total_size = get_file_size(infil);
-	buf = (unsigned char*)malloc(buf_size * sizeof(unsigned char));
+	buf = (unsigned char*)malloc((buf_size + 1024) * sizeof(unsigned char));
 	fseek(infil, 0, SEEK_END);
 
 	buf_pos = buf_size - 1;
@@ -140,13 +152,16 @@ void seq_unpack(const char* source_filename, const char* dest_filename)
 
 	fclose(infil);
 	fclose(utfil);
-	fclose(seq_lens_file);
-	fclose(offsets_file);
+	if (separate_files) {
+		fclose(seq_lens_file);
+		fclose(offsets_file);
+	}
 }
 
 void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* dir)
 {
 	base_dir = dir;
 	source_filename = concat(base_dir, source_filename);
+	separate_files = true;
 	seq_unpack(source_filename, dest_filename);
 }

@@ -26,12 +26,12 @@ char* get_rand() {
 	return concat(clk, ra);
 }
 
-char* get_temp_file(char* dir) {	
+char* get_temp_file(char* dir) {
 	return concat(dir, concat("tmp", get_rand()));
 }
 
 char* get_clock_dir() {
-	
+
 	const char* dir = concat("multipack", get_rand());
 	dir = concat(dir, "/");
 	dir = concat("c:/test/", dir);
@@ -67,14 +67,14 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
 
 	fwrite(&pack_type, 1, 1, out_file);
-	assert(pack_type < 16, concat("pack_type < 16 in multipacker.tar dst=", dst));
-	const char* seqlens_filename = concat(base_dir, "seqlens");	
-	uint64_t size_seqlens = get_file_size_from_name(seqlens_filename);	
+	assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
+	const char* seqlens_filename = concat(base_dir, "seqlens");
+	uint64_t size_seqlens = get_file_size_from_name(seqlens_filename);
 	assert(size_seqlens > 0, concat("size_seqlens > 0 in multipacker.tar dst=", dst));
 	fwrite(&size_seqlens, 8, 1, out_file);
 
-	const char* offsets_filename = concat(base_dir, "offsets");	
-	uint64_t size_offsets = get_file_size_from_name(offsets_filename);	
+	const char* offsets_filename = concat(base_dir, "offsets");
+	uint64_t size_offsets = get_file_size_from_name(offsets_filename);
 	assert(size_offsets > 0, concat("size_offsets > 0 in multipacker.tar dst=", dst));
 	fwrite(&size_offsets, 8, 1, out_file);
 
@@ -96,7 +96,7 @@ bool RLE_advanced_pack_and_test(const char* src, const char* dst) {
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(dst);
 
-	double ratio = (double)size_packed / (double)size_org;	
+	double ratio = (double)size_packed / (double)size_org;
 	printf("\n ratio with RLE_advanced:%f", ratio);
 
 	bool compression_success = (ratio < 0.93);
@@ -113,7 +113,27 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 	CanonicalEncode(src, tmp);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
+	printf("\n CanonicalEncode:%s  got ratio: %f", src, (double)size_packed / (double)size_org);
 	bool compression_success = (size_packed < size_org);
+	if (compression_success) {
+		remove(src);
+		rename(tmp, src);
+	}
+	else {
+		remove(tmp);
+	}
+	return compression_success;
+}
+
+bool SeqPackAndTest(const char* dir, const char* src) {
+	src = concat(dir, src);
+	char* tmp = get_temp_file(dir);
+	seq_pack(src, tmp, 100);
+	int size_org = get_file_size_from_name(src);
+	int size_packed = get_file_size_from_name(tmp);
+	double ratio = (double)size_packed / (double)size_org;
+	printf("\n SeqPacked:%s  got ratio: %f", src, ratio);
+	bool compression_success = (ratio < 0.89);
 	if (compression_success) {
 		remove(src);
 		rename(tmp, src);
@@ -148,6 +168,15 @@ void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 	remove(tmp);
 }
 
+void SeqUnpackAndReplace(const char* dir, const char* src) {
+	src = concat(dir, src);
+	const char* tmp = get_temp_file(dir);
+	seq_unpack(src, tmp);
+	remove(src);
+	rename(tmp, src);
+	remove(tmp);
+}
+
 void MultiUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
 	const char* tmp = get_temp_file(dir);
@@ -159,9 +188,9 @@ void MultiUnpackAndReplace(const char* dir, const char* src) {
 
 //----------------------------------------------------------------------------------------
 
-void multi_pack(const char* src, const char* dst, unsigned char pages, bool skip_recursion) {
+void multi_pack(const char* src, const char* dst, unsigned char pages) {
 	printf("\n-----------------------");
-	printf("\nmulti_pack of %s  =>  %s   size:%d   pages:%d", src, dst, get_file_size_from_name(src),  pages);
+	printf("\nmulti_pack of %s  =>  %s   size:%d   pages:%d", src, dst, get_file_size_from_name(src), pages);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 	char* base_dir = get_clock_dir();
@@ -169,78 +198,76 @@ void multi_pack(const char* src, const char* dst, unsigned char pages, bool skip
 
 	bool got_smaller = RLE_advanced_pack_and_test(src, tmp);
 	if (got_smaller) {
-		pack_type = setKthBit(pack_type, 3);
+		pack_type = setKthBit(pack_type, 5);
 	}
 
 	seq_pack_separate(tmp, pages, base_dir);
-	// now we have three files to huffman pack
+	// now we have three meta files to try to pack with seqlen+huffman
 
 	remove(tmp);
 
 	//try to pack meta files!
-    // ----------- Pack main -------------
+	// ----------- Pack main -------------
 	got_smaller = CanonicalEncodeAndTest(base_dir, "main");
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 0);
 	}
+
 	// ---------- Pack seqlens -----------
-	if (skip_recursion) {
-		got_smaller = CanonicalEncodeAndTest(base_dir, "seqlens");
-	}
-	else {
-		got_smaller = MultiPackAndTest(base_dir, "seqlens");		
-	}
+	got_smaller = SeqPackAndTest(base_dir, "seqlens");
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
 	}
-	// ---------- Pack offsets -----------
-	if (skip_recursion) {
-	   got_smaller = CanonicalEncodeAndTest(base_dir, "offsets");
-	}
-	else {
-		got_smaller = MultiPackAndTest(base_dir, "offsets");		
-	}
+
+	got_smaller = CanonicalEncodeAndTest(base_dir, "seqlens");
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 2);
 	}
+
+	// ------------- Pack offsets --------------
+	got_smaller = SeqPackAndTest(base_dir, "offsets");
+	if (got_smaller) {
+		pack_type = setKthBit(pack_type, 3);
+	}
+
+	got_smaller = CanonicalEncodeAndTest(base_dir, "offsets");
+	if (got_smaller) {
+		pack_type = setKthBit(pack_type, 4);
+	}
 	//-------------------------------------
-	printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir,pack_type);
+	printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 	tar(dst, base_dir, pack_type);
-	printf("\n => result: %s  size:%d",dst, get_file_size_from_name(dst));
+	printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 	printf("\n-------------------------------------");
 	//cleanup
-	
+
 }
 
 // ----------------------------------------------------------------
 
-void multi_unpack(const char* src, const char* dst, bool skip_recursion) {
+void multi_unpack(const char* src, const char* dst) {
 
 	printf("\n-----------------------------------------------------");
-	printf("\n multiunpack of %s  =>  %s    skip_rec:%d", src, dst, skip_recursion);
+	printf("\n multiunpack of %s  =>  %s", src, dst);
 	struct Pack_info pi = untar(src);
 	unsigned char pack_type = pi.pack_type;
 	char* base_dir = pi.dir;
-	if (isKthBitSet(pack_type, 0)) {
+	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
 		CanonicalDecodeAndReplace(base_dir, "main");
 	}
-	if (isKthBitSet(pack_type, 1)) {
-		if (skip_recursion) {
-			CanonicalDecodeAndReplace(base_dir, "seqlens");
-		}
-		else {
-			MultiUnpackAndReplace(base_dir, "seqlens");
-		}
-	}
 	if (isKthBitSet(pack_type, 2)) {
-		if (skip_recursion) {
-			CanonicalDecodeAndReplace(base_dir, "offsets");
-		}
-		else {
-			MultiUnpackAndReplace(base_dir, "offsets");
-		}
+		CanonicalDecodeAndReplace(base_dir, "seqlens");
+	}
+	if (isKthBitSet(pack_type, 1)) {
+		SeqUnpackAndReplace(base_dir, "seqlens");
+	}
+	if (isKthBitSet(pack_type, 4)) {
+		CanonicalDecodeAndReplace(base_dir, "offsets");
 	}
 	if (isKthBitSet(pack_type, 3)) {
+		SeqUnpackAndReplace(base_dir, "offsets");
+	}
+	if (isKthBitSet(pack_type, 5)) { //RLE unpack
 		char* seq_dst = get_temp_file(base_dir);
 		seq_unpack_separate("main", seq_dst, base_dir);
 		RLE_advanced_unpack(seq_dst, dst);
@@ -249,5 +276,5 @@ void multi_unpack(const char* src, const char* dst, bool skip_recursion) {
 	else {
 		seq_unpack_separate("main", dst, base_dir);
 	}
-	
+
 }

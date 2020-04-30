@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/tob_pdf_offsets"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -85,14 +85,15 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-    for (int i = 218; i < 243; i++) {
-	
+	int i = 242;
+   //for (int i = 240; i < 243; i++) 
+	 {
 
 		int cl = clock();
 
 		printf("\n\n  ------- Pages %d --------- ", i);
 
-		multi_pack(src, packed_name, i, true);
+		multi_pack(src, packed_name, i);
 		//CanonicalEncode(src, packed_name);
 
 		int pack_time = (clock() - cl);
@@ -111,7 +112,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		multi_unpack(packed_name, dst, true);
+		multi_unpack(packed_name, dst);
 		//CanonicalDecode(packed_name, dst);
 
 		int unpack_time = (clock() - cl);

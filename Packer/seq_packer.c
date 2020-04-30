@@ -16,6 +16,7 @@ static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_siz
 static unsigned char* buffer;
 static bool code_occurred = false;
 static const char* base_dir = "c:/test/";
+static bool separate_files = false;
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
@@ -51,17 +52,17 @@ unsigned char find_best_code(long* char_freq) {
 	printf("\n Found code: %d that occured: %d times.", best, value);
 
 	char_freq[best] = ULONG_MAX; // mark it as used!
-	code_occurred = (value > 0);			
+	code_occurred = (value > 0);
 	return best;
 }
 
 
 void write_seqlen(unsigned long long c) {
-	fwrite(&c, 1, 1, seq_lens_file);
+	fwrite(&c, 1, 1, (separate_files ? seq_lens_file : utfil));
 }
 
 void write_offset(unsigned long long c) {
-	fwrite(&c, 1, 1, offsets_file);
+	fwrite(&c, 1, 1, (separate_files ? offsets_file : utfil));
 }
 
 void out_seqlen(unsigned long best_seq_len) {
@@ -82,13 +83,13 @@ void out_offset(unsigned long long best_offset, unsigned long long lowest_specia
 	if (best_offset < lowest_special) {
 		write_offset(best_offset);
 	}
-	else {	
+	else {
 		int i = 0;
 		for (; i < offset_pages; i++) {
 
 			if (best_offset < (lowest_special + (256 * (i + 1)))) {
 				write_offset(best_offset - (lowest_special + (256 * i)));
-				write_offset(255 - i);				
+				write_offset(255 - i);
 				break;
 			}
 		}
@@ -102,7 +103,7 @@ void out_offset(unsigned long long best_offset, unsigned long long lowest_specia
 
 void pack_internal(const char* src, const char* dest_filename, unsigned char pass, unsigned char offset_pages)
 {
-	
+
 	unsigned long long offset, max_seq_len = (code_occurred ? 512 : 513), seq_len,
 		winsize = (offset_pages + 1) * (unsigned long long)256 + max_seq_len * 2 + 25,
 		best_offset = 0,
@@ -116,7 +117,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	buffer_min = winsize + max_seq_len * 2 + 1024;
 
 	debug("window_pages=%d", offset_pages);
-	
+
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -127,13 +128,17 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	unsigned long total_size = get_file_size(infil);
 
 	if (pass == 2) {
-		seq_lens_file = fopen(concat(base_dir,"seqlens"), "wb");
-		offsets_file = fopen(concat(base_dir, "offsets"), "wb");
-		printf("\nwinsize=%d", winsize);
+		printf("\n Winsize = %d", winsize);
+
+		if (separate_files) {
+			seq_lens_file = fopen(concat(base_dir, "seqlens"), "wb");
+			offsets_file = fopen(concat(base_dir, "offsets"), "wb");
+		}
 		fopen_s(&utfil, dest_filename, "wb");
 		if (!utfil) {
 			printf("\nHittade inte utfil: %s", dest_filename); getchar(); exit(1);
 		}
+
 	}
 
 	/* start compression */
@@ -172,7 +177,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					}
 					seq_len = 3;
 
-					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && 
+					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] &&
 						buffer_startpos + offset + seq_len < buffer_endpos &&
 						seq_len < max_seq_len && seq_len < offset)
 					{
@@ -216,9 +221,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			move_buffer(1);
 		}
 		else { // insert code triple instead of the matching sequence!
-			
+
 			//debug("Found sequence seq_len=%d, offset=%d, at bufferstartpos=%d", best_seq_len, best_offset, buffer_startpos);
-			
+
 			if (pass == 1) {
 				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
 				seq_lens[best_seq_len]++;
@@ -227,7 +232,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				// write offset i.e. distance from end of match
 
 				out_offset(best_offset, lowest_special, offset_pages);
-				
+
 				out_seqlen(best_seq_len);
 				WRITE(utfil, code);  /* note file is read backwards during unpack! */
 			}
@@ -257,22 +262,31 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		WRITE(utfil, offset_pages);
 		WRITE(utfil, code);
 		fclose(utfil);
-		fclose(seq_lens_file);
-		fclose(offsets_file);
+		if (separate_files) {
+			fclose(seq_lens_file);
+			fclose(offsets_file);
+		}
 	}
-	fclose(infil);	
+	fclose(infil);
 }
 
-void seq_pack(const char* source_filename, const char* dest_filename, unsigned char pages)
-{
+
+
+void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char pages, bool sep) {
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
+	separate_files = sep;
 	pack_internal(source_filename, dest_filename, 1, pages);
 	pack_internal(source_filename, dest_filename, 2, pages);
 }
 
+void seq_pack(const char* source_filename, const char* dest_filename, unsigned char pages)
+{
+	seq_pack_internal(source_filename, dest_filename, pages, false);
+}
+
 void seq_pack_separate(const char* source_filename, unsigned char pages, const char* dir) {
 	base_dir = dir;
-	const char* dest_filename = concat(base_dir, "main");
-	seq_pack(source_filename, dest_filename, pages);
+	const char* dest_filename = concat(base_dir, "main");	
+	seq_pack_internal(source_filename, dest_filename, pages, true);
 }
 
