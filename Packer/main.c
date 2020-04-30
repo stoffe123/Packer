@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book_med.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	

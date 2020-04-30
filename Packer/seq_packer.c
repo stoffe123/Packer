@@ -120,7 +120,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	infil = fopen(src, "rb");
 	if (!infil) {
-		printf("Hittade inte infil: %s", infil);
+		printf("\nHittade inte infil: %s", infil);
 		getchar();
 		exit(1);
 	}
@@ -132,7 +132,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		printf("\nwinsize=%d", winsize);
 		fopen_s(&utfil, dest_filename, "wb");
 		if (!utfil) {
-			printf("Hittade inte utfil: %s", dest_filename); getchar(); exit(1);
+			printf("\nHittade inte utfil: %s", dest_filename); getchar(); exit(1);
 		}
 	}
 

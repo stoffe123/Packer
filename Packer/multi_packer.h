@@ -15,7 +15,7 @@
 
 void multi_pack(const char* src, const char* dst, unsigned char pages, bool skip_recursion);
 
-void multi_unpack(const char* src, const char* dst);
+void multi_unpack(const char* src, const char* dst, bool skip_recursion);
 
 
 #endif
