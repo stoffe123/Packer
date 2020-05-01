@@ -89,7 +89,9 @@ int main()
 
 	//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		multi_pack(src, packed_name, 57, i);
+		two_byte_pack(src, packed_name);
+		
+		//multi_pack(src, packed_name, 57, i);
 		//CanonicalEncode(src, packed_name);
 
 		int pack_time = (clock() - cl);
@@ -108,7 +110,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		multi_unpack(packed_name, dst);
+		two_byte_unpack(packed_name, dst);
 		//CanonicalDecode(packed_name, dst);
 
 		int unpack_time = (clock() - cl);

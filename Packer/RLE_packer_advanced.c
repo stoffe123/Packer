@@ -9,8 +9,6 @@
 
 #define WRITE(x) putc(x, utfil)
 
-/* runlength packer and unpacker */
-
 FILE* infil, * utfil;
 
 #define RL_MAX 259
@@ -20,9 +18,9 @@ FILE* infil, * utfil;
 #define RL_MIN 3
 
 
-enum { RL_REALMAX = RL_MAX + 32768 + 127 };
+static enum { RL_REALMAX = RL_MAX + 32768 + 127 };
 
-int free_lens[256], no_of_freelen, count_desc;
+static int free_lens[256], no_of_freelen, count_desc;
 
 int min_val(int x, int y)
 {
@@ -691,7 +689,7 @@ int main_rle_advanced()
         RLE_advanced_pack(f1, f2);
         RLE_advanced_unpack(f2, f3);
     }
-    printf("\nExcecution time = %lf seconds", (clock() - startTime) / (double)CLOCKS_PER_SEC);
+    printf("\nExcecution time = %f seconds", ((double)clock() - startTime) / (double)CLOCKS_PER_SEC);
     getchar();
 
     return 0;

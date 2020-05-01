@@ -63,6 +63,12 @@
     <ClCompile Include="RLE_simple_unpacker.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Two_byte_packer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Two_byte_unpacker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
