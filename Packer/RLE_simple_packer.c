@@ -17,6 +17,8 @@ static unsigned char* buffer;
 static bool code_occurred = false;
 static FILE* runlengths_file;
 static unsigned long long char_freq[256] = { 0 };
+static const char* base_dir;
+static bool separate;
 
 
 static void move_buffer(unsigned int steps) {
@@ -77,7 +79,7 @@ void inc_char_freq(unsigned char c) {
 void RLE_pack_internal(const char* src, const char* dest, int pass) {
 
 	printf("\nRLE_simple_pack pass=%d" , pass);
-	runlengths_file = fopen("c:/test/runlengths", "wb");
+	runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
 	unsigned long long offset, max_seq_len = (code_occurred ? 257 : 258),				
 		min_seq_len = 3;
 
@@ -171,9 +173,21 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 }
 
 
-void RLE_simple_pack(const char* src, const char* dest)
+void RLE_simple_pack_internal(const char* src, const char* dest)
 {
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	RLE_pack_internal(src, dest, 1); //find code
 	RLE_pack_internal(src, dest, 2); //pack
+}
+
+void RLE_simple_pack(const char* src, const char* dest) {
+	separate = false;
+	RLE_simple_pack_internal(src, dest);
+}
+
+
+void RLE_simple_pack_separate(const char* src, const char* dest, const char* bd) {
+	base_dir = bd;
+	separate = true;
+	RLE_simple_pack_internal(src, dest);
 }

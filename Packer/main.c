@@ -74,7 +74,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/voc_short.wav"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/bad.cdg"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -85,8 +85,8 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-	int i = 242;
-   for (int i = 18; i < 243; i++) 
+	int i = 207;
+   // for (int i = 207; i < 243; i++) 
 	 {
 
 		int cl = clock();

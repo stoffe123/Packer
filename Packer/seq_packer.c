@@ -121,7 +121,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	infil = fopen(src, "rb");
 	if (!infil) {
-		printf("\nHittade inte infil: %s", infil);
+		printf("\nSeq_packer: Hittade inte infil: %s", src);
 		getchar();
 		exit(1);
 	}

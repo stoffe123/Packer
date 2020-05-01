@@ -279,5 +279,5 @@ void multi_unpack(const char* src, const char* dst) {
 	else {
 		seq_unpack_separate("main", dst, base_dir);
 	}
-	remove_meta_files(base_dir);
+	//remove_meta_files(base_dir);
 }

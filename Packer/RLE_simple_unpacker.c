@@ -12,6 +12,8 @@ static unsigned char code;
 static FILE* infil, * utfil, * seq_lens_file, * runlengths_file;
 static long long read_packedfile_pos,	
 	runlengths_file_pos;
+static const char* base_dir;
+static bool separate;
 
 static void write_byte_to_file(unsigned char cc) {
 	putc(cc, utfil);
@@ -26,11 +28,11 @@ static unsigned char read_runlength() {
 }
 
 //------------------------------------------------------------------------------
-void RLE_simple_unpack(const char* source_filename, const char* dest_filename)
+void RLE_simple_unpack_internal(const char* source_filename, const char* dest_filename)
 {
 	unsigned char code_occurred = 1;
 
-	runlengths_file = fopen("c:/test/runlengths", "rb");
+	runlengths_file = fopen(concat(base_dir, "runlengths"), "rb");
 
 	//printf("\n\n Unpacking %s", source_filename);
 	unsigned long i;
@@ -79,4 +81,15 @@ void RLE_simple_unpack(const char* source_filename, const char* dest_filename)
 	fclose(infil);
 	fclose(utfil);
 	fclose(runlengths_file);
+}
+
+void RLE_simple_unpack(const char* src, const char* dest, const char* bd) {
+	separate = false;
+	RLE_simple_unpack_internal(src, dest);
+}
+
+void RLE_simple_unpack_separate(const char* src, const char* dest, const char* bd) {
+	base_dir = bd;
+	separate = true;
+	RLE_simple_unpack_internal(src, dest);
 }
