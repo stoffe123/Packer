@@ -105,7 +105,7 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 	CanonicalEncode(src, tmp);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
-	printf("\n CanonicalEncode:%s  got ratio: %f", src, (double)size_packed / (double)size_org);
+	printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
 	bool compression_success = (size_packed < size_org);
 	if (compression_success) {
 		remove(src);

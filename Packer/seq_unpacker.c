@@ -71,10 +71,10 @@ static unsigned long get_seqlen(bool code_occurred, unsigned char seqlen_pages) 
 		return seqlen + SEQ_LEN_MIN;
 	}
 	**/
-	unsigned long long lowest_special = (code_occurred ? 255 : 256) - seqlen_pages;
+	unsigned long long lowest_special = (unsigned long long)(code_occurred ? 255 : 256) - seqlen_pages;
 
 	if (seqlen >= lowest_special && seqlen <= (code_occurred ? 254 : 255)) {
-		unsigned long long page = (code_occurred ? 254 : 255) - seqlen;
+		unsigned long long page = (unsigned long long)(code_occurred ? 254 : 255) - seqlen;
 		seqlen = (unsigned long long)lowest_special + (page * 256) + (unsigned long long)read_seqlen();
 	}
 	return seqlen + SEQ_LEN_MIN;
@@ -150,9 +150,25 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 				unsigned long match_index = buf_pos + offset + seq_len;
 				assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
 				//write the sequence at the right place!
-				for (i = 0; i < seq_len; i++) {
-					put_buf(buf[match_index - i]); ;
+				//if (seq_len > offset) {
+					for (i = 0; i < seq_len; i++) {
+						put_buf(buf[match_index - i]); ;
+					}
+			/*	}
+			
+				else {  //offset < seq_len, repeating
+					i = 0;
+					long j = 0;
+					while (i < seq_len) {
+						put_buf(buf[match_index - j]);
+						i++;
+						j++;
+						if (j == offset) {
+							j = 0;
+						}
+					}
 				}
+				*/
 			}
 		}
 		else {

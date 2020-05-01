@@ -75,7 +75,7 @@ void out_seqlen(unsigned long seqlen, unsigned char pages) {
 		write_seqlen(seqlen); 
 	}
 	else {
-		int i = 0;
+		unsigned long long i = 0;
 		for (; i < pages; i++) {
 			if (seqlen < (lowest_special + ((unsigned long long)256 * (i + 1)))) {
 				write_seqlen(seqlen - (lowest_special + ((unsigned long long)256 * i)));
@@ -197,7 +197,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					}
 					//check if better than the best!
 
-					if (seq_len > best_seq_len && offset - seq_len <= longest_offset) {
+					if (seq_len > best_seq_len && (offset - seq_len) <= longest_offset) {
 						best_seq_len = seq_len;
 						best_offset = offset - seq_len;
 						if (best_seq_len == max_seqlen) {

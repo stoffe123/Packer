@@ -10,12 +10,6 @@
 
 #include "RLE_packer_advanced.h"
 
-#define TRUE 1
-#define FALSE 0
-
-#define math_max(x,y) ((x) >= (y)) ? (x) : (y)
-#define math_min(x,y) ((x) <= (y)) ? (x) : (y)
-
 #define CMP_N 128
 
 
@@ -61,9 +55,11 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 		if (memcmp(tmp1, tmp2, CMP_N)) {
 			printf("\n File contents differ at position %d :", count);
 			printf("\n File1:");
-			print_string_rep(tmp1);
+			printf(tmp1);
+			//print_string_rep(tmp1);
 			printf("\n File2:");
-			print_string_rep(tmp2);
+			//print_string_rep(tmp2);
+			printf(tmp2);
 			return 0;
 		}
 	}
@@ -74,7 +70,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book_med.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -85,15 +81,15 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-	int i = 252;
-   for (int i = 252; i < 253; i++) 
+	int i = 0;
+   //for (int i = 4; i < 162; i++) 
 	 {
 
 		int cl = clock();
 
-		printf("\n\n  ------- Pages %d --------- ", i);
+	//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		multi_pack(src, packed_name, i, 7);
+		multi_pack(src, packed_name, 57, i);
 		//CanonicalEncode(src, packed_name);
 
 		int pack_time = (clock() - cl);
