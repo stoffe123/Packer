@@ -58,17 +58,26 @@ static unsigned char read_offset() {
 	}
 }
 
-static unsigned long get_seqlen(bool code_occurred) {
-	unsigned long seq_len = read_seqlen();
-	if (code_occurred && seq_len == SEQ_LEN_FOR_CODE) {
-		return seq_len;
+static unsigned long get_seqlen(bool code_occurred, unsigned char seqlen_pages) {
+	unsigned long seqlen = read_seqlen();
+	if (code_occurred && seqlen == SEQ_LEN_FOR_CODE) {
+		return seqlen;
 	}
-	if (seq_len == (code_occurred ? 254 : 255)) {
+	/**
+	if (seqlen == (code_occurred ? 254 : 255)) {
 		return (unsigned long)(code_occurred ? 254 : 255) + read_seqlen() + SEQ_LEN_MIN;
 	}
 	else {
-		return seq_len + SEQ_LEN_MIN;
+		return seqlen + SEQ_LEN_MIN;
 	}
+	**/
+	unsigned long long lowest_special = (code_occurred ? 255 : 256) - seqlen_pages;
+
+	if (seqlen >= lowest_special && seqlen <= (code_occurred ? 254 : 255)) {
+		unsigned long long page = (code_occurred ? 254 : 255) - seqlen;
+		seqlen = (unsigned long long)lowest_special + (page * 256) + (unsigned long long)read_seqlen();
+	}
+	return seqlen + SEQ_LEN_MIN;
 }
 
 unsigned long get_offset(unsigned char window_pages) {
@@ -86,7 +95,7 @@ unsigned long get_offset(unsigned char window_pages) {
 
 void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 {
-	unsigned char offset_pages,
+	unsigned char offset_pages, seqlen_pages,
 	              code_occurred = 1;
 	if (separate_files) {
 		seq_lens_file = fopen(concat(base_dir, "seqlens"), "rb");
@@ -120,6 +129,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 	buf_pos = buf_size - 1;
 	code = read_byte_from_file();
 	offset_pages = read_byte_from_file();
+	seqlen_pages = read_byte_from_file();
 	code_occurred = read_byte_from_file();
 
 
@@ -127,7 +137,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 		cc = read_byte_from_file();
 		if (cc == code) {
 			unsigned long long offset, 
-				               seq_len = get_seqlen(code_occurred);
+				               seq_len = get_seqlen(code_occurred, seqlen_pages);
 
 			if (cc == code && seq_len == 255 && code_occurred) {
 				//occurrence of code in original

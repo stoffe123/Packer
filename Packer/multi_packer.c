@@ -187,8 +187,8 @@ void remove_meta_files(const char* base_dir) {
 //----------------------------------------------------------------------------------------
 
 void multi_pack(const char* src, const char* dst, unsigned char pages) {
-	printf("\n-----------------------");
-	printf("\nmulti_pack of %s  =>  %s   size:%d   pages:%d", src, dst, get_file_size_from_name(src), pages);
+	printf("\n--------------------------------------------");
+	printf("\nMulti_pack  %s  =>  %s\nsize org: %d   pages: %d", src, dst, get_file_size_from_name(src), pages);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 	char* base_dir = get_clock_dir();
@@ -274,5 +274,5 @@ void multi_unpack(const char* src, const char* dst) {
 	else {
 		seq_unpack_separate("main", dst, base_dir);
 	}
-	//remove_meta_files(base_dir);
+	remove_meta_files(base_dir);
 }
