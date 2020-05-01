@@ -85,15 +85,15 @@ int main()
 
 	printf("\n Packing... %s with length:%d", src, size_org);		
 	 
-	int i = 242;
-   for (int i = 243; i < 254; i++) 
+	int i = 252;
+   for (int i = 252; i < 253; i++) 
 	 {
 
 		int cl = clock();
 
 		printf("\n\n  ------- Pages %d --------- ", i);
 
-		multi_pack(src, packed_name, i);
+		multi_pack(src, packed_name, i, 7);
 		//CanonicalEncode(src, packed_name);
 
 		int pack_time = (clock() - cl);

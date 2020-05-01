@@ -112,9 +112,9 @@ void out_offset(unsigned long offset, unsigned char pages) {
 //--------------------------------------------------------------------------------------------------------
 
 void pack_internal(const char* src, const char* dest_filename, unsigned char pass, 
-				unsigned char offset_pages)
+				unsigned char offset_pages, unsigned char seqlen_pages)
 {
-	unsigned char seqlen_pages = 6;
+
 		unsigned int max_seqlen = (code_occurred ? 257 : 258) - seqlen_pages + seqlen_pages * 256;
 	unsigned long long offset, seq_len,
 		winsize = (offset_pages + (unsigned long long)1) * (unsigned long long)256 + max_seqlen * 2 + 25,
@@ -280,21 +280,21 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	fclose(infil);
 }
 
-void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char pages, bool sep) {
+void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages, bool sep) {
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	separate_files = sep;
-	pack_internal(source_filename, dest_filename, 1, pages);
-	pack_internal(source_filename, dest_filename, 2, pages);
+	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages);
+	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
 }
 
-void seq_pack(const char* source_filename, const char* dest_filename, unsigned char pages)
+void seq_pack(const char* source_filename, const char* dest_filename, unsigned char offset_pages)
 {
-	seq_pack_internal(source_filename, dest_filename, pages, false);
+	seq_pack_internal(source_filename, dest_filename, offset_pages, 0, false);
 }
 
-void seq_pack_separate(const char* source_filename, unsigned char pages, const char* dir) {
+void seq_pack_separate(const char* source_filename, const char* dir, unsigned char offset_pages, unsigned char seqlen_pages) {
 	base_dir = dir;
 	const char* dest_filename = concat(base_dir, "main");
-	seq_pack_internal(source_filename, dest_filename, pages, true);
+	seq_pack_internal(source_filename, dest_filename, offset_pages, seqlen_pages, true);
 }
 

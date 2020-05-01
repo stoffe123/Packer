@@ -186,9 +186,10 @@ void remove_meta_files(const char* base_dir) {
 
 //----------------------------------------------------------------------------------------
 
-void multi_pack(const char* src, const char* dst, unsigned char pages) {
+void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
+	unsigned char seqlen_pages) {
 	printf("\n--------------------------------------------");
-	printf("\nMulti_pack  %s  =>  %s\nsize org: %d   pages: %d", src, dst, get_file_size_from_name(src), pages);
+	printf("\nMulti_pack  %s  =>  %s\nsize org: %d   pages: (%d,%d)", src, dst, get_file_size_from_name(src), offset_pages, seqlen_pages);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 	char* base_dir = get_clock_dir();
@@ -199,7 +200,7 @@ void multi_pack(const char* src, const char* dst, unsigned char pages) {
 		pack_type = setKthBit(pack_type, 5);
 	}
 
-	seq_pack_separate(tmp, pages, base_dir);
+	seq_pack_separate(tmp, base_dir, offset_pages, seqlen_pages);
 	// now we have three meta files to try to pack with seqlen+huffman
 
 	remove(tmp);
