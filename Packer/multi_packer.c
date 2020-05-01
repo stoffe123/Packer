@@ -17,13 +17,8 @@ struct Pack_info {
 	const char* dir;
 };
 
-char* get_rand() {
-	const char* clk = malloc(50);
-	_itoa(clock(), clk, 10);
-	
-	const char* ra = malloc(50);
-	_itoa(filename_count++, ra, 10);
-	return concat(clk, ra);
+char* get_rand() {	
+	return concat(int_to_string(clock()), int_to_string(filename_count++));
 }
 
 char* get_temp_file(char* dir) {

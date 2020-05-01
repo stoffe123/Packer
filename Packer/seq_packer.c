@@ -93,10 +93,9 @@ void out_offset(unsigned long long best_offset, unsigned long long lowest_specia
 				break;
 			}
 		}
-		if (i == offset_pages) {
-			printf("\n\n >>>>>>>> ERROR no offset coding found for offset = %d", best_offset);
-			exit(0);
-		}
+		assert(i < offset_pages, concat(
+			">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset =",
+			int_to_string(best_offset)));
 	}
 }
 //--------------------------------------------------------------------------------------------------------
@@ -270,8 +269,6 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	fclose(infil);
 }
 
-
-
 void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char pages, bool sep) {
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	separate_files = sep;
@@ -286,7 +283,7 @@ void seq_pack(const char* source_filename, const char* dest_filename, unsigned c
 
 void seq_pack_separate(const char* source_filename, unsigned char pages, const char* dir) {
 	base_dir = dir;
-	const char* dest_filename = concat(base_dir, "main");	
+	const char* dest_filename = concat(base_dir, "main");
 	seq_pack_internal(source_filename, dest_filename, pages, true);
 }
 

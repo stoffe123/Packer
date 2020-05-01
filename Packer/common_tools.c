@@ -106,7 +106,11 @@ char* concat(const char* s1, const char* s2) {
 	return strBuf;
 }
 
-
+char* int_to_string(int i) {
+	const char* ra = malloc(100);
+	_itoa(i, ra, 10);
+	return ra;
+}
 
 void make_dir(const char* path) {
 	

@@ -31,5 +31,7 @@ char* concat(const char* s1, const char* s2);
 
 void make_dir(const char* path);
 
+char* int_to_string(int i);
+
 
 #endif
