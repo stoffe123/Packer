@@ -142,6 +142,9 @@ unsigned int find_code_for_pair(unsigned char ch1, unsigned char ch2) {
 }
 
 bool is_code(unsigned char ch) {
+	if (ch == master_code) {
+		return true;
+	}
 	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
 		if (pair_table[i] == ch) {
 			return true;
@@ -216,13 +219,13 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 				}
 				WRITE(utfil, ch1);
 				move_buffer(1);
-			
+
+			}
+			else { // write the code for the pair
+				WRITE(utfil, (unsigned char)code);
+				move_buffer(2);
+			}
 		}
-		else { // write the code for the pair
-			WRITE(utfil, (unsigned char)code);
-			move_buffer(2);
-		}
-	}
 	else { // pass == 1
 
 		long val = ch1 + 256 * ch2; // always low first

@@ -73,7 +73,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -92,10 +92,10 @@ int main()
 
 	//	printf("\n\n  ------- Pages %d --------- ", i);
 
-	   multi_pack(src, packed_name, 252, 6);
+	   //multi_pack(src, packed_name, 252, 6);
 		
-		//multi_pack(src, packed_name, 57, i);
-		//CanonicalEncode(src, packed_name);
+		
+		two_byte_pack(src, packed_name);
 
 		int pack_time = (clock() - cl);
 		//printf("\n Packing finished time it took: %d", pack_time);
@@ -113,8 +113,8 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		multi_unpack(packed_name, dst);
-		//CanonicalDecode(packed_name, dst);
+		two_byte_unpack(packed_name, dst);
+		
 
 		int unpack_time = (clock() - cl);
 		//printf("\n Unpacking finished time it took: %d", unpack_time);
