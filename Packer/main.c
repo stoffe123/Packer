@@ -92,10 +92,10 @@ int main()
 
 	//	printf("\n\n  ------- Pages %d --------- ", i);
 
-	   //multi_pack(src, packed_name, 252, 6);
+	  multi_pack(src, packed_name, 57,0 );
 		
 		
-		two_byte_pack(src, packed_name);
+	//RLE_advanced_pack(src, packed_name);
 
 		int pack_time = (clock() - cl);
 		//printf("\n Packing finished time it took: %d", pack_time);
@@ -113,7 +113,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		two_byte_unpack(packed_name, dst);
+	    multi_unpack(packed_name, dst);
 		
 
 		int unpack_time = (clock() - cl);

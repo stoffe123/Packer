@@ -25,6 +25,7 @@ static void move_buffer(unsigned int steps) {
 		if (buffer_left < buffer_min) {
 			//load new buffer!!			
 			debug("Load new buffer of: %d", buffer_size);
+			printf("*");
 
 			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 			for (unsigned long i = 0; i < (buffer_size - buffer_startpos); i++) {
@@ -49,7 +50,7 @@ unsigned char find_best_code(long* char_freq) {
 		}
 	}//end for
 
-	printf("\n Found code: %d that occured: %d times.", best, value);
+	printf("\n Found code %d that occured %d times.", best, value);
 
 	char_freq[best] = ULONG_MAX; // mark it as used!
 	code_occurred = (value > 0);
@@ -71,8 +72,9 @@ void out_seqlen(unsigned long seqlen, unsigned char pages) {
 	seqlen -= SEQ_LEN_MIN;
 
 	//len = 255 is used for code occurence ... len =254 for next block
-	if (seqlen < lowest_special) {
+	if (seqlen < lowest_special || pages == 0) {
 		write_seqlen(seqlen); 
+		return;
 	}
 	else {
 		unsigned long long i = 0;
@@ -114,17 +116,17 @@ void out_offset(unsigned long offset, unsigned char pages) {
 void pack_internal(const char* src, const char* dest_filename, unsigned char pass, 
 				unsigned char offset_pages, unsigned char seqlen_pages)
 {
-
-		unsigned int max_seqlen = (code_occurred ? 257 : 258) - seqlen_pages + seqlen_pages * 256;
+	printf("\n");
+	unsigned int max_seqlen = (code_occurred ? 257 : 258) - seqlen_pages + seqlen_pages * 256;
 	unsigned long long offset, seq_len,
-		winsize = (offset_pages + (unsigned long long)1) * (unsigned long long)256 + max_seqlen * 2 + 25,
+		winsize = (offset_pages + (unsigned long long)1) * (unsigned long long)256 + max_seqlen + max_seqlen,
 		best_offset = 0, lowest_special_offset = (256 - offset_pages),
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },				
 		longest_offset = lowest_special_offset + ((unsigned long long)256 * offset_pages) - 1;
 
 	unsigned long char_freq[256] = { 0 }, best_seq_len;
 	buffer_startpos = 0;
-	buffer_min = winsize + max_seqlen * 2 + 1024;
+	buffer_min = winsize + max_seqlen + max_seqlen + 2048;
 
 	debug("Seq_packer pass: %d", pass);
 
@@ -289,7 +291,7 @@ void seq_pack_internal(const char* source_filename, const char* dest_filename, u
 
 void seq_pack(const char* source_filename, const char* dest_filename, unsigned char offset_pages)
 {
-	seq_pack_internal(source_filename, dest_filename, offset_pages, 0, false);
+	seq_pack_internal(source_filename, dest_filename, offset_pages, 2, false);
 }
 
 void seq_pack_separate(const char* source_filename, const char* dir, unsigned char offset_pages, unsigned char seqlen_pages) {

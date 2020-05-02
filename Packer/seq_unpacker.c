@@ -139,7 +139,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 			unsigned long long offset, 
 				               seq_len = get_seqlen(code_occurred, seqlen_pages);
 
-			if (cc == code && seq_len == 255 && code_occurred) {
+			if (seq_len == SEQ_LEN_FOR_CODE && code_occurred) {
 				//occurrence of code in original
 				put_buf(code);
 			}

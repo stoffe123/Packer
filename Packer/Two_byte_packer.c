@@ -189,8 +189,7 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 		for (int i = 0; i < pair_table_pos; i++) {
 
 			fwrite(&pair_table[i], 1, 1, utfil);
-		}
-		printf("\n pair_table_pos: %d", pair_table_pos);
+		}		
 	}
 	else {  // pass = 1
 		for (int i = 0; i < 65536; i++) {
