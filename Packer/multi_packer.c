@@ -10,6 +10,7 @@
 //#include "huffman2.h"
 #include "canonical.h"
 
+
 static unsigned long filename_count = 1000;
 
 struct Pack_info {
@@ -82,16 +83,16 @@ void my_rename(const char* f_old, const char* f_new) {
 	rename(f_old, f_new);
 }
 
-bool RLE_advanced_pack_and_test(const char* src, const char* dst) {
+bool RLE_pack_and_test(const char* src, const char* dst) {
 
-	RLE_advanced_pack(src, dst);
+	RLE_simple_pack(src, dst);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(dst);
 
 	double ratio = (double)size_packed / (double)size_org;
-	printf("\n ratio with RLE_advanced:%f", ratio);
+	printf("\n ratio with RLE  %f", ratio);
 
-	bool compression_success = (ratio < 0.93);
+	bool compression_success = (ratio < 0.96);
 	if (!compression_success) {
 		remove(dst);
 		copy_file(src, dst);
@@ -105,7 +106,7 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 	CanonicalEncode(src, tmp);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
-	printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
+	//printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
 	bool compression_success = (size_packed < size_org);
 	if (compression_success) {
 		remove(src);
@@ -120,11 +121,11 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 bool SeqPackAndTest(const char* dir, const char* src) {
 	src = concat(dir, src);
 	char* tmp = get_temp_file(dir);
-	seq_pack(src, tmp, 100);
+	seq_pack(src, tmp, 100, 10);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
 	double ratio = (double)size_packed / (double)size_org;
-	printf("\n SeqPacked:%s  got ratio: %f", src, ratio);
+	//printf("\n SeqPacked:%s  got ratio: %f", src, ratio);
 	bool compression_success = (ratio < 0.89);
 	if (compression_success) {
 		remove(src);
@@ -144,7 +145,7 @@ bool TwoBytePackAndTest(const char* dir, const char* src) {
 	int size_packed = get_file_size_from_name(tmp);
 	double ratio = (double)size_packed / (double)size_org;
 	printf("\n Two byte packed %s  got ratio  %f", src, ratio);
-	bool compression_success = (ratio < 0.1); // 0.89);
+	bool compression_success = (ratio < 0.80); // 0.89);
 	if (compression_success) {
 		remove(src);
 		rename(tmp, src);
@@ -172,6 +173,7 @@ bool MultiPackAndTest(const char* dir, const char* src) {
 
 void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
+	//printf("\n Canonical unpacking (in place) %s", src);
 	const char* tmp = get_temp_file(dir);
 	CanonicalDecode(src, tmp);
 	remove(src);
@@ -181,6 +183,7 @@ void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 
 void SeqUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
+	//printf("\n Seq unpacking (in place) %s", src);
 	const char* tmp = get_temp_file(dir);
 	seq_unpack(src, tmp);
 	remove(src);
@@ -223,12 +226,13 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	char* base_dir = get_clock_dir();
 	char* tmp = get_temp_file(base_dir);
 
-	bool got_smaller = RLE_advanced_pack_and_test(src, tmp);
+	bool got_smaller = RLE_pack_and_test(src, tmp);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 5);
 	}
 
-	got_smaller = TwoBytePackAndTest(base_dir, tmp);
+	//got_smaller = TwoBytePackAndTest(base_dir, tmp);
+	got_smaller = false;
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 6);
 	}
@@ -301,19 +305,21 @@ void multi_unpack(const char* src, const char* dst) {
 	}
 	if (isKthBitSet(pack_type, 5)) { //RLE unpack
 		char* seq_dst = get_temp_file(base_dir);
+		printf("\n SEQ unpack separate of %smain", base_dir);
 		seq_unpack_separate("main", seq_dst, base_dir);
 
 		if (isKthBitSet(pack_type, 6)) {
 			TwoByteUnpackAndReplace(base_dir, seq_dst);
 		}
 
-		RLE_advanced_unpack(seq_dst, dst);
+		RLE_simple_unpack(seq_dst, dst);
 		remove(seq_dst);
 	}
 	else {
 		if (isKthBitSet(pack_type, 6)) {
 			TwoByteUnpackAndReplace(base_dir, concat(base_dir, "main"));
 		}
+		printf("\n SEQ unpack separate of %smain", base_dir);
 		seq_unpack_separate("main", dst, base_dir);
 	}
 	remove_meta_files(base_dir);

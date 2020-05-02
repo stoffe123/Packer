@@ -61,8 +61,13 @@ static unsigned char find_best_code() {
 
 
 
-void write_runlength(unsigned long long c) {
-	fwrite(&c, 1, 1, runlengths_file);
+void write_runlength(unsigned char c) {
+	if (separate) {
+		fwrite(&c, 1, 1, runlengths_file);
+	}
+	else {
+		WRITE(utfil, c);
+	}
 }
 
 void inc_char_freq(unsigned char c) {
@@ -79,7 +84,9 @@ void inc_char_freq(unsigned char c) {
 void RLE_pack_internal(const char* src, const char* dest, int pass) {
 
 	printf("\nRLE_simple_pack pass=%d" , pass);
-	runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
+	if (separate) {
+		runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
+	}
 	unsigned long long offset, max_seq_len = (code_occurred ? 257 : 258),				
 		min_seq_len = 3;
 
@@ -167,7 +174,9 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 	}
 	else {
 		fclose(utfil);
-		fclose(runlengths_file);
+		if (separate) {
+			fclose(runlengths_file);
+		}
 	}
 	fclose(infil);
 }

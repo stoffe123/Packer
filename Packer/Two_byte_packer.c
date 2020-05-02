@@ -113,7 +113,7 @@ void create_two_byte_table() {
 	do {
 		struct value_freq two_byte = find_best_two_byte();
 		struct value_freq code = find_best_code();
-		found_code = (code.freq + 102 < two_byte.freq);
+		found_code = (code.freq + 100 < two_byte.freq);
 		if (found_code) {
 			//worthwile
 			add_to_two_byte_table(code.value);

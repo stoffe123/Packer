@@ -12,27 +12,31 @@
 //global variables used in compressor
 static FILE* infil, * utfil, * seq_lens_file, * offsets_file;
 static unsigned char code;
-static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536 * 2;
+unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size;
+
 static unsigned char* buffer;
 static bool code_occurred = false;
 static const char* base_dir = "c:/test/";
 static bool separate_files = false;
+static unsigned char* new_buf;
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
+	assert(buffer_startpos <= buffer_endpos, "buffer_startpos <= buffer_endpos in seq_packer.move_buffer");
 	if (buffer_endpos == buffer_size) {
 		unsigned long long buffer_left = buffer_size - buffer_startpos;
 		if (buffer_left < buffer_min) {
-			//load new buffer!!			
-			debug("Load new buffer of: %d", buffer_size);
+			//load new buffer!!
 			printf("*");
+			//printf("\nLoad new buffer, buffer size: %d buffer_left %d  buffer_min %d", buffer_size, buffer_left, buffer_min);
+			
 
-			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
+			new_buf = (unsigned char*)malloc(buffer_size);
 			for (unsigned long i = 0; i < (buffer_size - buffer_startpos); i++) {
 				new_buf[i] = buffer[i + buffer_startpos];
 			}
-			unsigned long long res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
-			buffer_endpos = res + (buffer_size - buffer_startpos);
+			unsigned long long bytes_read = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
+			buffer_endpos = bytes_read + (buffer_size - buffer_startpos);
 			free(buffer);
 			buffer = new_buf;
 			buffer_startpos = 0;
@@ -67,7 +71,8 @@ void write_offset(unsigned long long c) {
 }
 
 void out_seqlen(unsigned long seqlen, unsigned char pages) {
-    unsigned int lowest_special = (code_occurred ? 255 : 256) - pages;
+	unsigned int last_byte = (code_occurred ? 254 : 255);
+    unsigned int lowest_special = last_byte + 1 - pages;
 	assert(seqlen >= SEQ_LEN_MIN, "best_seq_len >= SEQ_LEN_MIN in seq_packer.out_seqlen");
 	seqlen -= SEQ_LEN_MIN;
 
@@ -77,36 +82,37 @@ void out_seqlen(unsigned long seqlen, unsigned char pages) {
 		return;
 	}
 	else {
-		unsigned long long i = 0;
-		for (; i < pages; i++) {
-			if (seqlen < (lowest_special + ((unsigned long long)256 * (i + 1)))) {
-				write_seqlen(seqlen - (lowest_special + ((unsigned long long)256 * i)));
-				write_seqlen((unsigned long long)(code_occurred ? 254 : 255) - i);
+		unsigned long page = 0;
+		for (; page < pages; page++) {
+			if (seqlen < (lowest_special + (256 * (page + 1)))) {
+				write_seqlen(seqlen - (lowest_special + (256 * page)));
+				write_seqlen(last_byte - page);
 				break;
 			}
 		}
-		assert(i < pages, concat(
+		assert(page < pages, concat(
 			">>>>>>>> ERROR in seq_packer.out_seqlen: no seqlen coding found for seqlen:",
 			int_to_string(seqlen)));
 	}
 }
 
 void out_offset(unsigned long offset, unsigned char pages) {
-	unsigned int lowest_special = 256 - pages;
+	unsigned int last_byte = 255;
+	unsigned int lowest_special = last_byte + 1 - pages;
 	if (offset < lowest_special) {
 		write_offset(offset);
 	}
 	else {
-		long i = 0;
-		for (; i < pages; i++) {
+		unsigned long page = 0;
+		for (; page < pages; page++) {
 
-			if (offset < (lowest_special + ((unsigned long)256 * (i + 1)))) {
-				write_offset(offset - (lowest_special + ((unsigned long long)256 * i)));
-				write_offset((unsigned long long)255 - i);
+			if (offset < (lowest_special + (256 * (page + 1)))) {
+				write_offset(offset - (lowest_special + (256 * page)));
+				write_offset(last_byte - page);
 				break;
 			}
 		}
-		assert(i < pages, concat(
+		assert(page < pages, concat(
 			">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset:",
 			int_to_string(offset)));
 	}
@@ -116,7 +122,7 @@ void out_offset(unsigned long offset, unsigned char pages) {
 void pack_internal(const char* src, const char* dest_filename, unsigned char pass, 
 				unsigned char offset_pages, unsigned char seqlen_pages)
 {
-	printf("\n");
+	
 	unsigned int max_seqlen = (code_occurred ? 257 : 258) - seqlen_pages + seqlen_pages * 256;
 	unsigned long long offset, seq_len,
 		winsize = (offset_pages + (unsigned long long)1) * (unsigned long long)256 + max_seqlen + max_seqlen,
@@ -124,10 +130,10 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },				
 		longest_offset = lowest_special_offset + ((unsigned long long)256 * offset_pages) - 1;
 
-	unsigned long char_freq[256] = { 0 }, best_seq_len;
+	unsigned long char_freq[256] = { 0 }, best_seqlen;
 	buffer_startpos = 0;
-	buffer_min = winsize + max_seqlen + max_seqlen + 2048;
-
+	buffer_min = winsize + max_seqlen + max_seqlen + 16384;
+	debug("\n buffer_min %d\n", buffer_min);
 	debug("Seq_packer pass: %d", pass);
 
 	infil = fopen(src, "rb");
@@ -139,10 +145,14 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	unsigned long total_size = get_file_size(infil);
 
 	if (pass == 2) {
-		debug("Winsize: %d", winsize);
-		debug("offset_pages: %d", offset_pages);
-		debug("seqlen_pages: %d", seqlen_pages);
-		debug("max_seqlen: %d", max_seqlen);
+		/*
+		printf("\nWinsize: %d", winsize);
+		printf("\noffset_pages: %d", offset_pages);
+		printf("\nseqlen_pages: %d", seqlen_pages);
+		printf("\nmax_seqlen: %d", max_seqlen);
+		printf("\nbuffer_min: %d", buffer_min);
+		printf("\ncode_occurred: %d", code_occurred);
+	*/
 
 		if (separate_files) {
 			seq_lens_file = fopen(concat(base_dir, "seqlens"), "wb");
@@ -155,6 +165,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 
+	printf("\n");
 	/* start compression */
 
 	buffer_endpos = fread(buffer, 1, buffer_size, infil);
@@ -163,23 +174,24 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	while (buffer_startpos < buffer_endpos) {
 
-		best_seq_len = 2;
+		best_seqlen = 2;
 
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_startpos) >= min_seq_len * 2) {
 				if (buffer_endpos - (buffer_startpos + winsize) >= min_seq_len * 2) {
-					offset_max = buffer_endpos - buffer_startpos - min_seq_len * 2;
+					//offset_max = buffer_endpos - buffer_startpos - min_seq_len * 2;
 				}
-				else {
+				//else {
 					offset_max = winsize;
-				}
-
+				//}
+				//printf("\noffset max %d\n", offset_max);
 				for (offset = 3; offset < offset_max; offset++)
 				{
 					// find matching sequence				
 					//if (buffer_startpos + offset + min_seq_len * 2 > buffer_endpos) {
 					//	break;
 					//}
+
 					if (buffer[buffer_startpos] != buffer[buffer_startpos + offset]) {
 						continue;
 					}
@@ -191,27 +203,28 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					}
 					seq_len = 3;
 
-					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] &&
-						buffer_startpos + offset + seq_len < buffer_endpos &&
-						seq_len < max_seqlen && seq_len < offset)
+					while (buffer[buffer_startpos + seq_len] == buffer[buffer_startpos + offset + seq_len] && seq_len < offset
+						&& buffer_startpos + offset + seq_len < buffer_endpos - 1 &&
+						seq_len < max_seqlen)
 					{
 						seq_len++;
 					}
 					//check if better than the best!
 
-					if (seq_len > best_seq_len && (offset - seq_len) <= longest_offset) {
-						best_seq_len = seq_len;
+					if (seq_len > best_seqlen && (offset - seq_len) <= longest_offset) {
+						best_seqlen = seq_len;
 						best_offset = offset - seq_len;
-						if (best_seq_len == max_seqlen) {
+						if (best_seqlen == max_seqlen) {
 							break;
 						}
+						assert(best_seqlen <= max_seqlen, "best_seq_len <= max_seqlen i seq_packer.pack_internal"); 
 					}
 				}
 			}
 		}
 		/* now we found the longest sequence in the window! */
 
-		if (best_seq_len <= 2 || (best_offset >= lowest_special_offset && best_seq_len <= 3))
+		if (best_seqlen <= 2 || (best_offset >= lowest_special_offset && best_seqlen <= 3))
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
 				if (char_freq[buffer[buffer_startpos]] < ULONG_MAX) {
@@ -219,10 +232,10 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				}
 			}
 			else {
-				// occurence of code in original is handled by {code, 0} pair
+				// occurence of code in original is handled by {code, 255} pair
 				if (buffer[buffer_startpos] == code) {
 
-					//debug("Found code at buffer_startpos=%d", buffer_startpos);
+					debug("Found code at buffer_startpos=%d", buffer_startpos);
 
 					write_seqlen(SEQ_LEN_FOR_CODE);
 					WRITE(utfil, code);
@@ -240,14 +253,17 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 			if (pass == 1) {
 				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
-				seq_lens[best_seq_len]++;
-			} else if (pass == 2) {  // write triplet!
+				seq_lens[best_seqlen]++;
+			} else if (pass == 2) {  // Write triplet!
 		
 				out_offset(best_offset, offset_pages);
-				out_seqlen(best_seq_len, seqlen_pages);
+				out_seqlen(best_seqlen, seqlen_pages);
+				//if (best_seqlen > 230) {
+					//printf("\nseqlen %d  offst %d", best_seqlen, best_offset);
+				//}
 				WRITE(utfil, code);  /* note file is read backwards during unpack! */
 			}
-			move_buffer(best_seq_len);
+			move_buffer(best_seqlen);
 		}//end if
 	}//end while
 
@@ -283,15 +299,16 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 }
 
 void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages, bool sep) {
+	buffer_size = 65536*4;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	separate_files = sep;
 	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages);
 	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
 }
 
-void seq_pack(const char* source_filename, const char* dest_filename, unsigned char offset_pages)
+void seq_pack(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages)
 {
-	seq_pack_internal(source_filename, dest_filename, offset_pages, 2, false);
+	seq_pack_internal(source_filename, dest_filename, offset_pages, seqlen_pages, false);
 }
 
 void seq_pack_separate(const char* source_filename, const char* dir, unsigned char offset_pages, unsigned char seqlen_pages) {

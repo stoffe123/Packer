@@ -52,9 +52,9 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	while (!feof(f1) && !feof(f2)) {
 		fread(&tmp1, 1, 1, f1);
 		fread(&tmp2, 1, 1, f2);
-		
+
 		if (tmp1 != tmp2) {
-	
+
 			printf("\n Contents differ at position  %d ", count);
 			printf("\n File1:");
 			printf("%c", tmp1);
@@ -72,66 +72,96 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 }
 
 int main()
-{	
-	const char* src = "C:/test/tob.pdf"; const char* dst = "C:/test/unp";
-
-	const char* packed_name = "c:/test/packed.bin";
+{
+	char filenames[12][100] = { "book.txt",
+		 "book_med.txt",
+			"amb.dll",
+		 "rel.pdf",
 	
-	unsigned long int best_size = ULONG_MAX;
-	unsigned char best_page = 0;
-
-	long long size_org = get_file_size_from_name(src);
-
-	printf("\n Packing... %s with length:%d", src, size_org);		
-	 
-	int i = 0;
-   //for (int i = 4; i < 162; i++) 
-	 {
-
-		int cl = clock();
-
-	//	printf("\n\n  ------- Pages %d --------- ", i);
-
-	  multi_pack(src, packed_name, 57,0 );
+		"nex.doc",
+		
+						 "bad.cdg",
+						 "bad.mp3",
+						 "did.csh",
+						
+						
+						 "book_long.txt",
 		
 		
-	//RLE_advanced_pack(src, packed_name);
+		 "pazera.exe",
+		 "tob.pdf",
+		"voc.wav"
+	};
+	unsigned long acc_size = 0;
+	for (int kk = 0; kk < 12; kk++) 
+	{
+		const char* src = concat("C:/test/", filenames[kk]);
+		const char* dst = "C:/test/unp";
 
-		int pack_time = (clock() - cl);
-		//printf("\n Packing finished time it took: %d", pack_time);
-		long long size_packed = get_file_size_from_name(packed_name);
-		
-		printf("\nLength of packed: %d", size_packed);
-		printf("  (%f)", (double)size_packed / (double)size_org);
+		const char* packed_name = "c:/test/packed.bin";
+
+		unsigned long int best_size = ULONG_MAX;
+		unsigned char best_page = 0;
+
+		long long size_org = get_file_size_from_name(src);
+
+		printf("\n Packing... %s with length:%d", src, size_org);
+
+		//int i = 0;
+		//for (int i = 4; i < 162; i++) 
+		{
+
+			int cl = clock();
+
+			//	printf("\n\n  ------- Pages %d --------- ", i);
+
+			seq_pack(src, packed_name, 50, 20);
 
 
-		if (size_packed < best_size) {
-			best_size = size_packed;
-			best_page = i;
-			printf("\n BEST! ");
+			//RLE_advanced_pack(src, packed_name);
+
+			int pack_time = (clock() - cl);
+			//printf("\n Packing finished time it took: %d", pack_time);
+			long long size_packed = get_file_size_from_name(packed_name);
+
+			printf("\nLength of packed: %d", size_packed);
+			printf("  (%f)", (double)size_packed / (double)size_org);
+
+			acc_size += (size_packed / 1024);
+
+			printf("\n Accumulated size kb %d", acc_size);
+
+			/*
+			if (size_packed < best_size) {
+				best_size = size_packed;
+				best_page = i;
+				printf("\n BEST! ");
+			}
+			*/
+			//printf("\n\n unpacking... packed.bin");
+			cl = clock();
+
+			seq_unpack(packed_name, dst);
+
+
+			int unpack_time = (clock() - cl);
+			//printf("\n Unpacking finished time it took: %d", unpack_time);
+			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+
+
+			//printf("\n\n Comparing files!");
+			if (files_equal(src, dst)) {
+				printf("\n ***** SUCCESS ***** (files equal)\n");
+			}
+			else {
+				printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
+				return 1;
+			}
 		}
-		//printf("\n\n unpacking... packed.bin");
-		cl = clock();
-
-	    multi_unpack(packed_name, dst);
+		//printf("\n Best page=%d, size=%d", best_page, best_size);
 		
-
-		int unpack_time = (clock() - cl);
-		//printf("\n Unpacking finished time it took: %d", unpack_time);
-		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-
-
-		//printf("\n\n Comparing files!");
-		if (files_equal(src, dst)) {
-			printf("\n ***** SUCCESS ***** (files equal)\n");
-		}
-		else {
-			printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
-			return 1;
-		}
 	}
-	printf("\n Best page=%d, size=%d", best_page, best_size);
-	return 0;
+	printf("\n **** TOTAL Accumulated size kb %d", acc_size);
 }
 
 

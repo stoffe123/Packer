@@ -24,7 +24,14 @@ static void put_buf(unsigned char cc) {
 }
 
 static unsigned char read_runlength() {
-	return fgetc(runlengths_file);
+	if (separate) {
+		return fgetc(runlengths_file);
+	}
+	else {
+		char c;
+		fread(&c, 1, 1, infil);
+		return c;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -32,7 +39,9 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 {
 	unsigned char code_occurred = 1;
 
-	runlengths_file = fopen(concat(base_dir, "runlengths"), "rb");
+	if (separate) {
+		runlengths_file = fopen(concat(base_dir, "runlengths"), "rb");	
+	}
 
 	//printf("\n\n Unpacking %s", source_filename);
 	unsigned long i;
@@ -80,7 +89,9 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 	}
 	fclose(infil);
 	fclose(utfil);
-	fclose(runlengths_file);
+	if (separate) {
+		fclose(runlengths_file);
+	}
 }
 
 void RLE_simple_unpack(const char* src, const char* dest, const char* bd) {
