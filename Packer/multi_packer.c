@@ -59,7 +59,7 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
 
 	fwrite(&pack_type, 1, 1, out_file);
-	assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
+	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 	const char* seqlens_filename = concat(base_dir, "seqlens");
 	uint64_t size_seqlens = get_file_size_from_name(seqlens_filename);
 	assert(size_seqlens > 0, concat("size_seqlens > 0 in multipacker.tar dst=", dst));
@@ -136,6 +136,25 @@ bool SeqPackAndTest(const char* dir, const char* src) {
 	return compression_success;
 }
 
+bool TwoBytePackAndTest(const char* dir, const char* src) {
+	
+	char* tmp = get_temp_file(dir);
+	two_byte_pack(src, tmp, 100);
+	int size_org = get_file_size_from_name(src);
+	int size_packed = get_file_size_from_name(tmp);
+	double ratio = (double)size_packed / (double)size_org;
+	printf("\n Two byte packed %s  got ratio  %f", src, ratio);
+	bool compression_success = (ratio < 0.89);
+	if (compression_success) {
+		remove(src);
+		rename(tmp, src);
+	}
+	else {
+		remove(tmp);
+	}
+	return compression_success;
+}
+
 bool MultiPackAndTest(const char* dir, const char* src) {
 	src = concat(dir, src);
 	char* tmp = get_temp_file(dir);
@@ -164,6 +183,15 @@ void SeqUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
 	const char* tmp = get_temp_file(dir);
 	seq_unpack(src, tmp);
+	remove(src);
+	rename(tmp, src);
+	remove(tmp);
+}
+
+void TwoByteUnpackAndReplace(const char* dir, const char* src) {
+
+	const char* tmp = get_temp_file(dir);
+	two_byte_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
 	remove(tmp);
@@ -198,6 +226,11 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	bool got_smaller = RLE_advanced_pack_and_test(src, tmp);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 5);
+	}
+
+	got_smaller = TwoBytePackAndTest(base_dir, tmp);
+	if (got_smaller) {
+		pack_type = setKthBit(pack_type, 6);
 	}
 
 	seq_pack_separate(tmp, base_dir, offset_pages, seqlen_pages);
@@ -269,10 +302,18 @@ void multi_unpack(const char* src, const char* dst) {
 	if (isKthBitSet(pack_type, 5)) { //RLE unpack
 		char* seq_dst = get_temp_file(base_dir);
 		seq_unpack_separate("main", seq_dst, base_dir);
+
+		if (isKthBitSet(pack_type, 6)) {
+			TwoByteUnpackAndReplace(base_dir, seq_dst);
+		}
+
 		RLE_advanced_unpack(seq_dst, dst);
 		remove(seq_dst);
 	}
 	else {
+		if (isKthBitSet(pack_type, 6)) {
+			TwoByteUnpackAndReplace(base_dir, concat(base_dir, "main"));
+		}
 		seq_unpack_separate("main", dst, base_dir);
 	}
 	remove_meta_files(base_dir);

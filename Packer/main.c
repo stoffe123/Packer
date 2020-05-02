@@ -41,27 +41,30 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	long f2_size = get_file_size(f2);
 	int res = 1;
 	if (f1_size != f2_size) {
-		printf("\n File lengths differ! %d, %d", f1_size, f2_size);
+		printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
+		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
 		res = 0;
 	}
-	unsigned char tmp1[CMP_N], tmp2[CMP_N];
+	unsigned char tmp1, tmp2;
 
 	size_t bytes = 0;
 	int count = 0;
 	while (!feof(f1) && !feof(f2)) {
-		fread(tmp1, sizeof * tmp1, CMP_N, f1);
-		fread(tmp2, sizeof * tmp2, CMP_N, f2);
-		count += CMP_N;
-		if (memcmp(tmp1, tmp2, CMP_N)) {
-			printf("\n File contents differ at position %d :", count);
+		fread(&tmp1, 1, 1, f1);
+		fread(&tmp2, 1, 1, f2);
+		
+		if (tmp1 != tmp2) {
+	
+			printf("\n Contents differ at position  %d ", count);
 			printf("\n File1:");
-			printf(tmp1);
+			printf("%c", tmp1);
 			//print_string_rep(tmp1);
 			printf("\n File2:");
 			//print_string_rep(tmp2);
-			printf(tmp2);
+			printf("%c", tmp2);
 			return 0;
 		}
+		count++;
 	}
 	fclose(f1);
 	fclose(f2);
@@ -70,7 +73,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {	
-	const char* src = "C:/test/book_med.txt"; const char* dst = "C:/test/unp";
+	const char* src = "C:/test/book_long.txt"; const char* dst = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 	
@@ -89,7 +92,7 @@ int main()
 
 	//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		two_byte_pack(src, packed_name);
+	   multi_pack(src, packed_name, 252, 6);
 		
 		//multi_pack(src, packed_name, 57, i);
 		//CanonicalEncode(src, packed_name);
@@ -110,7 +113,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		two_byte_unpack(packed_name, dst);
+		multi_unpack(packed_name, dst);
 		//CanonicalDecode(packed_name, dst);
 
 		int unpack_time = (clock() - cl);

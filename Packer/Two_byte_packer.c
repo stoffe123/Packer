@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "seq_packer.h"
 #include "seq_packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
+#define START_CODES_SIZE 2
 
 /* RLE simple packer */
 
@@ -20,8 +22,8 @@ static unsigned long long char_freq[256] = { 0 };
 static const char* base_dir;
 static bool separate;
 static long two_byte_freq_table[65536] = { 0 };
-static unsigned char* two_byte_table[2048] = { 0 };
-static unsigned int two_byte_table_pos;
+static uint8_t pair_table[2048] = { 0xee }, master_code;
+static unsigned int pair_table_pos;
 
 static struct value_freq {
 	unsigned long value;
@@ -80,8 +82,7 @@ static void inc_char_freq(unsigned char c) {
 }
 
 void add_to_two_byte_table(unsigned int c) {
-	two_byte_table_pos++;
-	two_byte_table[two_byte_table_pos] = (unsigned char)c;
+	pair_table[pair_table_pos++] = (unsigned char)c;
 	//printf("%d,", c);
 }
 
@@ -103,37 +104,50 @@ struct value_freq find_best_two_byte() {
 }
 
 void create_two_byte_table() {
-	printf("\n creating two_byte_table \n");
+	//printf("\n creating two_byte_table \n");
+	struct value_freq master = find_best_code();
+	master_code = master.value;
+
 	bool found_code = false;
-	two_byte_table_pos = 0;
+	pair_table_pos = START_CODES_SIZE;
 	do {
 		struct value_freq two_byte = find_best_two_byte();
 		struct value_freq code = find_best_code();
-		found_code = (code.freq + 10 < two_byte.freq);
+		found_code = (code.freq + 102 < two_byte.freq);
 		if (found_code) {
 			//worthwile
 			add_to_two_byte_table(code.value);
 			add_to_two_byte_table(two_byte.value % 256);
 			add_to_two_byte_table(two_byte.value / 256);
-			printf("\n addint two byte '%c%c' with freq:%d", two_byte.value % 256, two_byte.value / 256, two_byte.freq);
+			//printf("\n code %d for '%c%c' with freq:(%d,%d)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
 		}
 	} while (found_code);
-	two_byte_table_pos++;
-	assert(two_byte_table_pos > 0, "two_byte_table_pos = 0 !!!");
-	two_byte_table[0] = (two_byte_table_pos -1) / 3;
-	printf("\nCreated two_byte table size: %d", two_byte_table_pos);
+
+	assert(pair_table_pos > 0, "two_byte_table_pos = 0 !!!");
+	pair_table[0] = (uint8_t)((pair_table_pos - START_CODES_SIZE) / 3);
+	pair_table[1] = master_code;
+	printf("\nCreated two_byte table size: %d", pair_table_pos);
 }
 
 unsigned int find_code_for_pair(unsigned char ch1, unsigned char ch2) {
 	unsigned int val = ch1 + 256 * ch2;
-	for (int i = 1; i < two_byte_table_pos; i += 3) {
-		unsigned int table_val = two_byte_table[i + 1] + 
-			(unsigned char)two_byte_table[i + 2] * (unsigned char)256;
+	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
+		unsigned int table_val = pair_table[i + 1] +
+			256 * pair_table[i + 2];
 		if (table_val == val) {
-			return two_byte_table[i];
+			return pair_table[i];
 		}
 	}
 	return 256;
+}
+
+bool is_code(unsigned char ch) {
+	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
+		if (pair_table[i] == ch) {
+			return true;
+		}
+	}
+	return false;
 }
 
 
@@ -167,12 +181,13 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 			puts("Hittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
-	
-		//write the metadata table
-		for (int i = 0; i < two_byte_table_pos; i++) {
 
-			fwrite(&two_byte_table[i], 1, 1, utfil);
+		//write the metadata table
+		for (int i = 0; i < pair_table_pos; i++) {
+
+			fwrite(&pair_table[i], 1, 1, utfil);
 		}
+		printf("\n pair_table_pos: %d", pair_table_pos);
 	}
 	else {  // pass = 1
 		for (int i = 0; i < 65536; i++) {
@@ -196,35 +211,39 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 			unsigned int code = find_code_for_pair(ch1, ch2);
 			if (code == 256) {
 				// not found
+				if (is_code(ch1)) {
+					WRITE(utfil, master_code);
+				}
 				WRITE(utfil, ch1);
 				move_buffer(1);
-			}
-			else { // write the code for the pair
-				WRITE(utfil, (unsigned char)code);
-				move_buffer(2);
-			}
+			
 		}
-		else { // pass == 1
-
-			long val = ch1 + 256 * ch2; // always low first
-			if (two_byte_freq_table[val] < LONG_MAX) {
-				two_byte_freq_table[val]++;
-			}
-			inc_char_freq(ch1);
-			move_buffer(1);
+		else { // write the code for the pair
+			WRITE(utfil, (unsigned char)code);
+			move_buffer(2);
 		}
-	}//end while
-
-
-	if (pass == 1) {
-
-		create_two_byte_table();
 	}
-	else {
-		fclose(utfil);
+	else { // pass == 1
 
+		long val = ch1 + 256 * ch2; // always low first
+		if (two_byte_freq_table[val] < LONG_MAX) {
+			two_byte_freq_table[val]++;
+		}
+		inc_char_freq(ch1);
+		move_buffer(1);
 	}
-	fclose(infil);
+}//end while
+
+
+if (pass == 1) {
+
+	create_two_byte_table();
+}
+else {
+	fclose(utfil);
+
+}
+fclose(infil);
 }
 
 

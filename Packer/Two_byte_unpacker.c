@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "seq_packer.h"
 #include "seq_packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
+#define START_CODES_SIZE 2
 
 /* RLE simple packer */
 
@@ -20,19 +22,14 @@ static unsigned long long char_freq[256] = { 0 };
 static const char* base_dir;
 static bool separate;
 static long two_byte_freq_table[65536] = { 0 };
-static unsigned char* two_byte_table[2048] = { 0 };
-static unsigned int two_byte_table_pos = 0;
-
-
-
-
-
+static unsigned char two_byte_table[2048], master_code;
+static unsigned int two_byte_table_pos;
 
 
 int get_two_byte_for_code(unsigned char code) {
-	for (int i = 1; i < two_byte_table_pos; i += 3) {
+	for (int i = START_CODES_SIZE; i < two_byte_table_pos; i += 3) {
 		if (code == two_byte_table[i]) {
-			return two_byte_table[i + 1] + (unsigned char)256 * (unsigned char)two_byte_table[i + 2];
+			return two_byte_table[i + 1] + 256 * two_byte_table[i + 2];
 	
 		}
 	}
@@ -61,19 +58,28 @@ void two_byte_unpack_internal(const char* src, const char* dest) {
 		exit(1);
 	}
 	fread(&two_byte_table_pos, 1, 1, infil);
+	fread(&master_code, 1, 1, infil);
 	two_byte_table_pos *= 3;
-	two_byte_table_pos++;
-	fread(&two_byte_table[1], 1, two_byte_table_pos - 1, infil);
+	
+	fread(&two_byte_table[START_CODES_SIZE], 1, (size_t)two_byte_table_pos, infil);
+	two_byte_table_pos += START_CODES_SIZE;
+
 	unsigned char cc;
 	while (fread(&cc, 1, 1, infil) == 1) {
 
-		int two_byte = get_two_byte_for_code(cc);
-		if (two_byte == -1) {
+		if (cc == master_code) {
+			fread(&cc, 1, 1, infil);
 			WRITE(utfil, cc);
 		}
 		else {
-			WRITE(utfil, two_byte % 256);
-			WRITE(utfil, two_byte / 256);
+			int two_byte = get_two_byte_for_code(cc);
+			if (two_byte == -1) {
+				WRITE(utfil, cc);
+			}
+			else {
+				WRITE(utfil, two_byte % 256);
+				WRITE(utfil, two_byte / 256);
+			}
 		}
 	}
 	fclose(utfil);
