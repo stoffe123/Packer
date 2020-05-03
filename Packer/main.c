@@ -73,8 +73,8 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {
-	char filenames[16][100] = { "empty.txt",  "did.csh", "onechar.txt", "oneseq.txt",
-		"repeatchar.txt", "book_med.txt","book.txt",
+	char filenames[16][100] = { "did.csh", "repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt",
+		 "book_med.txt","book.txt",
 			
 		  	 "amb.dll",
 			 "rel.pdf",
@@ -129,7 +129,7 @@ int main()
 
 			acc_size += size_packed;
 
-			printf("\n Accumulated size (bytes) %d", acc_size);
+			printf("\n Accumulated size %d kb", acc_size / 1024);
 
 			/*
 			if (size_packed < best_size) {
@@ -154,7 +154,6 @@ int main()
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
 			else {
-				printf("\n >>>>>>>>>>>>>>> !!! FILES NOT EQUAL !!!! <<<<<<<<<<<<<<<<<<");
 				return 1;
 			}
 		}
