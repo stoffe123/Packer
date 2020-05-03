@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "seq_packer.h"
 #include "seq_packer_commons.h"
 #define VERBOSE false
@@ -298,9 +299,28 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	fclose(infil);
 }
 
+unsigned char check_pages(pages, size) {
+	unsigned char new_pages = 255;
+	if ((uint64_t)256 + pages * (uint64_t)256 > size) {
+		new_pages = size / 256 + 1;
+		if (new_pages > 0) {
+			new_pages--;
+		}
+	}
+	if (new_pages < pages) {
+		pages = new_pages;
+	}
+	return pages;
+}
+
 void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages, bool sep) {
 	buffer_size = 65536*4;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
+	long long source_size = get_file_size_from_name(source_filename);
+	printf("\nPages (%d,%d)", offset_pages, seqlen_pages);
+	offset_pages = check_pages(offset_pages, source_size);
+	seqlen_pages = check_pages(seqlen_pages, source_size);
+	printf("=> (%d,%d)", offset_pages, seqlen_pages);
 	separate_files = sep;
 	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages);
 	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);

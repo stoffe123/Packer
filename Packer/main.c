@@ -73,14 +73,15 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {
-	char filenames[16][100] = { "empty.txt", "onechar.txt", "oneseq.txt", "repeatchar.txt", "book_med.txt","book.txt",
+	char filenames[16][100] = { "empty.txt",  "did.csh", "onechar.txt", "oneseq.txt",
+		"repeatchar.txt", "book_med.txt","book.txt",
 			
 		  	 "amb.dll",
 			 "rel.pdf",
 			 "nex.doc",	
 			 "bad.cdg",
 			 "bad.mp3",
-			 "did.csh",
+			
 			 "book_long.txt",
 		     "pazera.exe",
 		     "tob.pdf",
@@ -150,10 +151,10 @@ int main()
 
 			//printf("\n\n Comparing files!");
 			if (files_equal(src, dst)) {
-				printf("\n ***** SUCCESS ***** (files equal)\n");
+				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
 			else {
-				printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
+				printf("\n >>>>>>>>>>>>>>> !!! FILES NOT EQUAL !!!! <<<<<<<<<<<<<<<<<<");
 				return 1;
 			}
 		}
@@ -161,7 +162,7 @@ int main()
 		
 	}
 	long total_time = clock() - before_suite;
-	printf("\n\n **** ALL SUCCEEDED **** TOTAL Accumulated size kb %d  (%d) ************", acc_size / 1024, acc_size);
+	printf("\n\n **** ALL SUCCEEDED **** Accumulated size %d kb (%d) ************", acc_size / 1024, acc_size);
 	printf("\n\n Total time %d seconds     (%d)", total_time / 1000, total_time);
 }
 

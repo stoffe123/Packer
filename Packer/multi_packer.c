@@ -63,12 +63,12 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 	const char* seqlens_filename = concat(base_dir, "seqlens");
 	uint64_t size_seqlens = get_file_size_from_name(seqlens_filename);
-	assert(size_seqlens > 0, concat("size_seqlens > 0 in multipacker.tar dst=", dst));
+	
 	fwrite(&size_seqlens, 8, 1, out_file);
 
 	const char* offsets_filename = concat(base_dir, "offsets");
 	uint64_t size_offsets = get_file_size_from_name(offsets_filename);
-	assert(size_offsets > 0, concat("size_offsets > 0 in multipacker.tar dst=", dst));
+	
 	fwrite(&size_offsets, 8, 1, out_file);
 
 	append_to_file(out_file, seqlens_filename);
@@ -233,7 +233,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	//got_smaller = TwoBytePackAndTest(base_dir, tmp);
-	got_smaller = false;
+    got_smaller = false;
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 6);
 	}

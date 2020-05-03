@@ -298,7 +298,7 @@ int RLE_advanced_pack(const char* source_filename, const char* dest_filename)
         {
             if (lcount >= RL_MIN && runlengths[lastch][lcount] < INT_MAX - 1)
                 runlengths[lastch][lcount]++;
-            if (lcount == 1)  /* lcount == 2 gives no penalty */
+            if (lcount == 1 && lastch >= 0)  /* lcount == 2 gives no penalty */
                 if (freqtable[lastch] < INT_MAX)
                     freqtable[lastch]++;
 

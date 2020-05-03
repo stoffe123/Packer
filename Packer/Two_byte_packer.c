@@ -26,8 +26,8 @@ static uint8_t pair_table[2048] = { 0xee }, master_code;
 static unsigned int pair_table_pos;
 
 static struct value_freq {
-	unsigned long value;
-	unsigned long freq;
+	 long value;
+	 long freq;
 };
 
 
@@ -89,14 +89,16 @@ void add_to_two_byte_table(unsigned int c) {
 
 struct value_freq find_best_two_byte() {
 	long best = 0;
-	unsigned int two_byte;
+	int two_byte = -1;
 	for (unsigned int i = 0; i < 65536; i++) {
 		if (two_byte_freq_table[i] > best) {
 			best = two_byte_freq_table[i];
 			two_byte = i;
 		}
 	}
-	two_byte_freq_table[two_byte] = 0; // mark as used
+	if (two_byte >= 0) {
+		two_byte_freq_table[two_byte] = 0; // mark as used
+	}
 	struct value_freq res;
 	res.value = two_byte;
 	res.freq = best;
@@ -112,6 +114,9 @@ void create_two_byte_table() {
 	pair_table_pos = START_CODES_SIZE;
 	do {
 		struct value_freq two_byte = find_best_two_byte();
+		if (two_byte.value == -1) {
+			break;
+		}
 		struct value_freq code = find_best_code();
 		found_code = (code.freq + 100 < two_byte.freq);
 		if (found_code) {

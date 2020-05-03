@@ -82,7 +82,7 @@ void assert(int x, const char* msg) {
 		printf("\n\n ASSERTION FAILURE!");
 		printf("\n\nMessage:   %s", msg);
 		printf("\n\n");
-		//exit(0);
+		exit(0);
 	}
 }
 
