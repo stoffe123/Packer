@@ -113,12 +113,12 @@ void create_two_byte_table() {
 	bool found_code = false;
 	pair_table_pos = START_CODES_SIZE;
 	do {
-		struct value_freq two_byte = find_best_two_byte();
+		struct value_freq two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
 		if (two_byte.value == -1) {
 			break;
 		}
 		struct value_freq code = find_best_code();
-		found_code = (code.freq + 100 < two_byte.freq);
+		found_code = (code.freq + 400 < two_byte.freq);
 		if (found_code) {
 			//worthwile
 			add_to_two_byte_table(code.value);
