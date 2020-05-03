@@ -90,6 +90,8 @@ int main()
 		    
 	};
 	unsigned long long acc_size = 0;
+
+	int before_suite = clock();
 	for (int kk = 0; kk < 16; kk++) 
 	{
 		const char* src = concat("C:/test/testsuite/", filenames[kk]);
@@ -112,10 +114,10 @@ int main()
 
 			//	printf("\n\n  ------- Pages %d --------- ", i);
 
-			//multi_pack(src, packed_name, 50, 20);
+			multi_pack(src, packed_name, 60, 15);
 
 
-			RLE_simple_pack(src, packed_name);
+			//RLE_simple_pack(src, packed_name);
 
 			int pack_time = (clock() - cl);
 			//printf("\n Packing finished time it took: %d", pack_time);
@@ -126,7 +128,7 @@ int main()
 
 			acc_size += size_packed;
 
-			printf("\n Accumulated size kb %d", acc_size);
+			printf("\n Accumulated size (bytes) %d", acc_size);
 
 			/*
 			if (size_packed < best_size) {
@@ -138,7 +140,7 @@ int main()
 			//printf("\n\n unpacking... packed.bin");
 			cl = clock();
 
-			RLE_simple_unpack(packed_name, dst);
+			multi_unpack(packed_name, dst);
 
 
 			int unpack_time = (clock() - cl);
@@ -158,7 +160,9 @@ int main()
 		//printf("\n Best page=%d, size=%d", best_page, best_size);
 		
 	}
+	long total_time = clock() - before_suite;
 	printf("\n\n **** ALL SUCCEEDED **** TOTAL Accumulated size kb %d  (%d) ************", acc_size / 1024, acc_size);
+	printf("\n\n Total time %d seconds     (%d)", total_time / 1000, total_time);
 }
 
 
