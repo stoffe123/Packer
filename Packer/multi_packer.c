@@ -90,9 +90,10 @@ bool RLE_pack_and_test(const char* src, const char* dst) {
 	int size_packed = get_file_size_from_name(dst);
 
 	double ratio = (double)size_packed / (double)size_org;
-	printf("\n ratio with RLE  %f", ratio);
+	double RLE_limit = 0.96;
+	printf("\n ratio with RLE  %f (limit %f)", ratio, RLE_limit);
 
-	bool compression_success = (ratio < 0.96);
+	bool compression_success = (ratio < RLE_limit);
 	if (!compression_success) {
 		remove(dst);
 		copy_file(src, dst);

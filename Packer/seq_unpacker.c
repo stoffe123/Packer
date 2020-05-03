@@ -14,9 +14,9 @@ static FILE *infil, *utfil, *seq_lens_file, *offsets_file;
 static long long read_packedfile_pos,
 	seqlens_file_pos,
 	offsets_file_pos;
-static unsigned char buf[20001000];
+static unsigned char buf[40001000];
 static unsigned long buf_pos = 0;
-static unsigned long long buf_size = 20000000;
+static unsigned long long buf_size = 40000000;
                           
 static const char* base_dir = "c:/test/";
 static bool separate_files = false;

@@ -28,7 +28,7 @@ static unsigned char read_runlength() {
 		return fgetc(runlengths_file);
 	}
 	else {
-		char c;
+		unsigned char c;
 		fread(&c, 1, 1, infil);
 		return c;
 	}
@@ -37,7 +37,7 @@ static unsigned char read_runlength() {
 //------------------------------------------------------------------------------
 void RLE_simple_unpack_internal(const char* source_filename, const char* dest_filename)
 {
-	unsigned char code_occurred = 1;
+	bool code_occurred = 1;
 
 	if (separate) {
 		runlengths_file = fopen(concat(base_dir, "runlengths"), "rb");	
@@ -60,25 +60,24 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 		exit(1);
 	}
 
-	fread(&code, 1, 1, infil);
-
 	code_occurred = read_runlength();
+	fread(&code, 1, 1, infil);
 
 	unsigned char cc;
 	while (fread(&cc, 1,1, infil) == 1) {
 		
 		if (cc == code) {
 			
-			unsigned int seq_len = read_runlength();
+			unsigned int runlength = read_runlength();
 			
-			if (seq_len == 255 && code_occurred) {
+			if (runlength == 255 && code_occurred) {
 				//occurrence of code in original
 				put_buf(code);
 			}
 			else {
 				int br = fread(&cc, 1, 1, infil);
 				assert(br == 1, "br == 1  in RLE_simple_unpacker.RLE_simple_unpack");
-				for (i = 0; i < (seq_len + 3); i++) {
+				for (i = 0; i < (runlength + 3); i++) {
 					put_buf(cc); 
 				}
 			}

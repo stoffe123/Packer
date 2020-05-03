@@ -87,12 +87,11 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 	if (separate) {
 		runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
 	}
-	unsigned long long offset, max_seq_len = (code_occurred ? 257 : 258),				
-		min_seq_len = 3;
-
-	unsigned long char_freq[256] = { 0 }, best_seq_len;
+	unsigned long long offset, max_runlength = (code_occurred ? 257 : 258);
+		
+	unsigned long char_freq[256] = { 0 }, best_runlength;
 	buffer_startpos = 0;
-	buffer_min = max_seq_len*2;
+	buffer_min = max_runlength*2;
 	unsigned int min_runlength = 3;
 
 	infil = fopen(src, "rb");
@@ -109,8 +108,10 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 			puts("Hittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
-		WRITE(utfil, code);
 		write_runlength(code_occurred ? 1 : 0);
+		WRITE(utfil, code);
+	} else { // pass = 1
+		code_occurred = false;
 	}
 
 	/* start compression */
@@ -118,33 +119,33 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 	buffer_endpos = fread(buffer, 1, buffer_size, infil);
 
 	unsigned long long offset_max;
-	unsigned int seq_len = 1;
+	unsigned int runlength = 1;
 
 	while (buffer_startpos < buffer_endpos) {
 
-		best_seq_len = 2;
+		best_runlength = 2;
 		unsigned char ch = buffer[buffer_startpos];
 		if (pass == 2) {
 
-			seq_len = 1;
-			while (seq_len < max_seq_len && 
-				buffer_startpos + seq_len < buffer_endpos && 
-				ch == buffer[buffer_startpos + seq_len]) {
-				seq_len++;
+			runlength = 1;
+			while (runlength < max_runlength && 
+				buffer_startpos + runlength < buffer_endpos && 
+				ch == buffer[buffer_startpos + runlength]) {
+				runlength++;
 			}
 		}
-		/* now we found the longest sequence in the window! */
+		/* now we found the longest runlength in the window! */
 
-		assert(seq_len > 0, "seq_len > 0 in RLE_simple_packer.RLE_pack_internal");
-		if (seq_len < min_runlength) {
+		assert(runlength > 0, "runlength > 0 in RLE_simple_packer.RLE_pack_internal");
+		if (runlength < min_runlength) {
 			if (pass == 1) {
 				inc_char_freq(buffer[buffer_startpos]);
-				if (seq_len == 2) {
+				if (runlength == 2) {
 					inc_char_freq(buffer[buffer_startpos + 1]);
 				}
 			}
 			else { // pass = 2
-				for (int i = 0; i < seq_len; i++) {
+				for (int i = 0; i < runlength; i++) {
 					unsigned char c = buffer[buffer_startpos + i];
 					if (c == code) {
 						WRITE(utfil, code);
@@ -156,15 +157,15 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 					}
 				}
 			}
-			move_buffer(seq_len);
+			move_buffer(runlength);
 		}
 		else { // Runlength fond!
 			if (pass == 2) {
 				WRITE(utfil, code);
+				write_runlength(runlength - min_runlength);
 				WRITE(utfil, ch);
-				write_runlength(seq_len - min_runlength);
 			}
-			move_buffer(seq_len);
+			move_buffer(runlength);
 		}
 	}//end while
 

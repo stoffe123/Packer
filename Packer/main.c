@@ -73,24 +73,21 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {
-	char filenames[12][100] = { "book.txt",
-		 "book_med.txt",
-			"amb.dll",
-		 "rel.pdf",
-	
-		"nex.doc",
-		
-						 "bad.cdg",
-						 "bad.mp3",
-						 "did.csh",
-						
-						
-						 "book_long.txt",
-		
-		
-		 "pazera.exe",
-		 "tob.pdf",
+	char filenames[12][100] = { "book_med.txt","book.txt",
+			
+		  	 "amb.dll",
+			 "rel.pdf",
+			 "nex.doc",	
+			 "bad.cdg",
+			 "bad.mp3",
+			 "did.csh",
+			 "book_long.txt",
+		     "pazera.exe",
+		     "tob.pdf",
 		"voc.wav"
+
+
+		    
 	};
 	unsigned long acc_size = 0;
 	for (int kk = 0; kk < 12; kk++) 
@@ -115,10 +112,10 @@ int main()
 
 			//	printf("\n\n  ------- Pages %d --------- ", i);
 
-			seq_pack(src, packed_name, 50, 20);
+			//multi_pack(src, packed_name, 50, 20);
 
 
-			//RLE_advanced_pack(src, packed_name);
+			RLE_simple_pack(src, packed_name);
 
 			int pack_time = (clock() - cl);
 			//printf("\n Packing finished time it took: %d", pack_time);
@@ -141,7 +138,7 @@ int main()
 			//printf("\n\n unpacking... packed.bin");
 			cl = clock();
 
-			seq_unpack(packed_name, dst);
+			RLE_simple_unpack(packed_name, dst);
 
 
 			int unpack_time = (clock() - cl);

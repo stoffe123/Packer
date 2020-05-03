@@ -54,7 +54,7 @@ unsigned char find_best_code(long* char_freq) {
 		}
 	}//end for
 
-	printf("\n Found code %d that occured %d times.", best, value);
+	printf("\n Found code %d with freq %d", best, value);
 
 	char_freq[best] = ULONG_MAX; // mark it as used!
 	code_occurred = (value > 0);
