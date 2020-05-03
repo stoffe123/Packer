@@ -73,7 +73,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 
 int main()
 {
-	char filenames[16][100] = { "book_med.txt","book.txt","empty.txt", "onechar.txt", "oneseq.txt", "repeatchar.txt",
+	char filenames[16][100] = { "empty.txt", "onechar.txt", "oneseq.txt", "repeatchar.txt", "book_med.txt","book.txt",
 			
 		  	 "amb.dll",
 			 "rel.pdf",
@@ -89,7 +89,7 @@ int main()
 
 		    
 	};
-	unsigned long acc_size = 0;
+	unsigned long long acc_size = 0;
 	for (int kk = 0; kk < 16; kk++) 
 	{
 		const char* src = concat("C:/test/testsuite/", filenames[kk]);
@@ -124,7 +124,7 @@ int main()
 			printf("\nLength of packed: %d", size_packed);
 			printf("  (%f)", (double)size_packed / (double)size_org);
 
-			acc_size += (size_packed / 1024);
+			acc_size += size_packed;
 
 			printf("\n Accumulated size kb %d", acc_size);
 
@@ -158,7 +158,7 @@ int main()
 		//printf("\n Best page=%d, size=%d", best_page, best_size);
 		
 	}
-	printf("\n\n **** ALL SUCCEEDED **** TOTAL Accumulated size kb %d ************", acc_size);
+	printf("\n\n **** ALL SUCCEEDED **** TOTAL Accumulated size kb %d  (%d) ************", acc_size / 1024, acc_size);
 }
 
 

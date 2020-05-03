@@ -3,6 +3,7 @@
 #include <limits.h>
 #include "seq_unpacker.h"
 #include "common_tools.h"
+#include "RLE_simple_packer_commons.h"
 #include "seq_packer_commons.h"
 
 // RLE simple  - unpacker
@@ -77,7 +78,7 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 			else {
 				int br = fread(&cc, 1, 1, infil);
 				assert(br == 1, "br == 1  in RLE_simple_unpacker.RLE_simple_unpack");
-				for (i = 0; i < (runlength + 3); i++) {
+				for (i = 0; i < (runlength + MIN_RUNLENGTH); i++) {
 					put_buf(cc); 
 				}
 			}

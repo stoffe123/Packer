@@ -1,0 +1,9 @@
+#ifndef RLE_SIMPLE_PACKER_COMMONS_H
+#define  RLE_SIMPLE_PACKER_COMMONS_H
+
+#define MIN_RUNLENGTH 3
+
+
+
+#endif
+

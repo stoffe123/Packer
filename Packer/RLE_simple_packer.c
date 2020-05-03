@@ -6,6 +6,7 @@
 #include "seq_packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
+#include "RLE_simple_packer_commons.h"
 
 /* RLE simple packer */
 
@@ -87,12 +88,11 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 	if (separate) {
 		runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
 	}
-	unsigned long long offset, max_runlength = (code_occurred ? 257 : 258);
+	unsigned long long offset, max_runlength = (code_occurred ? 254 + MIN_RUNLENGTH : 255 + MIN_RUNLENGTH);
 		
 	unsigned long char_freq[256] = { 0 }, best_runlength;
 	buffer_startpos = 0;
 	buffer_min = max_runlength*2;
-	unsigned int min_runlength = 3;
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -137,7 +137,7 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 		/* now we found the longest runlength in the window! */
 
 		assert(runlength > 0, "runlength > 0 in RLE_simple_packer.RLE_pack_internal");
-		if (runlength < min_runlength) {
+		if (runlength < MIN_RUNLENGTH) {
 			if (pass == 1) {
 				inc_char_freq(buffer[buffer_startpos]);
 				if (runlength == 2) {
@@ -162,7 +162,7 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 		else { // Runlength fond!
 			if (pass == 2) {
 				WRITE(utfil, code);
-				write_runlength(runlength - min_runlength);
+				write_runlength(runlength - MIN_RUNLENGTH);
 				WRITE(utfil, ch);
 			}
 			move_buffer(runlength);
