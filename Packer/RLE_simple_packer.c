@@ -6,20 +6,23 @@
 #include "seq_packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
+#include <stdint.h>
 #include "RLE_simple_packer_commons.h"
+#include <windows.h>
+
 
 /* RLE simple packer */
 
 //global variables used in compressor
-static FILE* infil, * utfil;
-static unsigned char code;
-static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 2048;
-static unsigned char* buffer;
-static bool code_occurred = false;
-static FILE* runlengths_file;
-static unsigned long long char_freq[256] = { 0 };
-static const char* base_dir;
-static bool separate;
+__declspec (thread)FILE* infil, * utfil;
+ __declspec (thread) unsigned char code;
+ __declspec (thread) unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
+ __declspec (thread) unsigned char* buffer;
+ __declspec (thread) bool code_occurred = false;
+ __declspec (thread) FILE* runlengths_file;
+ __declspec (thread) unsigned long long char_freq[256] = { 0 };
+ __declspec (thread) const char* base_dir;
+ __declspec (thread) bool separate;
 
 
 static void move_buffer(unsigned int steps) {
@@ -200,4 +203,34 @@ void RLE_simple_pack_separate(const char* src, const char* dest, const char* bd)
 	base_dir = bd;
 	separate = true;
 	RLE_simple_pack_internal(src, dest);
+}
+
+
+
+DWORD WINAPI thread_RLE_simple_pack(LPVOID lpParam)
+{
+	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
+			 "amb.dll",
+			 "rel.pdf",
+			 "nex.doc",
+			"did.csh",
+			 "aft.htm",
+			 "tob.pdf",
+		 "pazera.exe",
+		"voc.wav",
+		 "bad.mp3"
+
+
+
+	};
+	uint32_t i = *(DWORD*)lpParam;
+
+	printf("OOOOOOOOOOOOOOOOO The parameter: %d.\n", i);
+
+	printf("filename=%s", test_filenames[i]);
+
+	const char* src = concat("c:/test/testsuite/", test_filenames[i]);
+
+	RLE_simple_pack(src, concat(src, "_packed"));
+
 }

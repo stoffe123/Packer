@@ -94,7 +94,7 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 	}
 }
 
-void RLE_simple_unpack(const char* src, const char* dest, const char* bd) {
+void RLE_simple_unpack(const char* src, const char* dest) {
 	separate = false;
 	RLE_simple_unpack_internal(src, dest);
 }

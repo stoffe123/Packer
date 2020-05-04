@@ -4,13 +4,17 @@
 #include "common_tools.h"
 #include "seq_unpacker.h"  
 #include "seq_packer.h"  
+#include "RLE_simple_packer.h"
 //#include "huffman2.h"
 //#include "canonical.h"
 #include "multi_packer.h"
+#include <Windows.h>
+#include "packer_commons.h"
 
 #include "RLE_packer_advanced.h"
 
 #define CMP_N 128
+
 
 
 
@@ -71,31 +75,38 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	return res;
 }
 
+
+
+
 int main()
 {
-	char filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt",
-		 "book_med.txt","book.txt",
-			
-		  	 "amb.dll",
+
+	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
+			 "amb.dll",
 			 "rel.pdf",
-			 "nex.doc",	
-		  	"did.csh",
-			 "bad.mp3",
-			
+			 "nex.doc",
+			"did.csh",
 			 "aft.htm",
-		     "pazera.exe",
-		     "tob.pdf",
-		"voc.wav"
+			 "tob.pdf",
+		 "pazera.exe",
+		"voc.wav",
+		 "bad.mp3"
 
 
-		    
+
 	};
+
+
+
+
+
+	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0;
 
 	int before_suite = clock();
-	for (int kk = 0; kk < 16; kk++) 
+	for (int kk = 0; kk < 16; kk++)
 	{
-		const char* src = concat("C:/test/testsuite/", filenames[kk]);
+		const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
 		const char* dst = "C:/test/unp";
 
 		const char* packed_name = "c:/test/packed.bin";
@@ -107,70 +118,76 @@ int main()
 
 		printf("\n Packing... %s with length:%d", src, size_org);
 
-		//int i = 0;
-		//for (int i = 4; i < 162; i++) 
-		{
-
-			int cl = clock();
-
-			//	printf("\n\n  ------- Pages %d --------- ", i);
-
-			two_byte_pack(src, packed_name, 60, 15);
 
 
-			//RLE_simple_pack(src, packed_name);
+		int cl = clock();
 
-			int pack_time = (clock() - cl);
-			//printf("\n Packing finished time it took: %d", pack_time);
-			long long size_packed = get_file_size_from_name(packed_name);
+		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-			printf("\nLength of packed: %d", size_packed);
-			printf("  (%f)", (double)size_packed / (double)size_org);
-
-			acc_size += size_packed;
-
-			printf("\n Accumulated size %d kb", acc_size / 1024);
-
-			/*
-			if (size_packed < best_size) {
-				best_size = size_packed;
-				best_page = i;
-				printf("\n BEST! ");
-			}
-			*/
-			//printf("\n\n unpacking... packed.bin");
-			cl = clock();
-
-			two_byte_unpack(packed_name, dst);
+		//multi_pack(src, packed_name, 60, 15);
 
 
-			int unpack_time = (clock() - cl);
-			//printf("\n Unpacking finished time it took: %d", unpack_time);
-			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+		//RLE_simple_pack(src, packed_name);
+		DWORD dwThreadId, dwThrdParam = kk;
+
+		HANDLE hThread = CreateThread(
+
+			NULL, // default security attributes
+
+			0, // use default stack size
+
+			thread_RLE_simple_pack, // thread function
+
+			&dwThrdParam, // argument to thread function
+
+			0, // use default creation flags
+
+			&dwThreadId); // returns the thread identifier
 
 
-			//printf("\n\n Comparing files!");
-			if (files_equal(src, dst)) {
-				printf("\n ****** SUCCESS ****** (equal)\n");
-			}
-			else {
-				return 1;
-			}
+		int pack_time = (clock() - cl);
+		//printf("\n Packing finished time it took: %d", pack_time);
+		long long size_packed = get_file_size_from_name(packed_name);
+
+		printf("\nLength of packed: %d", size_packed);
+		printf("  (%f)", (double)size_packed / (double)size_org);
+
+		acc_size += size_packed;
+
+		printf("\n Accumulated size %d kb", acc_size / 1024);
+
+		/*
+		if (size_packed < best_size) {
+			best_size = size_packed;
+			best_page = i;
+			printf("\n BEST! ");
 		}
+		*/
+		//printf("\n\n unpacking... packed.bin");
+		cl = clock();
+
+		//RLE_simple_unpack(packed_name, dst);
+
+
+		int unpack_time = (clock() - cl);
+		//printf("\n Unpacking finished time it took: %d", unpack_time);
+		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+
+
+		//printf("\n\n Comparing files!");
+		/*
+		if (files_equal(src, dst)) {
+			printf("\n ****** SUCCESS ****** (equal)\n");
+		}
+		else {
+			return 1;
+		}
+		*/
+
 		//printf("\n Best page=%d, size=%d", best_page, best_size);
-		
+
 	}
 	long total_time = clock() - before_suite;
 	printf("\n\n **** ALL SUCCEEDED **** Accumulated size %d kb (%d) ************", acc_size / 1024, acc_size);
 	printf("\n\n Total time %d seconds     (%d)", total_time / 1000, total_time);
 }
-
-
-
-
-
-
-
-
-
-

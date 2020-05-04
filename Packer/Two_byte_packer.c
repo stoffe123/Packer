@@ -94,20 +94,21 @@ struct value_freq find_best_two_byte() {
 }
 
 int get_gain_threshhold() {
-	int res = source_size / 2000;
+	
+	int res = source_size / 500;
 
 	if (res < 20) {
 		res = 20;
 	}
-	if (res > 700) {
-		res = 700;
+	if (res > 1600) {
+		res = 1600;
 	}
-	printf("\n Two byte packer gain threshhold %d", res);
+
 	return res;
 }
 
 int create_two_byte_table() {
-	//printf("\n creating two_byte_table \n");
+	debug("\n creating two_byte_table \n");
 
 	// extract one code to use with seqpack later
 	find_best_code();
@@ -115,7 +116,7 @@ int create_two_byte_table() {
 	struct value_freq master = find_best_code();
 	master_code = master.value;
 	int threshhold = get_gain_threshhold();
-
+	printf("\n Two byte packer gain threshhold %d", threshhold);
 	bool found_code = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
@@ -127,10 +128,10 @@ int create_two_byte_table() {
 		found_code = (code.freq + threshhold < two_byte.freq);
 		if (found_code) {
 			//worthwile
-			pair_table[pair_table_pos++] = code.value;
-			pair_table[pair_table_pos++] = two_byte.value % 256;
-			pair_table[pair_table_pos++] = two_byte.value / 256;
-			//printf("\n code %d for '%c%c' with freq:(%d,%d)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
+			pair_table[pair_table_pos++] = (uint8_t)code.value;
+			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value % 256);
+			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value / 256);
+			debug("\n Code %d for '%c%c' with freq:(%d,%d)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
 		}
 	} while (found_code);
 
@@ -172,7 +173,7 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 
 void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 
-	printf("\nTwo-byte pack pass=%d", pass);
+	debug("\nTwo-byte pack pass=%d", pass);
 	
 	buffer_startpos = 0;
 	buffer_min = 20;
@@ -201,8 +202,8 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 		//write the metadata table
 		for (int i = 0; i < pair_table_pos; i++) {
 
-			fwrite(&pair_table[i], 1, 1, utfil);
-			printf(" %d", pair_table[i]);
+			putc(pair_table[i], utfil);
+			debug(" %d", pair_table[i]);
 		}
 	}
 	else {  // pass = 1

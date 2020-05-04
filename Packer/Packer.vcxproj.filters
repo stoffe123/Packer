@@ -69,6 +69,9 @@
     <ClCompile Include="Two_byte_unpacker.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="packer_commons.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -123,6 +126,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="RLE_simple_packer_commons.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="packer_commons.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
