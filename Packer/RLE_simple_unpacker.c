@@ -9,22 +9,15 @@
 // RLE simple  - unpacker
 
 //Global vars
-static unsigned char code;
-static FILE* infil, * utfil, * seq_lens_file, * runlengths_file;
-static long long read_packedfile_pos,	
+static  __declspec (thread) unsigned char code;
+
+static  __declspec (thread) long long read_packedfile_pos,
 	runlengths_file_pos;
-static const char* base_dir;
-static bool separate;
+static  __declspec (thread) const char* base_dir;
+static  __declspec (thread) bool separate;
 
-static void write_byte_to_file(unsigned char cc) {
-	putc(cc, utfil);
-}
 
-static void put_buf(unsigned char cc) {
-	putc(cc, utfil);
-}
-
-static unsigned char read_runlength() {
+unsigned char read_runlength(FILE* infil, FILE* runlengths_file) {
 	if (separate) {
 		return fgetc(runlengths_file);
 	}
@@ -38,6 +31,8 @@ static unsigned char read_runlength() {
 //------------------------------------------------------------------------------
 void RLE_simple_unpack_internal(const char* source_filename, const char* dest_filename)
 {
+
+	FILE* infil, * utfil, *runlengths_file = NULL;
 	bool code_occurred = 1;
 
 	if (separate) {
@@ -61,7 +56,7 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 		exit(1);
 	}
 
-	code_occurred = read_runlength();
+	code_occurred = read_runlength(infil, runlengths_file);
 	fread(&code, 1, 1, infil);
 
 	unsigned char cc;
@@ -69,22 +64,22 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 		
 		if (cc == code) {
 			
-			unsigned int runlength = read_runlength();
+			unsigned int runlength = read_runlength(infil, runlengths_file);
 			
 			if (runlength == 255 && code_occurred) {
 				//occurrence of code in original
-				put_buf(code);
+				putc(code, utfil);
 			}
 			else {
 				int br = fread(&cc, 1, 1, infil);
 				assert(br == 1, "br == 1  in RLE_simple_unpacker.RLE_simple_unpack");
 				for (i = 0; i < (runlength + MIN_RUNLENGTH); i++) {
-					put_buf(cc); 
+					putc(cc, utfil);
 				}
 			}
 		}
 		else {
-			put_buf(cc);
+			putc(cc, utfil);
 		}
 	}
 	fclose(infil);

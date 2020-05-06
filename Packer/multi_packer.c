@@ -11,12 +11,13 @@
 #include "canonical.h"
 
 
-static unsigned long filename_count = 1000;
+//Global for all threads
+unsigned long filename_count = 1000; 
 
-struct Pack_info {
+typedef struct pack_info_t {
 	unsigned char pack_type;
 	const char* dir;
-};
+} pack_info_t;
 
 char* get_rand() {	
 	return concat(int_to_string(clock()), int_to_string(filename_count++));
@@ -38,7 +39,7 @@ void unstore(FILE* in, const char* dst) {
 }
 
 
-void untar(FILE* in, struct Pack_info pi) {
+void untar(FILE* in, pack_info_t pi) {
 		
 	// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
 	uint64_t size1 = 0;
@@ -227,8 +228,8 @@ void remove_meta_files(const char* base_dir) {
 
 void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	unsigned char seqlen_pages) {
-	printf("\n--------------------------------------------");
-	printf("\nMulti_pack  %s  =>  %s\nsize org: %d   pages: (%d,%d)", src, dst, get_file_size_from_name(src), offset_pages, seqlen_pages);
+	printf("\n------------------------------------------------------------------------------");
+	printf("\nMulti_pack  %s  =>  %s\nsize org: %d    pages: (%d,%d)", src, dst, get_file_size_from_name(src), offset_pages, seqlen_pages);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 	char* base_dir = get_clock_dir();
@@ -292,7 +293,6 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 		store(src, dst, pack_type);
 	}
 	printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
-	printf("\n-------------------------------------");
 
 	remove_meta_files(base_dir);
 }
@@ -301,9 +301,8 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 
 void multi_unpack(const char* src, const char* dst) {
 
-	printf("\n-----------------------------------------------------");
 	printf("\n Multiunpack of %s  =>  %s", src, dst);
-	struct Pack_info pi;
+	pack_info_t pi;
 	FILE* in = fopen(src, "rb");
 	unsigned char pt;
 	fread(&pt, 1, 1, in);

@@ -10,34 +10,26 @@
 
 //Global vars used in unpacker
 static unsigned char code;
-static FILE *infil, *utfil, *seq_lens_file, *offsets_file;
-static long long read_packedfile_pos,
-	seqlens_file_pos,
-	offsets_file_pos;
-static unsigned char buf[40001000];
+static FILE* infil, * utfil, * seq_lens_file, * offsets_file;
+static long long read_packedfile_pos, seqlens_file_pos, offsets_file_pos;
+static  unsigned char buf[40001000];
 static unsigned long buf_pos = 0;
-static unsigned long long buf_size = 40000000;
-                          
-static const char* base_dir = "c:/test/";
+static  unsigned long long buf_size = 40000000;
+
 static bool separate_files = false;
 
 
-static unsigned char read_byte_from_file() {
+unsigned char read_byte_from_file() {
 	read_packedfile_pos++;
 	fseek(infil, -read_packedfile_pos, SEEK_END);
 	return fgetc(infil);
 }
 
-static void write_byte_to_file(unsigned char cc) {
-	putc(cc, utfil);
+void put_buf(unsigned char c) {
+	buf[buf_pos--] = c;
 }
 
-static void put_buf(unsigned char c) {
-	buf[buf_pos--] = c;	
-}
-
-
-static unsigned char read_seqlen() {
+unsigned char read_seqlen() {
 	if (separate_files) {
 		seqlens_file_pos++;
 		fseek(seq_lens_file, -seqlens_file_pos, SEEK_END);
@@ -48,7 +40,7 @@ static unsigned char read_seqlen() {
 	}
 }
 
-static unsigned char read_offset() {
+unsigned char read_offset() {
 	if (separate_files) {
 		offsets_file_pos++;
 		fseek(offsets_file, -offsets_file_pos, SEEK_END);
@@ -59,8 +51,8 @@ static unsigned char read_offset() {
 	}
 }
 
-static unsigned long transform_seqlen(unsigned long seqlen, bool code_occurred, unsigned char pages) {
-	
+unsigned long transform_seqlen(unsigned long seqlen, bool code_occurred, unsigned char pages) {
+
 	unsigned long last_byte = (code_occurred ? 254 : 255);
 	unsigned long lowest_special = last_byte + 1 - pages;
 
@@ -77,7 +69,7 @@ unsigned long get_offset(unsigned char pages) {
 	unsigned long lowest_special = last_byte + 1 - pages;
 
 	unsigned long offset = read_offset();
-	
+
 	if (offset >= lowest_special && offset <= last_byte) {
 		unsigned long long page = last_byte - offset;
 		offset = lowest_special + (page * 256) + read_offset();
@@ -87,10 +79,10 @@ unsigned long get_offset(unsigned char pages) {
 
 //------------------------------------------------------------------------------
 
-void seq_unpack_internal(const char* source_filename, const char* dest_filename)
+void seq_unpack_internal(const char* source_filename, const char* dest_filename, const char* base_dir)
 {
 	unsigned char offset_pages, seqlen_pages,
-	              code_occurred = 1;
+		code_occurred = 1;
 	if (separate_files) {
 		seq_lens_file = fopen(concat(base_dir, "seqlens"), "rb");
 		offsets_file = fopen(concat(base_dir, "offsets"), "rb");
@@ -112,7 +104,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 	}
 	fopen_s(&utfil, dest_filename, "wb");
 	if (!utfil) {
-		puts("Hittade inte utfil %s", dest_filename);
+		printf("\nHittade inte utfil %s", dest_filename);
 		getchar();
 		exit(1);
 	}
@@ -130,38 +122,38 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 	while (total_size > read_packedfile_pos) {
 		cc = read_byte_from_file();
 		if (cc == code) {
-			unsigned long long offset, 
-				               seqlen = read_seqlen();
+			unsigned long long offset,
+				seqlen = read_seqlen();
 			if (code_occurred && seqlen == SEQ_LEN_FOR_CODE) {
 				//occurrence of code in original
 				put_buf(code);
 			}
 			else {
 				seqlen = transform_seqlen(seqlen, code_occurred, seqlen_pages);
-				offset = get_offset(offset_pages);		
+				offset = get_offset(offset_pages);
 				//printf("\nseqlen %d  offst %d", seqlen, offset);
 				unsigned long long match_index = buf_pos + offset + seqlen;
 				assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
 				//write the sequence at the right place!
 				//if (seq_len > offset) {
-					for (unsigned long i = 0; i < seqlen; i++) {
-						put_buf(buf[match_index - i]);
-					}
-			/*	}
-			
-				else {  //offset < seq_len, repeating
-					i = 0;
-					long j = 0;
-					while (i < seq_len) {
-						put_buf(buf[match_index - j]);
-						i++;
-						j++;
-						if (j == offset) {
-							j = 0;
+				for (unsigned long i = 0; i < seqlen; i++) {
+					put_buf(buf[match_index - i]);
+				}
+				/*	}
+
+					else {  //offset < seq_len, repeating
+						i = 0;
+						long j = 0;
+						while (i < seq_len) {
+							put_buf(buf[match_index - j]);
+							i++;
+							j++;
+							if (j == offset) {
+								j = 0;
+							}
 						}
 					}
-				}
-				*/
+					*/
 			}
 		}
 		else {
@@ -181,13 +173,12 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename)
 
 void seq_unpack(const char* source_filename, const char* dest_filename) {
 	separate_files = false;
-	seq_unpack_internal(source_filename, dest_filename);
+	seq_unpack_internal(source_filename, dest_filename, "");
 }
 
-void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* dir)
+void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* base_dir)
 {
-	base_dir = dir;
 	source_filename = concat(base_dir, source_filename);
 	separate_files = true;
-	seq_unpack_internal(source_filename, dest_filename);
+	seq_unpack_internal(source_filename, dest_filename, base_dir);
 }

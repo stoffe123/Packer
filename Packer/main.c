@@ -4,7 +4,7 @@
 #include "common_tools.h"
 #include "seq_unpacker.h"  
 #include "seq_packer.h"  
-#include "RLE_simple_packer.h"
+#include "multi_packer.h"
 //#include "huffman2.h"
 //#include "canonical.h"
 #include "multi_packer.h"
@@ -81,23 +81,27 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
-			 "amb.dll",
+	char test_filenames[16][100] = { "pazera.exe", "tob.pdf", "onechar.txt",
+		"repeatchar.txt", 
+		
+		"bad.cdg",
+		"empty.txt", 
+		"oneseq.txt", 
+		"book_med.txt",
+		"amb.dll",
+	     "book.txt",			
 			 "rel.pdf",
 			 "nex.doc",
 			"did.csh",
 			 "aft.htm",
-			 "tob.pdf",
-		 "pazera.exe",
+			
+		
 		"voc.wav",
 		 "bad.mp3"
 
 
 
 	};
-
-
-
 
 
 	//const char** test_filenames = get_test_filenames();
@@ -124,10 +128,11 @@ int main()
 
 		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		//multi_pack(src, packed_name, 60, 15);
+		multi_pack(src, packed_name, 60, 15);
 
 
-		//RLE_simple_pack(src, packed_name);
+		
+		/*
 		DWORD dwThreadId, dwThrdParam = kk;
 
 		HANDLE hThread = CreateThread(
@@ -136,7 +141,7 @@ int main()
 
 			0, // use default stack size
 
-			thread_RLE_simple_pack, // thread function
+			thread_multi_pack, // thread function
 
 			&dwThrdParam, // argument to thread function
 
@@ -144,7 +149,7 @@ int main()
 
 			&dwThreadId); // returns the thread identifier
 
-
+	    */
 		int pack_time = (clock() - cl);
 		//printf("\n Packing finished time it took: %d", pack_time);
 		long long size_packed = get_file_size_from_name(packed_name);
@@ -166,7 +171,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		//RLE_simple_unpack(packed_name, dst);
+		multi_unpack(packed_name, dst);
 
 
 		int unpack_time = (clock() - cl);
@@ -174,15 +179,15 @@ int main()
 		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
 
-		//printf("\n\n Comparing files!");
-		/*
+		printf("\n\n Comparing files!");
+	
 		if (files_equal(src, dst)) {
 			printf("\n ****** SUCCESS ****** (equal)\n");
 		}
 		else {
 			return 1;
 		}
-		*/
+		
 
 		//printf("\n Best page=%d, size=%d", best_page, best_size);
 

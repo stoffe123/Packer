@@ -4,49 +4,28 @@
 #include <stdbool.h>
 #include "seq_packer.h"
 #include "seq_packer_commons.h"
-#define VERBOSE false
 #include "common_tools.h"
 #include <stdint.h>
 #include "RLE_simple_packer_commons.h"
 #include <windows.h>
 
+#define VERBOSE false
 
 /* RLE simple packer */
 
-//global variables used in compressor
-__declspec (thread)FILE* infil, * utfil;
- __declspec (thread) unsigned char code;
- __declspec (thread) unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 65536;
- __declspec (thread) unsigned char* buffer;
- __declspec (thread) bool code_occurred = false;
- __declspec (thread) FILE* runlengths_file;
- __declspec (thread) unsigned long long char_freq[256] = { 0 };
- __declspec (thread) const char* base_dir;
- __declspec (thread) bool separate;
+//Global variables used in compressor
+
+static __declspec (thread) const char* base_dir;
+static __declspec (thread) bool separate;
 
 
-static void move_buffer(unsigned int steps) {
-	buffer_startpos += steps;
-	if (buffer_endpos == buffer_size) {
-		unsigned long long buffer_left = buffer_size - buffer_startpos;
-		if (buffer_left < buffer_min) {
-			//load new buffer!!			
-			debug("Load new buffer of: %d", buffer_size);
+typedef struct value_freq_t {
+	long value;
+	long freq;
+} value_freq_t;
 
-			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-			for (unsigned long i = 0; i < (buffer_size - buffer_startpos); i++) {
-				new_buf[i] = buffer[i + buffer_startpos];
-			}
-			unsigned long long res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
-			buffer_endpos = res + (buffer_size - buffer_startpos);
-			free(buffer);
-			buffer = new_buf;
-			buffer_startpos = 0;
-		}
-	}
-}
 
-static unsigned char find_best_code() {
+static value_freq_t find_best_code2(unsigned long* char_freq) {
 	unsigned char best_code;
 	unsigned long freq = ULONG_MAX;
 	for (unsigned int i = 0; i < 256; i++) {
@@ -59,13 +38,15 @@ static unsigned char find_best_code() {
 	printf("\n Found code: %d that occured: %d times.", best_code, freq);
 
 	// char_freq[best] = ULONG_MAX; // mark it as used!
-	code_occurred = (freq > 0);
-	return best_code;
+	value_freq_t res;
+	res.value = best_code;
+	res.freq = freq;
+	return res;
 }
 
 
 
-void write_runlength(unsigned char c) {
+void write_runlength(unsigned char c, FILE* utfil, FILE* runlengths_file) {
 	if (separate) {
 		fwrite(&c, 1, 1, runlengths_file);
 	}
@@ -74,28 +55,25 @@ void write_runlength(unsigned char c) {
 	}
 }
 
-void inc_char_freq(unsigned char c) {
-	if (char_freq[c] < ULONG_MAX) {
-		char_freq[c]++;
-	}
-}
-
 
 //--------------------------------------------------------------------------------------------------------
 
+value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, value_freq_t code_struct, const char* base_dir) {
 
+	unsigned char code = 0;
+	bool code_occurred = true;
+	if (pass == 2) {
+		code = code_struct.value;
+		code_occurred = code_struct.freq > 0;
+	}
 
-void RLE_pack_internal(const char* src, const char* dest, int pass) {
-
-	printf("\nRLE_simple_pack pass=%d" , pass);
+	FILE* infil = NULL, * utfil = NULL, * runlengths_file = NULL;
+	unsigned long char_freq[256] = { 0 };
+	debug("\nRLE_simple_pack pass=%d", pass);
 	if (separate) {
 		runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
 	}
-	unsigned long long offset, max_runlength = (code_occurred ? 254 + MIN_RUNLENGTH : 255 + MIN_RUNLENGTH);
-		
-	unsigned long char_freq[256] = { 0 }, best_runlength;
-	buffer_startpos = 0;
-	buffer_min = max_runlength*2;
+	unsigned long long max_runlength = (code_occurred ? 254 + MIN_RUNLENGTH : 255 + MIN_RUNLENGTH);
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -103,78 +81,79 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 		getchar();
 		exit(1);
 	}
-	unsigned long total_size = get_file_size(infil);
 
-	if (pass == 2) {		
+	if (pass == 2) {
 		fopen_s(&utfil, dest, "wb");
 		if (!utfil) {
-			puts("Hittade inte utfil!%s", dest); getchar(); exit(1);
+			printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
-		write_runlength(code_occurred ? 1 : 0);
+		write_runlength(code_occurred ? 1 : 0, utfil, runlengths_file);
 		WRITE(utfil, code);
-	} else { // pass = 1
+	}
+	else { // pass = 1
 		code_occurred = false;
 	}
 
 	/* start compression */
 
-	buffer_endpos = fread(buffer, 1, buffer_size, infil);
-
-	unsigned long long offset_max;
 	unsigned int runlength = 1;
 
-	while (buffer_startpos < buffer_endpos) {
+	int read_char = fgetc(infil);
+	while (read_char != EOF) {
 
-		best_runlength = 2;
-		unsigned char ch = buffer[buffer_startpos];
-		if (pass == 2) {
-
-			runlength = 1;
-			while (runlength < max_runlength && 
-				buffer_startpos + runlength < buffer_endpos && 
-				ch == buffer[buffer_startpos + runlength]) {
-				runlength++;
+		if (pass == 1) {
+			if (char_freq[read_char] < ULONG_MAX - runlength) {
+				char_freq[read_char]++;
 			}
 		}
+		unsigned char first_char = read_char;
+		runlength = 1;
+		while ((read_char = fgetc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
+			runlength++;
+		}
+
 		/* now we found the longest runlength in the window! */
 
 		assert(runlength > 0, "runlength > 0 in RLE_simple_packer.RLE_pack_internal");
 		if (runlength < MIN_RUNLENGTH) {
 			if (pass == 1) {
-				inc_char_freq(buffer[buffer_startpos]);
-				if (runlength == 2) {
-					inc_char_freq(buffer[buffer_startpos + 1]);
+				if (char_freq[first_char] < ULONG_MAX - runlength) {
+					char_freq[first_char]++;
 				}
 			}
 			else { // pass = 2
 				for (int i = 0; i < runlength; i++) {
-					unsigned char c = buffer[buffer_startpos + i];
-					if (c == code) {
+					if (first_char == code) {
 						WRITE(utfil, code);
 						WRITE(utfil, 255);
 						assert(code_occurred, "code_occured in RLE_simple_packer.RLE_pack_internal");
 					}
 					else {
-						WRITE(utfil, c);
+						WRITE(utfil, first_char);
 					}
 				}
 			}
-			move_buffer(runlength);
 		}
 		else { // Runlength fond!
 			if (pass == 2) {
 				WRITE(utfil, code);
-				write_runlength(runlength - MIN_RUNLENGTH);
-				WRITE(utfil, ch);
+				write_runlength(runlength - MIN_RUNLENGTH, utfil, runlengths_file);
+				WRITE(utfil, first_char);
 			}
-			move_buffer(runlength);
+			else {
+				//since the code appeared in a runlength no penalty needed!
+				if (char_freq[first_char] > 0) {
+					char_freq[first_char]--;
+				}
+			}
 		}
 	}//end while
 
+	fclose(infil);
 
 	if (pass == 1) {
-		code = find_best_code();
+		return find_best_code2(char_freq);
 	}
 	else {
 		fclose(utfil);
@@ -182,31 +161,32 @@ void RLE_pack_internal(const char* src, const char* dest, int pass) {
 			fclose(runlengths_file);
 		}
 	}
-	fclose(infil);
+
 }
 
 
-void RLE_simple_pack_internal(const char* src, const char* dest)
+void RLE_simple_pack_internal(const char* src, const char* dest, const char* base_dir)
 {
-	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-	RLE_pack_internal(src, dest, 1); //find code
-	RLE_pack_internal(src, dest, 2); //pack
+	value_freq_t dummy;
+	dummy.freq = 0;
+	dummy.value = 0;
+	value_freq_t res = RLE_pack_internal(src, dest, 1, dummy, base_dir); //find code
+	RLE_pack_internal(src, dest, 2, res, base_dir); //pack
 }
 
 void RLE_simple_pack(const char* src, const char* dest) {
 	separate = false;
-	RLE_simple_pack_internal(src, dest);
+	RLE_simple_pack_internal(src, dest, "");
 }
 
 
-void RLE_simple_pack_separate(const char* src, const char* dest, const char* bd) {
-	base_dir = bd;
+void RLE_simple_pack_separate(const char* src, const char* dest, const char* base_dir) {	
 	separate = true;
-	RLE_simple_pack_internal(src, dest);
+	RLE_simple_pack_internal(src, dest, base_dir);
 }
 
 
-
+/*
 DWORD WINAPI thread_RLE_simple_pack(LPVOID lpParam)
 {
 	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
@@ -234,3 +214,4 @@ DWORD WINAPI thread_RLE_simple_pack(LPVOID lpParam)
 	RLE_simple_pack(src, concat(src, "_packed"));
 
 }
+*/

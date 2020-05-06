@@ -9,26 +9,24 @@
 #include "common_tools.h"
 #define START_CODES_SIZE 2
 
-/* RLE simple packer */
+/* Two-byte packer */
 
 //Global variables used in compressor
-static FILE* infil, * utfil;
+static __declspec (thread) FILE* infil, * utfil;
 
-static unsigned long long buffer_endpos, buffer_startpos, buffer_min, buffer_size = 2048;
-static unsigned char* buffer;
+static  __declspec (thread) unsigned long long buffer_endpos, buffer_startpos, buffer_min,
+	                                    buffer_size = 2048, source_size;
+static  __declspec (thread) unsigned char* buffer;
 
-static unsigned long long  source_size;
-static const char* base_dir;
-static long two_byte_freq_table[65536] = { 0 };
-static uint8_t pair_table[2048] = { 0 }, master_code;
+static  __declspec (thread) const char* base_dir;
+static  __declspec (thread) long two_byte_freq_table[65536] = { 0 };
+static  __declspec (thread) uint8_t pair_table[2048] = { 0 }, master_code;
+static  __declspec (thread) unsigned long* char_freq[256];
 
-
-unsigned long* char_freq[256];
-
-static struct value_freq {
+ typedef struct value_freq_t {
 	long value;
 	long freq;
-};
+} value_freq_t;
 
 
 static void move_buffer(unsigned int steps) {
@@ -53,7 +51,7 @@ static void move_buffer(unsigned int steps) {
 }
 
 
-static struct value_freq find_best_code() {
+ static value_freq_t find_best_code() {
 	unsigned char best_code;
 	unsigned long freq = ULONG_MAX;
 	for (unsigned int i = 0; i < 256; i++) {
@@ -66,7 +64,7 @@ static struct value_freq find_best_code() {
 
 
 	char_freq[best_code] = ULONG_MAX; // mark it as used!
-	struct value_freq res;
+	value_freq_t res;
 	res.value = best_code;
 	res.freq = freq;
 	return res;
@@ -75,7 +73,7 @@ static struct value_freq find_best_code() {
 
 
 
-struct value_freq find_best_two_byte() {
+value_freq_t find_best_two_byte() {
 	long best = 0;
 	int two_byte = -1;
 	for (unsigned int i = 0; i < 65536; i++) {
@@ -87,7 +85,7 @@ struct value_freq find_best_two_byte() {
 	if (two_byte >= 0) {
 		two_byte_freq_table[two_byte] = 0; // mark as used
 	}
-	struct value_freq res;
+	value_freq_t res;
 	res.value = two_byte;
 	res.freq = best;
 	return res;
@@ -113,18 +111,18 @@ int create_two_byte_table() {
 	// extract one code to use with seqpack later
 	find_best_code();
 
-	struct value_freq master = find_best_code();
+	value_freq_t master = find_best_code();
 	master_code = master.value;
 	int threshhold = get_gain_threshhold();
 	printf("\n Two byte packer gain threshhold %d", threshhold);
 	bool found_code = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
-		struct value_freq two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
+		value_freq_t two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
 		if (two_byte.value == -1) {
 			break;
 		}
-		struct value_freq code = find_best_code();
+		value_freq_t code = find_best_code();
 		found_code = (code.freq + threshhold < two_byte.freq);
 		if (found_code) {
 			//worthwile
@@ -192,7 +190,7 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 	if (pass == 2) {
 		fopen_s(&utfil, dest, "wb");
 		if (!utfil) {
-			puts("Hittade inte utfil!%s", dest); getchar(); exit(1);
+			printf("\nHittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
 

@@ -7,13 +7,13 @@
 #include "common_tools.h"
 #define START_CODES_SIZE 2
 
-/* RLE simple packer */
+/* Two-byte unpacker */
 
-//global variables used in compressor
-static FILE* infil, * utfil;
+//Global variables used in compressor
+ __declspec (thread) FILE* infil, * utfil;
 
-static unsigned char two_byte_table[16384] = { 0 }, master_code;
-int two_byte_table_pos;
+ __declspec (thread) unsigned char two_byte_table[16384] = { 0 }, master_code;
+ __declspec (thread) int two_byte_table_pos;
 
 int get_two_byte_for_code(unsigned char code) {
 	for (int i = START_CODES_SIZE; i < two_byte_table_pos; i += 3) {
@@ -39,7 +39,7 @@ void two_byte_unpack_internal(const char* src, const char* dest) {
 	}
 	fopen_s(&utfil, dest, "wb");
 	if (!utfil) {
-		puts("Hittade inte utfil! %s", dest);
+		printf("\nHittade inte utfil! %s", dest);
 		getchar();
 		exit(1);
 	}
