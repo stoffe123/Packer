@@ -6,32 +6,17 @@
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "multi_packer.h"
-#include "RLE_packer_advanced.h"
 //#include "huffman2.h"
 #include "canonical.h"
 
 
-//Global for all threads
-unsigned long filename_count = 1000; 
+
 
 typedef struct pack_info_t {
 	unsigned char pack_type;
 	const char* dir;
 } pack_info_t;
 
-char* get_rand() {	
-	return concat(int_to_string(clock()), int_to_string(filename_count++));
-}
-
-char* get_temp_file(char* dir) {
-	return concat(dir, concat("tmp", get_rand()));
-}
-
-char* get_clock_dir() {
-	const char* dir = concat("c:/test/", concat("multipack", get_rand()));
-	dir = concat(dir, "_");
-	return dir;
-}
 
 void unstore(FILE* in, const char* dst) {
 	copy_the_rest(in, dst);

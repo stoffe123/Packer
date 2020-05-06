@@ -81,7 +81,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "pazera.exe", "tob.pdf", "onechar.txt",
+	char test_filenames[16][100] = {  "onechar.txt",
 		"repeatchar.txt", 
 		
 		"bad.cdg",
@@ -92,6 +92,7 @@ int main()
 	     "book.txt",			
 			 "rel.pdf",
 			 "nex.doc",
+		"pazera.exe", "tob.pdf",
 			"did.csh",
 			 "aft.htm",
 			
@@ -128,7 +129,7 @@ int main()
 
 		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		multi_pack(src, packed_name, 60, 15);
+		block_pack(src, packed_name, 60, 15);
 
 
 		
@@ -171,7 +172,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		multi_unpack(packed_name, dst);
+		block_unpack(packed_name, dst);
 
 
 		int unpack_time = (clock() - cl);

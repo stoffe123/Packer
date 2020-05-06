@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClCompile Include="bitarray.c" />
     <ClCompile Include="bitfile.c" />
+    <ClCompile Include="block_packer.c" />
     <ClCompile Include="canonical.c" />
     <ClCompile Include="common_tools.c" />
     <ClCompile Include="huffman2.c" />

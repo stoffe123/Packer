@@ -5,6 +5,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+//Global for all threads
+unsigned long filename_count = 1000;
+
 
 static const unsigned long BUF_SIZE = 32768;
 static unsigned char buf[32768];
@@ -91,6 +94,25 @@ void WRITE(FILE* ut, unsigned long long c)
 	fwrite(&c, 1, 1, ut);
 }
 
+char* get_rand() {
+	return concat(int_to_string(clock()), int_to_string(filename_count++));
+}
+
+
+char* get_temp_file(char* dir) {
+	return concat(dir, concat("tmp", get_rand()));
+}
+
+
+
+
+char* get_clock_dir() {
+	const char* dir = concat("c:/test/", concat("multipack", get_rand()));
+	dir = concat(dir, "_");
+	return dir;
+}
+
+
 char* concat(const char* s1, const char* s2) {
 
 	const size_t s1_length = strlen(s1);
@@ -104,6 +126,10 @@ char* concat(const char* s1, const char* s2) {
 	strcpy(strBuf, s1);
 	strcpy(strBuf + s1_length, s2);
 	return strBuf;
+}
+
+char* concat_int(const char* s1, int i) {
+	return concat(s1, int_to_string(i));
 }
 
 char* int_to_string(int i) {
