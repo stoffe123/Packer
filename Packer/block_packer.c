@@ -9,7 +9,7 @@
 #include "canonical.h"
 
 // 4 x 65536
-#define BLOCK_SIZE 524288
+#define BLOCK_SIZE 65536
 
 
 
@@ -63,9 +63,9 @@ append_to_tar(FILE* utfil,char* src) {
 		uint32_t size;
 		while (fread(&size, 1, 4, infil) == 4) {
 
-			char* base_dir = get_clock_dir();
-			char* tmp = get_temp_file(base_dir);
-			char* tmp2 = get_temp_file(base_dir);
+	
+			char* tmp = get_temp_file();
+			char* tmp2 = get_temp_file();
 			copy_chunk(infil, tmp, size);
 
 			multi_unpack(tmp, tmp2);

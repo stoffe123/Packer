@@ -37,9 +37,8 @@ char* int_to_string(int i);
 
 char* get_rand();
 
-char* get_temp_file(char* dir);
+char* get_temp_file();
 
 char* get_clock_dir();
-
 
 #endif

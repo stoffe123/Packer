@@ -114,7 +114,7 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 
 bool SeqPackAndTest(const char* dir, const char* src) {
 	src = concat(dir, src);
-	char* tmp = get_temp_file(dir);
+	char* tmp = get_temp_file();
 	seq_pack(src, tmp, 80, 10);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -161,7 +161,9 @@ bool MultiPackAndTest(const char* dir, const char* src) {
 		remove(src);
 		rename(tmp, src);
 	}
-	remove(tmp);
+	else {
+		remove(tmp);
+	}
 	return compression_success;
 }
 
@@ -171,8 +173,7 @@ void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 	const char* tmp = get_temp_file(dir);
 	CanonicalDecode(src, tmp);
 	remove(src);
-	rename(tmp, src);
-	remove(tmp);
+	rename(tmp, src);	
 }
 
 void SeqUnpackAndReplace(const char* dir, const char* src) {
@@ -182,7 +183,6 @@ void SeqUnpackAndReplace(const char* dir, const char* src) {
 	seq_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
-	remove(tmp);
 }
 
 void TwoByteUnpackAndReplace(const char* dir, const char* src) {
@@ -191,7 +191,6 @@ void TwoByteUnpackAndReplace(const char* dir, const char* src) {
 	two_byte_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
-	remove(tmp);
 }
 
 void MultiUnpackAndReplace(const char* dir, const char* src) {
@@ -200,7 +199,6 @@ void MultiUnpackAndReplace(const char* dir, const char* src) {
 	multi_unpack(src, tmp, true);
 	remove(src);
 	rename(tmp, src);
-	remove(tmp);
 }
 
 void remove_meta_files(const char* base_dir) {
@@ -217,14 +215,13 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	printf("\nMulti_pack  %s  =>  %s\nsize org: %d    pages: (%d,%d)", src, dst, get_file_size_from_name(src), offset_pages, seqlen_pages);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
-	char* base_dir = get_clock_dir();
-	char* tmp = get_temp_file(base_dir);
+	char* tmp = get_temp_file();
 
 	bool got_smaller = RLE_pack_and_test(src, tmp);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 5);
 	}
-
+	const char* base_dir = get_clock_dir();
 	got_smaller = TwoBytePackAndTest(base_dir, tmp);
     //got_smaller = false;
 	if (got_smaller) {
@@ -234,7 +231,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	seq_pack_separate(tmp, base_dir, offset_pages, seqlen_pages);
 	// now we have three meta files to try to pack with seqlen+huffman
 
-	remove(tmp);
+	//remove(tmp);
 
 	//try to pack meta files!
 	// ----------- Pack main -------------
@@ -326,7 +323,7 @@ void multi_unpack(const char* src, const char* dst) {
 		}
 
 		RLE_simple_unpack(seq_dst, dst);
-		remove(seq_dst);
+		//remove(seq_dst);
 	}
 	else {
 		

@@ -81,23 +81,25 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = {  "onechar.txt",
+	char test_filenames[16][100] = { "pazera.exe",  
+		"onechar.txt",
 		"repeatchar.txt", 
 		
 		"bad.cdg",
 		"empty.txt", 
 		"oneseq.txt", 
 		"book_med.txt",
+		 "voc.wav",
 		"amb.dll",
 	     "book.txt",			
 			 "rel.pdf",
 			 "nex.doc",
-		"pazera.exe", "tob.pdf",
+		"tob.pdf",
 			"did.csh",
 			 "aft.htm",
 			
 		
-		"voc.wav",
+		
 		 "bad.mp3"
 
 

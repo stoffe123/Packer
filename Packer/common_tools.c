@@ -5,8 +5,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define TEMP_DIR "c:/test/temp_files/"
+
 //Global for all threads
-unsigned long filename_count = 1000;
+unsigned long long filename_count = 1000000;
 
 
 static const unsigned long BUF_SIZE = 32768;
@@ -67,6 +69,7 @@ void copy_the_rest(FILE* source_file, const char* dest_filename) {
 void copy_file(const char* src, const char* dst) {
 	FILE* f = fopen(src, "rb");
 	copy_the_rest(f, dst);
+	fclose(f);
 }
 
 
@@ -95,19 +98,19 @@ void WRITE(FILE* ut, unsigned long long c)
 }
 
 char* get_rand() {
-	return concat(int_to_string(clock()), int_to_string(filename_count++));
+	return int_to_string(filename_count++);
 }
 
 
-char* get_temp_file(char* dir) {
-	return concat(dir, concat("tmp", get_rand()));
+char* get_temp_file() {
+	return concat(TEMP_DIR, concat("tmp", get_rand()));
 }
 
 
 
 
 char* get_clock_dir() {
-	const char* dir = concat("c:/test/", concat("multipack", get_rand()));
+	const char* dir = concat(TEMP_DIR, get_rand());
 	dir = concat(dir, "_");
 	return dir;
 }
