@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdint.h>
 #include "common_tools.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -14,6 +15,7 @@ unsigned long long filename_count = 1000000;
 static const unsigned long BUF_SIZE = 32768;
 static unsigned char buf[32768];
 
+
 long long get_file_size(const FILE* f) {	
 	fseek(f, 0, SEEK_END);
 	long long res = ftell(f);
@@ -21,8 +23,12 @@ long long get_file_size(const FILE* f) {
 	return res;
 }
 
-long long get_file_size_from_name(const char* name) {
+uint64_t get_file_size_from_name(const char* name) {
 	const FILE* f = fopen(name, "r");
+	if (f == NULL) {
+		printf("\n Can't find file: %s", name);
+		exit(0);
+	}
 	long long res = get_file_size(f);
 	fclose(f);
 	return res;
@@ -75,19 +81,26 @@ void copy_file(const char* src, const char* dst) {
 
 void append_to_file(FILE* main_file, const char* append_filename) {
 	FILE* append_file = fopen(append_filename, "rb");
-	unsigned long long bytes_got;
+	size_t bytes_got;
 	do {
 		bytes_got = fread(&buf, 1, BUF_SIZE, append_file);
-		fwrite(&buf, 1, bytes_got, main_file);
+		if (bytes_got > 0) {
+			fwrite(&buf, 1, bytes_got, main_file);
+		}
 	} while (bytes_got == BUF_SIZE);
 	fclose(append_file);
 }
 
 void assert(int x, const char* msg) {
 	if (!x) {
-		printf("\n\n ASSERTION FAILURE!");
-		printf("\n\nMessage:   %s", msg);
-		printf("\n\n");
+		printf("\n\n ASSERTION FAILURE: %s", msg);		
+		exit(0);
+	}
+}
+
+void assertSmallerOrEqual(int x, int y, const char* msg) {
+	if (x > y) {
+		printf("\n\n ASSERTION FAILURE: %d <= %d \n %s", x,y, msg);
 		exit(0);
 	}
 }

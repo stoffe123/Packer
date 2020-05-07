@@ -81,28 +81,26 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "pazera.exe",  
+	char test_filenames[16][100] = { "voc.wav",
+		
 		"onechar.txt",
 		"repeatchar.txt", 
 		
-		"bad.cdg",
+		
 		"empty.txt", 
 		"oneseq.txt", 
 		"book_med.txt",
-		 "voc.wav",
-		"amb.dll",
-	     "book.txt",			
+		 "book.txt",
 			 "rel.pdf",
 			 "nex.doc",
+			  "aft.htm",
+		"bad.cdg",
+		"did.csh",
+		"amb.dll",
+		"pazera.exe",
 		"tob.pdf",
-			"did.csh",
-			 "aft.htm",
-			
-		
 		
 		 "bad.mp3"
-
-
 
 	};
 
@@ -111,9 +109,12 @@ int main()
 	unsigned long long acc_size = 0;
 
 	int before_suite = clock();
-	for (int kk = 0; kk < 16; kk++)
+	for (int kk = 0 ; kk < 16; kk++)
 	{
 		const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
+		//const char* src = "C:/test/tmp1";
+		//const char* src = concat_int("C:/test/temp_files/a" , kk);
+
 		const char* dst = "C:/test/unp";
 
 		const char* packed_name = "c:/test/packed.bin";
@@ -131,7 +132,7 @@ int main()
 
 		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		block_pack(src, packed_name, 60, 15);
+	   block_pack(src, packed_name, 60, 15);
 
 
 		
@@ -174,7 +175,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		block_unpack(packed_name, dst);
+	block_unpack(packed_name, dst);
 
 
 		int unpack_time = (clock() - cl);

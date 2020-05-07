@@ -231,7 +231,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	seq_pack_separate(tmp, base_dir, offset_pages, seqlen_pages);
 	// now we have three meta files to try to pack with seqlen+huffman
 
-	//remove(tmp);
+	remove(tmp);
 
 	//try to pack meta files!
 	// ----------- Pack main -------------
@@ -323,7 +323,7 @@ void multi_unpack(const char* src, const char* dst) {
 		}
 
 		RLE_simple_unpack(seq_dst, dst);
-		//remove(seq_dst);
+		remove(seq_dst);
 	}
 	else {
 		

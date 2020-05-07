@@ -6,6 +6,8 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
+#define BLOCK_SIZE 917504
+
 
 long long get_file_size(const FILE* f);
 
@@ -24,6 +26,8 @@ void copy_the_rest(FILE* source_file, const char* dest_filename);
 void append_to_file(FILE* main_file, const char* append_filename);
 
 void assert(int x, const char* msg);
+
+void assertSmallerOrEqual(int x, int y, char* msg);
 
 void WRITE(FILE * ut, unsigned long long c);
 
