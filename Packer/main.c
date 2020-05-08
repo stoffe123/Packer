@@ -197,6 +197,8 @@ int main()
 
 	}
 	long total_time = clock() - before_suite;
-	printf("\n\n **** ALL SUCCEEDED **** Accumulated size %d kb (%d) ************", acc_size / 1024, acc_size);
-	printf("\n\n Total time %d seconds     (%d)", total_time / 1000, total_time);
+	printf("\n\n **** ALL SUCCEEDED **** Accumulated size\n%d kb (%d)", round((double)acc_size / (double)1024), acc_size);
+	printf("\n\n Total time %d seconds     (%d)", round((double)total_time / (double)1000), total_time);
+	int eff = round((double)acc_size /(double)total_time / (double)1024);
+	printf("\nPack rate:%d", eff);
 }

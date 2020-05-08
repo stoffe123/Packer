@@ -48,7 +48,8 @@ unsigned char setKthBit(unsigned char value, unsigned char bit)
 void copy_internal(FILE* source_file, const char* dest_filename, unsigned long long size_to_copy, bool copy_the_rest) {
 	FILE* out = fopen(dest_filename, "wb");
 
-	unsigned long long total_read = 0, bytes_to_read, bytes_got;
+	unsigned long long total_read = 0, bytes_to_read;
+	size_t bytes_got;
 	do {
 		if (!copy_the_rest && total_read + BUF_SIZE > size_to_copy) {
 			bytes_to_read = (size_to_copy - total_read);
@@ -57,7 +58,9 @@ void copy_internal(FILE* source_file, const char* dest_filename, unsigned long l
 			bytes_to_read = BUF_SIZE;
 		}
 		bytes_got = fread(&buf, 1, bytes_to_read, source_file);
+		if (bytes_got > 0) {
 			fwrite(&buf, 1, bytes_got, out);
+		}
 		total_read += bytes_got;
 	} while (bytes_got == BUF_SIZE);
 	fclose(out);
