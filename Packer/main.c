@@ -81,11 +81,11 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "voc.wav",
+	char test_filenames[16][100] = { "bad.cdg",
 		
 		"onechar.txt",
 		"repeatchar.txt", 
-		
+		 "voc.wav",
 		
 		"empty.txt", 
 		"oneseq.txt", 
@@ -94,7 +94,7 @@ int main()
 			 "rel.pdf",
 			 "nex.doc",
 			  "aft.htm",
-		"bad.cdg",
+		
 		"did.csh",
 		"amb.dll",
 		"pazera.exe",
@@ -197,8 +197,10 @@ int main()
 
 	}
 	long total_time = clock() - before_suite;
-	printf("\n\n **** ALL SUCCEEDED **** Accumulated size\n%d kb (%d)", round((double)acc_size / (double)1024), acc_size);
-	printf("\n\n Total time %d seconds     (%d)", round((double)total_time / (double)1000), total_time);
-	int eff = round((double)acc_size /(double)total_time / (double)1024);
-	printf("\nPack rate:%d", eff);
+	double size_kb = round((double)acc_size / (double)1024);
+	printf("\n\n **** ALL SUCCEEDED **** Accumulated size\n%.0f kb   (%d)", size_kb, acc_size);
+	double time_sec = round((double)total_time / (double)1000);
+	printf("\n\Time %.0fs  (%d)", time_sec, total_time);
+	double eff = size_kb/time_sec;
+	printf("\nRate  %.2f kb/s\n\n", eff);
 }
