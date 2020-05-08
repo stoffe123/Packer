@@ -1,12 +1,13 @@
 #ifndef COMMON_TOOLS_H 
 #define COMMON_TOOLS_H
 #include <stdbool.h>
+#include <stdint.h>
 #define debug if(VERBOSE) printf("\n");if(VERBOSE) printf
 
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
-#define BLOCK_SIZE 1572864
+#define BLOCK_SIZE 3000000
 
 
 long long get_file_size(const FILE* f);
@@ -25,9 +26,11 @@ void copy_the_rest(FILE* source_file, const char* dest_filename);
 
 void append_to_file(FILE* main_file, const char* append_filename);
 
-void assert(int x, const char* msg);
+void assert(uint64_t x, const char* msg);
 
-void assertSmallerOrEqual(int x, int y, char* msg);
+void assertSmallerOrEqual(uint64_t x, uint64_t y, char* msg);
+
+void assertEqual(uint64_t x, uint64_t y, char* msg);
 
 void WRITE(FILE * ut, unsigned long long c);
 
@@ -37,7 +40,7 @@ char* concat_int(const char* s1, int i);
 
 void make_dir(const char* path);
 
-char* int_to_string(int i);
+char* int_to_string(int64_t i);
 
 char* get_rand();
 

@@ -76,43 +76,48 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 }
 
 
-
+//-------------------------------------------------------------------------------
 
 int main()
 {
 
-	char test_filenames[16][100] = { "bad.cdg",
-		
+	char test_filenames[16][100] = { "did.csh", "aft.htm", "book.txt", "book_med.txt",
+
 		"onechar.txt",
-		"repeatchar.txt", 
-		 "voc.wav",
-		
-		"empty.txt", 
-		"oneseq.txt", 
-		"book_med.txt",
-		 "book.txt",
-			 "rel.pdf",
+		"repeatchar.txt",
+
+
+		"empty.txt",
+		"oneseq.txt",
+
+
+		  "rel.pdf",
+		  "bad.cdg",
+
 			 "nex.doc",
-			  "aft.htm",
-		
-		"did.csh",
+			
+
+	
 		"amb.dll",
-		"pazera.exe",
+
 		"tob.pdf",
-		
+
+			 "voc.wav",
+		"pazera.exe",
 		 "bad.mp3"
 
 	};
 
+	int offset_pages = 80, seqlen_pages = 10;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0;
 
 	int before_suite = clock();
-	for (int kk = 0 ; kk < 16; kk++)
+	//for (int kk = 0; kk < 13; kk++)
 	{
-		const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
-		//const char* src = "C:/test/tmp1";
+		//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
+		const char* src = "C:/test/seqlen_c";
 		//const char* src = concat_int("C:/test/temp_files/a" , kk);
 
 		const char* dst = "C:/test/unp";
@@ -132,10 +137,8 @@ int main()
 
 		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-	   block_pack(src, packed_name, 60, 15);
+		seq_pack(src, packed_name, offset_pages, seqlen_pages);
 
-
-		
 		/*
 		DWORD dwThreadId, dwThrdParam = kk;
 
@@ -153,7 +156,7 @@ int main()
 
 			&dwThreadId); // returns the thread identifier
 
-	    */
+		*/
 		int pack_time = (clock() - cl);
 		//printf("\n Packing finished time it took: %d", pack_time);
 		long long size_packed = get_file_size_from_name(packed_name);
@@ -175,7 +178,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-	block_unpack(packed_name, dst);
+		seq_unpack(packed_name, dst);
 
 
 		int unpack_time = (clock() - cl);
@@ -184,23 +187,23 @@ int main()
 
 
 		printf("\n\n Comparing files!");
-	
+
 		if (files_equal(src, dst)) {
 			printf("\n ****** SUCCESS ****** (equal)\n");
 		}
 		else {
 			return 1;
 		}
-		
+
 
 		//printf("\n Best page=%d, size=%d", best_page, best_size);
 
 	}
 	long total_time = clock() - before_suite;
 	double size_kb = round((double)acc_size / (double)1024);
-	printf("\n\n **** ALL SUCCEEDED **** Accumulated size\n%.0f kb   (%d)", size_kb, acc_size);
+	printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)", seqlen_pages, offset_pages, size_kb, acc_size);
 	double time_sec = round((double)total_time / (double)1000);
 	printf("\n\Time %.0fs  (%d)", time_sec, total_time);
-	double eff = size_kb/time_sec;
+	double eff = size_kb / time_sec;
 	printf("\nRate  %.2f kb/s\n\n", eff);
 }

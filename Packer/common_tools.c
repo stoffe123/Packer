@@ -94,14 +94,22 @@ void append_to_file(FILE* main_file, const char* append_filename) {
 	fclose(append_file);
 }
 
-void assert(int x, const char* msg) {
+void assert(uint64_t x, const char* msg) {
 	if (!x) {
 		printf("\n\n ASSERTION FAILURE: %s", msg);		
 		exit(0);
 	}
 }
 
-void assertSmallerOrEqual(int x, int y, const char* msg) {
+void assertEqual(uint64_t x, uint64_t y, const char* msg) {
+	if (x != y) {
+		printf("\n\n ASSERTION FAILURE: %d != %d \n %s", x, y, msg);
+		exit(0);
+	}
+}
+
+
+void assertSmallerOrEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x > y) {
 		printf("\n\n ASSERTION FAILURE: %d <= %d \n %s", x,y, msg);
 		exit(0);
@@ -151,7 +159,7 @@ char* concat_int(const char* s1, int i) {
 	return concat(s1, int_to_string(i));
 }
 
-char* int_to_string(int i) {
+char* int_to_string(int64_t i) {
 	const char* ra = malloc(100);
 	_itoa(i, ra, 10);
 	return ra;

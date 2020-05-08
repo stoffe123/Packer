@@ -14,14 +14,14 @@
 //Global variables used in compressor
 static  FILE* infil, * utfil;
 
-static   unsigned long long buffer_endpos, buffer_startpos, buffer_min,
+static   uint64_t buffer_endpos, buffer_startpos, buffer_min,
 	                                    buffer_size = 2048, source_size;
 static   unsigned char* buffer;
 
 static   const char* base_dir;
 static   long two_byte_freq_table[65536] = { 0 };
 static   uint8_t pair_table[2048] = { 0 }, master_code;
-static   unsigned long* char_freq[256];
+static   uint64_t* char_freq[256];
 
  typedef struct value_freq_t {
 	long value;
@@ -32,16 +32,16 @@ static   unsigned long* char_freq[256];
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
 	if (buffer_endpos == buffer_size) {
-		unsigned long long buffer_left = buffer_size - buffer_startpos;
+		uint64_t buffer_left = buffer_size - buffer_startpos;
 		if (buffer_left < buffer_min) {
 			//load new buffer!!			
 			debug("Load new buffer of: %d", buffer_size);
 
 			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-			for (unsigned long i = 0; i < (buffer_size - buffer_startpos); i++) {
+			for (uint64_t i = 0; i < (buffer_size - buffer_startpos); i++) {
 				new_buf[i] = buffer[i + buffer_startpos];
 			}
-			unsigned long long res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
+			uint64_t res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
 			buffer_endpos = res + (buffer_size - buffer_startpos);
 			free(buffer);
 			buffer = new_buf;
@@ -53,7 +53,7 @@ static void move_buffer(unsigned int steps) {
 
  static value_freq_t find_best_code() {
 	unsigned char best_code;
-	unsigned long freq = ULONG_MAX;
+	uint64_t freq = ULONG_MAX;
 	for (unsigned int i = 0; i < 256; i++) {
 		if (char_freq[i] < freq) {
 			freq = char_freq[i];
@@ -93,7 +93,7 @@ value_freq_t find_best_two_byte() {
 
 int get_gain_threshhold() {
 	
-	int res = source_size / 500;
+	uint64_t res = source_size / 500;
 
 	if (res < 20) {
 		res = 20;
@@ -185,7 +185,7 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 	source_size = get_file_size(infil);
 
 
-	unsigned long total_size = get_file_size(infil);
+	uint64_t total_size = get_file_size(infil);
 	int pair_table_pos;
 	if (pass == 2) {
 		fopen_s(&utfil, dest, "wb");
@@ -217,7 +217,6 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 
 	buffer_endpos = fread(buffer, 1, buffer_size, infil);
 
-	unsigned long long offset_max;
 	unsigned int seq_len = 1;
 
 	while (buffer_startpos < buffer_endpos) {

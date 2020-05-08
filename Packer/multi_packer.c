@@ -196,12 +196,13 @@ void TwoByteUnpackAndReplace(const char* dir, const char* src) {
 void MultiUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
 	const char* tmp = get_temp_file(dir);
-	multi_unpack(src, tmp, true);
+	multi_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
 }
 
 void remove_meta_files(const char* base_dir) {
+	
 	remove(concat(base_dir, "seqlens"));
 	remove(concat(base_dir, "offsets"));
 	remove(concat(base_dir, "main"));
@@ -241,7 +242,9 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	// ---------- Pack seqlens -----------
-	got_smaller = SeqPackAndTest(base_dir, "seqlens");
+	got_smaller = false; // SeqPackAndTest(base_dir, "seqlens");
+	printf(concat(base_dir, "seqlens"));
+	exit(0);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
 	}
