@@ -11,7 +11,7 @@
 //Global vars used in unpacker
 static unsigned char code;
 static FILE* infil, * utfil, * seqlens_file, * offsets_file;
-static long long read_packedfile_pos, seqlens_pos, offsets_pos;
+static size_t  seqlens_pos, offsets_pos, read_packedfile_pos;
 static  unsigned char buf[BLOCK_SIZE * 2];
 
 static unsigned char offsets[BLOCK_SIZE];

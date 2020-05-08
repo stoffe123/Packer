@@ -15,8 +15,8 @@
 
 //Global variables used in compressor
 
-static __declspec (thread) const char* base_dir;
-static __declspec (thread) bool separate;
+static const char* base_dir;
+static bool separate;
 
 
 typedef struct value_freq_t {

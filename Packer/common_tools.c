@@ -57,7 +57,7 @@ void copy_internal(FILE* source_file, const char* dest_filename, unsigned long l
 			bytes_to_read = BUF_SIZE;
 		}
 		bytes_got = fread(&buf, 1, bytes_to_read, source_file);
-		fwrite(&buf, 1, bytes_got, out);
+			fwrite(&buf, 1, bytes_got, out);
 		total_read += bytes_got;
 	} while (bytes_got == BUF_SIZE);
 	fclose(out);

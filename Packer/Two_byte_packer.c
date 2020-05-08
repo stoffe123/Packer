@@ -12,16 +12,16 @@
 /* Two-byte packer */
 
 //Global variables used in compressor
-static __declspec (thread) FILE* infil, * utfil;
+static  FILE* infil, * utfil;
 
-static  __declspec (thread) unsigned long long buffer_endpos, buffer_startpos, buffer_min,
+static   unsigned long long buffer_endpos, buffer_startpos, buffer_min,
 	                                    buffer_size = 2048, source_size;
-static  __declspec (thread) unsigned char* buffer;
+static   unsigned char* buffer;
 
-static  __declspec (thread) const char* base_dir;
-static  __declspec (thread) long two_byte_freq_table[65536] = { 0 };
-static  __declspec (thread) uint8_t pair_table[2048] = { 0 }, master_code;
-static  __declspec (thread) unsigned long* char_freq[256];
+static   const char* base_dir;
+static   long two_byte_freq_table[65536] = { 0 };
+static   uint8_t pair_table[2048] = { 0 }, master_code;
+static   unsigned long* char_freq[256];
 
  typedef struct value_freq_t {
 	long value;
