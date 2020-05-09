@@ -159,6 +159,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	assertEqual(buffer_endpos, size_org, "buffer_endpos == size_org in seqpacker");
 
+	assert(buffer_size > size_org * 2, "buffer_size > size_org * 2  in seqpacker");
+
 	absolute_end = buffer_endpos;
 
 	uint64_t offset_max;
@@ -256,6 +258,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				{
 					
 					WRITE(utfil, ch);
+					assert(absolute_end < buffer_size, "absolute_end < buffer_size in seqpacker");
 					buffer[absolute_end++] = ch; // write start to end to wrap-around find sequences
 				}
 			}

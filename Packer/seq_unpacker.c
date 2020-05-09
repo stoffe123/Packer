@@ -12,8 +12,8 @@
 
 //Global vars used in unpacker
 static size_t  seqlens_pos, offsets_pos, packed_file_end;
-static  uint8_t buf[BLOCK_SIZE * 3], offsets[BLOCK_SIZE], seqlens[BLOCK_SIZE];
-static uint64_t buf_size = BLOCK_SIZE * 3, buf_pos, size_wraparound;
+static  uint8_t buf[BLOCK_SIZE * 4], offsets[BLOCK_SIZE], seqlens[BLOCK_SIZE];
+static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wraparound;
 
 static bool separate_files = true;
 
@@ -25,6 +25,7 @@ uint8_t read_byte_from_file() {
 
 void put_buf(uint8_t c) {
 	buf[buf_pos--] = c;
+	assert(buf_pos > packed_file_end, "buf_pos > packed_file_end in sequnpacker");
 }
 
 uint8_t read_seqlen() {

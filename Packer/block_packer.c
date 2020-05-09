@@ -12,7 +12,7 @@
 append_to_tar(FILE* utfil,char* src) {
 	//write size
 	uint32_t size = get_file_size_from_name(src);
-	fwrite(&size, 1, 4, utfil);
+	fwrite(&size, sizeof(size), 1, utfil);
 
 	//write contents
 	append_to_file(utfil, src);
@@ -30,7 +30,7 @@ append_to_tar(FILE* utfil,char* src) {
 		utfil = fopen(dst, "wb");
 		infil = fopen(src, "rb");
 
-		uint32_t tmp_size;
+		uint64_t tmp_size;
 		do {
 			char* tmp = get_temp_file();
 			copy_chunk(infil, tmp, BLOCK_SIZE);
@@ -57,7 +57,7 @@ append_to_tar(FILE* utfil,char* src) {
 		infil = fopen(src, "rb");
 
 		uint32_t size;
-		while (fread(&size, 1, 4, infil) == 4) {
+		while (fread(&size, sizeof(size), 1, infil) == 1) {
 
 	
 			char* tmp = get_temp_file();

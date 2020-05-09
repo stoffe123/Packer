@@ -9,12 +9,7 @@
 #define TEMP_DIR "c:/test/temp_files/"
 
 //Global for all threads
-unsigned long long filename_count = 1000000;
-
-
-static const unsigned long BUF_SIZE = 32768;
-static unsigned char buf[32768];
-
+uint64_t filename_count = 1000000;
 
 long long get_file_size(const FILE* f) {	
 	fseek(f, 0, SEEK_END);
@@ -45,33 +40,28 @@ unsigned char setKthBit(unsigned char value, unsigned char bit)
 	return ((1 << bit) | value);
 }
 
-void copy_internal(FILE* source_file, const char* dest_filename, unsigned long long size_to_copy, bool copy_the_rest) {
+void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_copy) {
 	FILE* out = fopen(dest_filename, "wb");
 
-	unsigned long long total_read = 0, bytes_to_read;
-	size_t bytes_got;
-	do {
-		if (!copy_the_rest && total_read + BUF_SIZE > size_to_copy) {
-			bytes_to_read = (size_to_copy - total_read);
+	uint8_t ch;
+	for (int i=0; i < size_to_copy; i++) {
+		size_t bytes_got = fread(&ch, 1, 1, source_file);
+		if (bytes_got == 0) {
+			break;
 		}
-		else {
-			bytes_to_read = BUF_SIZE;
-		}
-		bytes_got = fread(&buf, 1, bytes_to_read, source_file);
-		if (bytes_got > 0) {
-			fwrite(&buf, 1, bytes_got, out);
-		}
-		total_read += bytes_got;
-	} while (bytes_got == BUF_SIZE);
+		fwrite(&ch, 1, 1, out);
+	}
 	fclose(out);
 }
 
-void copy_chunk(FILE* source_file, const char* dest_filename, unsigned long long size_to_copy) {
-	copy_internal(source_file, dest_filename, size_to_copy, false);
-}
-
-void copy_the_rest(FILE* source_file, const char* dest_filename) {
-	copy_internal(source_file, dest_filename, 0, true);
+void copy_the_rest(FILE* in, const char* dest_filename) {
+	FILE* out = fopen(dest_filename, "wb");
+	uint8_t ch;
+	while (fread(&ch, 1, 1, in) == 1) {
+		fwrite(&ch, 1, 1, out);
+	} 
+	fclose(out);
+	fclose(in);
 }
 
 
@@ -84,13 +74,10 @@ void copy_file(const char* src, const char* dst) {
 
 void append_to_file(FILE* main_file, const char* append_filename) {
 	FILE* append_file = fopen(append_filename, "rb");
-	size_t bytes_got;
-	do {
-		bytes_got = fread(&buf, 1, BUF_SIZE, append_file);
-		if (bytes_got > 0) {
-			fwrite(&buf, 1, bytes_got, main_file);
-		}
-	} while (bytes_got == BUF_SIZE);
+	int ch;
+	while ((ch = fgetc(append_file)) != EOF) {
+		fputc(ch, main_file);
+	}	
 	fclose(append_file);
 }
 
@@ -108,7 +95,6 @@ void assertEqual(uint64_t x, uint64_t y, const char* msg) {
 	}
 }
 
-
 void assertSmallerOrEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x > y) {
 		printf("\n\n ASSERTION FAILURE: %d <= %d \n %s", x,y, msg);
@@ -116,7 +102,7 @@ void assertSmallerOrEqual(uint64_t x, uint64_t y, const char* msg) {
 	}
 }
 
-void WRITE(FILE* ut, unsigned long long c)
+void WRITE(FILE* ut, uint64_t c)
 {
 	fwrite(&c, 1, 1, ut);
 }
@@ -125,20 +111,15 @@ char* get_rand() {
 	return int_to_string(filename_count++);
 }
 
-
 char* get_temp_file() {
 	return concat(TEMP_DIR, concat("tmp", get_rand()));
 }
-
-
-
 
 char* get_clock_dir() {
 	const char* dir = concat(TEMP_DIR, get_rand());
 	dir = concat(dir, "_");
 	return dir;
 }
-
 
 char* concat(const char* s1, const char* s2) {
 

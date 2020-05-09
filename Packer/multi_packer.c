@@ -242,7 +242,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	// ---------- Pack seqlens -----------
-	got_smaller = false; // SeqPackAndTest(base_dir, "seqlens");
+	got_smaller = SeqPackAndTest(base_dir, "seqlens");
 	printf(concat(base_dir, "seqlens"));	
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
@@ -273,6 +273,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 		tar(dst, base_dir, pack_type);
 	}
 	else {
+		printf("\n  CHOOOSING STORE in multi_packer !!! ");
 		pack_type = setKthBit(pack_type, 7);
 		store(src, dst, pack_type);
 	}
@@ -292,6 +293,7 @@ void multi_unpack(const char* src, const char* dst) {
 	fread(&pt, 1, 1, in);
 	pi.pack_type = pt;
 	if (isKthBitSet(pt, 7)) {
+		printf("\n  UNSTORE!!  ");
 		unstore(in, dst);
 		return;
 	}

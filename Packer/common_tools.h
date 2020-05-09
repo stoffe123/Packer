@@ -7,8 +7,7 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
-#define BLOCK_SIZE 1310720
-
+#define BLOCK_SIZE 655360
 
 long long get_file_size(const FILE* f);
 
@@ -20,7 +19,7 @@ unsigned char setKthBit(unsigned char value, unsigned char bit);
 
 void copy_file(const char* src, const char* dst);
 
-void copy_chunk(FILE* source_file, const char* dest_filename, unsigned long long size_to_copy);
+void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_copy);
 
 void copy_the_rest(FILE* source_file, const char* dest_filename);
 
@@ -32,7 +31,7 @@ void assertSmallerOrEqual(uint64_t x, uint64_t y, char* msg);
 
 void assertEqual(uint64_t x, uint64_t y, char* msg);
 
-void WRITE(FILE * ut, unsigned long long c);
+void WRITE(FILE * ut, uint64_t c);
 
 char* concat(const char* s1, const char* s2);
 

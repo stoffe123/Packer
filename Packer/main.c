@@ -78,28 +78,32 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "book.txt", "book_med.txt",
-
+	char test_filenames[16][100] = {  "book.txt", "book_med.txt",
+		
+		
 		"onechar.txt",
 		"repeatchar.txt",
-
-
+		
+	
 		"empty.txt",
 		"oneseq.txt",
-
+		"bad.cdg",
+		"aft.htm",
+			"tob.pdf",
+		"voc.wav",
 
 		  "rel.pdf",
-		  "bad.cdg",
-		"did.csh", "aft.htm",
+		 
+		"did.csh", 
 			 "nex.doc",
 			
 
 	
 		"amb.dll",
 
-		"tob.pdf",
+		
 
-			 "voc.wav",
+			
 		"pazera.exe",
 		 "bad.mp3"
 
@@ -111,10 +115,10 @@ int main()
 	unsigned long long acc_size = 0;
 
 	int before_suite = clock();
-	for (int kk = 0; kk < 16; kk++)
+    for (int kk = 0; kk < 16; kk++)
 	{
 		const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
-		//const char* src = "C:/test/seqlen_c";
+		//const char* src = "C:/test/a2";
 		
 		//const char* src = concat_int("C:/test/temp_files/a" , kk);
 
@@ -129,13 +133,12 @@ int main()
 
 		printf("\n Packing... %s with length:%d", src, size_org);
 
-
-
 		int cl = clock();
 
 		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		multi_pack(src, packed_name, offset_pages, seqlen_pages);
+	    block_pack(src, packed_name, offset_pages, seqlen_pages);
+		//seq_pack_separate(src, "c:/test/", offset_pages, seqlen_pages);
 
 		/*
 		DWORD dwThreadId, dwThrdParam = kk;
@@ -176,7 +179,8 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		multi_unpack(packed_name, dst);
+		block_unpack(packed_name, dst);
+		//seq_unpack_separate("main", dst, "c:/test/");
 
 
 		int unpack_time = (clock() - cl);
