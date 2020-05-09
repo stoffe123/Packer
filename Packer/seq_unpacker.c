@@ -13,14 +13,14 @@
 //Global vars used in unpacker
 static size_t  seqlens_pos, offsets_pos, packed_file_end;
 static  uint8_t buf[BLOCK_SIZE * 3], offsets[BLOCK_SIZE], seqlens[BLOCK_SIZE];
-static uint64_t buf_size = BLOCK_SIZE * 3, buf_pos, read_packedfile_pos, size_wraparound;
+static uint64_t buf_size = BLOCK_SIZE * 3, buf_pos, size_wraparound;
 
-static bool separate_files = false;
+static bool separate_files = true;
 
 
 uint8_t read_byte_from_file() {	
-	read_packedfile_pos--;
-	return buf[read_packedfile_pos];
+	packed_file_end--;
+	return buf[packed_file_end];
 }
 
 void put_buf(uint8_t c) {
@@ -71,7 +71,7 @@ uint64_t get_offset(uint8_t pages) {
 	return offset;
 }
 
-size_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset_pages, uint8_t code) {
+uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset_pages, uint8_t code) {
 	uint8_t* temp_ar = malloc(packed_file_end);
 	long long i = packed_file_end; //index to read from packed
 	long long j = packed_file_end;  //index to write to temp array
@@ -83,7 +83,7 @@ size_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset_p
 			}
 			continue;
 		}
-		// ch == code
+		// ch was code
 		uint64_t seqlen = buf[--i];
 		if (code_occurred && seqlen == SEQ_LEN_FOR_CODE) {
 			continue;
@@ -104,12 +104,13 @@ size_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset_p
 			i--;
 		}
 	}
-	uint64_t k = packed_file_end;
 	size_wraparound = packed_file_end - j;
+	uint64_t k = buf_size - size_wraparound;
 	for (uint64_t i = j; i < packed_file_end; i++) {
 		buf[k++] = temp_ar[i];
 	}
-	return k;
+	assertEqual(k, buf_size, "k=buf_size in seq_unpacker");
+	return buf_size - size_wraparound - 1;
 }
 
 //------------------------------------------------------------------------------
@@ -146,6 +147,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 		exit(1);
 	}
 	packed_file_end = fread(&buf, 1, BLOCK_SIZE * 2, infil);	 
+	debug("\n packed_file_end %d", packed_file_end);
 	fclose(infil);
 	
 	uint8_t code = buf[--packed_file_end];
@@ -153,18 +155,18 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 	seqlen_pages = buf[--packed_file_end];
 	code_occurred = buf[--packed_file_end];
 
-	read_packedfile_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, code);
+	buf_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, code);
+	debug("\n buf_pos after wraparound %d", buf_pos);
+	
 	if (VERBOSE) {
 		printf("\nwrap around:\n");
-		for (uint64_t i = packed_file_end; i < read_packedfile_pos; i++) {
+		for (uint64_t i = packed_file_end; i < packed_file_end; i++) {
 			printf("%c", buf[i]);
 		}
 		printf("\n\n");
-	}
+	}	
 
-	buf_pos = buf_size - 1;
-
-	while (read_packedfile_pos > 0) {
+	while (packed_file_end > 0) {
 		cc = read_byte_from_file();
 		if (cc == code) {
 			uint64_t offset, seqlen = read_seqlen();			
@@ -177,15 +179,15 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 				offset = get_offset(offset_pages);
 
 				uint64_t match_index = buf_pos + offset + seqlen;
-				printf("\nunp: %d, %d  read_packedfile_pos %d match_index %d '", seqlen, offset, read_packedfile_pos, match_index);
+				debug("unp: %d, %d  packed_file_end %d match_index %d buf_pos %d  '", seqlen, offset, packed_file_end, match_index, buf_pos);
 				assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
 				//write the sequence at the right place!
 				//if (seq_len > offset) {
 				for (uint64_t i = 0; i < seqlen; i++) {
 					put_buf(buf[match_index - i]);
-					printf("%d ", buf[(match_index - seqlen) + (i + 1)]);
+					debug("%d ", buf[(match_index - seqlen) + (i + 1)]);
 				}
-				printf("'\n");
+				debug("'\n");
 				/*	}
 
 					else {  //offset < seq_len, repeating
@@ -210,7 +212,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 
 
 	uint64_t size_out = buf_size - ((uint64_t)buf_pos + 1) - size_wraparound;
-	printf("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
+	debug("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
 	fwrite(&buf[buf_pos + 1], size_out, 1, utfil);
 	fclose(utfil);
 }

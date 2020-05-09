@@ -25,7 +25,7 @@ static bool separate_files = false;
 
 static void move_buffer(unsigned int steps, uint8_t pass) {
 	buffer_startpos += steps;
-	if (buffer_startpos % 12000 == 0 && pass == 2) {
+	if (buffer_startpos % 12000 == 0 && pass == 2 && !VERBOSE) {
 		printf("*");
 	}
 	assert(buffer_startpos <= buffer_size, "buffer_startpos <= buffer_size in seq_packer.move_buffer");	
@@ -176,7 +176,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				else {
 				    offset_max = winsize;
 				}
-				debug("\noffset max %d\n", offset_max);
+				//debug("\noffset max %d\n", offset_max);
 				for (offset = 3; offset < offset_max; offset++)
 				{
 					// find matching sequence				
@@ -208,6 +208,17 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 							assert(seq_len >= 0, "seq_len >= 0");
 						}
 					}
+					diff = (buffer_startpos + seq_len) - buffer_endpos;
+					if (diff > 0) {
+						if (seq_len <= diff) {
+							seq_len = 0;
+						}
+						else {
+							seq_len -= diff;
+							assert(seq_len >= 0, "seq_len >= 0");
+						}
+					}
+
 					//check if better than the best!
 
 					if (seq_len > best_seqlen && (offset - seq_len) <= longest_offset) {
@@ -225,7 +236,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		/* now we found the longest sequence in the window! */
 		unsigned char ch = buffer[buffer_startpos];
 		unsigned int dummy = buffer_startpos;//for debugging
-		if (best_seqlen <= 2 || (best_offset >= lowest_special_offset && best_seqlen <= 3)) // ||best_offset == 20122)
+		if (best_seqlen <= 2 || (best_offset >= lowest_special_offset && best_seqlen <= 3))
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
 				if (char_freq[ch] < LONG_MAX) {
@@ -267,13 +278,13 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				out_offset(best_offset, offset_pages);
 				out_seqlen(best_seqlen, seqlen_pages);
 				//if (best_seqlen > 230) {
-				//if (VERBOSE) {
+				if (VERBOSE) {
 					printf("\n%d, %d  buffer_startpos %d   buffer_endpos %d  seq \"", best_seqlen, best_offset, buffer_startpos, buffer_endpos);
 					for (int i = 0; i < best_seqlen; i++) {
 						printf("%d ", buffer[buffer_startpos + i]);
 					}
-					printf("\"\n");					
-				//}
+					printf("\"");					
+				}
 
 				//}
 				WRITE(utfil, code);  /* note file is read backwards during unpack! */
@@ -282,7 +293,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		}//end if
 	}//end while
 
-	if (VERBOSE) {
+	if (VERBOSE && false) {
 		printf("\nwrap around:\n");
 		for (int i = buffer_endpos; i < absolute_end; i++) {
 			printf("%c", buffer[i]);

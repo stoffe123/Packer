@@ -2,7 +2,7 @@
 #define COMMON_TOOLS_H
 #include <stdbool.h>
 #include <stdint.h>
-#define debug if(VERBOSE) printf("\n");if(VERBOSE) printf
+#define debug if(VERBOSE) printf
 
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)

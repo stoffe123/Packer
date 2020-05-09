@@ -15,9 +15,6 @@
 
 #define CMP_N 128
 
-
-
-
 void print_string_rep(unsigned char* tt) {
 	printf("\n");
 	for (int i = 0; i < CMP_N; i++) {
@@ -81,7 +78,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "did.csh", "aft.htm", "book.txt", "book_med.txt",
+	char test_filenames[16][100] = { "book.txt", "book_med.txt",
 
 		"onechar.txt",
 		"repeatchar.txt",
@@ -93,7 +90,7 @@ int main()
 
 		  "rel.pdf",
 		  "bad.cdg",
-
+		"did.csh", "aft.htm",
 			 "nex.doc",
 			
 
@@ -108,7 +105,7 @@ int main()
 
 	};
 
-	int offset_pages = 80, seqlen_pages = 10;
+	int offset_pages = 78, seqlen_pages = 10;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0;
@@ -118,6 +115,7 @@ int main()
 	{
 		//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
 		const char* src = "C:/test/seqlen_c";
+		
 		//const char* src = concat_int("C:/test/temp_files/a" , kk);
 
 		const char* dst = "C:/test/unp";
@@ -201,7 +199,7 @@ int main()
 	}
 	long total_time = clock() - before_suite;
 	double size_kb = round((double)acc_size / (double)1024);
-	printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)", seqlen_pages, offset_pages, size_kb, acc_size);
+	printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)",  offset_pages, seqlen_pages, size_kb, acc_size);
 	double time_sec = round((double)total_time / (double)1000);
 	printf("\n\Time %.0fs  (%d)", time_sec, total_time);
 	double eff = size_kb / time_sec;
