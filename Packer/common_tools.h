@@ -7,7 +7,7 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
-#define BLOCK_SIZE 3000000
+#define BLOCK_SIZE 1310720
 
 
 long long get_file_size(const FILE* f);

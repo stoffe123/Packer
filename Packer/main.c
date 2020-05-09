@@ -105,16 +105,16 @@ int main()
 
 	};
 
-	int offset_pages = 78, seqlen_pages = 10;
+	int offset_pages = 60, seqlen_pages = 15;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0;
 
 	int before_suite = clock();
-	//for (int kk = 0; kk < 13; kk++)
+	for (int kk = 0; kk < 16; kk++)
 	{
-		//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
-		const char* src = "C:/test/seqlen_c";
+		const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
+		//const char* src = "C:/test/seqlen_c";
 		
 		//const char* src = concat_int("C:/test/temp_files/a" , kk);
 
@@ -135,7 +135,7 @@ int main()
 
 		//	printf("\n\n  ------- Pages %d --------- ", i);
 
-		seq_pack(src, packed_name, offset_pages, seqlen_pages);
+		multi_pack(src, packed_name, offset_pages, seqlen_pages);
 
 		/*
 		DWORD dwThreadId, dwThrdParam = kk;
@@ -176,7 +176,7 @@ int main()
 		//printf("\n\n unpacking... packed.bin");
 		cl = clock();
 
-		seq_unpack(packed_name, dst);
+		multi_unpack(packed_name, dst);
 
 
 		int unpack_time = (clock() - cl);
