@@ -42,7 +42,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 	long f2_size = get_file_size(f2);
 	int res = 1;
 	if (f1_size != f2_size) {
-		printf("\n >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
+		printf("\n\a >>>>>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<<<<");
 		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
 		res = 0;
 	}
@@ -110,7 +110,7 @@ int main()
 
 	};
 
-	int offset_pages = 220, seqlen_pages = 30;
+	int offset_pages = 230, seqlen_pages = 35;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0, acc_size_org = 0;

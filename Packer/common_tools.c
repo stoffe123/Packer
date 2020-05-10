@@ -84,21 +84,21 @@ void append_to_file(FILE* main_file, const char* append_filename) {
 
 void assert(uint64_t x, const char* msg) {
 	if (!x) {
-		printf("\n\n ASSERTION FAILURE: %s", msg);		
+		printf("\n\n\a ASSERTION FAILURE: %s", msg);		
 		exit(0);
 	}
 }
 
 void assertEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x != y) {
-		printf("\n\n ASSERTION FAILURE: %d != %d \n %s", x, y, msg);
+		printf("\n\n\a ASSERTION FAILURE: %d != %d \n %s", x, y, msg);
 		exit(0);
 	}
 }
 
 void assertSmallerOrEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x > y) {
-		printf("\n\n ASSERTION FAILURE: %d <= %d \n %s", x,y, msg);
+		printf("\n\n\a ASSERTION FAILURE: %d <= %d \n %s", x,y, msg);
 		exit(0);
 	}
 }
