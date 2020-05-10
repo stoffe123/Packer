@@ -32,11 +32,11 @@ append_to_tar(FILE* utfil,char* src) {
 
 		uint64_t tmp_size;
 		do {
-			char* tmp = get_temp_file();
+			char* tmp = get_temp_file2("block_chunck");
 			copy_chunk(infil, tmp, BLOCK_SIZE);
 			tmp_size = get_file_size_from_name(tmp);
 
-			char* tmp2 = get_temp_file();
+			char* tmp2 = get_temp_file2("block_multipacked");
 			multi_pack(tmp, tmp2, offset_pages, seqlen_pages);
 			remove(tmp);
 
@@ -60,10 +60,10 @@ append_to_tar(FILE* utfil,char* src) {
 		while (fread(&size, sizeof(size), 1, infil) == 1) {
 
 	
-			char* tmp = get_temp_file();
+			char* tmp = get_temp_file2("block_tobeunpacked");
 			copy_chunk(infil, tmp, size);
 
-			char* tmp2 = get_temp_file();
+			char* tmp2 = get_temp_file2("block_multiunpacked");
 			multi_unpack(tmp, tmp2);
 
 			remove(tmp);

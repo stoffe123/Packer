@@ -78,7 +78,7 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = {  "book.txt", "book_med.txt",
+	char test_filenames[16][100] = { "voc.wav", "book.txt", "book_med.txt",
 		
 		
 		"onechar.txt",
@@ -90,7 +90,7 @@ int main()
 		"bad.cdg",
 		"aft.htm",
 			"tob.pdf",
-		"voc.wav",
+		
 
 		  "rel.pdf",
 		 
@@ -109,10 +109,10 @@ int main()
 
 	};
 
-	int offset_pages = 60, seqlen_pages = 15;
+	int offset_pages = 80, seqlen_pages = 10;
 
 	//const char** test_filenames = get_test_filenames();
-	unsigned long long acc_size = 0;
+	unsigned long long acc_size = 0, acc_size_org = 0;
 
 	int before_suite = clock();
     for (int kk = 0; kk < 16; kk++)
@@ -166,6 +166,7 @@ int main()
 		printf("  (%f)", (double)size_packed / (double)size_org);
 
 		acc_size += size_packed;
+		acc_size_org += size_org;
 
 		printf("\n Accumulated size %d kb", acc_size / 1024);
 
@@ -206,6 +207,6 @@ int main()
 	printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)",  offset_pages, seqlen_pages, size_kb, acc_size);
 	double time_sec = round((double)total_time / (double)1000);
 	printf("\n\Time %.0fs  (%d)", time_sec, total_time);
-	double eff = size_kb / time_sec;
+	double eff = ((double)(acc_size_org - acc_size)/(double)1024) / time_sec;
 	printf("\nRate  %.2f kb/s\n\n", eff);
 }

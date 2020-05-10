@@ -27,10 +27,10 @@ void unstore(FILE* in, const char* dst) {
 void untar(FILE* in, pack_info_t pi) {
 		
 	// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
-	uint64_t size1 = 0;
-	fread(&size1, 4, 1, in);
-	uint64_t size2 = 0;
-	fread(&size2, 4, 1, in);
+	uint32_t size1 = 0;
+	fread(&size1, sizeof(size1), 1, in);
+	uint32_t size2 = 0;
+	fread(&size2, sizeof(size2), 1, in);
 	//printf("\n untar size1=%d, size2=%d\n", size1, size2);
 	
 	copy_chunk(in, concat(pi.dir, "seqlens"), size1);
@@ -53,16 +53,16 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 	fwrite(&pack_type, 1, 1, out_file);
 	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 	const char* seqlens_filename = concat(base_dir, "seqlens");
-	uint64_t size_seqlens = get_file_size_from_name(seqlens_filename);
+	uint32_t size_seqlens = get_file_size_from_name(seqlens_filename);
 	
 
 	// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
-	fwrite(&size_seqlens, 4, 1, out_file);
+	fwrite(&size_seqlens, sizeof(size_seqlens), 1, out_file);
 
 	const char* offsets_filename = concat(base_dir, "offsets");
-	uint64_t size_offsets = get_file_size_from_name(offsets_filename);
+	uint32_t size_offsets = get_file_size_from_name(offsets_filename);
 	
-	fwrite(&size_offsets, 4, 1, out_file);
+	fwrite(&size_offsets, sizeof(size_offsets), 1, out_file);
 
 	append_to_file(out_file, seqlens_filename);
 	append_to_file(out_file, offsets_filename);
@@ -96,7 +96,7 @@ bool RLE_pack_and_test(const char* src, const char* dst) {
 
 bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 	src = concat(dir, src);
-	char* tmp = get_temp_file(dir);
+	char* tmp = get_temp_file2("multi_canonicaled");
 	CanonicalEncode(src, tmp);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -114,7 +114,7 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 
 bool SeqPackAndTest(const char* dir, const char* src) {
 	src = concat(dir, src);
-	char* tmp = get_temp_file();
+	char* tmp = get_temp_file2("multi_seqpacked");
 	seq_pack(src, tmp, 80, 10);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -133,7 +133,7 @@ bool SeqPackAndTest(const char* dir, const char* src) {
 
 bool TwoBytePackAndTest(const char* dir, const char* src) {
 	
-	char* tmp = get_temp_file(dir);
+	char* tmp = get_temp_file2("multi_twobyted");
 	two_byte_pack(src, tmp, 100);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -150,27 +150,10 @@ bool TwoBytePackAndTest(const char* dir, const char* src) {
 	return compression_success;
 }
 
-bool MultiPackAndTest(const char* dir, const char* src) {
-	src = concat(dir, src);
-	char* tmp = get_temp_file(dir);
-	multi_pack(src, tmp, 2, true);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	bool compression_success = (size_packed < size_org);
-	if (compression_success) {
-		remove(src);
-		rename(tmp, src);
-	}
-	else {
-		remove(tmp);
-	}
-	return compression_success;
-}
-
 void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
 	printf("\n Canonical unpacking (in place) %s", src);
-	const char* tmp = get_temp_file(dir);
+	const char* tmp = get_temp_file2("multi_canonicaldec");
 	CanonicalDecode(src, tmp);
 	remove(src);
 	rename(tmp, src);	
@@ -179,7 +162,7 @@ void CanonicalDecodeAndReplace(const char* dir, const char* src) {
 void SeqUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
 	//printf("\n Seq unpacking (in place) %s", src);
-	const char* tmp = get_temp_file(dir);
+	const char* tmp = get_temp_file2("multi_sequnpacked");
 	seq_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
@@ -187,16 +170,8 @@ void SeqUnpackAndReplace(const char* dir, const char* src) {
 
 void TwoByteUnpackAndReplace(const char* dir, const char* src) {
 
-	const char* tmp = get_temp_file(dir);
+	const char* tmp = get_temp_file2("multi_twobytedunp");
 	two_byte_unpack(src, tmp);
-	remove(src);
-	rename(tmp, src);
-}
-
-void MultiUnpackAndReplace(const char* dir, const char* src) {
-	src = concat(dir, src);
-	const char* tmp = get_temp_file(dir);
-	multi_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
 }
@@ -216,7 +191,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	printf("\nMulti_pack  %s  =>  %s\nsize org: %d    pages: (%d,%d)", src, dst, get_file_size_from_name(src), offset_pages, seqlen_pages);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
-	char* tmp = get_temp_file();
+	char* tmp = get_temp_file2("multi_rlepacked");
 
 	bool got_smaller = RLE_pack_and_test(src, tmp);
 	if (got_smaller) {
@@ -318,7 +293,7 @@ void multi_unpack(const char* src, const char* dst) {
 		SeqUnpackAndReplace(base_dir, "offsets");
 	}
 	if (isKthBitSet(pack_type, 5)) { //RLE unpack
-		char* seq_dst = get_temp_file(base_dir);
+		char* seq_dst = get_temp_file2("multi_seqsepunp");
 		printf("\n SEQ unpack separate of %smain", base_dir);
 		seq_unpack_separate("main", seq_dst, base_dir);
 

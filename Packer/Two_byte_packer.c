@@ -21,11 +21,11 @@ static   unsigned char* buffer;
 static   const char* base_dir;
 static   long two_byte_freq_table[65536] = { 0 };
 static   uint8_t pair_table[2048] = { 0 }, master_code;
-static   uint64_t* char_freq[256];
+static   uint64_t char_freq[256];
 
  typedef struct value_freq_t {
-	long value;
-	long freq;
+	uint8_t value;
+	uint64_t freq;
 } value_freq_t;
 
 

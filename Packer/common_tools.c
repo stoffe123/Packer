@@ -5,6 +5,7 @@
 #include "common_tools.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #define TEMP_DIR "c:/test/temp_files/"
 
@@ -107,21 +108,25 @@ void WRITE(FILE* ut, uint64_t c)
 	fwrite(&c, 1, 1, ut);
 }
 
-char* get_rand() {
+const char* get_rand() {
 	return int_to_string(filename_count++);
 }
 
-char* get_temp_file() {
+const char* get_temp_file() {
 	return concat(TEMP_DIR, concat("tmp", get_rand()));
 }
 
-char* get_clock_dir() {
+const char* get_temp_file2(const char* s) {
+	return concat(TEMP_DIR, concat(s, get_rand()));
+}
+
+const char* get_clock_dir() {
 	const char* dir = concat(TEMP_DIR, get_rand());
 	dir = concat(dir, "_");
 	return dir;
 }
 
-char* concat(const char* s1, const char* s2) {
+const char* concat(const char* s1, const char* s2) {
 
 	const size_t s1_length = strlen(s1);
 	const size_t totalLength = s1_length + strlen(s2);
@@ -136,11 +141,11 @@ char* concat(const char* s1, const char* s2) {
 	return strBuf;
 }
 
-char* concat_int(const char* s1, int i) {
+const char* concat_int(const char* s1, int i) {
 	return concat(s1, int_to_string(i));
 }
 
-char* int_to_string(int64_t i) {
+const char* int_to_string(int64_t i) {
 	const char* ra = malloc(100);
 	_itoa(i, ra, 10);
 	return ra;
