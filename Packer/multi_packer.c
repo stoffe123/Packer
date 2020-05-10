@@ -115,12 +115,12 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 bool SeqPackAndTest(const char* dir, const char* src) {
 	src = concat(dir, src);
 	char* tmp = get_temp_file2("multi_seqpacked");
-	seq_pack(src, tmp, 80, 10);
+	seq_pack(src, tmp, 80, 5);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
 	double ratio = (double)size_packed / (double)size_org;
 	printf("\n SeqPacked:%s  got ratio: %f", src, ratio);
-	bool compression_success = (ratio < 0.89);
+	bool compression_success = (ratio < 0.89); 
 	if (compression_success) {
 		remove(src);
 		rename(tmp, src);
@@ -139,7 +139,7 @@ bool TwoBytePackAndTest(const char* dir, const char* src) {
 	int size_packed = get_file_size_from_name(tmp);
 	double ratio = (double)size_packed / (double)size_org;
 	printf("\n Two byte packed %s  got ratio  %f", src, ratio);
-	bool compression_success = (ratio < 0.80); // 0.89);
+	bool compression_success = (ratio < 0.97);  // 0.80
 	if (compression_success) {
 		remove(src);
 		rename(tmp, src);

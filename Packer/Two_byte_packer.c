@@ -93,13 +93,13 @@ value_freq_t find_best_two_byte() {
 
 int get_gain_threshhold() {
 	
-	uint64_t res = source_size / 500;
+	uint64_t res = source_size / 1000;
 
 	if (res < 20) {
 		res = 20;
 	}
-	if (res > 1600) {
-		res = 1600;
+	if (res > 1400) {
+		res = 1400;
 	}
 
 	return res;

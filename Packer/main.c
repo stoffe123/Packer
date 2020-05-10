@@ -110,7 +110,7 @@ int main()
 
 	};
 
-	int offset_pages = 230, seqlen_pages = 35;
+	int offset_pages = 230, seqlen_pages = 30;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0, acc_size_org = 0;
