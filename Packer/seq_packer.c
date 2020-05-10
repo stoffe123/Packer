@@ -27,7 +27,6 @@ static uint32_t nextChar[BLOCK_SIZE * 2];
 
 static uint32_t lastChar[256];
 
-
 static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 	uint32_t lastPos = lastChar[ch];
 	if (lastPos == INT32_MAX) { // first occurence!

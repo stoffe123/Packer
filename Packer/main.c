@@ -110,7 +110,7 @@ int main()
 
 	};
 
-	int offset_pages = 90, seqlen_pages = 15;
+	int offset_pages = 220, seqlen_pages = 30;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0, acc_size_org = 0;
@@ -206,8 +206,12 @@ int main()
 	long total_time = clock() - before_suite;
 	double size_kb = round((double)acc_size / (double)1024);
 	printf("\n\n \a**** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)",  offset_pages, seqlen_pages, size_kb, acc_size);
+	printf("\nBlock size %d", BLOCK_SIZE);
 	double time_sec = round((double)total_time / (double)1000);
 	printf("\n\Time %.0fs  (%d)", time_sec, total_time);
+	double ratio = (double)acc_size / (double)acc_size_org;
+	printf("\nPack Ratio %.2f \%", ratio * (double)100);
+
 	double eff = ((double)(acc_size_org - acc_size)/(double)1024) / time_sec;
 	printf("\nRate  %.2f kb/s\n\n", eff);
 }
