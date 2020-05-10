@@ -183,6 +183,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
+		unsigned char ch = buffer[buffer_pos];
 
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_pos) >= min_seq_len) {
@@ -193,20 +194,17 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				else {
 					offset_max = winsize;
 				}
-				unsigned char ch = buffer[buffer_pos];
 			
 				offset = 0;
 				int32_t nextChar_pos = buffer_pos;
+				int32_t nextCh;
 				while (offset < offset_max) 
 				{
-					// find matching sequence	
-					int32_t nextCh = nextChar[nextChar_pos];
-					
-					if (nextCh == 0) {
+					// find matching sequence		
+					if ((nextCh = nextChar[nextChar_pos]) == 0) {
 						break;
-					}
-					offset += nextCh;
-					if (offset >= offset_max) {
+					}					
+					if ((offset += nextCh) >= offset_max) {
 						break;
 					}
 					nextChar_pos += nextCh;
@@ -215,12 +213,13 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					}
 					
 					//printf("\n File %s  Buffer pos %d", src, buffer_pos);
+					/*
 					if (ch != buffer[buffer_pos + offset]) {
 						printf("ch = buffer[buffer[buffer_pos + offset]] in seqpacker\n");
 					
 						exit(0);
 					}
-				
+					*/
 					
 					if (buffer[buffer_pos + 1] != buffer[buffer_pos + offset + 1]) {
 						continue;
@@ -272,8 +271,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			}
 		}
 		/* now we found the longest sequence in the window! */
-		unsigned char ch = buffer[buffer_pos];
-		unsigned int dummy = buffer_pos;//for debugging
+	
 		if (best_seqlen <= 2 || (best_offset >= lowest_special_offset && best_seqlen <= 3))
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
