@@ -78,20 +78,21 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int main()
 {
 
-	char test_filenames[16][100] = { "voc.wav", "book.txt", "book_med.txt",
-		
+	char test_filenames[16][100] = { "book.txt",
+		"empty.txt",
 		
 		"onechar.txt",
+			"oneseq.txt",
 		"repeatchar.txt",
+		 "book_med.txt",
+	
 		
 	
-		"empty.txt",
-		"oneseq.txt",
 		"bad.cdg",
 		"aft.htm",
 			"tob.pdf",
 		
-
+		"voc.wav",
 		  "rel.pdf",
 		 
 		"did.csh", 
@@ -109,7 +110,7 @@ int main()
 
 	};
 
-	int offset_pages = 80, seqlen_pages = 10;
+	int offset_pages = 90, seqlen_pages = 15;
 
 	//const char** test_filenames = get_test_filenames();
 	unsigned long long acc_size = 0, acc_size_org = 0;
@@ -118,7 +119,7 @@ int main()
     for (int kk = 0; kk < 16; kk++)
 	{
 		const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
-		//const char* src = "C:/test/a2";
+		//const char* src = "C:/test/book_seqlens";
 		
 		//const char* src = concat_int("C:/test/temp_files/a" , kk);
 
@@ -204,7 +205,7 @@ int main()
 	}
 	long total_time = clock() - before_suite;
 	double size_kb = round((double)acc_size / (double)1024);
-	printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)",  offset_pages, seqlen_pages, size_kb, acc_size);
+	printf("\n\n \a**** ALL SUCCEEDED **** pages (%d,%d)\n%.0f kb   (%d)",  offset_pages, seqlen_pages, size_kb, acc_size);
 	double time_sec = round((double)total_time / (double)1000);
 	printf("\n\Time %.0fs  (%d)", time_sec, total_time);
 	double eff = ((double)(acc_size_org - acc_size)/(double)1024) / time_sec;

@@ -33,7 +33,14 @@ append_to_tar(FILE* utfil,char* src) {
 		uint64_t tmp_size;
 		do {
 			char* tmp = get_temp_file2("block_chunck");
-			copy_chunk(infil, tmp, BLOCK_SIZE);
+			uint64_t read_size = BLOCK_SIZE;
+			
+			//workaround for a bug that even 2 powers cause bug
+			//this bug should be fixed but it is hard
+			if (read_size % 256 == 0) {
+				read_size--;
+			}
+			copy_chunk(infil, tmp, read_size);
 			tmp_size = get_file_size_from_name(tmp);
 
 			char* tmp2 = get_temp_file2("block_multipacked");

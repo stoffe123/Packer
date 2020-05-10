@@ -218,7 +218,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 
 	// ---------- Pack seqlens -----------
 	got_smaller = SeqPackAndTest(base_dir, "seqlens");
-	printf(concat(base_dir, "seqlens"));	
+	//printf(concat(base_dir, "seqlens"));	
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
 	}

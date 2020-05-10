@@ -7,7 +7,7 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
-#define BLOCK_SIZE 2310700
+#define BLOCK_SIZE 2510700
 
 uint64_t get_file_size(const FILE* f);
 
