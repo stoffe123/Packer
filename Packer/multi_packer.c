@@ -10,7 +10,7 @@
 #include "canonical.h"
 
 
-
+int tempcount = 1000;
 
 typedef struct pack_info_t {
 	unsigned char pack_type;
@@ -112,10 +112,10 @@ bool CanonicalEncodeAndTest(const char* dir, const char* src) {
 	return compression_success;
 }
 
-bool SeqPackAndTest(const char* dir, const char* src) {
+bool SeqPackAndTest(const char* dir, const char* src, int seqlen_pages, int offset_pages) {
 	src = concat(dir, src);
 	char* tmp = get_temp_file2("multi_seqpacked");
-	seq_pack(src, tmp, 80, 5);
+	seq_pack(src, tmp, seqlen_pages, offset_pages);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
 	double ratio = (double)size_packed / (double)size_org;
@@ -205,9 +205,16 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	seq_pack_separate(tmp, base_dir, offset_pages, seqlen_pages);
+		remove(tmp);
+	
+	/*
 	// now we have three meta files to try to pack with seqlen+huffman
-
-	remove(tmp);
+	const char* tmp99 = concat("c:/test/temp_files/", concat_int("seqlens", tempcount));
+	copy_file(concat(base_dir, "seqlens"), tmp99);
+	const char* tmp98 = concat("c:/test/temp_files/", concat_int("offsets", tempcount));
+	copy_file(concat(base_dir, "offsets"), tmp98);
+	tempcount++;
+	*/
 
 	//try to pack meta files!
 	// ----------- Pack main -------------
@@ -217,8 +224,9 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	// ---------- Pack seqlens -----------
-	got_smaller = SeqPackAndTest(base_dir, "seqlens");
+	got_smaller = SeqPackAndTest(base_dir, "seqlens", 229, 5);
 	//printf(concat(base_dir, "seqlens"));	
+
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
 	}
@@ -229,7 +237,7 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	// ------------- Pack offsets --------------
-	got_smaller = SeqPackAndTest(base_dir, "offsets");
+	got_smaller = SeqPackAndTest(base_dir, "offsets", 219, 4);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 3);
 	}
