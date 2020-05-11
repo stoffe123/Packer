@@ -142,10 +142,7 @@ void test_meta() {
 				break;
 			}
 			acc_size_org += size_org;
-
 			printf("\n Accumulated size %d kb", acc_size / 1024);
-
-
 			cl = clock();
 
 			seq_unpack(packed_name, dst);
@@ -165,10 +162,6 @@ void test_meta() {
 			else {
 				return 1;
 			}
-
-
-			//printf("\n Best page=%d, size=%d", best_page, best_size);
-
 		}
 		long total_time = clock() - before_suite;
 		double size_kb = round((double)acc_size / (double)1024);
@@ -194,62 +187,70 @@ void test_meta() {
 	}
 }
 
+int taken[200];
+int taken_index;
+
+bool is_taken(int x, int y) {
+	for (int i = 0; i < taken_index; i++) {
+		if (taken[i] == x + 256 * y) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void set_taken(int x, int y) {
+	taken[taken_index++] = x + 256 * y;
+}
 
 void testsuit16() {
 
-
 	char test_filenames[16][100] = { "book.txt",
 		"empty.txt",
-
 		"onechar.txt",
 			"oneseq.txt",
 		"repeatchar.txt",
 		 "book_med.txt",
-
-
-
 		"bad.cdg",
 		"aft.htm",
 			"tob.pdf",
-
 		"voc.wav",
 		  "rel.pdf",
-
 		"did.csh",
 			 "nex.doc",
-
-
-
 		"amb.dll",
-
-
-
-
 		"pazera.exe",
 		 "bad.mp3"
-
 	};
 
-	int offset_pages = 230, seqlen_pages = 30, best_offset_pages = 219, best_seqlen_pages = 4;
+	for (int i = 0; i < 200; i++) {
+		taken[i] = 0;
+	}
+	taken_index = 0;
+	set_taken(230, 34);
 
-	unsigned long long best_size = ULONG_MAX;
+	int offset_pages = 230, seqlen_pages = 31, best_offset_pages = 230, best_seqlen_pages = 30;
+
+	unsigned long long best_size = 44244806;
 	while (true) {
-		/*
-		if (rand() % 4 == 0) {
+
+		if (rand() % 9 == 0) {
 			offset_pages = rand() % 240;
 			seqlen_pages = rand() % 240;
 		}
 		else {
-			if (rand() % 2 == 0) {
-				offset_pages = fuzz(best_offset_pages);
-				seqlen_pages = best_seqlen_pages;
-			}
-			else {
-				offset_pages = best_offset_pages;
-				seqlen_pages = fuzz(best_seqlen_pages);
-			}
+			do {
+				if (rand() % 2 == 0) {
+					offset_pages = fuzz(best_offset_pages);
+					seqlen_pages = best_seqlen_pages;
+				}
+				else {
+					offset_pages = best_offset_pages;
+					seqlen_pages = fuzz(best_seqlen_pages);
+				}
+			} while (is_taken(offset_pages, seqlen_pages));
 		}
-		*/
+		set_taken(offset_pages, seqlen_pages);
 		//const char** test_filenames = get_test_filenames();
 		unsigned long long acc_size = 0, acc_size_org = 0;
 
@@ -257,7 +258,7 @@ void testsuit16() {
 		for (int kk = 0; kk < 16; kk++)
 		{
 			const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
-	
+
 
 			const char* dst = "C:/test/unp";
 
@@ -283,7 +284,7 @@ void testsuit16() {
 
 			acc_size += size_packed;
 			if (acc_size > best_size) {
-			//	break;
+				//	break;
 			}
 			acc_size_org += size_org;
 
@@ -294,11 +295,9 @@ void testsuit16() {
 			block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");
 
-
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-
 
 			printf("\n\n Comparing files!");
 
@@ -308,10 +307,6 @@ void testsuit16() {
 			else {
 				return 1;
 			}
-
-
-			//printf("\n Best page=%d, size=%d", best_page, best_size);
-
 		}
 		long total_time = clock() - before_suite;
 		double size_kb = round((double)acc_size / (double)1024);
@@ -324,7 +319,6 @@ void testsuit16() {
 
 		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / time_sec;
 		printf("\nRate  %.2f kb/s\n\n", eff);
-		break;
 
 		if (acc_size < best_size) {
 			best_offset_pages = offset_pages;
@@ -347,6 +341,6 @@ int main()
 	srand((unsigned)time(&t));
 
 	testsuit16();
-	
+
 }
 

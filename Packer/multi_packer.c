@@ -10,8 +10,6 @@
 #include "canonical.h"
 
 
-int tempcount = 1000;
-
 typedef struct pack_info_t {
 	unsigned char pack_type;
 	const char* dir;
@@ -205,17 +203,8 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	}
 
 	seq_pack_separate(tmp, base_dir, offset_pages, seqlen_pages);
-		remove(tmp);
+	remove(tmp);
 	
-	/*
-	// now we have three meta files to try to pack with seqlen+huffman
-	const char* tmp99 = concat("c:/test/temp_files/", concat_int("seqlens", tempcount));
-	copy_file(concat(base_dir, "seqlens"), tmp99);
-	const char* tmp98 = concat("c:/test/temp_files/", concat_int("offsets", tempcount));
-	copy_file(concat(base_dir, "offsets"), tmp98);
-	tempcount++;
-	*/
-
 	//try to pack meta files!
 	// ----------- Pack main -------------
 	got_smaller = CanonicalEncodeAndTest(base_dir, "main");
