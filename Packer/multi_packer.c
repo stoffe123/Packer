@@ -6,6 +6,7 @@
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "multi_packer.h"
+#include "packer_commons.h"
 //#include "huffman2.h"
 #include "canonical.h"
 
@@ -92,42 +93,8 @@ bool RLE_pack_and_test(const char* src, const char* dst) {
 	return compression_success;
 }
 
-bool CanonicalEncodeAndTest(const char* dir, const char* src) {
-	src = concat(dir, src);
-	char* tmp = get_temp_file2("multi_canonicaled");
-	CanonicalEncode(src, tmp);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	//printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
-	bool compression_success = (size_packed < size_org);
-	if (compression_success) {
-		remove(src);
-		rename(tmp, src);
-	}
-	else {
-		remove(tmp);
-	}
-	return compression_success;
-}
 
-bool SeqPackAndTest(const char* dir, const char* src, int seqlen_pages, int offset_pages) {
-	src = concat(dir, src);
-	char* tmp = get_temp_file2("multi_seqpacked");
-	seq_pack(src, tmp, seqlen_pages, offset_pages);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	double ratio = (double)size_packed / (double)size_org;
-	printf("\n SeqPacked:%s  got ratio: %f", src, ratio);
-	bool compression_success = (ratio < 0.89); 
-	if (compression_success) {
-		remove(src);
-		rename(tmp, src);
-	}
-	else {
-		remove(tmp);
-	}
-	return compression_success;
-}
+
 
 bool TwoBytePackAndTest(const char* dir, const char* src) {
 	
@@ -148,14 +115,6 @@ bool TwoBytePackAndTest(const char* dir, const char* src) {
 	return compression_success;
 }
 
-void CanonicalDecodeAndReplace(const char* dir, const char* src) {
-	src = concat(dir, src);
-	printf("\n Canonical unpacking (in place) %s", src);
-	const char* tmp = get_temp_file2("multi_canonicaldec");
-	CanonicalDecode(src, tmp);
-	remove(src);
-	rename(tmp, src);	
-}
 
 void SeqUnpackAndReplace(const char* dir, const char* src) {
 	src = concat(dir, src);
@@ -207,31 +166,31 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	
 	//try to pack meta files!
 	// ----------- Pack main -------------
-	got_smaller = CanonicalEncodeAndTest(base_dir, "main");
+	got_smaller = CanonicalEncodeAndTest(concat(base_dir, "main"));
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 0);
 	}
 
 	// ---------- Pack seqlens -----------
-	got_smaller = SeqPackAndTest(base_dir, "seqlens", 229, 5);
+	got_smaller = SeqPackAndTest(concat(base_dir, "seqlens"), 65, 3, 33);
 	//printf(concat(base_dir, "seqlens"));	
 
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 1);
 	}
 
-	got_smaller = CanonicalEncodeAndTest(base_dir, "seqlens");
+	got_smaller = CanonicalEncodeAndTest(concat(base_dir, "seqlens"));
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 2);
 	}
 
 	// ------------- Pack offsets --------------
-	got_smaller = SeqPackAndTest(base_dir, "offsets", 219, 4);
+	got_smaller = SeqPackAndTest(concat(base_dir, "offsets"), 115, 68, 97);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 3);
 	}
 
-	got_smaller = CanonicalEncodeAndTest(base_dir, "offsets");
+	got_smaller = CanonicalEncodeAndTest(concat(base_dir, "offsets"));
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 4);
 	}
@@ -275,16 +234,16 @@ void multi_unpack(const char* src, const char* dst) {
 	unsigned char pack_type = pi.pack_type;
 	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
-		CanonicalDecodeAndReplace(base_dir, "main");
+		CanonicalDecodeAndReplace(concat(base_dir, "main"));
 	}
 	if (isKthBitSet(pack_type, 2)) {
-		CanonicalDecodeAndReplace(base_dir, "seqlens");
+		CanonicalDecodeAndReplace(concat(base_dir, "seqlens"));
 	}
 	if (isKthBitSet(pack_type, 1)) {
 		SeqUnpackAndReplace(base_dir, "seqlens");
 	}
 	if (isKthBitSet(pack_type, 4)) {
-		CanonicalDecodeAndReplace(base_dir, "offsets");
+		CanonicalDecodeAndReplace(concat(base_dir, "offsets"));
 	}
 	if (isKthBitSet(pack_type, 3)) {
 		SeqUnpackAndReplace(base_dir, "offsets");

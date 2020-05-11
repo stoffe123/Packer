@@ -155,7 +155,9 @@
     <ClCompile Include="RLE_simple_packer.c" />
     <ClCompile Include="RLE_simple_unpacker.c" />
     <ClCompile Include="seq_packer.c" />
+    <ClCompile Include="seq_packer2.c" />
     <ClCompile Include="seq_unpacker.c" />
+    <ClCompile Include="seq_unpacker2.c" />
     <ClCompile Include="Two_byte_packer.c" />
     <ClCompile Include="Two_byte_unpacker.c" />
   </ItemGroup>
