@@ -88,8 +88,7 @@ bool MultiPackAndTest(const char* src, packProfile_t profile) {
 
 void printProfile(packProfile_t* profile) {
 	printf("\n");
-	printf("\nSeqlen pages:   %d", profile->seqlen_pages);
-	printf("\nOffset pages:   %d", profile->offset_pages);
+	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);	
 	printf("\nRLE ratio:      %d", profile->rle_ratio);
 	printf("\nTwo byte ratio: %d", profile->twobyte_ratio);
 	printf("\nSeq ratio:      %d\n", profile->seq_ratio);

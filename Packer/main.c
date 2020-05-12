@@ -139,19 +139,19 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	profile->seq_ratio = fuzzRatio(profile->seq_ratio, best.seq_ratio);
 }
 
-unsigned long long presentResult(int kk, int before_suite,unsigned long long acc_size,unsigned long long acc_size_org,
+unsigned long long presentResult(bool earlyBreak, int before_suite,unsigned long long acc_size,unsigned long long acc_size_org,
 	    unsigned long long best_size, packProfile_t profile, packProfile_t* best) {
-	if (kk == 34) {
+	if (!earlyBreak) {
 		long total_time = clock() - before_suite;
 		double size_kb = round((double)acc_size / (double)1024);
 		printf("\n\n **** ALL SUCCEEDED **** ");
 		double time_sec = round((double)total_time / (double)1000);
 		printf("\n\Time %.0fs  (%d)", time_sec, total_time);
 		double pack_ratio = (double)acc_size / (double)acc_size_org;
-		printf("\nPack Ratio %.2f \%", pack_ratio * (double)100);
+		printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
 
 		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / time_sec;
-		printf("\nRate  %.2f kb/s\n\n", eff);
+		printf("\nSpeed %.2f kb/s\n\n", eff);
 		
 		if (best_size == 0 || acc_size < best_size) {
 			copyProfile(&profile, best);
@@ -159,7 +159,7 @@ unsigned long long presentResult(int kk, int before_suite,unsigned long long acc
 			printf("\n\n\a ************ BEST FOUND *************");
 		}
 	}
-	printf("\n\n STATUS: size %llu", best_size);
+	printf("\n\n STATUS: size %llu   (%d kb)", best_size, round((double)best_size / 1024.0));
 	printProfile(best);
 	printf("\n");
 	return best_size;
@@ -168,7 +168,7 @@ unsigned long long presentResult(int kk, int before_suite,unsigned long long acc
 void testmeta() {
 	init_taken();
 	
-	packProfile_t profile, best;
+	packProfile_t profile, bestProfile;
 
 	profile.offset_pages = 51;
 	profile.seqlen_pages = 115;
@@ -176,21 +176,18 @@ void testmeta() {
 	profile.twobyte_ratio = 80;
 	profile.seq_ratio = 97;
 
-	best.offset_pages = 51;
-	best.seqlen_pages = 115;
-	best.rle_ratio = 90;
-	best.twobyte_ratio = 80;
-	best.seq_ratio = 97;
-		
+	copyProfile(&profile, &bestProfile);
 
 	unsigned long long best_size = 0;
 	while (true) {
 
 		//const char** test_filenames = get_test_filenames();
-		unsigned long long acc_size = 0, acc_size_org = 0;
+		unsigned long long acc_size_packed = 0, 
+			               acc_size_org = 0;
 
 		int before_suite = clock();
 		int kk = 0;
+		bool earlyBreak = true;
 		for (; kk < 34; kk++)
 		{
 			//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
@@ -226,12 +223,12 @@ void testmeta() {
 			printf("\nLength of packed: %d", size_packed);
 			printf("  (%f)", (double)size_packed / (double)size_org);
 
-			acc_size += size_packed;
-			if (best_size > 0 && acc_size > best_size) {
+			acc_size_packed += size_packed;
+			if (best_size > 0 && acc_size_packed > best_size) {
 				break;
 			}
 			acc_size_org += size_org;
-			printf("\n Accumulated size %d kb", acc_size / 1024);
+			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
 			/*
 			if (huffman) {
@@ -260,9 +257,10 @@ void testmeta() {
 			else {
 				return 1;
 			}
-		}
-		best_size = presentResult(kk, before_suite, acc_size, acc_size_org, best_size, profile, &best);
-		fuzzProfile(&profile, best);
+			earlyBreak = false;
+		}//end for
+		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		fuzzProfile(&profile, bestProfile);
 	}
 }//end test_meta
 
@@ -297,21 +295,19 @@ void test16() {
 	profile.twobyte_ratio = 97;
 	profile.seq_ratio = 100;
 
-	packProfile_t best;
-	best.offset_pages = 230;
-	best.seqlen_pages = 31;
-	best.rle_ratio = 96;
-	best.twobyte_ratio = 97;
-	best.seq_ratio = 100;
-
+	packProfile_t bestProfile;
+	copyProfile(&profile, &bestProfile);
+	
 	unsigned long long best_size = 0;
 	while (true) {
 
 		//const char** test_filenames = get_test_filenames();
-		unsigned long long acc_size = 0, acc_size_org = 0;
+		unsigned long long acc_size_packed = 0, 
+			               acc_size_org = 0;
 
 		int before_suite = clock();
 		int kk = 0;
+		bool earlyBreak = true;
 		for (; kk < 16; kk++)
 		{
 			const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
@@ -337,13 +333,13 @@ void test16() {
 			printf("\nLength of packed: %d", size_packed);
 			printf("  (%f)", (double)size_packed / (double)size_org);
 
-			acc_size += size_packed;
-			if (best_size > 0 && acc_size > best_size) {
+			acc_size_packed += size_packed;
+			if (best_size > 0 && acc_size_packed > best_size) {
 				break;
 			}
 			acc_size_org += size_org;
 
-			printf("\n Accumulated size %lu kb", acc_size / 1024);
+			printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
 			cl = clock();
 
@@ -362,9 +358,10 @@ void test16() {
 			else {
 				return 1;
 			}
-		}
-		best_size = presentResult(kk, before_suite, acc_size, acc_size_org, best_size, profile, &best);
-		fuzzProfile(&profile, best);
+			earlyBreak = false;
+		}//end for
+		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);		
+		fuzzProfile(&profile, bestProfile);
 	}
 }//end test suit 16
 

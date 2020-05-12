@@ -179,8 +179,8 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile) {
 	// ---------- Pack seqlens -----------
 	if (get_file_size_from_name(seqlens_filename) > 200) {
 		packProfile_t seqlenProfile;
-		seqlenProfile.seqlen_pages = 76;
-		seqlenProfile.offset_pages = 2,
+		seqlenProfile.offset_pages = 76;
+		seqlenProfile.seqlen_pages = 2;	
 		seqlenProfile.rle_ratio = 65;
 		seqlenProfile.twobyte_ratio = 75;
 		seqlenProfile.seq_ratio = 34;
@@ -190,9 +190,9 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile) {
 		}
 
 		// ------------- Pack offsets --------------
-		packProfile_t offsetProfile;
-		offsetProfile.seqlen_pages = 105;
-		offsetProfile.offset_pages = 57;
+		packProfile_t offsetProfile;	
+		offsetProfile.offset_pages = 105;
+		offsetProfile.seqlen_pages = 57;
 		offsetProfile.rle_ratio = 80;
 		offsetProfile.twobyte_ratio = 79;
 		offsetProfile.seq_ratio = 94;
