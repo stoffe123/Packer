@@ -401,7 +401,6 @@ void seq_pack_internal(const char* source_filename, const char* dest_filename, u
 	}
 	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages);
 	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
-	free(buffer);
 }
 
 void seq_pack(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages)
