@@ -19,6 +19,8 @@ unsigned char isKthBitSet(unsigned char value, unsigned char bit);
 
 unsigned char setKthBit(unsigned char value, unsigned char bit);
 
+unsigned char clearKthBit(unsigned char value, unsigned char bit);
+
 void copy_file(const char* src, const char* dst);
 
 void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_copy);

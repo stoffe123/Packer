@@ -41,6 +41,13 @@ unsigned char setKthBit(unsigned char value, unsigned char bit)
 	return ((1 << bit) | value);
 }
 
+unsigned char clearKthBit(unsigned char value, unsigned char bit)
+{
+	// kth bit of n is being set by this operation 
+	return (value & (~(1 << bit)));
+}
+
+
 void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_copy) {
 	FILE* out = fopen(dest_filename, "wb");
 

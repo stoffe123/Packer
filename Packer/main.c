@@ -80,7 +80,7 @@ int fuzz(int i) {
 		else {
 			i -= (rand() % 10);
 		}
-	} while (!(i >= 0 && i <= 244));
+	} while (!(i >= 0 && i <= 245));
 	return i;
 }
 
@@ -108,23 +108,40 @@ void init_taken() {
 	taken_index = 0;
 }
 
+int fuzzRatio(int r, int best) {
+	if (rand() % 2 == 0) {
+		r += (rand() % 5 + 1);
+	}
+	else {
+		r -= (rand() % 5 + 1);
+	}
+	if (r > 100 || rand() % 6 == 0) {
 
-void test_meta() {
+		r = best;
+
+	}
+	return r;
+}
+
+
+void testmeta() {
 	init_taken();
 
-	int offset_pages = 115, seqlen_pages = 68, best_offset_pages = 230, best_seqlen_pages = 3,
-		 ratio_limit = 97, best_ratio = 89;
+	int offset_pages = 49, seqlen_pages = 115, best_offset_pages = 230, best_seqlen_pages = 3,
+		rle_ratio = 90, twobyte_ratio = 80, seq_ratio = 97,
+		best_seq_ratio = seq_ratio, best_rle_ratio = rle_ratio, best_twobyte_ratio = twobyte_ratio;
 
 	unsigned long long best_size = 1789985;
 	while (true) {
-		
+
 		set_taken(offset_pages, seqlen_pages);
 
 		//const char** test_filenames = get_test_filenames();
 		unsigned long long acc_size = 0, acc_size_org = 0;
 
 		int before_suite = clock();
-		for (int kk = 0; kk < 34; kk++)
+		int kk = 0;
+		for (; kk < 34; kk++)
 		{
 			//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
 			//const char* src = "C:/test/book_seqlens";
@@ -142,10 +159,17 @@ void test_meta() {
 			int cl = clock();
 
 			//	printf("\n\n  ------- Pages %d --------- ", i);
-			printf("\nSeqpack Ratio limit %d", ratio_limit);
-			copy_file(src, packed_name);
-			bool seq = SeqPackAndTest(packed_name, offset_pages, seqlen_pages, ratio_limit);
-			bool huffman = CanonicalEncodeAndTest(packed_name);
+			printf("\nrle_pack Ratio limit %d", rle_ratio);
+			printf("\ntwobyte_pack Ratio limit %d", twobyte_ratio);
+			printf("\nSeqpack Ratio limit %d", seq_ratio);
+			/*
+				copy_file(src, packed_name);
+				bool seq = SeqPackAndTest(packed_name, offset_pages, seqlen_pages, ratio_limit);
+				bool huffman = CanonicalEncodeAndTest(packed_name);
+				*/
+
+			multi_pack(src, packed_name, offset_pages, seqlen_pages, rle_ratio, twobyte_ratio, seq_ratio);
+
 			//seq_pack_separate(src, "c:/test/", offset_pages, seqlen_pages);
 
 			int pack_time = (clock() - cl);
@@ -162,6 +186,7 @@ void test_meta() {
 			acc_size_org += size_org;
 			printf("\n Accumulated size %d kb", acc_size / 1024);
 			cl = clock();
+			/*
 			if (huffman) {
 				CanonicalDecodeAndReplace(packed_name);
 			}
@@ -171,7 +196,8 @@ void test_meta() {
 			else {
 				copy_file(packed_name, dst);
 			}
-			//seq_unpack_separate("main", dst, "c:/test/");
+			*/
+			multi_unpack(packed_name, dst);
 
 
 			int unpack_time = (clock() - cl);
@@ -188,59 +214,56 @@ void test_meta() {
 				return 1;
 			}
 		}
-		long total_time = clock() - before_suite;
-		double size_kb = round((double)acc_size / (double)1024);
-		printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d) ratio_limit %d\n%.0f kb   (%d)", offset_pages, seqlen_pages, ratio_limit,size_kb, acc_size);		
-		double time_sec = round((double)total_time / (double)1000);
-		printf("\n\Time %.0fs  (%d)", time_sec, total_time);
-		double pack_ratio = (double)acc_size / (double)acc_size_org;
-		printf("\nPack Ratio %.2f \%", pack_ratio * (double)100);
-	
-		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / time_sec;
-		printf("\nRate  %.2f kb/s\n\n", eff);
-		//break;
-		if (acc_size < best_size) {
-			best_offset_pages = offset_pages;
-			best_seqlen_pages = seqlen_pages;
-			best_size = acc_size;
-			best_ratio = ratio_limit;
-			printf("\n\n\a ************ BEST FOUND ************* (%d,%d) %d", offset_pages, seqlen_pages, acc_size);
+		if (kk == 34) {
+			long total_time = clock() - before_suite;
+			double size_kb = round((double)acc_size / (double)1024);
+			printf("\n\n **** ALL SUCCEEDED **** pages (%d,%d) \n%.0f kb   (%d)", offset_pages, seqlen_pages, size_kb, acc_size);
+			double time_sec = round((double)total_time / (double)1000);
+			printf("\n\Time %.0fs  (%d)", time_sec, total_time);
+			double pack_ratio = (double)acc_size / (double)acc_size_org;
+			printf("\nPack Ratio %.2f \%", pack_ratio * (double)100);
+
+			double eff = ((double)(acc_size_org - acc_size) / (double)1024) / time_sec;
+			printf("\nRate  %.2f kb/s\n\n", eff);
+			//break;
+			if (acc_size < best_size) {
+				best_offset_pages = offset_pages;
+				best_seqlen_pages = seqlen_pages;
+				best_size = acc_size;
+				best_seq_ratio = seq_ratio;
+				best_rle_ratio = rle_ratio;
+				best_twobyte_ratio = twobyte_ratio;
+				printf("\n\n\a ************ BEST FOUND *************");
+			}
+		}
+		printf("\n\n STATUS BEST: (%d,%d) size %d", best_offset_pages, best_seqlen_pages, best_size);
+		printf("\n rle_ratio %d", best_rle_ratio);
+		printf("\n twobyte_ratio %d", best_twobyte_ratio);
+		printf("\n seq_ratio %d", best_seq_ratio);
+		printf("\n");
+
+
+		if (rand() % 4 == 0) {
+			offset_pages = rand() % 240;
+			seqlen_pages = rand() % 240;
 		}
 		else {
-			printf("\n\n STATUS: (%d,%d) %d %d", best_offset_pages, best_seqlen_pages, best_size, best_ratio);
+
+			offset_pages = fuzz(best_offset_pages);
+			seqlen_pages = fuzz(best_seqlen_pages);
+
 		}
-	
-			if (rand() % 4 == 0) {
-				offset_pages = rand() % 240;
-				seqlen_pages = rand() % 240;
-			}
-			else {
-				if (rand() % 2 == 0) {
-					offset_pages = fuzz(best_offset_pages);
-					seqlen_pages = best_seqlen_pages;
-				}
-				else {
-					offset_pages = best_offset_pages;
-					seqlen_pages = fuzz(best_seqlen_pages);
-				}
-			}
-			if (rand() % 2 == 0) {
-				ratio_limit += (rand() % 5 + 1);
-			}
-			else {
-				ratio_limit -= (rand() % 5 + 1);
-			}
-			if (ratio_limit > 100 || rand() % 6 == 0) {
-				ratio_limit = best_ratio;
-			}
-			
-		
+		fuzzRatio(seq_ratio, best_seq_ratio);
+		fuzzRatio(rle_ratio, best_rle_ratio);
+		fuzzRatio(twobyte_ratio, best_twobyte_ratio);
+
+
 	}
 }//end test_meta
 
 void testsuit16() {
 
-	char test_filenames[16][100] = { "book.txt",
+	char test_filenames[16][100] = { "bad.mp3", "book.txt",
 		"empty.txt",
 		"onechar.txt",
 			"oneseq.txt",
@@ -254,8 +277,8 @@ void testsuit16() {
 		"did.csh",
 			 "nex.doc",
 		"amb.dll",
-		"pazera.exe",
-		 "bad.mp3"
+		"pazera.exe"
+
 	};
 
 	init_taken();
@@ -266,7 +289,7 @@ void testsuit16() {
 
 	unsigned long long best_size = 44244806;
 	while (true) {
-	
+
 		set_taken(offset_pages, seqlen_pages);
 		//const char** test_filenames = get_test_filenames();
 		unsigned long long acc_size = 0, acc_size_org = 0;
@@ -282,14 +305,14 @@ void testsuit16() {
 			const char* packed_name = "c:/test/packed.bin";
 
 			long long size_org = get_file_size_from_name(src);
-
+			printf("\n------------------------------------------------");
 			printf("\n Packing... %s with length:%d", src, size_org);
 
 			int cl = clock();
 
 			//	printf("\n\n  ------- Pages %d --------- ", i);
 
-			block_pack(src, packed_name, offset_pages, seqlen_pages);
+			block_pack(src, packed_name, offset_pages, seqlen_pages, 96, 97, 100);
 			//seq_pack_separate(src, "c:/test/", offset_pages, seqlen_pages);
 
 			int pack_time = (clock() - cl);
@@ -346,20 +369,20 @@ void testsuit16() {
 		else {
 			printf("\n\n STATUS: (%d,%d) %d", best_offset_pages, best_seqlen_pages, best_size);
 		}
-		
-			do {
-				if (rand() % 9 == 0) {
-					offset_pages = rand() % 240;
-					seqlen_pages = rand() % 240;
-				}
-				else {
-					
-						offset_pages = fuzz(best_offset_pages);
-						seqlen_pages = fuzz(best_seqlen_pages);
-							
-				}
-			} while (is_taken(offset_pages, seqlen_pages));
-			
+
+		do {
+			if (rand() % 9 == 0) {
+				offset_pages = rand() % 240;
+				seqlen_pages = rand() % 240;
+			}
+			else {
+
+				offset_pages = fuzz(best_offset_pages);
+				seqlen_pages = fuzz(best_seqlen_pages);
+
+			}
+		} while (is_taken(offset_pages, seqlen_pages));
+
 	}
 }//end test suit 16
 
@@ -371,7 +394,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	test_meta();
+	//testsuit16();
+	testmeta();
 
 }
 

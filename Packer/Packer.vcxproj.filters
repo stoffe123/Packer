@@ -140,5 +140,8 @@
     <ClInclude Include="packer_commons.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="block_packer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

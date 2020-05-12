@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClInclude Include="bitarray.h" />
     <ClInclude Include="bitfile.h" />
+    <ClInclude Include="block_packer.h" />
     <ClInclude Include="canonical.h" />
     <ClInclude Include="common_tools.h" />
     <ClInclude Include="huffman.h" />
