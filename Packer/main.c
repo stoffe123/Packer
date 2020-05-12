@@ -5,14 +5,13 @@
 #include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "multi_packer.h"
-//#include "huffman2.h"
-//#include "canonical.h"
-#include "multi_packer.h"
 #include "block_packer.h"
 #include <Windows.h>
 #include "packer_commons.h"
 
-#include "RLE_packer_advanced.h"
+//#include "huffman2.h"
+//#include "canonical.h"
+
 
 #define CMP_N 128
 
