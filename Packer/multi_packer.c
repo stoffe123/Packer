@@ -87,7 +87,7 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 
 	double packed_ratio = (double)size_packed / (double)size_org;
 	double RLE_limit = (double)ratio / 100.0;
-	printf("\n ratio with RLE  %f (limit %f)", ratio, RLE_limit);
+	printf("\n ratio with RLE  %f (limit %f)", packed_ratio, RLE_limit);
 
 	bool compression_success = (packed_ratio < RLE_limit);
 	if (!compression_success) {
@@ -96,8 +96,6 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 	}
 	return compression_success;
 }
-
-
 
 
 bool TwoBytePackAndTest(const char* dir, const char* src, int ratio) {
@@ -119,12 +117,18 @@ bool TwoBytePackAndTest(const char* dir, const char* src, int ratio) {
 	return compression_success;
 }
 
-
-void SeqUnpackAndReplace(const char* dir, const char* src) {
-	src = concat(dir, src);
+void SeqUnpackAndReplace(const char* src) {
 	//printf("\n Seq unpacking (in place) %s", src);
 	const char* tmp = get_temp_file2("multi_sequnpacked");
 	seq_unpack(src, tmp);
+	remove(src);
+	rename(tmp, src);
+}
+
+void MultiUnpackAndReplace(const char* src) {
+	//printf("\n Seq unpacking (in place) %s", src);
+	const char* tmp = get_temp_file2("multi_sequnpacked");
+	multi_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
 }
@@ -146,26 +150,26 @@ void remove_meta_files(const char* base_dir) {
 
 //----------------------------------------------------------------------------------------
 
-void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
-	unsigned char seqlen_pages, int rle_ratio, int twobyte_ratio, int seq_ratio) {
-
-	printf("\nMulti_pack  %s  =>  %s\nsize org: %d    pages: (%d,%d) seqpackratio %d", src, dst, get_file_size_from_name(src), offset_pages, seqlen_pages, seq_ratio);
+void multi_pack(const char* src, const char* dst, packProfile_t profile) {
+ 
+	printf("\n* Multi pack *");
+	printProfile(&profile);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 	char* temp_filename = get_temp_file2("multi_rlepacked");
 
-	bool got_smaller = RLE_pack_and_test(src, temp_filename, rle_ratio);
+	bool got_smaller = RLE_pack_and_test(src, temp_filename, profile.rle_ratio);
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 5);
 	}
 	const char* base_dir = get_clock_dir();
-	got_smaller = TwoBytePackAndTest(base_dir, temp_filename, twobyte_ratio);
+	got_smaller = TwoBytePackAndTest(base_dir, temp_filename, profile.twobyte_ratio);
 	//got_smaller = false;
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 6);
 	}
 
-	seq_pack_separate(temp_filename, base_dir, offset_pages, seqlen_pages);
+	seq_pack_separate(temp_filename, base_dir, profile.offset_pages, profile.seqlen_pages);
 	const char* main_filename = concat(base_dir, "main");
 	const char* seqlens_filename = concat(base_dir, "seqlens");
 	const char* offsets_filename = concat(base_dir, "offsets");
@@ -173,27 +177,29 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	//try to pack meta files!
 
 	// ---------- Pack seqlens -----------
-	got_smaller = SeqPackAndTest(seqlens_filename, 65, 3, 33);
-	//printf(concat(base_dir, "seqlens"));	
+	if (get_file_size_from_name(seqlens_filename) > 200) {
+		packProfile_t seqlenProfile;
+		seqlenProfile.seqlen_pages = 76;
+		seqlenProfile.offset_pages = 2,
+		seqlenProfile.rle_ratio = 65;
+		seqlenProfile.twobyte_ratio = 75;
+		seqlenProfile.seq_ratio = 34;
+		got_smaller = MultiPackAndTest(seqlens_filename, seqlenProfile);
+		if (got_smaller) {
+			pack_type = setKthBit(pack_type, 1);
+		}
 
-	if (got_smaller) {
-		pack_type = setKthBit(pack_type, 1);
-	}
-
-	got_smaller = CanonicalEncodeAndTest(seqlens_filename);
-	if (got_smaller) {
-		pack_type = setKthBit(pack_type, 2);
-	}
-
-	// ------------- Pack offsets --------------
-	got_smaller = SeqPackAndTest(offsets_filename, 115, 68, 97);
-	if (got_smaller) {
-		pack_type = setKthBit(pack_type, 3);
-	}
-
-	got_smaller = CanonicalEncodeAndTest(offsets_filename);
-	if (got_smaller) {
-		pack_type = setKthBit(pack_type, 4);
+		// ------------- Pack offsets --------------
+		packProfile_t offsetProfile;
+		offsetProfile.seqlen_pages = 105;
+		offsetProfile.offset_pages = 57;
+		offsetProfile.rle_ratio = 80;
+		offsetProfile.twobyte_ratio = 79;
+		offsetProfile.seq_ratio = 94;
+		got_smaller = MultiPackAndTest(offsets_filename, offsetProfile);
+		if (got_smaller) {
+			pack_type = setKthBit(pack_type, 2);
+		}
 	}
 
 	uint64_t packed_size = get_file_size_from_name(offsets_filename) +
@@ -203,8 +209,13 @@ void multi_pack(const char* src, const char* dst, unsigned char offset_pages,
 	double seqPackRatio = (double)packed_size /
 		(double)get_file_size_from_name(temp_filename);
 
-	bool seqPacked = seqPackRatio < ((double)seq_ratio / (double)100);
-	printf("\n Seqpacked %s and got ratio %f.2 (limit %d)", temp_filename, seqPackRatio, seq_ratio);
+	bool seqPacked = seqPackRatio < ((double)profile.seq_ratio / (double)100);
+	/*
+	if (get_file_size_from_name(temp_filename) < 512) {
+		seqPacked = seqPackRatio < 1.0;
+	}
+	*/
+	printf("\n Seqpacked %s and got ratio %f.2 (limit %d)", temp_filename, seqPackRatio, profile.seq_ratio);
 	if (seqPacked) {
 		pack_type = setKthBit(pack_type, 7);
 	}
@@ -261,18 +272,12 @@ void multi_unpack(const char* src, const char* dst) {
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
-		if (isKthBitSet(pack_type, 2)) {
-			CanonicalDecodeAndReplace(concat(base_dir, "seqlens"));
-		}
 		if (isKthBitSet(pack_type, 1)) {
-			SeqUnpackAndReplace(base_dir, "seqlens");
+			MultiUnpackAndReplace(concat(base_dir, "seqlens"));
 		}
-		if (isKthBitSet(pack_type, 4)) {
-			CanonicalDecodeAndReplace(concat(base_dir, "offsets"));
-		}
-		if (isKthBitSet(pack_type, 3)) {
-			SeqUnpackAndReplace(base_dir, "offsets");
-		}
+		if (isKthBitSet(pack_type, 2)) {			
+			MultiUnpackAndReplace(concat(base_dir, "offsets"));
+		}		
 	}
 
 	const char* seq_dst = get_temp_file2("multi_seqsepunp");

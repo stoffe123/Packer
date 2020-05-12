@@ -3,10 +3,26 @@
 
 const char** get_test_filenames();
 
-#endif
 
-void CanonicalDecodeAndReplace(const char* src);
+typedef struct packProfile_t {
+	int seqlen_pages;
+	int offset_pages;
+	int rle_ratio;
+	int twobyte_ratio;
+	int seq_ratio;
+} packProfile_t;
 
-bool CanonicalEncodeAndTest(const char* src);
+void printProfile(packProfile_t*);
+
+void copyProfile(packProfile_t*, packProfile_t*);
+
+void CanonicalDecodeAndReplace(const char*);
+
+bool CanonicalEncodeAndTest(const char*);
 
 bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit);
+
+bool MultiPackAndTest(const char* src, packProfile_t profile);
+
+
+#endif

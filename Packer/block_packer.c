@@ -21,8 +21,7 @@ append_to_tar(FILE* utfil, char* src) {
 
 //----------------------------------------------------------------------------------------
 
-void block_pack(const char* src, const char* dst, unsigned char offset_pages,
-	unsigned char seqlen_pages, int seq_ratio, int rle_ratio, int twobyte_ratio) {
+void block_pack(const char* src, const char* dst, packProfile_t profile) {
 
 	unsigned long long  src_size = get_file_size_from_name(src);
 
@@ -44,7 +43,7 @@ void block_pack(const char* src, const char* dst, unsigned char offset_pages,
 		tmp_size = get_file_size_from_name(tmp);
 
 		char* tmp2 = get_temp_file2("block_multipacked");
-		multi_pack(tmp, tmp2, offset_pages, seqlen_pages, seq_ratio, rle_ratio, twobyte_ratio);
+		multi_pack(tmp, tmp2, profile);
 		remove(tmp);
 
 		append_to_tar(utfil, tmp2);
