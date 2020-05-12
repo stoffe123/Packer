@@ -8,6 +8,7 @@
 //#include "huffman2.h"
 //#include "canonical.h"
 #include "multi_packer.h"
+#include "block_packer.h"
 #include <Windows.h>
 #include "packer_commons.h"
 

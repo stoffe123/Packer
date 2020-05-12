@@ -216,6 +216,9 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 	debug("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
 	fwrite(&buf[buf_pos + 1], size_out, 1, utfil);
 	fclose(utfil);
+	free(buf);
+	free(offsets);
+	free(seqlens);
 }
 
 void seq_unpack(const char* source_filename, const char* dest_filename) {
