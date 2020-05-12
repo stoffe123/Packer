@@ -6,6 +6,7 @@
 #include "seq_packer.h"
 #include <inttypes.h>
 #include "seq_packer_commons.h"
+#include "packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
 

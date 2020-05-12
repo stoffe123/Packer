@@ -15,8 +15,8 @@
 static  FILE* infil, * utfil;
 
 static   uint64_t buffer_endpos, buffer_startpos, buffer_min,
-	                                    buffer_size = 2048, source_size;
-static   unsigned char* buffer;
+	                                    buffer_size2 = 2048, source_size;
+static   unsigned char* buf2;
 
 static   const char* base_dir;
 static   long two_byte_freq_table[65536] = { 0 };
@@ -31,20 +31,20 @@ static   uint64_t char_freq[256];
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
-	if (buffer_endpos == buffer_size) {
-		uint64_t buffer_left = buffer_size - buffer_startpos;
+	if (buffer_endpos == buffer_size2) {
+		uint64_t buffer_left = buffer_size2 - buffer_startpos;
 		if (buffer_left < buffer_min) {
 			//load new buffer!!			
-			debug("Load new buffer of: %d", buffer_size);
+			debug("Load new buffer of: %d", buffer_size2);
 
-			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-			for (uint64_t i = 0; i < (buffer_size - buffer_startpos); i++) {
-				new_buf[i] = buffer[i + buffer_startpos];
+			unsigned char* new_buf = (unsigned char*)malloc(buffer_size2 * sizeof(unsigned char));
+			for (uint64_t i = 0; i < (buffer_size2 - buffer_startpos); i++) {
+				new_buf[i] = buf2[i + buffer_startpos];
 			}
-			uint64_t res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
-			buffer_endpos = res + (buffer_size - buffer_startpos);
-			free(buffer);
-			buffer = new_buf;
+			uint64_t res = fread(&new_buf[buffer_size2 - buffer_startpos], 1, buffer_startpos, infil);
+			buffer_endpos = res + (buffer_size2 - buffer_startpos);
+			free(buf2);
+			buf2 = new_buf;
 			buffer_startpos = 0;
 		}
 	}
@@ -214,15 +214,15 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 	}
 
 	/* start compression */
-
-	buffer_endpos = fread(buffer, 1, buffer_size, infil);
+	buf2 = (unsigned char*)malloc(buffer_size2 * sizeof(unsigned char));
+	buffer_endpos = fread(buf2, 1, buffer_size2, infil);
 
 	unsigned int seq_len = 1;
 
 	while (buffer_startpos < buffer_endpos) {
 
-		unsigned char ch1 = buffer[buffer_startpos];
-		unsigned char ch2 = buffer[buffer_startpos + 1];
+		unsigned char ch1 = buf2[buffer_startpos];
+		unsigned char ch2 = buf2[buffer_startpos + 1];
 
 		if (pass == 2) {
 			unsigned int code = find_code_for_pair(ch1, ch2, pair_table_pos);
@@ -262,14 +262,16 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 
 	}
 	fclose(infil);
+	free(buf2);
 }
 
 
 void two_byte_pack(const char* src, const char* dest)
 {
-	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
+	
 	two_byte_pack_internal(src, dest, 1); //analyse and build meta-data
 	two_byte_pack_internal(src, dest, 2); //pack
+
 }
 
 

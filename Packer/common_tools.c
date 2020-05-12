@@ -138,6 +138,7 @@ const char* concat(const char* s1, const char* s2) {
 	const size_t s1_length = strlen(s1);
 	const size_t totalLength = s1_length + strlen(s2);
 
+	//careful this method leaks memory!
 	char* const strBuf = malloc(totalLength + 1);
 	if (strBuf == NULL) {
 		fprintf(stderr, "malloc failed\n");
@@ -153,7 +154,8 @@ const char* concat_int(const char* s1, int i) {
 }
 
 const char* int_to_string(int64_t i) {
-	const char* ra = malloc(100);
+	//careful this method leaks memory!
+	const char* ra = malloc(20);
 	_itoa(i, ra, 10);
 	return ra;
 }

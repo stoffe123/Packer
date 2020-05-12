@@ -5,6 +5,7 @@
 #include "seq_unpacker.h"
 #include "common_tools.h"
 #include "seq_packer_commons.h"
+#include "packer_commons.h"
 
 #define VERBOSE false
 
@@ -111,6 +112,7 @@ uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset
 		buf[k++] = temp_ar[i];
 	}
 	assertEqual(k, buf_size, "k=buf_size in seq_unpacker");
+	free(temp_ar);
 	return buf_size - size_wraparound - 1;
 }
 

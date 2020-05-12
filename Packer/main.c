@@ -266,19 +266,19 @@ void testmeta() {
 
 void test16() {
 
-	char test_filenames[16][100] = { "book.txt",
+	char test_filenames[16][100] = { "bad.cdg","voc.wav", "did.csh", "book.txt",
 		"empty.txt",
 		"onechar.txt",
 			"oneseq.txt",
 		"repeatchar.txt",
 		 "book_med.txt",
-		"bad.cdg",
+		
 		"aft.htm",
 		"rel.pdf",
-		"did.csh",
+		
 		"bad.mp3",
 			"tob.pdf",
-		"voc.wav",
+		
 		  
 			 "nex.doc",
 		"amb.dll",

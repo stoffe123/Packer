@@ -1,8 +1,7 @@
 #ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
-const char** get_test_filenames();
-
+#define BLOCK_SIZE 2510700
 
 typedef struct packProfile_t {
 	int seqlen_pages;

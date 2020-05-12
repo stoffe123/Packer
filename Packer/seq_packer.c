@@ -6,6 +6,7 @@
 #include "seq_packer.h"
 #include <inttypes.h>
 #include "seq_packer_commons.h"
+#include "packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
 
@@ -16,14 +17,13 @@ static  FILE* infil, * utfil, * seq_lens_file, * offsets_file;
 static unsigned char code;
 
 static buffer_size = BLOCK_SIZE * 3;
-static  unsigned char buffer[BLOCK_SIZE * 3];
-
+static unsigned char buffer[BLOCK_SIZE * 3];
 size_t absolute_end, buffer_endpos;
 static bool code_occurred = false;
 static const char* base_dir = "c:/test/";
 static bool separate_files = false;
 
-static uint32_t nextChar[BLOCK_SIZE * 2];
+static uint32_t* nextChar[BLOCK_SIZE * 2] ;
 
 static uint32_t lastChar[256];
 
@@ -113,9 +113,10 @@ void out_offset(unsigned long offset, unsigned char pages) {
 				break;
 			}
 		}
-		assert(page < pages, concat(
-			">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset:",
-			int_to_string(offset)));
+
+		assert(page < pages,
+			">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset:");
+
 	}
 }
 //--------------------------------------------------------------------------------------------------------
@@ -128,7 +129,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	uint64_t offset,
 		winsize = (offset_pages + (uint64_t)1) * (uint64_t)256 + max_seqlen + max_seqlen,
 		best_offset = 0, lowest_special_offset = (256 - offset_pages),
-		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
+		min_seq_len = 3,
 		longest_offset = lowest_special_offset + ((uint64_t)256 * offset_pages) - 1;
 	long long  best_seqlen, seq_len;
 
@@ -178,25 +179,24 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	absolute_end = buffer_endpos;
 
 	uint64_t offset_max;
-
+	int32_t nextChar_pos, nextCh;
+	unsigned char ch;
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
-		unsigned char ch = buffer[buffer_pos];
-
+		ch = buffer[buffer_pos];
+		
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_pos) >= min_seq_len) {
 				if (buffer_pos + winsize > absolute_end - min_seq_len) {
-
 					offset_max = (absolute_end - min_seq_len) - buffer_pos;
 				}
 				else {
 					offset_max = winsize;
-				}
-			
+				}			
 				offset = 0;
-				int32_t nextChar_pos = buffer_pos;
-				int32_t nextCh;
+				nextChar_pos = buffer_pos;
+				
 				while (offset < offset_max) 
 				{
 					// find matching sequence		
@@ -241,7 +241,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 						}
 						else {
 							seq_len -= diff;  
-							assert(seq_len >= 0, "seq_len >= 0");
+							//assert(seq_len >= 0, "seq_len >= 0");
 						}
 					}
 					diff = (buffer_pos + seq_len) - buffer_endpos;
@@ -251,7 +251,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 						}
 						else {
 							seq_len -= diff;
-							assert(seq_len >= 0, "seq_len >= 0");
+							//assert(seq_len >= 0, "seq_len >= 0");
 						}
 					}
 
@@ -310,7 +310,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 			if (pass == 1) {
 				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
-				seq_lens[best_seqlen]++;
+				//seq_lens[best_seqlen]++;
 			}
 			else if (pass == 2) {  // Write triplet!
 
