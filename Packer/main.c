@@ -127,7 +127,7 @@ int fuzzRatio(int r, int best) {
 void testmeta() {
 	init_taken();
 
-	int offset_pages = 49, seqlen_pages = 115, best_offset_pages = 230, best_seqlen_pages = 3,
+	int offset_pages = 51, seqlen_pages = 115, best_offset_pages = offset_pages, best_seqlen_pages = seqlen_pages,
 		rle_ratio = 90, twobyte_ratio = 80, seq_ratio = 97,
 		best_seq_ratio = seq_ratio, best_rle_ratio = rle_ratio, best_twobyte_ratio = twobyte_ratio;
 
@@ -253,9 +253,9 @@ void testmeta() {
 			seqlen_pages = fuzz(best_seqlen_pages);
 
 		}
-		fuzzRatio(seq_ratio, best_seq_ratio);
-		fuzzRatio(rle_ratio, best_rle_ratio);
-		fuzzRatio(twobyte_ratio, best_twobyte_ratio);
+		rle_ratio = fuzzRatio(rle_ratio, best_rle_ratio);
+		twobyte_ratio = fuzzRatio(twobyte_ratio, best_twobyte_ratio);
+		seq_ratio = fuzzRatio(seq_ratio, best_seq_ratio);
 
 
 	}
