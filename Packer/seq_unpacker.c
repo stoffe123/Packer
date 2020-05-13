@@ -156,10 +156,10 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 	debug("\n packed_file_end %d", packed_file_end);
 	fclose(infil);
 
-	uint8_t code = buf[--packed_file_end];
-	offset_pages = buf[--packed_file_end];
-	seqlen_pages = buf[--packed_file_end];
-	code_occurred = buf[--packed_file_end];
+	uint8_t code = read_byte_from_file();
+	offset_pages = read_byte_from_file();
+	seqlen_pages = read_byte_from_file();
+	code_occurred = read_byte_from_file();
 
 	buf_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, code);
 	debug("\n buf_pos after wraparound %d", buf_pos);

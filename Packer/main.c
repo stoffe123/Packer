@@ -80,7 +80,7 @@ int fuzz(int i) {
 		else {
 			i -= (rand() % 10);
 		}
-	} while (!(i >= 0 && i <= 245));
+	} while (!(i >= 0 && i <= 246));
 	return i;
 }
 
@@ -108,14 +108,19 @@ void init_taken() {
 	taken_index = 0;
 }
 
-int fuzzRatio(int r, int best) {
+int fuzzVal(int r, int v) {
 	if (rand() % 2 == 0) {
-		r += (rand() % 5 + 1);
+		r += (rand() % v + 1);
 	}
 	else {
-		r -= (rand() % 5 + 1);
+		r -= (rand() % v + 1);
 	}
-	if (r > 100 || rand() % 6 == 0) {
+	return r;
+}
+
+int fuzzRatio(int r, int best, int min, int max) {
+	r = fuzzVal(r, max / 10);
+	if ((r > max ||r < min) || rand() % 6 == 0) {
 
 		r = best;
 
@@ -125,8 +130,8 @@ int fuzzRatio(int r, int best) {
 
 void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	if (rand() % 4 == 0) {
-		profile->offset_pages = rand() % 240;
-		profile->seqlen_pages = rand() % 240;
+		profile->offset_pages = rand() % 247;
+		profile->seqlen_pages = rand() % 247;
 	}
 	else {
 
@@ -134,9 +139,11 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 		profile->seqlen_pages = fuzz(best.seqlen_pages);
 
 	}
-	profile->rle_ratio = fuzzRatio(profile->rle_ratio, best.rle_ratio);
-	profile->twobyte_ratio = fuzzRatio(profile->twobyte_ratio, best.twobyte_ratio);
-	profile->seq_ratio = fuzzRatio(profile->seq_ratio, best.seq_ratio);
+	profile->rle_ratio = fuzzRatio(profile->rle_ratio, best.rle_ratio, 10, 100);
+	profile->twobyte_ratio = fuzzRatio(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
+	profile->seq_ratio = fuzzRatio(profile->seq_ratio, best.seq_ratio, 10, 100);
+	profile->recursive_limit = fuzzRatio(profile->recursive_limit, best.recursive_limit, 10, 800);
+	profile->twobyte_threshold = fuzzRatio(profile->twobyte_threshold, best.twobyte_threshold, 30, 2000);
 }
 
 unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned long long acc_size, unsigned long long acc_size_org,
@@ -150,8 +157,8 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 		double pack_ratio = (double)acc_size / (double)acc_size_org;
 		printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
 
-		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / time_sec;
-		printf("\nSpeed %.2f kb/s\n\n", eff);
+		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / ((double)total_time / 1000.0);
+		printf("\nEfficiency %.2f kb/s\n\n", eff);
 
 		if (best_size == 0 || acc_size < best_size) {
 			copyProfile(&profile, best);
@@ -175,6 +182,8 @@ void testmeta() {
 	profile.rle_ratio = 90;
 	profile.twobyte_ratio = 80;
 	profile.seq_ratio = 97;
+	profile.recursive_limit = 200;
+	profile.twobyte_threshold = 1400;
 
 	copyProfile(&profile, &bestProfile);
 
@@ -267,7 +276,7 @@ void testmeta() {
 }//end test_meta
 
 void test16() {
-
+	
 	char test_filenames[16][100] = { "book.txt",
 		"empty.txt",
 		"onechar.txt",
@@ -290,6 +299,9 @@ void test16() {
 		"bad.mp3",
 
 	};
+	
+	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
+		
 
 	init_taken();
 
@@ -299,6 +311,8 @@ void test16() {
 	profile.rle_ratio = 96;
 	profile.twobyte_ratio = 97;
 	profile.seq_ratio = 100;
+	profile.recursive_limit = 200;
+	profile.twobyte_threshold = 1400;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
@@ -313,10 +327,10 @@ void test16() {
 		int before_suite = clock();
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 13; kk++)
+		for (; kk < 6; kk++)
 		{
 			const char src[100] = { 0 };
-			concat(src, "C:/test/testsuite/", test_filenames[kk]);
+			concat(src, "C:/test/test16/", test_filenames[kk]);
 
 
 			const char* dst = "C:/test/unp";

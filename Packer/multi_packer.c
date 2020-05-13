@@ -112,16 +112,16 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 }
 
 
-bool TwoBytePackAndTest(const char* dir, const char* src, int ratio) {
+bool TwoBytePackAndTest(const char* dir, const char* src, packProfile_t profile) {
 
 	char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobyted");
-	two_byte_pack(src, tmp, 100);
+	two_byte_pack(src, tmp, profile);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
 	double packed_ratio = (double)size_packed / (double)size_org;
-	printf("\n Two byte packed %s  got ratio  %f", src, ratio);
-	bool compression_success = (packed_ratio < ((double)ratio/100.0));  
+	printf("\n Two byte packed %s  got ratio  %f", src, packed_ratio);
+	bool compression_success = (packed_ratio < ((double)profile.twobyte_ratio/100.0));  
 	if (compression_success) {
 		remove(src);
 		rename(tmp, src);
@@ -177,7 +177,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile) {
 
 	char base_dir[100] = { 0 };
 	get_clock_dir(base_dir);
-	got_smaller = TwoBytePackAndTest(base_dir, temp_filename, profile.twobyte_ratio);
+	got_smaller = TwoBytePackAndTest(base_dir, temp_filename, profile);
 	//got_smaller = false;
 	if (got_smaller) {
 		pack_type = setKthBit(pack_type, 6);
@@ -194,7 +194,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile) {
 	//try to pack meta files!
 
 	// ---------- Pack seqlens -----------
-	if (get_file_size_from_name(seqlens_name) > 200) {
+	if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
 		packProfile_t seqlenProfile;
 		seqlenProfile.offset_pages = 76;
 		seqlenProfile.seqlen_pages = 2;	

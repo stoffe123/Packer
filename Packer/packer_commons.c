@@ -93,15 +93,19 @@ bool MultiPackAndTest(const char* src, packProfile_t profile) {
 void printProfile(packProfile_t* profile) {
 	printf("\n");
 	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);
-	printf("\nRLE ratio:      %d", profile->rle_ratio);
-	printf("\nTwo byte ratio: %d", profile->twobyte_ratio);
-	printf("\nSeq ratio:      %d\n", profile->seq_ratio);
+	printf("\nRLE ratio:         %d", profile->rle_ratio);
+	printf("\nTwo byte ratio:    %d", profile->twobyte_ratio);
+	printf("\nSeq ratio:         %d", profile->seq_ratio);
+	printf("\nRecursive limit:   %d", profile->recursive_limit);
+	printf("\nTwobyte threshold: %d\n", profile->twobyte_threshold);
 }
 
-void copyProfile(packProfile_t* src, packProfile_t* dst) {
-	dst->seqlen_pages = src->seqlen_pages;
+void copyProfile(packProfile_t* src, packProfile_t* dst) {	
 	dst->offset_pages = src->offset_pages;
+	dst->seqlen_pages = src->seqlen_pages;
 	dst->rle_ratio = src->rle_ratio;
 	dst->twobyte_ratio = src->twobyte_ratio;
 	dst->seq_ratio = src->seq_ratio;
+	dst->recursive_limit = src->recursive_limit;
+	dst->twobyte_threshold = src->twobyte_threshold;
 }

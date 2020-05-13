@@ -10,6 +10,8 @@ typedef struct packProfile_t {
 	int rle_ratio;
 	int twobyte_ratio;
 	int seq_ratio;
+	int recursive_limit;
+	int twobyte_threshold;
 } packProfile_t;
 
 void printProfile(packProfile_t*);

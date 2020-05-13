@@ -7,6 +7,7 @@
 #include "seq_packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
+#include "packer_commons.h"
 #define START_CODES_SIZE 2
 
 /* Two-byte packer */
@@ -22,6 +23,7 @@ static   const char* base_dir;
 static   long two_byte_freq_table[65536] = { 0 };
 static   uint8_t pair_table[2048] = { 0 }, master_code;
 static   uint64_t char_freq[256];
+static packProfile_t profile;
 
 typedef struct value_freq_t {
 	uint8_t value;
@@ -98,8 +100,8 @@ int get_gain_threshhold() {
 	if (res < 20) {
 		res = 20;
 	}
-	if (res > 1400) {
-		res = 1400;
+	if (res > profile.twobyte_threshold) {
+		res = profile.twobyte_threshold;
 	}
 
 	return res;
@@ -261,8 +263,9 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 }
 
 
-void two_byte_pack(const char* src, const char* dest)
+void two_byte_pack(const char* src, const char* dest, packProfile_t prof)
 {
+	profile = prof;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	two_byte_pack_internal(src, dest, 1); //analyse and build meta-data
 	two_byte_pack_internal(src, dest, 2); //pack
