@@ -147,7 +147,7 @@ void concat3(const char* dst, const char* s1, const char* s2, const char* s3) {
 
 void concat_int(const char* dst, const char* s1, int i) {
 	const char number[30] = { 0 };
-	get_rand(number);
+	int_to_string(number, i);
 	concat(dst, s1, number);
 }
 

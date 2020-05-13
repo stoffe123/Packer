@@ -114,24 +114,25 @@ int fuzzVal(int r, int v) {
 	}
 	else {
 		r -= (rand() % v + 1);
+		if (r < 0) {
+			r = (rand() % v + 1);
+		}
 	}
 	return r;
 }
 
 int fuzzRatio(int r, int best, int min, int max) {
 	r = fuzzVal(r, max / 10);
-	if ((r > max ||r < min) || rand() % 6 == 0) {
-
+	if (r < 0 || r > max ||r < min || rand() % 6 == 0) {
 		r = best;
-
 	}
 	return r;
 }
 
 void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	if (rand() % 4 == 0) {
-		profile->offset_pages = rand() % 247;
-		profile->seqlen_pages = rand() % 247;
+		profile->offset_pages = rand() % 252;
+		profile->seqlen_pages = rand() % 252;
 	}
 	else {
 
@@ -160,13 +161,13 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / ((double)total_time / 1000.0);
 		printf("\nEfficiency %.2f kb/s\n\n", eff);
 
-		if (best_size == 0 || acc_size < best_size) {
+		if (best_size == 0 || (acc_size < best_size && acc_size != 0)) {
 			copyProfile(&profile, best);
 			best_size = acc_size;
 			printf("\n\n\a ************ BEST FOUND *************");
 		}
 	}
-	printf("\n\n STATUS: size %llu   (%.0f kb)", best_size, round((double)best_size / 1024.0));
+	printf("\n  STATUS: %.0f kb   (%llu)", round((double)best_size / 1024.0), best_size);
 	printProfile(best);
 	printf("\n");
 	return best_size;
@@ -177,11 +178,11 @@ void testmeta() {
 
 	packProfile_t profile, bestProfile;
 
-	profile.offset_pages = 51;
-	profile.seqlen_pages = 115;
+	profile.offset_pages = 247;
+	profile.seqlen_pages = 107;
 	profile.rle_ratio = 90;
 	profile.twobyte_ratio = 80;
-	profile.seq_ratio = 97;
+	profile.seq_ratio = 72;
 	profile.recursive_limit = 200;
 	profile.twobyte_threshold = 1400;
 
@@ -195,16 +196,16 @@ void testmeta() {
 			acc_size_org = 0;
 
 		int before_suite = clock();
-		int kk = 0;
+		int kk = 1;
 		bool earlyBreak = true;
-		for (; kk < 34; kk++)
+		for (; kk < 12; kk++)
 		{
 			//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
 			//const char* src = "C:/test/book_seqlens";
 
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/meta/offsets", kk + 1000);
+			concat_int(src, "C:/test/txt/", kk);
 
 			const char* dst = "C:/test/unp";
 
@@ -276,7 +277,7 @@ void testmeta() {
 }//end test_meta
 
 void test16() {
-	
+	/*
 	char test_filenames[16][100] = { "book.txt",
 		"empty.txt",
 		"onechar.txt",
@@ -299,17 +300,17 @@ void test16() {
 		"bad.mp3",
 
 	};
-	
-	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
+	*/
+	char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
 		
 
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 230;
-	profile.seqlen_pages = 31;
-	profile.rle_ratio = 96;
-	profile.twobyte_ratio = 97;
+	profile.offset_pages = 212;
+	profile.seqlen_pages = 29;
+	profile.rle_ratio = 76;
+	profile.twobyte_ratio = 93;
 	profile.seq_ratio = 100;
 	profile.recursive_limit = 200;
 	profile.twobyte_threshold = 1400;
@@ -327,10 +328,10 @@ void test16() {
 		int before_suite = clock();
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 6; kk++)
+		for (; kk < 2; kk++)
 		{
 			const char src[100] = { 0 };
-			concat(src, "C:/test/test16/", test_filenames[kk]);
+			concat(src, "C:/test/wav/", test_filenames[kk]);
 
 
 			const char* dst = "C:/test/unp";
@@ -393,8 +394,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	test16();
-	//testmeta();
+	//test16();
+	testmeta();
 
 }
 

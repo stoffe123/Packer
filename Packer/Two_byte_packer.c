@@ -95,6 +95,9 @@ value_freq_t find_best_two_byte() {
 
 int get_gain_threshhold() {
 
+	if (profile.twobyte_threshold == 0) {
+		return 0;
+	}
 	uint64_t res = source_size / 1000;
 
 	if (res < 20) {
