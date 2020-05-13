@@ -6,7 +6,6 @@
 #include "seq_packer.h"
 #include <inttypes.h>
 #include "seq_packer_commons.h"
-#include "packer_commons.h"
 #define VERBOSE false
 #include "common_tools.h"
 
@@ -17,13 +16,14 @@ static  FILE* infil, * utfil, * seq_lens_file, * offsets_file;
 static unsigned char code;
 
 static buffer_size = BLOCK_SIZE * 3;
-static unsigned char buffer[BLOCK_SIZE * 3];
+static  unsigned char buffer[BLOCK_SIZE * 3];
+
 size_t absolute_end, buffer_endpos;
 static bool code_occurred = false;
 static const char* base_dir = "c:/test/";
 static bool separate_files = false;
 
-static uint32_t* nextChar[BLOCK_SIZE * 2] ;
+static uint32_t nextChar[BLOCK_SIZE * 2];
 
 static uint32_t lastChar[256];
 
@@ -42,7 +42,7 @@ static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 static void display_progress(uint32_t buffer_pos, uint8_t pass) {
 	if (buffer_pos % 48000 == 0 && pass == 2 && !VERBOSE) {
 		printf("*");
-	}	
+	}
 }
 
 static unsigned char find_best_code(long* char_freq) {
@@ -91,9 +91,8 @@ void out_seqlen(unsigned long seqlen, unsigned char pages) {
 				break;
 			}
 		}
-		assert(page < pages, concat(
-			">>>>>>>> ERROR in seq_packer.out_seqlen: no seqlen coding found for seqlen:",
-			int_to_string(seqlen)));
+		assert(page < pages,
+			">>>>>>>> ERROR in seq_packer.out_seqlen: no seqlen coding found");
 	}
 }
 
@@ -113,9 +112,11 @@ void out_offset(unsigned long offset, unsigned char pages) {
 				break;
 			}
 		}
+		const char* msg =
+			">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset:";
 
-		assert(page < pages,
-			">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset:");
+
+		assert(page < pages, msg);
 
 	}
 }
@@ -129,7 +130,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	uint64_t offset,
 		winsize = (offset_pages + (uint64_t)1) * (uint64_t)256 + max_seqlen + max_seqlen,
 		best_offset = 0, lowest_special_offset = (256 - offset_pages),
-		min_seq_len = 3,
+		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
 		longest_offset = lowest_special_offset + ((uint64_t)256 * offset_pages) - 1;
 	long long  best_seqlen, seq_len;
 
@@ -155,8 +156,12 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	*/
 
 		if (separate_files) {
-			seq_lens_file = fopen(concat(base_dir, "seqlens"), "wb");
-			offsets_file = fopen(concat(base_dir, "offsets"), "wb");
+			const char seqlens_name[100] = { 0 };
+			const char offsets_name[100] = { 0 };
+			concat(seqlens_name, base_dir, "seqlens");
+			concat(offsets_name, base_dir, "offsets");
+			seq_lens_file = fopen(seqlens_name, "wb");
+			offsets_file = fopen(offsets_name, "wb");
 		}
 		fopen_s(&utfil, dest_filename, "wb");
 		if (!utfil) {
@@ -169,8 +174,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	/* start compression */
 	long long size_org = get_file_size(infil);
 
-	
-	buffer_endpos = fread(&buffer, 1, buffer_size, infil);	
+
+	buffer_endpos = fread(&buffer, 1, buffer_size, infil);
 
 	assertEqual(buffer_endpos, size_org, "buffer_endpos == size_org in seqpacker");
 
@@ -179,30 +184,31 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	absolute_end = buffer_endpos;
 
 	uint64_t offset_max;
-	int32_t nextChar_pos, nextCh;
-	unsigned char ch;
+
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
-		ch = buffer[buffer_pos];
-		
+		unsigned char ch = buffer[buffer_pos];
+
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_pos) >= min_seq_len) {
 				if (buffer_pos + winsize > absolute_end - min_seq_len) {
+
 					offset_max = (absolute_end - min_seq_len) - buffer_pos;
 				}
 				else {
 					offset_max = winsize;
-				}			
+				}
+
 				offset = 0;
-				nextChar_pos = buffer_pos;
-				
-				while (offset < offset_max) 
+				int32_t nextChar_pos = buffer_pos;
+				int32_t nextCh;
+				while (offset < offset_max)
 				{
 					// find matching sequence		
 					if ((nextCh = nextChar[nextChar_pos]) == 0) {
 						break;
-					}					
+					}
 					if ((offset += nextCh) >= offset_max) {
 						break;
 					}
@@ -210,16 +216,16 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					if (offset < 3) {
 						continue;
 					}
-					
+
 					//printf("\n File %s  Buffer pos %d", src, buffer_pos);
 					/*
 					if (ch != buffer[buffer_pos + offset]) {
 						printf("ch = buffer[buffer[buffer_pos + offset]] in seqpacker\n");
-					
+
 						exit(0);
 					}
 					*/
-					
+
 					if (buffer[buffer_pos + 1] != buffer[buffer_pos + offset + 1]) {
 						continue;
 					}
@@ -227,7 +233,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 						continue;
 					}
 					seq_len = 3;
-				
+
 					while (buffer[buffer_pos + seq_len] == buffer[buffer_pos + offset + seq_len] && seq_len < offset
 						&& buffer_pos + offset + seq_len < absolute_end - 1 &&
 						seq_len < max_seqlen)
@@ -240,8 +246,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 							continue;
 						}
 						else {
-							seq_len -= diff;  
-							//assert(seq_len >= 0, "seq_len >= 0");
+							seq_len -= diff;
+							assert(seq_len >= 0, "seq_len >= 0");
 						}
 					}
 					diff = (buffer_pos + seq_len) - buffer_endpos;
@@ -251,7 +257,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 						}
 						else {
 							seq_len -= diff;
-							//assert(seq_len >= 0, "seq_len >= 0");
+							assert(seq_len >= 0, "seq_len >= 0");
 						}
 					}
 
@@ -261,7 +267,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 						best_seqlen = seq_len;
 						best_offset = offset - seq_len;
 						assert(best_seqlen <= max_seqlen, "best_seq_len <= max_seqlen i seq_packer.pack_internal");
-					
+
 						if (best_seqlen == max_seqlen) {
 							break;
 						}
@@ -270,7 +276,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			}
 		}
 		/* now we found the longest sequence in the window! */
-	
+
 		if (best_seqlen <= 2 || (best_offset >= lowest_special_offset && best_seqlen <= 3))
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
@@ -290,14 +296,14 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				}
 				else
 				{
-					
+
 					WRITE(utfil, ch);
 					assert(absolute_end < buffer_size, "absolute_end < buffer_size in seqpacker");
 					updateNextCharTable(ch, absolute_end);
 					buffer[absolute_end++] = ch; // write start to end to wrap-around find sequences					
 				}
 			}
-			buffer_pos++; 
+			buffer_pos++;
 			display_progress(buffer_pos, pass);
 		}
 		else { // insert code triple instead of the matching sequence!
@@ -310,7 +316,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 			if (pass == 1) {
 				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
-				//seq_lens[best_seqlen]++;
+				seq_lens[best_seqlen]++;
 			}
 			else if (pass == 2) {  // Write triplet!
 
@@ -322,7 +328,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 					for (int i = 0; i < best_seqlen; i++) {
 						printf("%d ", buffer[buffer_pos + i]);
 					}
-					printf("\"");					
+					printf("\"");
 				}
 
 				//}
@@ -410,7 +416,8 @@ void seq_pack(const char* source_filename, const char* dest_filename, unsigned c
 
 void seq_pack_separate(const char* source_filename, const char* dir, unsigned char offset_pages, unsigned char seqlen_pages) {
 	base_dir = dir;
-	const char* dest_filename = concat(base_dir, "main");
+	const char dest_filename[100] = { 0 };
+	concat(dest_filename, base_dir, "main");
 	seq_pack_internal(source_filename, dest_filename, offset_pages, seqlen_pages, true);
 }
 

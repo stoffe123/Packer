@@ -5,7 +5,6 @@
 #include "seq_unpacker.h"
 #include "common_tools.h"
 #include "seq_packer_commons.h"
-#include "packer_commons.h"
 
 #define VERBOSE false
 
@@ -19,7 +18,7 @@ static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wraparound;
 static bool separate_files = true;
 
 
-uint8_t read_byte_from_file() {	
+uint8_t read_byte_from_file() {
 	packed_file_end--;
 	return buf[packed_file_end];
 }
@@ -30,7 +29,7 @@ void put_buf(uint8_t c) {
 }
 
 uint8_t read_seqlen() {
-	if (separate_files) {		
+	if (separate_files) {
 		return seqlens[--seqlens_pos];
 	}
 	else {
@@ -78,7 +77,7 @@ uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset
 	long long i = packed_file_end; //index to read from packed
 	long long j = packed_file_end;  //index to write to temp array
 	while (i > 0) {
-		uint8_t ch = buf[--i];		
+		uint8_t ch = buf[--i];
 		if (separate_files || ch != code) {
 			if (ch != code) {
 				temp_ar[--j] = ch;
@@ -120,16 +119,20 @@ uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset
 
 void seq_unpack_internal(const char* source_filename, const char* dest_filename, const char* base_dir)
 {
-	uint8_t offset_pages, seqlen_pages, 
+	uint8_t offset_pages, seqlen_pages,
 		code_occurred = 1;
 
 	static FILE* infil, * utfil, * seqlens_file, * offsets_file;
+	const char seqlens_name[100] = { 0 };
+	const char offsets_name[100] = { 0 };
+	concat(seqlens_name, base_dir, "seqlens");
+	concat(offsets_name, base_dir, "offsets");
 
 	if (separate_files) {
-		seqlens_file = fopen(concat(base_dir, "seqlens"), "rb");
+		seqlens_file = fopen(seqlens_name, "rb");
 		seqlens_pos = fread(&seqlens, 1, BLOCK_SIZE, seqlens_file);
 		fclose(seqlens_file);
-		offsets_file = fopen(concat(base_dir, "offsets"), "rb");
+		offsets_file = fopen(offsets_name, "rb");
 		offsets_pos = fread(&offsets, 1, BLOCK_SIZE, offsets_file);
 		fclose(offsets_file);
 	}
@@ -149,10 +152,10 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 		getchar();
 		exit(1);
 	}
-	packed_file_end = fread(&buf, 1, BLOCK_SIZE * 2, infil);	 
+	packed_file_end = fread(&buf, 1, BLOCK_SIZE * 2, infil);
 	debug("\n packed_file_end %d", packed_file_end);
 	fclose(infil);
-	
+
 	uint8_t code = buf[--packed_file_end];
 	offset_pages = buf[--packed_file_end];
 	seqlen_pages = buf[--packed_file_end];
@@ -160,19 +163,19 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 
 	buf_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, code);
 	debug("\n buf_pos after wraparound %d", buf_pos);
-	
+
 	if (VERBOSE) {
 		printf("\nwrap around:\n");
 		for (uint64_t i = packed_file_end; i < packed_file_end; i++) {
 			printf("%c", buf[i]);
 		}
 		printf("\n\n");
-	}	
+	}
 
 	while (packed_file_end > 0) {
 		cc = read_byte_from_file();
 		if (cc == code) {
-			uint64_t offset, seqlen = read_seqlen();			
+			uint64_t offset, seqlen = read_seqlen();
 			if (code_occurred && seqlen == SEQ_LEN_FOR_CODE) {
 				//occurrence of code in original
 				put_buf(code);
@@ -225,9 +228,8 @@ void seq_unpack(const char* source_filename, const char* dest_filename) {
 	seq_unpack_internal(source_filename, dest_filename, "");
 }
 
-void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* base_dir)
+void seq_unpack_separate(const char* src, const char* dest_filename, const char* base_dir)
 {
-	source_filename = concat(base_dir, source_filename);
 	separate_files = true;
-	seq_unpack_internal(source_filename, dest_filename, base_dir);
+	seq_unpack_internal(src, dest_filename, base_dir);
 }

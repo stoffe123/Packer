@@ -31,7 +31,8 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 
 	uint64_t tmp_size;
 	do {
-		char* tmp = get_temp_file2("block_chunck");
+		const char tmp[100] = { 0 };
+		get_temp_file2(tmp, "block_chunck");
 		uint64_t read_size = BLOCK_SIZE;
 
 		//workaround for a bug that even 2 powers cause bug
@@ -42,7 +43,8 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 		copy_chunk(infil, tmp, read_size);
 		tmp_size = get_file_size_from_name(tmp);
 
-		char* tmp2 = get_temp_file2("block_multipacked");
+		const char tmp2[100] = { 0 };
+		get_temp_file2(tmp2, "block_multipacked");
 		multi_pack(tmp, tmp2, profile);
 		remove(tmp);
 
@@ -66,10 +68,12 @@ void block_unpack(const char* src, const char* dst) {
 	while (fread(&size, sizeof(size), 1, infil) == 1) {
 
 
-		char* tmp = get_temp_file2("block_tobeunpacked");
+		const char tmp[100] = { 0 };
+		get_temp_file2(tmp, "block_tobeunpacked");
 		copy_chunk(infil, tmp, size);
 
-		char* tmp2 = get_temp_file2("block_multiunpacked");
+		const char tmp2[100] = { 0 };
+		get_temp_file2(tmp2, "block_multiunpacked");
 		multi_unpack(tmp, tmp2);
 
 		remove(tmp);

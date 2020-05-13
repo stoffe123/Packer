@@ -71,7 +71,9 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 	unsigned long char_freq[256] = { 0 };
 	debug("\nRLE_simple_pack pass=%d", pass);
 	if (separate) {
-		runlengths_file = fopen(concat(base_dir, "runlengths"), "wb");
+		const char name[100] = { 0 };
+		concat(name, base_dir, "runlengths");
+		runlengths_file = fopen(name, "wb");
 	}
 	unsigned long long max_runlength = (code_occurred ? 254 + MIN_RUNLENGTH : 255 + MIN_RUNLENGTH);
 

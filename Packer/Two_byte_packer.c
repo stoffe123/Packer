@@ -15,15 +15,15 @@
 static  FILE* infil, * utfil;
 
 static   uint64_t buffer_endpos, buffer_startpos, buffer_min,
-	                                    buffer_size2 = 2048, source_size;
-static   unsigned char* buf2;
+buffer_size = 2048, source_size;
+static   unsigned char* buffer;
 
 static   const char* base_dir;
 static   long two_byte_freq_table[65536] = { 0 };
 static   uint8_t pair_table[2048] = { 0 }, master_code;
 static   uint64_t char_freq[256];
 
- typedef struct value_freq_t {
+typedef struct value_freq_t {
 	uint8_t value;
 	uint64_t freq;
 } value_freq_t;
@@ -31,27 +31,27 @@ static   uint64_t char_freq[256];
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
-	if (buffer_endpos == buffer_size2) {
-		uint64_t buffer_left = buffer_size2 - buffer_startpos;
+	if (buffer_endpos == buffer_size) {
+		uint64_t buffer_left = buffer_size - buffer_startpos;
 		if (buffer_left < buffer_min) {
 			//load new buffer!!			
-			debug("Load new buffer of: %d", buffer_size2);
+			debug("Load new buffer of: %d", buffer_size);
 
-			unsigned char* new_buf = (unsigned char*)malloc(buffer_size2 * sizeof(unsigned char));
-			for (uint64_t i = 0; i < (buffer_size2 - buffer_startpos); i++) {
-				new_buf[i] = buf2[i + buffer_startpos];
+			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
+			for (uint64_t i = 0; i < (buffer_size - buffer_startpos); i++) {
+				new_buf[i] = buffer[i + buffer_startpos];
 			}
-			uint64_t res = fread(&new_buf[buffer_size2 - buffer_startpos], 1, buffer_startpos, infil);
-			buffer_endpos = res + (buffer_size2 - buffer_startpos);
-			free(buf2);
-			buf2 = new_buf;
+			uint64_t res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
+			buffer_endpos = res + (buffer_size - buffer_startpos);
+			free(buffer);
+			buffer = new_buf;
 			buffer_startpos = 0;
 		}
 	}
 }
 
 
- static value_freq_t find_best_code() {
+static value_freq_t find_best_code() {
 	unsigned char best_code;
 	uint64_t freq = ULONG_MAX;
 	for (unsigned int i = 0; i < 256; i++) {
@@ -92,7 +92,7 @@ value_freq_t find_best_two_byte() {
 }
 
 int get_gain_threshhold() {
-	
+
 	uint64_t res = source_size / 1000;
 
 	if (res < 20) {
@@ -172,10 +172,10 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 
 	debug("\nTwo-byte pack pass=%d", pass);
-	
+
 	buffer_startpos = 0;
 	buffer_min = 20;
-	
+
 	infil = fopen(src, "rb");
 	if (!infil) {
 		printf("Hittade inte infil: %s", src);
@@ -214,15 +214,15 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 	}
 
 	/* start compression */
-	buf2 = (unsigned char*)malloc(buffer_size2 * sizeof(unsigned char));
-	buffer_endpos = fread(buf2, 1, buffer_size2, infil);
+
+	buffer_endpos = fread(buffer, 1, buffer_size, infil);
 
 	unsigned int seq_len = 1;
 
 	while (buffer_startpos < buffer_endpos) {
 
-		unsigned char ch1 = buf2[buffer_startpos];
-		unsigned char ch2 = buf2[buffer_startpos + 1];
+		unsigned char ch1 = buffer[buffer_startpos];
+		unsigned char ch2 = buffer[buffer_startpos + 1];
 
 		if (pass == 2) {
 			unsigned int code = find_code_for_pair(ch1, ch2, pair_table_pos);
@@ -253,25 +253,20 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 		}
 	}//end while
 
-
-
-
-
 	if (pass == 2) {
 		fclose(utfil);
 
 	}
 	fclose(infil);
-	free(buf2);
 }
 
 
 void two_byte_pack(const char* src, const char* dest)
 {
-	
+	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	two_byte_pack_internal(src, dest, 1); //analyse and build meta-data
 	two_byte_pack_internal(src, dest, 2); //pack
-
+	free(buffer);
 }
 
 

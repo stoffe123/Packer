@@ -2,16 +2,40 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 
+
+const char** get_test_filenames() {
+
+	//really strange that you have to duplicate this here but can't find a way to receive it
+	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
+			 "amb.dll",
+			 "rel.pdf",
+			 "nex.doc",
+			"did.csh",
+			 "aft.htm",
+			 "tob.pdf",
+		 "pazera.exe",
+		"voc.wav",
+		 "bad.mp3"
+
+
+
+	};
+	printf("test_filenames 0: %s", test_filenames[0]);
+	return test_filenames;
+}
+
 void CanonicalDecodeAndReplace(const char* src) {
 	printf("\n Canonical unpacking (in place) %s", src);
-	const char* tmp = get_temp_file2("multi_canonicaldec");
+	const char tmp[100] = { 0 };
+	get_temp_file2(tmp, "multi_canonicaldec");
 	CanonicalDecode(src, tmp);
 	remove(src);
 	rename(tmp, src);
 }
 
 bool CanonicalEncodeAndTest(const char* src) {
-	char* tmp = get_temp_file2("multi_canonicaled");
+	const char tmp[100] = { 0 };
+	get_temp_file2(tmp, "multi_canonicaled");
 	CanonicalEncode(src, tmp);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -28,8 +52,9 @@ bool CanonicalEncodeAndTest(const char* src) {
 }
 
 
-bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit) {	
-	char* tmp = get_temp_file2("multi_seqpacked");
+bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit) {
+	const char tmp[100] = { 0 };
+	get_temp_file2(tmp, "multi_seqpacked");
 	seq_pack(src, tmp, seqlen_pages, offset_pages);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -47,7 +72,8 @@ bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int rat
 }
 
 bool MultiPackAndTest(const char* src, packProfile_t profile) {
-	char* tmp = get_temp_file2("multi_seqpacked");
+	const char tmp[100] = { 0 };
+	get_temp_file2(tmp, "multi_seqpacked");
 	multi_pack(src, tmp, profile);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
@@ -66,7 +92,7 @@ bool MultiPackAndTest(const char* src, packProfile_t profile) {
 
 void printProfile(packProfile_t* profile) {
 	printf("\n");
-	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);	
+	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);
 	printf("\nRLE ratio:      %d", profile->rle_ratio);
 	printf("\nTwo byte ratio: %d", profile->twobyte_ratio);
 	printf("\nSeq ratio:      %d\n", profile->seq_ratio);

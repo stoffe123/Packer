@@ -12,7 +12,7 @@
 //Global for all threads
 uint64_t filename_count = 1000000;
 
-long long get_file_size(const FILE* f) {	
+long long get_file_size(const FILE* f) {
 	fseek(f, 0, SEEK_END);
 	long long res = ftell(f);
 	fseek(f, 0, SEEK_SET);
@@ -52,7 +52,7 @@ void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_c
 	FILE* out = fopen(dest_filename, "wb");
 
 	uint8_t ch;
-	for (int i=0; i < size_to_copy; i++) {
+	for (int i = 0; i < size_to_copy; i++) {
 		size_t bytes_got = fread(&ch, 1, 1, source_file);
 		if (bytes_got == 0) {
 			break;
@@ -67,7 +67,7 @@ void copy_the_rest(FILE* in, const char* dest_filename) {
 	uint8_t ch;
 	while (fread(&ch, 1, 1, in) == 1) {
 		fwrite(&ch, 1, 1, out);
-	} 
+	}
 	fclose(out);
 	fclose(in);
 }
@@ -85,13 +85,13 @@ void append_to_file(FILE* main_file, const char* append_filename) {
 	int ch;
 	while ((ch = fgetc(append_file)) != EOF) {
 		fputc(ch, main_file);
-	}	
+	}
 	fclose(append_file);
 }
 
 void assert(uint64_t x, const char* msg) {
 	if (!x) {
-		printf("\n\n\a ASSERTION FAILURE: %s", msg);		
+		printf("\n\n\a ASSERTION FAILURE: %s", msg);
 		exit(0);
 	}
 }
@@ -105,7 +105,7 @@ void assertEqual(uint64_t x, uint64_t y, const char* msg) {
 
 void assertSmallerOrEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x > y) {
-		printf("\n\n\a ASSERTION FAILURE: %d <= %d \n %s", x,y, msg);
+		printf("\n\n\a ASSERTION FAILURE: %d <= %d \n %s", x, y, msg);
 		exit(0);
 	}
 }
@@ -115,55 +115,42 @@ void WRITE(FILE* ut, uint64_t c)
 	fwrite(&c, 1, 1, ut);
 }
 
-const char* get_rand() {
-	return int_to_string(filename_count++);
+void get_rand(const char* s) {
+	int_to_string(s, filename_count++);
 }
 
-const char* get_temp_file() {
-	return concat(TEMP_DIR, concat("tmp", get_rand()));
+void get_temp_file2(const char* dst, const char* s) {
+	char number[40] = { 0 };
+	get_rand(number);
+	concat3(dst, TEMP_DIR, s, number);
 }
 
-const char* get_temp_file2(const char* s) {
-	return concat(TEMP_DIR, concat(s, get_rand()));
+void get_clock_dir(const char* dst) {
+	const char number[30] = { 0 };
+	get_rand(number);
+	concat(dst, TEMP_DIR, number);
 }
 
-const char* get_clock_dir() {
-	const char* dir = concat(TEMP_DIR, get_rand());
-	dir = concat(dir, "_");
-	return dir;
-}
-
-const char* concat(const char* s1, const char* s2) {
-
+void concat(const char* dst, const char* s1, const char* s2) {
 	const size_t s1_length = strlen(s1);
-	const size_t totalLength = s1_length + strlen(s2);
-
-	//careful this method leaks memory!
-	char* const strBuf = malloc(totalLength + 1);
-	if (strBuf == NULL) {
-		fprintf(stderr, "malloc failed\n");
-		exit(EXIT_FAILURE);
-	}
-	strcpy(strBuf, s1);
-	strcpy(strBuf + s1_length, s2);
-	return strBuf;
+	strcpy(dst, s1);
+	strcpy(dst + s1_length, s2);
 }
 
-const char* concat_int(const char* s1, int i) {
-	return concat(s1, int_to_string(i));
+void concat3(const char* dst, const char* s1, const char* s2, const char* s3) {
+	const size_t s1_length = strlen(s1);
+	const size_t s2_length = strlen(s2);
+	strcpy(dst, s1);
+	strcpy(dst + s1_length, s2);
+	strcpy(dst + s1_length + s2_length, s3);
 }
 
-const char* int_to_string(int64_t i) {
-	//careful this method leaks memory!
-	const char* ra = malloc(20);
-	_itoa(i, ra, 10);
-	return ra;
+void concat_int(const char* dst, const char* s1, int i) {
+	const char number[30] = { 0 };
+	get_rand(number);
+	concat(dst, s1, number);
 }
 
-void make_dir(const char* path) {
-	
-	struct stat st = { 0 };
-	if (stat(path, &st) == -1) {
-		mkdir(path, 0777);
-	}
+void int_to_string(const char* s, int64_t i) {
+	_itoa(i, s, 10);
 }

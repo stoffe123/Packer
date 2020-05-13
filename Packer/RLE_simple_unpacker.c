@@ -36,7 +36,9 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 	bool code_occurred = 1;
 
 	if (separate) {
-		runlengths_file = fopen(concat(base_dir, "runlengths"), "rb");	
+		const char name[100] = { 0 };
+		concat(name, base_dir, "runlengths");
+		runlengths_file = fopen(name, "rb");	
 	}
 
 	//printf("\n\n Unpacking %s", source_filename);
