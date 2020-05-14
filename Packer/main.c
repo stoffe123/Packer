@@ -178,11 +178,11 @@ void testmeta() {
 
 	packProfile_t profile, bestProfile;
 
-	profile.offset_pages = 247;
-	profile.seqlen_pages = 107;
-	profile.rle_ratio = 90;
-	profile.twobyte_ratio = 80;
-	profile.seq_ratio = 72;
+	profile.offset_pages = 76;
+	profile.seqlen_pages = 2;
+	profile.rle_ratio = 65;
+	profile.twobyte_ratio = 75;
+	profile.seq_ratio = 34;
 	profile.recursive_limit = 200;
 	profile.twobyte_threshold = 1400;
 
@@ -198,14 +198,14 @@ void testmeta() {
 		int before_suite = clock();
 		int kk = 1;
 		bool earlyBreak = true;
-		for (; kk < 12; kk++)
+		for (; kk < 34; kk++)
 		{
 			//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
 			//const char* src = "C:/test/book_seqlens";
 
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/txt/", kk);
+			concat_int(src, "C:/test/meta/seqlens", kk + 1000);
 
 			const char* dst = "C:/test/unp";
 
@@ -223,8 +223,27 @@ void testmeta() {
 				bool seq = SeqPackAndTest(packed_name, offset_pages, seqlen_pages, ratio_limit);
 				bool huffman = CanonicalEncodeAndTest(packed_name);
 				*/
+			/*
+			packProfile_t seqlenProfile;
+			seqlenProfile.offset_pages = 227;
+			seqlenProfile.seqlen_pages = 1;
+			seqlenProfile.rle_ratio = 82;
+			seqlenProfile.twobyte_ratio = 88;
+			seqlenProfile.seq_ratio = 67;
+			seqlenProfile.recursive_limit = 86;
+			seqlenProfile.twobyte_threshold = 1328;
+			*/
 
-			multi_pack(src, packed_name, profile);
+			packProfile_t offsetProfile;
+			offsetProfile.offset_pages = 105;
+			offsetProfile.seqlen_pages = 57;
+			offsetProfile.rle_ratio = 80;
+			offsetProfile.twobyte_ratio = 79;
+			offsetProfile.seq_ratio = 94;
+			offsetProfile.recursive_limit = 100;
+			offsetProfile.twobyte_threshold = 1328;
+
+			multi_pack(src, packed_name, profile, profile, offsetProfile);
 
 			//seq_pack_separate(src, "c:/test/", offset_pages, seqlen_pages);
 
@@ -277,40 +296,35 @@ void testmeta() {
 }//end test_meta
 
 void test16() {
-	/*
+	
 	char test_filenames[16][100] = { "book.txt",
 		"empty.txt",
 		"onechar.txt",
-			"oneseq.txt",
+	    "oneseq.txt",
 		"repeatchar.txt",
 		 "book_med.txt",
 		"bad.cdg",
 		"aft.htm",
 		"did.csh",
 		"rel.pdf",
-
-			"tob.pdf",
-
-
-			 "nex.doc",
+		"tob.pdf",
+		"nex.doc",
 		"amb.dll",
 		"pazera.exe",
 		"voc.wav",
-
-		"bad.mp3",
-
+		"bad.mp3"
 	};
-	*/
-	char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
+	
+	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
 		
 
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 212;
-	profile.seqlen_pages = 29;
-	profile.rle_ratio = 76;
-	profile.twobyte_ratio = 93;
+	profile.offset_pages = 230;
+	profile.seqlen_pages = 31;
+	profile.rle_ratio = 96;
+	profile.twobyte_ratio = 97;
 	profile.seq_ratio = 100;
 	profile.recursive_limit = 200;
 	profile.twobyte_threshold = 1400;
@@ -328,10 +342,10 @@ void test16() {
 		int before_suite = clock();
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 2; kk++)
+		for (; kk < 16; kk++)
 		{
 			const char src[100] = { 0 };
-			concat(src, "C:/test/wav/", test_filenames[kk]);
+			concat(src, "C:/test/test16/", test_filenames[kk]);
 
 
 			const char* dst = "C:/test/unp";
@@ -394,8 +408,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	//test16();
-	testmeta();
+	test16();
+	//testmeta();
 
 }
 

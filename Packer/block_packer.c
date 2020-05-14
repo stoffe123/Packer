@@ -45,7 +45,26 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 
 		const char tmp2[100] = { 0 };
 		get_temp_file2(tmp2, "block_multipacked");
-		multi_pack(tmp, tmp2, profile);
+
+		packProfile_t seqlenProfile;
+		seqlenProfile.offset_pages = 76;
+		seqlenProfile.seqlen_pages = 2;
+		seqlenProfile.rle_ratio = 65;
+		seqlenProfile.twobyte_ratio = 75;
+		seqlenProfile.seq_ratio = 34;
+		seqlenProfile.recursive_limit = 200;
+		seqlenProfile.twobyte_threshold = 1400;
+		
+		packProfile_t offsetProfile;
+		offsetProfile.offset_pages = 105;
+		offsetProfile.seqlen_pages = 57;
+		offsetProfile.rle_ratio = 80;
+		offsetProfile.twobyte_ratio = 79;
+		offsetProfile.seq_ratio = 94;
+		offsetProfile.recursive_limit = 200;
+		offsetProfile.twobyte_threshold = 1400;
+
+		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);
 		remove(tmp);
 
 		append_to_tar(utfil, tmp2);

@@ -71,10 +71,11 @@ bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int rat
 	return compression_success;
 }
 
-bool MultiPackAndTest(const char* src, packProfile_t profile) {
+bool MultiPackAndTest(const char* src, packProfile_t profile, 
+	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_seqpacked");
-	multi_pack(src, tmp, profile);
+	multi_pack(src, tmp, profile, seqlensProfile, offsetsProfile);
 	int size_org = get_file_size_from_name(src);
 	int size_packed = get_file_size_from_name(tmp);
 	double pack_ratio = (double)size_packed / (double)size_org;

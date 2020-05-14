@@ -161,7 +161,8 @@ void TwoByteUnpackAndReplace(const char* src) {
 
 //----------------------------------------------------------------------------------------
 
-void multi_pack(const char* src, const char* dst, packProfile_t profile) {
+void multi_pack(const char* src, const char* dst, packProfile_t profile,
+	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
  
 	printf("\n* Multi pack *");
 	printProfile(&profile);
@@ -198,25 +199,15 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile) {
 
 		// ---------- Pack seqlens -----------
 		if (temp_filename_size > 0 && get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
-			packProfile_t seqlenProfile;
-			seqlenProfile.offset_pages = 76;
-			seqlenProfile.seqlen_pages = 2;
-			seqlenProfile.rle_ratio = 65;
-			seqlenProfile.twobyte_ratio = 75;
-			seqlenProfile.seq_ratio = 34;
-			got_smaller = MultiPackAndTest(seqlens_name, seqlenProfile);
+			
+			got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 1);
 			}
 
 			// ------------- Pack offsets --------------
-			packProfile_t offsetProfile;
-			offsetProfile.offset_pages = 105;
-			offsetProfile.seqlen_pages = 57;
-			offsetProfile.rle_ratio = 80;
-			offsetProfile.twobyte_ratio = 79;
-			offsetProfile.seq_ratio = 94;
-			got_smaller = MultiPackAndTest(offsets_name, offsetProfile);
+			
+			got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 2);
 			}
@@ -249,6 +240,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile) {
 		}
 		else {
 			profile.twobyte_threshold = 0;
+			profile.twobyte_ratio = 100;
 			got_smaller = TwoBytePackAndTest(main_name, profile);
 			//got_smaller = false;
 			if (got_smaller) {
