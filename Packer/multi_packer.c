@@ -101,7 +101,7 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 
 	double packed_ratio = (double)size_packed / (double)size_org;
 	double RLE_limit = (double)ratio / 100.0;
-	printf("\n ratio with RLE  %f (limit %f)", packed_ratio, RLE_limit);
+	printf("\n ratio with RLE simple  %f (limit %f)", packed_ratio, RLE_limit);
 
 	bool compression_success = (packed_ratio < RLE_limit);
 	if (!compression_success) {
@@ -132,6 +132,27 @@ bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 	return compression_success;
 }
 
+bool RLEAdvancedPackAndTest(const char* src, packProfile_t profile) {
+
+	char tmp[100] = { 0 };
+	get_temp_file2(tmp, "multi_rleadv");
+	RLE_advanced_pack(src, tmp, profile);
+	int size_org = get_file_size_from_name(src);
+	int size_packed = get_file_size_from_name(tmp);
+	double packed_ratio = (double)size_packed / (double)size_org;
+	printf("\n RLE advanced packed %s  got ratio %.2f (limit %d)", src, packed_ratio, 100);
+	bool compression_success = size_packed < size_org;
+	if (compression_success) {
+		remove(src);
+		rename(tmp, src);
+	}
+	else {
+		remove(tmp);
+	}
+	return compression_success;
+}
+
+
 void SeqUnpackAndReplace(const char* src) {
 	//printf("\n Seq unpacking (in place) %s", src);
 	const char tmp[100] = { 0 };
@@ -155,6 +176,15 @@ void TwoByteUnpackAndReplace(const char* src) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobytedunp");
 	two_byte_unpack(src, tmp);
+	remove(src);
+	rename(tmp, src);
+}
+
+void RLEAdvancedUnpackAndReplace(const char* src) {
+
+	const char tmp[100] = { 0 };
+	get_temp_file2(tmp, "multi_rleadvunp");
+	RLE_advanced_unpack(src, tmp);
 	remove(src);
 	rename(tmp, src);
 }
@@ -238,16 +268,18 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 0);
 		}
-		else {
+		else { // huffman wasn't possible
 			profile.twobyte_threshold = 0;
 			profile.twobyte_ratio = 100;
 			got_smaller = TwoBytePackAndTest(main_name, profile);
-			//got_smaller = false;
-			if (got_smaller) {
-				//this case will probably never happen
+			if (got_smaller) {				
 				pack_type = setKthBit(pack_type, 3);
 			}
-
+			//long shoot but why not also try RLEAdvancedPack
+			got_smaller = RLEAdvancedPackAndTest(main_name, profile);
+			if (got_smaller) {								
+				pack_type = setKthBit(pack_type, 4);
+			}
 		}
 
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
@@ -303,8 +335,13 @@ void multi_unpack(const char* src, const char* dst) {
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
 		CanonicalDecodeAndReplace(main_name);
 	}
-	else if (isKthBitSet(pack_type, 3)) { 
-		TwoByteUnpackAndReplace(main_name);
+	else {
+		if (isKthBitSet(pack_type, 3)) {
+			TwoByteUnpackAndReplace(main_name);
+		}
+		if (isKthBitSet(pack_type, 4)) {
+			RLEAdvancedUnpackAndReplace(main_name);
+		}
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {

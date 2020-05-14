@@ -152,7 +152,7 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 	if (!earlyBreak) {
 		long total_time = clock() - before_suite;
 		double size_kb = round((double)acc_size / (double)1024);
-		printf("\n\n **** ALL SUCCEEDED **** ");
+		printf("\n\n **** ALL SUCCEEDED **** %.0f kb", size_kb);
 		double time_sec = round((double)total_time / (double)1000);
 		printf("\n\Time %.0fs  (%d)", time_sec, total_time);
 		double pack_ratio = (double)acc_size / (double)acc_size_org;
@@ -165,6 +165,9 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 			copyProfile(&profile, best);
 			best_size = acc_size;
 			printf("\n\n\a ************ BEST FOUND *************");
+		}
+		else {
+			printf("\n Not enough this time...");
 		}
 	}
 	printf("\n  STATUS: %.0f kb   (%llu)", round((double)best_size / 1024.0), best_size);
@@ -297,12 +300,7 @@ void testmeta() {
 
 void test16() {
 	
-	char test_filenames[16][100] = { "book.txt",
-		"empty.txt",
-		"onechar.txt",
-	    "oneseq.txt",
-		"repeatchar.txt",
-		 "book_med.txt",
+	char test_filenames[16][100] = {
 		"bad.cdg",
 		"aft.htm",
 		"did.csh",
@@ -312,7 +310,13 @@ void test16() {
 		"amb.dll",
 		"pazera.exe",
 		"voc.wav",
-		"bad.mp3"
+		"bad.mp3",
+		 "book_med.txt",
+		"book.txt",
+		"onechar.txt",
+		"oneseq.txt",
+		"repeatchar.txt",
+		"empty.txt"
 	};
 	
 	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
@@ -365,9 +369,8 @@ void test16() {
 			//printf("\n Packing finished time it took: %d", pack_time);
 			long long size_packed = get_file_size_from_name(packed_name);
 
-			printf("\nLength of packed: %d", size_packed);
-			printf("  (%f)", (double)size_packed / (double)size_org);
-
+			printf("\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
+			
 			acc_size_packed += size_packed;
 			if (best_size > 0 && acc_size_packed > best_size) {
 				break;

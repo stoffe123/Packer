@@ -52,7 +52,7 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 		seqlenProfile.rle_ratio = 65;
 		seqlenProfile.twobyte_ratio = 75;
 		seqlenProfile.seq_ratio = 34;
-		seqlenProfile.recursive_limit = 200;
+		seqlenProfile.recursive_limit = 100;
 		seqlenProfile.twobyte_threshold = 1400;
 		
 		packProfile_t offsetProfile;
@@ -61,7 +61,7 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 		offsetProfile.rle_ratio = 80;
 		offsetProfile.twobyte_ratio = 79;
 		offsetProfile.seq_ratio = 94;
-		offsetProfile.recursive_limit = 200;
+		offsetProfile.recursive_limit = 100;
 		offsetProfile.twobyte_threshold = 1400;
 
 		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);
