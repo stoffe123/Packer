@@ -321,13 +321,13 @@ void test16() {
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 230;
-	profile.seqlen_pages = 31;
-	profile.rle_ratio = 96;
-	profile.twobyte_ratio = 97;
+	profile.offset_pages = 234;
+	profile.seqlen_pages = 32;
+	profile.rle_ratio = 87;
+	profile.twobyte_ratio = 93;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 200;
-	profile.twobyte_threshold = 1400;
+	profile.recursive_limit = 141;
+	profile.twobyte_threshold = 1344;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
