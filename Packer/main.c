@@ -162,11 +162,11 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 		double pack_ratio = (double)acc_size / (double)acc_size_org;
 		printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
 
-		double eff = (size_kb / 1024.0) / time_sec;
+		double eff = size_kb  / time_sec;
 		printf("\nEfficiency %.2f kb/s\n\n", eff);
 
 		if (best_size == 0 || (acc_size < best_size && acc_size != 0)) {
-			copyProfile(&profile, &best);
+			copyProfile(&profile, best);
 			best_size = acc_size;
 			printf("\n\n\a ************ BEST FOUND *************");
 		}
@@ -175,7 +175,7 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 		}
 	}
 	printf("\n  STATUS: %.0f kb   (%llu)", round((double)best_size / 1024.0), best_size);
-	printProfile(&best);
+	printProfile(best);
 	printf("\n");
 	return best_size;
 }
@@ -328,8 +328,8 @@ void test16() {
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 233;
-	profile.seqlen_pages = 32;
+	profile.offset_pages = 230;
+	profile.seqlen_pages = 29;
 	profile.rle_ratio = 86;
 	profile.twobyte_ratio = 94;
 	profile.seq_ratio = 100;
@@ -339,7 +339,7 @@ void test16() {
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 44222113;
+	unsigned long long best_size = 44219553;
 	while (true) {
 		fuzzProfile(&profile, bestProfile);
 		//const char** test_filenames = get_test_filenames();
