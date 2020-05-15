@@ -24,7 +24,8 @@ bool CanonicalEncodeAndTest(const char*);
 
 bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit);
 
-bool MultiPackAndTest(const char* src, packProfile_t profile);
+bool MultiPackAndTest(const char* src, packProfile_t profile,
+	packProfile_t seqlensProfile, packProfile_t offsetsProfile);
 
 
 #endif

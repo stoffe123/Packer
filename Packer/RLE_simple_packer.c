@@ -37,7 +37,7 @@ static value_freq_t find_best_code2(unsigned long* char_freq) {
 
 	printf("\n Found code: %d that occured: %d times.", best_code, freq);
 
-	// char_freq[best] = ULONG_MAX; // mark it as used!
+	char_freq[best_code] = ULONG_MAX; // mark it as used!
 	value_freq_t res;
 	res.value = best_code;
 	res.freq = freq;
@@ -155,6 +155,9 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 	fclose(infil);
 
 	if (pass == 1) {
+		//skip best code, save that for seqlen packer
+		find_best_code2(char_freq);
+		
 		return find_best_code2(char_freq);
 	}
 	else {

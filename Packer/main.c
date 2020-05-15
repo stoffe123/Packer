@@ -75,10 +75,10 @@ int files_equal(const char* source_filename, const char* dest_filename) {
 int fuzz(int i) {
 	do {
 		if (rand() % 2 == 0) {
-			i += (rand() % 10);
+			i += (rand() % 4);
 		}
 		else {
-			i -= (rand() % 10);
+			i -= (rand() % 4);
 		}
 	} while (!(i >= 0 && i <= 246));
 	return i;
@@ -130,7 +130,7 @@ int fuzzRatio(int r, int best, int min, int max) {
 }
 
 void fuzzProfile(packProfile_t* profile, packProfile_t best) {
-	if (rand() % 4 == 0) {
+	if (rand() % 7 == 0) {
 		profile->offset_pages = rand() % 252;
 		profile->seqlen_pages = rand() % 252;
 	}
@@ -147,31 +147,35 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	profile->twobyte_threshold = fuzzRatio(profile->twobyte_threshold, best.twobyte_threshold, 30, 2000);
 }
 
+
+	
+
+
 unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned long long acc_size, unsigned long long acc_size_org,
 	unsigned long long best_size, packProfile_t profile, packProfile_t* best) {
 	if (!earlyBreak) {
 		long total_time = clock() - before_suite;
-		double size_kb = round((double)acc_size / (double)1024);
-		printf("\n\n **** ALL SUCCEEDED **** %.0f kb", size_kb);
-		double time_sec = round((double)total_time / (double)1000);
+		double size_kb = (double)acc_size / (double)1024;
+		printf("\n\n **** ALL SUCCEEDED ****\n %.0f kb   (%llu)", size_kb, acc_size);
+		double time_sec = (double)total_time / 1000.0;
 		printf("\n\Time %.0fs  (%d)", time_sec, total_time);
 		double pack_ratio = (double)acc_size / (double)acc_size_org;
 		printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
 
-		double eff = ((double)(acc_size_org - acc_size) / (double)1024) / ((double)total_time / 1000.0);
+		double eff = (size_kb / 1024.0) / time_sec;
 		printf("\nEfficiency %.2f kb/s\n\n", eff);
 
 		if (best_size == 0 || (acc_size < best_size && acc_size != 0)) {
-			copyProfile(&profile, best);
+			copyProfile(&profile, &best);
 			best_size = acc_size;
 			printf("\n\n\a ************ BEST FOUND *************");
 		}
 		else {
-			printf("\n Not enough this time...");
+			printf("\n Not enough this time...\n");
 		}
 	}
 	printf("\n  STATUS: %.0f kb   (%llu)", round((double)best_size / 1024.0), best_size);
-	printProfile(best);
+	printProfile(&best);
 	printf("\n");
 	return best_size;
 }
@@ -320,25 +324,24 @@ void test16() {
 	};
 	
 	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
-		
 
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 234;
+	profile.offset_pages = 233;
 	profile.seqlen_pages = 32;
-	profile.rle_ratio = 87;
-	profile.twobyte_ratio = 93;
+	profile.rle_ratio = 86;
+	profile.twobyte_ratio = 94;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 141;
-	profile.twobyte_threshold = 1344;
+	profile.recursive_limit = 94;
+	profile.twobyte_threshold = 1650;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 0;
+	unsigned long long best_size = 44222113;
 	while (true) {
-
+		fuzzProfile(&profile, bestProfile);
 		//const char** test_filenames = get_test_filenames();
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
@@ -399,8 +402,8 @@ void test16() {
 			earlyBreak = false;
 		}//end for
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
-		fuzzProfile(&profile, bestProfile);
-	}
+		
+	}//end while true
 }//end test suit 16
 
 //-------------------------------------------------------------------------------

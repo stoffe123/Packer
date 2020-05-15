@@ -19,9 +19,6 @@ char end_array[CHAR_BIT+1];
 int read_bit(FILE* f);
 
 
-
-
-
 //This function takes in the file* and reads bits
 //It converts the btis into a string and returns the string.
 char* make_string(FILE* f){
@@ -29,9 +26,7 @@ char* make_string(FILE* f){
 	for(int i=0; i<CHAR_BIT; i++){
 		str[i]=read_bit(f)+'0';
 	}
-	return str;	
-	
-	
+	return str;		
 }
 
 //Once we know we have read a leaf during the building of the tree

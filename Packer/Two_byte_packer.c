@@ -114,7 +114,9 @@ int create_two_byte_table() {
 	debug("\n creating two_byte_table \n");
 
 	// extract one code to use with seqpack later
-	find_best_code();
+	if (profile.twobyte_threshold > 0) {
+		find_best_code();
+	}
 
 	value_freq_t master = find_best_code();
 	master_code = master.value;

@@ -3,7 +3,5 @@
 
 #define MIN_RUNLENGTH 3
 
-
-
 #endif
 
