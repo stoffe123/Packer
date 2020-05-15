@@ -3,6 +3,11 @@
 
 const char** get_test_filenames();
 
+typedef struct value_freq_t {
+	uint8_t value;
+	uint64_t freq;
+} value_freq_t;
+
 
 typedef struct packProfile_t {
 	int seqlen_pages;

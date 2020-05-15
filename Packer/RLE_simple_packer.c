@@ -18,13 +18,6 @@
 static const char* base_dir;
 static bool separate;
 
-
-typedef struct value_freq_t {
-	long value;
-	long freq;
-} value_freq_t;
-
-
 static value_freq_t find_best_code2(unsigned long* char_freq) {
 	unsigned char best_code;
 	unsigned long freq = ULONG_MAX;

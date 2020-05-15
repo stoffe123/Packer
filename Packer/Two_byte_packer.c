@@ -25,12 +25,6 @@ static   uint8_t pair_table[2048] = { 0 }, master_code;
 static   uint64_t char_freq[256];
 static packProfile_t profile;
 
-typedef struct value_freq_t {
-	uint8_t value;
-	uint64_t freq;
-} value_freq_t;
-
-
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
 	if (buffer_endpos == buffer_size) {
