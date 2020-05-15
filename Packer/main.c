@@ -339,7 +339,7 @@ void test16() {
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 44219553;
+	unsigned long long best_size = ULONG_MAX; // 44219553;
 	while (true) {
 		
 		//const char** test_filenames = get_test_filenames();

@@ -61,10 +61,7 @@ static value_freq_t find_best_code() {
 			freq = char_freq[i];
 			best_code = i;
 		}
-	}//end for
-
-
-
+	}
 	char_freq[best_code] = ULONG_MAX; // mark it as used!
 	value_freq_t res;
 	res.value = best_code;
@@ -96,7 +93,7 @@ value_freq_t find_best_two_byte() {
 int get_gain_threshhold() {
 
 	if (profile.twobyte_threshold == 0) {
-		return 0;
+		return 3;
 	}
 	uint64_t res = source_size / 1000;
 
