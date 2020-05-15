@@ -341,7 +341,7 @@ void test16() {
 
 	unsigned long long best_size = 44219553;
 	while (true) {
-		fuzzProfile(&profile, bestProfile);
+		
 		//const char** test_filenames = get_test_filenames();
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
@@ -402,7 +402,7 @@ void test16() {
 			earlyBreak = false;
 		}//end for
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
-		
+		fuzzProfile(&profile, bestProfile);
 	}//end while true
 }//end test suit 16
 
