@@ -17,25 +17,6 @@
 static const char* base_dir;
 static bool separate;
 
-static value_freq_t find_best_code2(unsigned long* char_freq) {
-	unsigned char best_code;
-	unsigned long freq = ULONG_MAX;
-	for (unsigned int i = 0; i < 256; i++) {
-		if (char_freq[i] < freq) {
-			freq = char_freq[i];
-			best_code = i;
-		}
-	}//end for
-
-	printf("\n Found code: %d that occured: %d times.", best_code, freq);
-
-	char_freq[best_code] = ULONG_MAX; // mark it as used!
-	value_freq_t res;
-	res.value = best_code;
-	res.freq = freq;
-	return res;
-}
-
 
 
 void write_runlength(unsigned char c, FILE* utfil, FILE* runlengths_file) {
@@ -46,7 +27,6 @@ void write_runlength(unsigned char c, FILE* utfil, FILE* runlengths_file) {
 		WRITE(utfil, c);
 	}
 }
-
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -148,9 +128,9 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 
 	if (pass == 1) {
 		//skip best code, save that for seqlen packer
-		find_best_code2(char_freq);
+		find_best_code(char_freq);
 		
-		return find_best_code2(char_freq);
+		return find_best_code(char_freq);
 	}
 	else {
 		fclose(utfil);
@@ -160,7 +140,6 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 	}
 
 }
-
 
 void RLE_simple_pack_internal(const char* src, const char* dest, const char* base_dir)
 {

@@ -315,7 +315,7 @@ void test16() {
 		"pazera.exe",
 		"voc.wav",
 		"bad.mp3",
-		 "book_med.txt",
+		"book_med.txt",
 		"book.txt",
 		"onechar.txt",
 		"oneseq.txt",

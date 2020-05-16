@@ -62,9 +62,6 @@ static value_freq_t find_best_code() {
 	return res;
 }
 
-
-
-
 value_freq_t find_best_two_byte() {
 	long best = 0;
 	int two_byte = -1;

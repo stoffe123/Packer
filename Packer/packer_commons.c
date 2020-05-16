@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <limits.h>
 #include "common_tools.h"
 #include "packer_commons.h"
 
@@ -71,7 +72,7 @@ bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int rat
 	return compression_success;
 }
 
-bool MultiPackAndTest(const char* src, packProfile_t profile, 
+bool MultiPackAndTest(const char* src, packProfile_t profile,
 	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_seqpacked");
@@ -101,7 +102,7 @@ void printProfile(packProfile_t* profile) {
 	printf("\nTwobyte threshold: %d\n", profile->twobyte_threshold);
 }
 
-void copyProfile(packProfile_t* src, packProfile_t* dst) {	
+void copyProfile(packProfile_t* src, packProfile_t* dst) {
 	dst->offset_pages = src->offset_pages;
 	dst->seqlen_pages = src->seqlen_pages;
 	dst->rle_ratio = src->rle_ratio;
@@ -110,3 +111,23 @@ void copyProfile(packProfile_t* src, packProfile_t* dst) {
 	dst->recursive_limit = src->recursive_limit;
 	dst->twobyte_threshold = src->twobyte_threshold;
 }
+
+value_freq_t find_best_code(unsigned long* char_freq) {
+	unsigned char best_code;
+	unsigned long freq = ULONG_MAX;
+	for (unsigned int i = 0; i < 256; i++) {
+		if (char_freq[i] < freq) {
+			freq = char_freq[i];
+			best_code = i;
+		}
+	}
+
+	printf("\n Found code: %d that occured: %d times.", best_code, freq);
+
+	char_freq[best_code] = ULONG_MAX; // mark it as used!
+	value_freq_t res;
+	res.value = best_code;
+	res.freq = freq;
+	return res;
+}
+

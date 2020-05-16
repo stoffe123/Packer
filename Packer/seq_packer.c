@@ -5,15 +5,17 @@
 #include <stdint.h>
 #include "seq_packer.h"
 #include <inttypes.h>
+
 #include "seq_packer_commons.h"
-#define VERBOSE false
+#include "packer_commons.h"
 #include "common_tools.h"
 
-/* sequence packer */
+#define VERBOSE false
 
-//global variables used in compressor
+/* Sequence packer */
+
+/* Global variables used in compressor */
 static  FILE* infil, * utfil, * seq_lens_file, * offsets_file;
-static unsigned char code;
 
 static buffer_size = BLOCK_SIZE * 3;
 static  unsigned char buffer[BLOCK_SIZE * 3];
@@ -45,22 +47,6 @@ static void display_progress(uint32_t buffer_pos, uint8_t pass) {
 	}
 }
 
-static unsigned char find_best_code(long* char_freq) {
-	unsigned char best;
-	unsigned long value = LONG_MAX;
-	for (unsigned int i = 0; i < 256; i++) {
-		if (char_freq[i] < value) {
-			value = char_freq[i];
-			best = i;
-		}
-	}//end for
-
-	debug("\n Found code %d with freq %d", best, value);
-
-	char_freq[best] = ULONG_MAX; // mark it as used!
-	code_occurred = (value > 0);
-	return best;
-}
 
 
 void write_seqlen(uint64_t c) {
@@ -125,7 +111,7 @@ void out_offset(unsigned long offset, unsigned char pages) {
 void pack_internal(const char* src, const char* dest_filename, unsigned char pass,
 	unsigned char offset_pages, unsigned char seqlen_pages)
 {
-
+	static unsigned char code;
 	unsigned int max_seqlen = (code_occurred ? 257 : 258) - seqlen_pages + seqlen_pages * 256;
 	uint64_t offset,
 		winsize = (offset_pages + (uint64_t)1) * (uint64_t)256 + max_seqlen + max_seqlen,
@@ -296,7 +282,6 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				}
 				else
 				{
-
 					WRITE(utfil, ch);
 					assert(absolute_end < buffer_size, "absolute_end < buffer_size in seqpacker");
 					updateNextCharTable(ch, absolute_end);
@@ -350,7 +335,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	if (pass == 1) {
 
-		code = find_best_code(char_freq);
+		value_freq_t res = find_best_code(char_freq);
+		code = res.value;
+		code_occurred = (res.freq > 0);
 #if false
 		printf("\n\n SEQ_LEN frequency:\n");
 		for (int i = 0; i < 257; i++) {
