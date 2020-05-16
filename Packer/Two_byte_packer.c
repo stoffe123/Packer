@@ -3,11 +3,10 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "seq_packer.h"
-#include "seq_packer_commons.h"
-#define VERBOSE false
 #include "common_tools.h"
 #include "packer_commons.h"
+
+#define VERBOSE false
 #define START_CODES_SIZE 2
 
 /* Two-byte packer */

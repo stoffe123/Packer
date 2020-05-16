@@ -2,19 +2,18 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
-#include "seq_packer.h"
-#include "seq_packer_commons.h"
-#include "common_tools.h"
 #include <stdint.h>
-#include "RLE_simple_packer_commons.h"
 #include <windows.h>
+
+#include "common_tools.h"
+#include "packer_commons.h"
+#include "RLE_simple_packer_commons.h"
 
 #define VERBOSE false
 
 /* RLE simple packer */
 
-//Global variables used in compressor
-
+/* Global variables used in compressor */
 static const char* base_dir;
 static bool separate;
 
