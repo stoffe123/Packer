@@ -35,7 +35,7 @@ int fuzz(int i) {
 		else {
 			i -= (rand() % 4);
 		}
-	} while (!(i >= 0 && i <= 246));
+	} while (!(i >= 0 && i <= 248));
 	return i;
 }
 
@@ -76,7 +76,7 @@ int fuzzVal(int r, int v) {
 	return r;
 }
 
-int fuzzRatio(int r, int best, int min, int max) {
+int doFuzz(int r, int best, int min, int max) {
 	r = fuzzVal(r, max / 10);
 	if (r < 0 || r > max || r < min || rand() % 6 == 0) {
 		r = best;
@@ -95,11 +95,12 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 		profile->seqlen_pages = fuzz(best.seqlen_pages);
 
 	}
-	profile->rle_ratio = fuzzRatio(profile->rle_ratio, best.rle_ratio, 10, 100);
-	profile->twobyte_ratio = fuzzRatio(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
-	profile->seq_ratio = fuzzRatio(profile->seq_ratio, best.seq_ratio, 10, 100);
-	profile->recursive_limit = fuzzRatio(profile->recursive_limit, best.recursive_limit, 10, 800);
-	profile->twobyte_threshold = fuzzRatio(profile->twobyte_threshold, best.twobyte_threshold, 30, 2000);
+	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
+	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
+	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 10, 100);
+	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 800);
+	profile->twobyte_threshold = doFuzz(profile->twobyte_threshold, best.twobyte_threshold, 30, 2000);
+	profile->twobyte_divide = doFuzz(profile->twobyte_divide, best.twobyte_divide, 30, 2000);
 }
 
 
@@ -140,13 +141,15 @@ void testmeta() {
 
 	packProfile_t profile, bestProfile, offsetProfile;
 
-	profile.offset_pages = 216;
+	profile.offset_pages = 220;
 	profile.seqlen_pages = 2;
 	profile.rle_ratio = 82;
-	profile.twobyte_ratio = 88;
-	profile.seq_ratio = 73;
-	profile.recursive_limit = 64;
-	profile.twobyte_threshold = 1415;
+	profile.twobyte_ratio = 85;
+	profile.seq_ratio = 68;
+	profile.recursive_limit = 161;
+	profile.twobyte_threshold = 596;
+	profile.twobyte_divide = 1000;
+
 
 	offsetProfile.offset_pages = 105;
 	offsetProfile.seqlen_pages = 57;
@@ -155,10 +158,11 @@ void testmeta() {
 	offsetProfile.seq_ratio = 94;
 	offsetProfile.recursive_limit = 100;
 	offsetProfile.twobyte_threshold = 1328;
+	offsetProfile.twobyte_divide = 1000;
 
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 0;
+	unsigned long long best_size = 234981;
 	while (true) {
 
 		//const char** test_filenames = get_test_filenames();
@@ -202,6 +206,7 @@ void testmeta() {
 			seqlenProfile.seq_ratio = 67;
 			seqlenProfile.recursive_limit = 86;
 			seqlenProfile.twobyte_threshold = 1328;
+			seqlenProfile.twobyte_divide = 1000;
 
 
 
@@ -287,6 +292,7 @@ void onefile() {
 	profile.seq_ratio = 82;
 	profile.recursive_limit = 230;
 	profile.twobyte_threshold = 1363;
+	profile.twobyte_divide = 1000;
 
 	offsetProfile.offset_pages = 105;
 	offsetProfile.seqlen_pages = 57;
@@ -295,6 +301,7 @@ void onefile() {
 	offsetProfile.seq_ratio = 94;
 	offsetProfile.recursive_limit = 100;
 	offsetProfile.twobyte_threshold = 1328;
+	offsetProfile.twobyte_divide = 1000;
 
 	//seq_pack_separate(src, "c:/test/", 219, 2);
 	//seq_pack(src, packed_name, 219, 2);
@@ -368,6 +375,7 @@ void test16() {
 	profile.seq_ratio = 100;
 	profile.recursive_limit = 94;
 	profile.twobyte_threshold = 1650;
+	profile.twobyte_divide = 1000;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
@@ -447,8 +455,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	//test16();
-	testmeta();
+	test16();
+	//testmeta();
 	//onefile();
 }
 

@@ -47,13 +47,14 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 		get_temp_file2(tmp2, "block_multipacked");
 
 		packProfile_t seqlenProfile;
-		seqlenProfile.offset_pages = 76;
+		seqlenProfile.offset_pages = 220;
 		seqlenProfile.seqlen_pages = 2;
-		seqlenProfile.rle_ratio = 65;
-		seqlenProfile.twobyte_ratio = 75;
-		seqlenProfile.seq_ratio = 34;
-		seqlenProfile.recursive_limit = 100;
-		seqlenProfile.twobyte_threshold = 1400;
+		seqlenProfile.rle_ratio = 82;
+		seqlenProfile.twobyte_ratio = 85;
+		seqlenProfile.seq_ratio = 68;
+		seqlenProfile.recursive_limit = 161;
+		seqlenProfile.twobyte_threshold = 596;
+		seqlenProfile.twobyte_divide = 1000;
 		
 		packProfile_t offsetProfile;
 		offsetProfile.offset_pages = 105;
@@ -63,6 +64,8 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 		offsetProfile.seq_ratio = 94;
 		offsetProfile.recursive_limit = 100;
 		offsetProfile.twobyte_threshold = 1400;
+		offsetProfile.twobyte_divide = 1000;
+
 
 		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);
 		remove(tmp);

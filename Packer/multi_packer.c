@@ -291,11 +291,14 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		}
 		*/
 		printf("\n Seqpacked %s and got ratio %.2f (limit %d)", temp_filename, seqPackRatio, profile.seq_ratio);
+		char tmp3[100] = { 0 };
 		if (seqPacked) {
 			pack_type = setKthBit(pack_type, 7);
 		    remove(temp_filename);
 		}
-		else {
+		else {		
+			get_temp_file2(tmp3, "multi_seqpackedfallback");
+			copy_file(main_name, tmp3);
 			my_rename(temp_filename, main_name);
 		}
 		got_smaller = CanonicalEncodeAndTest(main_name);
@@ -303,6 +306,16 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 			pack_type = setKthBit(pack_type, 0);
 		}
 		else { // huffman wasn't possible
+
+			if (!seqPacked) {
+				if (seqPackRatio < 1) {
+					printf("\n ** regret myself since huffman failed, take back seqpack w ratio %f", seqPackRatio);
+					pack_type = setKthBit(pack_type, 7);
+					my_rename(tmp3, main_name);
+					seqPacked = true;
+				}
+			}
+
 			profile.twobyte_threshold = 0;
 			profile.twobyte_ratio = 100;
 						

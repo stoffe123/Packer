@@ -85,10 +85,10 @@ int get_gain_threshhold() {
 	if (profile.twobyte_threshold == 0) {
 		return 3;
 	}
-	uint64_t res = source_size / 1000;
+	uint64_t res = source_size / profile.twobyte_divide;
 
-	if (res < 20) {
-		res = 20;
+	if (res < 50) {
+		res = 50;
 	}
 	if (res > profile.twobyte_threshold) {
 		res = profile.twobyte_threshold;
