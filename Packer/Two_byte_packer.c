@@ -82,16 +82,16 @@ value_freq_t find_best_two_byte() {
 
 int get_gain_threshhold() {
 
-	if (profile.twobyte_threshold == 0) {
+	if (profile.twobyte_threshold_max == 0) {
 		return 3;
 	}
-	uint64_t res = source_size / profile.twobyte_divide;
+	uint64_t res = source_size / profile.twobyte_threshold_divide;
 
-	if (res < 50) {
-		res = 50;
+	if (res < profile.twobyte_threshold_min) {
+		res = profile.twobyte_threshold_min;
 	}
-	if (res > profile.twobyte_threshold) {
-		res = profile.twobyte_threshold;
+	if (res > profile.twobyte_threshold_max) {
+		res = profile.twobyte_threshold_max;
 	}
 
 	return res;
@@ -101,7 +101,7 @@ int create_two_byte_table() {
 	debug("\n creating two_byte_table \n");
 
 	// extract one code to use with seqpack later
-	if (profile.twobyte_threshold > 0) {
+	if (profile.twobyte_threshold_max > 0) {
 		find_best_code();
 	}
 

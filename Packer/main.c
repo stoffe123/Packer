@@ -99,8 +99,9 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
 	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 10, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 800);
-	profile->twobyte_threshold = doFuzz(profile->twobyte_threshold, best.twobyte_threshold, 30, 2000);
-	profile->twobyte_divide = doFuzz(profile->twobyte_divide, best.twobyte_divide, 30, 2000);
+	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 30, 2000);
+	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 30, 2000);
+	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 250);
 }
 
 
@@ -139,30 +140,33 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 void testmeta() {
 	init_taken();
 
-	packProfile_t profile, bestProfile, offsetProfile;
+	packProfile_t profile, bestProfile, seqlenProfile;
 
-	profile.offset_pages = 220;
-	profile.seqlen_pages = 2;
-	profile.rle_ratio = 82;
-	profile.twobyte_ratio = 85;
-	profile.seq_ratio = 68;
-	profile.recursive_limit = 161;
-	profile.twobyte_threshold = 596;
-	profile.twobyte_divide = 1000;
+	seqlenProfile.offset_pages = 220;
+	seqlenProfile.seqlen_pages = 2;
+	seqlenProfile.rle_ratio = 82;
+	seqlenProfile.twobyte_ratio = 85;
+	seqlenProfile.seq_ratio = 68;
+	seqlenProfile.recursive_limit = 161;
+	seqlenProfile.twobyte_threshold_max = 596;
+	seqlenProfile.twobyte_threshold_divide = 1000;
+	seqlenProfile.twobyte_threshold_min = 50;
 
 
-	offsetProfile.offset_pages = 105;
-	offsetProfile.seqlen_pages = 57;
-	offsetProfile.rle_ratio = 80;
-	offsetProfile.twobyte_ratio = 79;
-	offsetProfile.seq_ratio = 94;
-	offsetProfile.recursive_limit = 100;
-	offsetProfile.twobyte_threshold = 1328;
-	offsetProfile.twobyte_divide = 1000;
+	//offsets
+	profile.offset_pages = 105;
+	profile.seqlen_pages = 57;
+	profile.rle_ratio = 80;
+	profile.twobyte_ratio = 79;
+	profile.seq_ratio = 94;
+	profile.recursive_limit = 100;
+	profile.twobyte_threshold_max = 1328;
+	profile.twobyte_threshold_divide = 1000;
+	profile.twobyte_threshold_min = 50;
 
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 234981;
+	unsigned long long best_size = 0;
 	while (true) {
 
 		//const char** test_filenames = get_test_filenames();
@@ -179,7 +183,7 @@ void testmeta() {
 
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/meta/seqlens", kk + 1000);
+			concat_int(src, "C:/test/meta/offsets", kk + 1000);
 
 			const char* dst = "C:/test/unp";
 
@@ -198,20 +202,9 @@ void testmeta() {
 				bool huffman = CanonicalEncodeAndTest(packed_name);
 				*/
 
-			packProfile_t seqlenProfile;
-			seqlenProfile.offset_pages = 227;
-			seqlenProfile.seqlen_pages = 1;
-			seqlenProfile.rle_ratio = 82;
-			seqlenProfile.twobyte_ratio = 88;
-			seqlenProfile.seq_ratio = 67;
-			seqlenProfile.recursive_limit = 86;
-			seqlenProfile.twobyte_threshold = 1328;
-			seqlenProfile.twobyte_divide = 1000;
+			
 
-
-
-
-			multi_pack(src, packed_name, profile, profile, offsetProfile);
+			multi_pack(src, packed_name, profile, seqlenProfile, profile);
 
 			//seq_pack_separate(src, "c:/test/", 219, 2);
 			//seq_pack(src, packed_name, 219, 2);
@@ -224,7 +217,8 @@ void testmeta() {
 			printf("  (%f)", (double)size_packed / (double)size_org);
 
 			acc_size_packed += size_packed;
-			if (best_size > 0 && acc_size_packed > best_size) {
+			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
+			if (earlyBreak) {
 				break;
 			}
 			acc_size_org += size_org;
@@ -291,8 +285,9 @@ void onefile() {
 	profile.twobyte_ratio = 83;
 	profile.seq_ratio = 82;
 	profile.recursive_limit = 230;
-	profile.twobyte_threshold = 1363;
-	profile.twobyte_divide = 1000;
+	profile.twobyte_threshold_max = 1363;
+	profile.twobyte_threshold_divide = 1000;
+	profile.twobyte_threshold_min = 50;
 
 	offsetProfile.offset_pages = 105;
 	offsetProfile.seqlen_pages = 57;
@@ -300,8 +295,9 @@ void onefile() {
 	offsetProfile.twobyte_ratio = 79;
 	offsetProfile.seq_ratio = 94;
 	offsetProfile.recursive_limit = 100;
-	offsetProfile.twobyte_threshold = 1328;
-	offsetProfile.twobyte_divide = 1000;
+	offsetProfile.twobyte_threshold_max = 1328;
+	offsetProfile.twobyte_threshold_divide = 1000;
+	offsetProfile.twobyte_threshold_min = 50;
 
 	//seq_pack_separate(src, "c:/test/", 219, 2);
 	//seq_pack(src, packed_name, 219, 2);
@@ -344,23 +340,17 @@ void onefile() {
 
 void test16() {
 
-	char test_filenames[16][100] = { "book.txt","empty.txt","onechar.txt","oneseq.txt","repeatchar.txt",
-
-		"book_med.txt",
-
-
-
-		"bad.cdg",
-		"aft.htm",
+	char test_filenames[16][100] = { 		
+		"bad.cdg",	
 		"did.csh",
 		"rel.pdf",
 		"tob.pdf",
 		"nex.doc",
 		"amb.dll",
 		"pazera.exe",
-		"voc.wav",
-		"bad.mp3"
-
+		"voc.wav", 	"aft.htm",
+		"bad.mp3", "book_med.txt",
+		"book.txt","empty.txt","onechar.txt","oneseq.txt","repeatchar.txt"
 	};
 
 	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
@@ -368,19 +358,20 @@ void test16() {
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 230;
-	profile.seqlen_pages = 29;
+	profile.offset_pages = 218;
+	profile.seqlen_pages = 206;
 	profile.rle_ratio = 86;
-	profile.twobyte_ratio = 94;
+	profile.twobyte_ratio = 85;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 94;
-	profile.twobyte_threshold = 1650;
-	profile.twobyte_divide = 1000;
+	profile.recursive_limit = 62;
+	profile.twobyte_threshold_max = 1499;
+	profile.twobyte_threshold_divide = 805;
+	profile.twobyte_threshold_min = 50;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = ULONG_MAX; // 44219553;
+	unsigned long long best_size = 0; // 44200770;
 	while (true) {
 
 		//const char** test_filenames = get_test_filenames();
@@ -416,7 +407,8 @@ void test16() {
 			printf("\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 			acc_size_packed += size_packed;
-			if (best_size > 0 && acc_size_packed > best_size) {
+			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
+			if (earlyBreak) {
 				break;
 			}
 			acc_size_org += size_org;

@@ -4,27 +4,6 @@
 #include "packer_commons.h"
 
 
-const char** get_test_filenames() {
-
-	//really strange that you have to duplicate this here but can't find a way to receive it
-	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
-			 "amb.dll",
-			 "rel.pdf",
-			 "nex.doc",
-			"did.csh",
-			 "aft.htm",
-			 "tob.pdf",
-		 "pazera.exe",
-		"voc.wav",
-		 "bad.mp3"
-
-
-
-	};
-	printf("test_filenames 0: %s", test_filenames[0]);
-	return test_filenames;
-}
-
 void CanonicalDecodeAndReplace(const char* src) {
 	printf("\n Canonical unpacking (in place) %s", src);
 	const char tmp[100] = { 0 };
@@ -56,8 +35,6 @@ bool CanonicalEncodeAndTest(const char* src) {
 			}
 			remove(tmp2);
 		}
-			
-
 
 		remove(src);
 		rename(tmp, src);
@@ -129,8 +106,9 @@ void printProfile(packProfile_t* profile) {
 	printf("\nTwo byte ratio:    %d", profile->twobyte_ratio);
 	printf("\nSeq ratio:         %d", profile->seq_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
-	printf("\nTwobyte threshold: %d", profile->twobyte_threshold);
-	printf("\nTwobyte divide: %d\n", profile->twobyte_divide);
+	printf("\nTwobyte threshold max:       %d", profile->twobyte_threshold_max);
+	printf("\nTwobyte threshold divide:    %d", profile->twobyte_threshold_divide);
+	printf("\nTwobyte threshold min:       %d", profile->twobyte_threshold_min);
 }
 
 void copyProfile(packProfile_t* src, packProfile_t* dst) {
@@ -140,8 +118,9 @@ void copyProfile(packProfile_t* src, packProfile_t* dst) {
 	dst->twobyte_ratio = src->twobyte_ratio;
 	dst->seq_ratio = src->seq_ratio;
 	dst->recursive_limit = src->recursive_limit;
-	dst->twobyte_threshold = src->twobyte_threshold;
-	dst->twobyte_divide = src->twobyte_divide;
+	dst->twobyte_threshold_max = src->twobyte_threshold_max;
+	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
+	dst->twobyte_threshold_min = src->twobyte_threshold_min;
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {

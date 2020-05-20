@@ -316,7 +316,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 				}
 			}
 
-			profile.twobyte_threshold = 0;
+			profile.twobyte_threshold_max = 0;
 			profile.twobyte_ratio = 100;
 						
 			got_smaller = TwoBytePackAndTest(main_name, profile);
@@ -327,7 +327,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 			//long shoot but why not also try RLEAdvancedPack
 			got_smaller = RLEAdvancedPackAndTest(main_name, profile);
 			if (got_smaller) {	
-				printf("\n\n======> %s   %d", main_name, profile.twobyte_threshold);
+				printf("\n\n======> %s   %d", main_name, profile.twobyte_threshold_max);
 				//exit(1);
 				pack_type = setKthBit(pack_type, 4);
 			}
