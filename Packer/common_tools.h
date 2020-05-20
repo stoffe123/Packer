@@ -51,4 +51,6 @@ void get_temp_file2(const char* dst, const char* s);
 
 void get_clock_dir(const char* dst);
 
+bool files_equal(const char* source_filename, const char* dest_filename);
+
 #endif

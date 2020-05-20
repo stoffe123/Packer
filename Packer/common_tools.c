@@ -125,10 +125,10 @@ void get_temp_file2(const char* dst, const char* s) {
 	concat3(dst, TEMP_DIR, s, number);
 }
 
-void get_clock_dir(const char* dst) {
+void get_clock_dir(const char* dir) {
 	const char number[30] = { 0 };
 	get_rand(number);
-	concat(dst, TEMP_DIR, number);
+	concat(dir, TEMP_DIR, number);
 }
 
 void concat(const char* dst, const char* s1, const char* s2) {
@@ -153,4 +153,54 @@ void concat_int(const char* dst, const char* s1, int i) {
 
 void int_to_string(const char* s, int64_t i) {
 	_itoa(i, s, 10);
+}
+
+bool files_equal(const char* source_filename, const char* dest_filename) {
+	FILE* f1, * f2;
+
+	fopen_s(&f1, source_filename, "rb");
+	if (!f1) {
+		printf("\nHittade inte utfil: %s", source_filename);
+		getchar();
+		exit(1);
+	}
+
+	fopen_s(&f2, dest_filename, "rb");
+	if (!f2) {
+		puts("Hittade inte utfil!");
+		getchar();
+		exit(1);
+	}
+	long f1_size = get_file_size(f1);
+	long f2_size = get_file_size(f2);
+	int res = 1;
+	if (f1_size != f2_size) {
+		printf("\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", source_filename, dest_filename);
+		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
+		res = 0;
+	}
+	unsigned char tmp1, tmp2;
+
+	size_t bytes = 0;
+	int count = 0;
+	while (!feof(f1) && !feof(f2)) {
+		fread(&tmp1, 1, 1, f1);
+		fread(&tmp2, 1, 1, f2);
+
+		if (tmp1 != tmp2) {
+
+			printf("\n Contents differ at position  %d ", count);
+			printf("\n File1:");
+			printf("%c", tmp1);
+			//print_string_rep(tmp1);
+			printf("\n File2:");
+			//print_string_rep(tmp2);
+			printf("%c", tmp2);
+			return 0;
+		}
+		count++;
+	}
+	fclose(f1);
+	fclose(f2);
+	return res;
 }

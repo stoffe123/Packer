@@ -1,7 +1,7 @@
 #ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
-const char** get_test_filenames();
+static bool DOUBLE_CHECK_PACK = false;
 
 typedef struct value_freq_t {
 	uint8_t value;

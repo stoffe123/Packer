@@ -29,7 +29,7 @@ int get_two_byte_for_code(unsigned char code) {
 
 void two_byte_unpack_internal(const char* src, const char* dest) {
 
-	printf("\nTwo-byte unpack...");
+	printf("\nTwo-byte unpack of %s", src);
 
 	fopen_s(&infil, src, "rb");
 	if (!infil) {

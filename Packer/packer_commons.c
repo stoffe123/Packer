@@ -43,6 +43,22 @@ bool CanonicalEncodeAndTest(const char* src) {
 	//printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
 	bool compression_success = (size_packed < size_org);
 	if (compression_success) {
+		
+		if (DOUBLE_CHECK_PACK) {
+			//test if compression worked!
+			const char tmp2[100] = { 0 };
+			get_temp_file2(tmp2, "multi_maksurecanonical");
+			CanonicalDecode(tmp, tmp2);
+			bool sc = files_equal(tmp2, src);
+			if (!sc) {
+				printf("\n\n\n ** Failed to canoical pack: %s", src);
+				exit(1);
+			}
+			remove(tmp2);
+		}
+			
+
+
 		remove(src);
 		rename(tmp, src);
 	}
@@ -83,6 +99,20 @@ bool MultiPackAndTest(const char* src, packProfile_t profile,
 	printf("\n MultiPacked:%s  got ratio: %f", src, pack_ratio);
 	bool compression_success = size_packed < size_org;
 	if (compression_success) {
+
+		if (DOUBLE_CHECK_PACK) {
+			//test if compression worked!
+			const char tmp2[100] = { 0 };
+			get_temp_file2(tmp2, "multi_makingsure");
+			multi_unpack(tmp, tmp2);
+			bool sc = files_equal(tmp2, src);
+			if (!sc) {
+				printf("\n\n\n ** Failed to multipack: %s", src);
+				exit(1);
+			}
+			remove(tmp2);
+		}
+
 		remove(src);
 		rename(tmp, src);
 	}

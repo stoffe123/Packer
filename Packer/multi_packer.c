@@ -7,6 +7,7 @@
 #include "common_tools.h"
 #include "multi_packer.h"
 #include "packer_commons.h"
+#include "RLE_packer_advanced.h"
 //#include "huffman2.h"
 #include "canonical.h"
 
@@ -123,8 +124,20 @@ bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 	printf("\n Two byte packed %s  got ratio %.2f (limit %d)", src, packed_ratio, profile.twobyte_ratio);
 	bool compression_success = (packed_ratio < ((double)profile.twobyte_ratio/100.0));  
 	if (compression_success) {
-		remove(src);
-		rename(tmp, src);
+
+		if (DOUBLE_CHECK_PACK) {
+			//test if compression worked!
+			const char tmp2[100] = { 0 };
+			get_temp_file2(tmp2, "multi_maksure2bytre");
+			two_byte_unpack(tmp, tmp2);
+			bool sc = files_equal(tmp2, src);
+			if (!sc) {
+				printf("\n\n\n ** Failed to two byte pack: %s", src);
+				exit(1);
+			}
+			remove(tmp2);
+		}		
+		my_rename(tmp, src);
 	}
 	else {
 		remove(tmp);
@@ -143,8 +156,20 @@ bool RLEAdvancedPackAndTest(const char* src, packProfile_t profile) {
 	printf("\n RLE advanced packed %s  got ratio %.2f (limit %d)", src, packed_ratio, 100);
 	bool compression_success = size_packed < size_org;
 	if (compression_success) {
-		remove(src);
-		rename(tmp, src);
+
+		if (DOUBLE_CHECK_PACK) {
+			//test if compression worked!
+			const char tmp2[100] = { 0 };
+			get_temp_file2(tmp2, "multi_maksure");
+			RLE_advanced_unpack(tmp, tmp2);
+			bool sc = files_equal(tmp2, src);
+			if (!sc) {
+				printf("\n\n\n ** Failed to RLE advance pack: %s", src);
+				exit(1);
+			}
+			remove(tmp2);
+		}		
+		my_rename(tmp, src);
 	}
 	else {
 		remove(tmp);
@@ -157,36 +182,32 @@ void SeqUnpackAndReplace(const char* src) {
 	//printf("\n Seq unpacking (in place) %s", src);
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_sequnpacked");
-	seq_unpack(src, tmp);
-	remove(src);
-	rename(tmp, src);
+	seq_unpack(src, tmp);	
+	my_rename(tmp, src);
 }
 
 void MultiUnpackAndReplace(const char* src) {
 	//printf("\n Seq unpacking (in place) %s", src);
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_sequnpacked");
-	multi_unpack(src, tmp);
-	remove(src);
-	rename(tmp, src);
+	multi_unpack(src, tmp);	
+	my_rename(tmp, src);
 }
 
 void TwoByteUnpackAndReplace(const char* src) {
 
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobytedunp");
-	two_byte_unpack(src, tmp);
-	remove(src);
-	rename(tmp, src);
+	two_byte_unpack(src, tmp);	
+	my_rename(tmp, src);
 }
 
 void RLEAdvancedUnpackAndReplace(const char* src) {
 
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_rleadvunp");
-	RLE_advanced_unpack(src, tmp);
-	remove(src);
-	rename(tmp, src);
+	RLE_advanced_unpack(src, tmp);	
+	my_rename(tmp, src);
 }
 
 //----------------------------------------------------------------------------------------
@@ -194,7 +215,7 @@ void RLEAdvancedUnpackAndReplace(const char* src) {
 void multi_pack(const char* src, const char* dst, packProfile_t profile,
 	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
  
-	printf("\n* Multi pack *");
+	printf("\n* Multi pack * %s => %s", src,dst);
 	printProfile(&profile);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
@@ -216,14 +237,27 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 			pack_type = setKthBit(pack_type, 6);
 		}
 		uint64_t temp_filename_size = get_file_size_from_name(temp_filename);	
-			seq_pack_separate(temp_filename, base_dir, profile.offset_pages, profile.seqlen_pages);
-		
+		seq_pack_separate(temp_filename, base_dir, profile.offset_pages, profile.seqlen_pages);
+
 		const char seqlens_name[100] = { 0 };
 		const char offsets_name[100] = { 0 };
 		const char main_name[100] = { 0 };
 		concat(seqlens_name, base_dir, "seqlens");
 		concat(offsets_name, base_dir, "offsets");
 		concat(main_name, base_dir, "main");
+
+		if (DOUBLE_CHECK_PACK) {
+			//test if seq_compression worked!
+			const char tmp2[100] = { 0 };
+			get_temp_file2(tmp2, "multi_maksureseqpack");
+			seq_unpack_separate(main_name, tmp2, base_dir);
+			bool sc = files_equal(tmp2, temp_filename);
+			if (!sc) {
+				printf("\n\n\n ** Failed to seq pack seperate: %s", temp_filename);
+				exit(1);
+			}
+			remove(tmp2);
+		}
 
 		//try to pack meta files!
 
@@ -259,11 +293,11 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		printf("\n Seqpacked %s and got ratio %.2f (limit %d)", temp_filename, seqPackRatio, profile.seq_ratio);
 		if (seqPacked) {
 			pack_type = setKthBit(pack_type, 7);
+		    remove(temp_filename);
 		}
 		else {
-			copy_file(temp_filename, main_name);
+			my_rename(temp_filename, main_name);
 		}
-		remove(temp_filename);
 		got_smaller = CanonicalEncodeAndTest(main_name);
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 0);
@@ -271,13 +305,17 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		else { // huffman wasn't possible
 			profile.twobyte_threshold = 0;
 			profile.twobyte_ratio = 100;
+						
 			got_smaller = TwoBytePackAndTest(main_name, profile);
 			if (got_smaller) {				
+				
 				pack_type = setKthBit(pack_type, 3);
 			}
 			//long shoot but why not also try RLEAdvancedPack
 			got_smaller = RLEAdvancedPackAndTest(main_name, profile);
-			if (got_smaller) {								
+			if (got_smaller) {	
+				printf("\n\n======> %s   %d", main_name, profile.twobyte_threshold);
+				//exit(1);
 				pack_type = setKthBit(pack_type, 4);
 			}
 		}
@@ -311,10 +349,10 @@ void multi_unpack(const char* src, const char* dst) {
 	printf("\n Multiunpack of %s  =>  %s", src, dst);
 	pack_info_t pi;
 	FILE* in = fopen(src, "rb");
-	unsigned char pt;
-	fread(&pt, 1, 1, in);
-	pi.pack_type = pt;
-	if (pt == 0) {
+	unsigned char pack_type;
+	fread(&pack_type, 1, 1, in);
+	pi.pack_type = pack_type;
+	if (pack_type == 0) {
 		printf("\n  UNSTORE!!  ");
 		unstore(in, dst);
 		return;
@@ -323,7 +361,6 @@ void multi_unpack(const char* src, const char* dst) {
 	get_clock_dir(base_dir);
 	pi.dir = base_dir;
 	untar(in, pi);
-	unsigned char pack_type = pi.pack_type;
 
 	const char seqlens_name[100] = { 0 };
 	const char offsets_name[100] = { 0 };
@@ -336,12 +373,13 @@ void multi_unpack(const char* src, const char* dst) {
 		CanonicalDecodeAndReplace(main_name);
 	}
 	else {
-		if (isKthBitSet(pack_type, 3)) {
-			TwoByteUnpackAndReplace(main_name);
-		}
 		if (isKthBitSet(pack_type, 4)) {
+			printf("\n RLE advance unpack");
 			RLEAdvancedUnpackAndReplace(main_name);
 		}
+		if (isKthBitSet(pack_type, 3)) {
+			TwoByteUnpackAndReplace(main_name);
+		}		
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
@@ -359,7 +397,7 @@ void multi_unpack(const char* src, const char* dst) {
 		seq_unpack_separate(main_name, seq_dst, base_dir);
 	}
 	else {
-		copy_file(main_name, seq_dst);
+		my_rename(main_name, seq_dst);
 	}
 	if (isKthBitSet(pack_type, 6)) {
 		TwoByteUnpackAndReplace(seq_dst);
@@ -368,7 +406,7 @@ void multi_unpack(const char* src, const char* dst) {
 		RLE_simple_unpack(seq_dst, dst);
 	}
 	else {
-		copy_file(seq_dst, dst);
+		my_rename(seq_dst, dst);
 	}
 	remove(seq_dst);
 

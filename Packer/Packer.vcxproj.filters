@@ -137,5 +137,11 @@
     <ClInclude Include="block_packer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Two_byte_packer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Two_byte_unpacker.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

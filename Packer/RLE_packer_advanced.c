@@ -569,8 +569,8 @@ void RLE_advanced_unpack(const char* source_filename, const char* dest_filename)
     
     infil = fopen(source_filename, "rb");
     if (!infil) {
-        printf("Can't create output file: %s\n", source_filename);
-        return;
+        printf("Can't find input file: %s\n", source_filename);
+        exit(1);
     }
 
     /* read header */
@@ -605,7 +605,7 @@ void RLE_advanced_unpack(const char* source_filename, const char* dest_filename)
 
     utfil = fopen(dest_filename, "wb");
     if (!utfil) {
-        puts("Hittade inte utfil:");
+        puts("Hittade inte utfil: ");
         puts(dest_filename);
         getchar();
         exit(1);
