@@ -446,14 +446,14 @@ void testarchive() {
 	L"empty.txt",
 	L"onechar.txt",
 	L"oneseq.txt",
-	L"repeatchar.txt",
-	L"pazera.exe",
-		L"did.csh",
-		L"tob.pdf",
-		L"voc.wav",
+	L"repeatchar.txt",	
+		L"did.csh",				
 		L"aft.htm",
 		L"amb.dll",
-		L"bad.mp3"
+		L"bad.mp3",
+		L"voc.wav",
+		L"tob.pdf",
+		L"pazera.exe"
 	};
 
 	packProfile_t profile;
