@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="archive_packer.c" />
     <ClCompile Include="bitarray.c" />
     <ClCompile Include="bitfile.c" />
     <ClCompile Include="block_packer.c" />
@@ -160,6 +161,7 @@
     <ClCompile Include="Two_byte_unpacker.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="archive_packer.h" />
     <ClInclude Include="bitarray.h" />
     <ClInclude Include="bitfile.h" />
     <ClInclude Include="block_packer.h" />

@@ -75,6 +75,9 @@
     <ClCompile Include="block_packer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="archive_packer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -141,6 +144,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Two_byte_unpacker.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="archive_packer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

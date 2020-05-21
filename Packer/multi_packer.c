@@ -343,6 +343,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		if (!do_store) {
 			tar(dst, base_dir, pack_type);			
 		} 
+		remove(tmp3);
 		remove(seqlens_name);
 		remove(offsets_name);
 		remove(main_name);		
