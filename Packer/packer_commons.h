@@ -1,7 +1,7 @@
 #ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
-#define BLOCK_SIZE 2510700
+#define BLOCK_SIZE 2110700
 
 static bool DOUBLE_CHECK_PACK = false;
 

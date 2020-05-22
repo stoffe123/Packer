@@ -332,7 +332,7 @@ void onefile() {
 }//onefile
 
 void test16() {
-
+	
 	wchar_t test_filenames[16][100] = {
 		L"bad.cdg",
 		L"did.csh",
@@ -342,8 +342,8 @@ void test16() {
 		L"amb.dll",
 		L"pazera.exe",
 		L"voc.wav", 	
-		L"aft.htm",
-		L"bad.mp3", 
+		L"bad.mp3",
+		L"aft.htm",		
 		L"book_med.txt",
 		L"book.txt",
 		L"empty.txt",
@@ -352,7 +352,8 @@ void test16() {
 		L"repeatchar.txt"
 	};
 
-	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
+	
+	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
 	init_taken();
 
