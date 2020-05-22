@@ -9,7 +9,6 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
-#define BLOCK_SIZE 2510700
 
 uint64_t get_file_size(const FILE* f);
 
@@ -49,9 +48,17 @@ void concatw(wchar_t* dst, wchar_t* s1, wchar_t* s2);
 
 void concat3(const char* dst, const char* s1, const char* s2, const char* s3);
 
+void concat3w(wchar_t* dst, wchar_t* s1, wchar_t* s2, wchar_t* s3);
+	
+void concat4w(wchar_t* dst, wchar_t* s1, wchar_t* s2, wchar_t* s3, wchar_t* s4);
+	
 void concat_int(const char* dst, const char* s1, int i);
 
+void concat_intw(const wchar_t* dst, const wchar_t* s1, int i);
+
 void int_to_string(const char* dst, int64_t i);
+
+void int_to_stringw(const wchar_t* dst, int64_t i);
 
 void get_rand(const char* dst);
 
@@ -62,5 +69,7 @@ void get_clock_dir(const char* dst);
 bool files_equal(const char* source_filename, const char* dest_filename);
 
 bool files_equalw(wchar_t* source_filename, wchar_t* dest_filename);
+
+wchar_t* toUnicode(const char* string);
 
 #endif

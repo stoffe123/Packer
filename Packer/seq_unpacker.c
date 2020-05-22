@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "seq_unpacker.h"
 #include "common_tools.h"
+#include "packer_commons.h"
 #include "seq_packer_commons.h"
 
 #define VERBOSE false

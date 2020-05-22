@@ -21,14 +21,19 @@ append_to_tar(FILE* utfil, char* src) {
 
 //----------------------------------------------------------------------------------------
 
-void block_pack(const char* src, const char* dst, packProfile_t profile) {
+void block_pack(const wchar_t* src, const wchar_t* dst, packProfile_t profile) {
 
-	unsigned long long  src_size = get_file_size_from_name(src);
+	uint64_t src_size = get_file_size_from_wname(src);
 
 	FILE* utfil, * infil;
-	utfil = fopen(dst, "wb");
-	infil = fopen(src, "rb");
-
+	errno_t err = _wfopen_s(&utfil, dst, L"wb");
+	if (err != 0) {
+		wprintf(L"\n Block_pack can't find destination file: %s", dst);exit(0);
+	}
+	err = _wfopen_s(&infil, src, L"rb");
+	if (err != 0) {
+		wprintf(L"\n Block_pack can't find source file: %s", src); exit(0);
+	}
 	uint64_t tmp_size;
 	do {
 		const char tmp[100] = { 0 };
@@ -83,10 +88,16 @@ void block_pack(const char* src, const char* dst, packProfile_t profile) {
 
 // ----------------------------------------------------------------
 
-void block_unpack(const char* src, const char* dst) {
+void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	FILE* utfil, * infil;
-	utfil = fopen(dst, "wb");
-	infil = fopen(src, "rb");
+	errno_t err = _wfopen_s(&utfil, dst, L"wb");
+	if (err != 0) {
+		wprintf(L"\n Block_pack can't find destination file: %s", dst); exit(0);
+	}
+	err = _wfopen_s(&infil, src, L"rb");
+	if (err != 0) {
+		wprintf(L"\n Block_pack can't find source file: %s", src); exit(0);
+	}
 
 	uint32_t size;
 	while (fread(&size, sizeof(size), 1, infil) == 1) {

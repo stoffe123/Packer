@@ -84,7 +84,7 @@ int doFuzz(int r, int best, int min, int max) {
 }
 
 void fuzzProfile(packProfile_t* profile, packProfile_t best) {
-	if (rand() % 7 == 0) {
+	if (rand() % 3 == 0) {
 		profile->offset_pages = rand() % 252;
 		profile->seqlen_pages = rand() % 252;
 	}
@@ -92,7 +92,6 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 
 		profile->offset_pages = fuzz(best.offset_pages);
 		profile->seqlen_pages = fuzz(best.seqlen_pages);
-
 	}
 	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
@@ -102,9 +101,6 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 30, 2000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 250);
 }
-
-
-
 
 
 unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned long long acc_size, unsigned long long acc_size_org,
@@ -337,17 +333,23 @@ void onefile() {
 
 void test16() {
 
-	char test_filenames[16][100] = {
-		"bad.cdg",
-		"did.csh",
-		"rel.pdf",
-		"tob.pdf",
-		"nex.doc",
-		"amb.dll",
-		"pazera.exe",
-		"voc.wav", 	"aft.htm",
-		"bad.mp3", "book_med.txt",
-		"book.txt","empty.txt","onechar.txt","oneseq.txt","repeatchar.txt"
+	wchar_t test_filenames[16][100] = {
+		L"bad.cdg",
+		L"did.csh",
+		L"rel.pdf",
+		L"tob.pdf",
+		L"nex.doc",
+		L"amb.dll",
+		L"pazera.exe",
+		L"voc.wav", 	
+		L"aft.htm",
+		L"bad.mp3", 
+		L"book_med.txt",
+		L"book.txt",
+		L"empty.txt",
+		L"onechar.txt",
+		L"oneseq.txt",
+		L"repeatchar.txt"
 	};
 
 	//char test_filenames[2][100] = { "ragg.wav", "voc_short.wav" };
@@ -380,15 +382,14 @@ void test16() {
 		bool earlyBreak = true;
 		for (; kk < 16; kk++)
 		{
-			const char src[100] = { 0 };
-			concat(src, "C:/test/test16/", test_filenames[kk]);
+			const wchar_t src[100] = { 0 };
+			concatw(src, L"C:/test/test16/", test_filenames[kk]);
 
+			const wchar_t* dst = L"C:/test/unp";
 
-			const char* dst = "C:/test/unp";
+			const wchar_t* packed_name = L"c:/test/packed.bin";
 
-			const char* packed_name = "c:/test/packed.bin";
-
-			long long size_org = get_file_size_from_name(src);
+			uint64_t size_org = get_file_size_from_wname(src);
 			printf("\n------------------------------------------------");
 			printf("\n Packing... %s with length:%d", src, size_org);
 
@@ -399,9 +400,9 @@ void test16() {
 
 			int pack_time = (clock() - cl);
 			//printf("\n Packing finished time it took: %d", pack_time);
-			long long size_packed = get_file_size_from_name(packed_name);
+			uint64_t size_packed = get_file_size_from_wname(packed_name);
 
-			printf("\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
+			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 			acc_size_packed += size_packed;
 			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
@@ -423,7 +424,7 @@ void test16() {
 
 			printf("\n\n Comparing files!");
 
-			if (files_equal(src, dst)) {
+			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
 			else {
@@ -438,8 +439,8 @@ void test16() {
 
 void testarchive() {
 	wchar_t* test_filenames[16] = {
-	L"bad.cdg",	
-	L"rel.pdf",	
+	L"rel.pdf",
+	L"bad.cdg",		
 	L"nex.doc",					
 	L"book_med.txt",
 	L"book.txt",
@@ -457,20 +458,21 @@ void testarchive() {
 	};
 
 	packProfile_t profile;
-	profile.offset_pages = 218;
-	profile.seqlen_pages = 206;
-	profile.rle_ratio = 86;
-	profile.twobyte_ratio = 85;
+	profile.offset_pages = 221;
+	profile.seqlen_pages = 204;
+	profile.rle_ratio = 85;
+	profile.twobyte_ratio = 73;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 62;
-	profile.twobyte_threshold_max = 1499;
-	profile.twobyte_threshold_divide = 805;
-	profile.twobyte_threshold_min = 50;
+	profile.recursive_limit = 79;
+	profile.twobyte_threshold_max = 1651;
+	profile.twobyte_threshold_divide = 926;
+	profile.twobyte_threshold_min = 49;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 	wchar_t* destDir = L"c:/test/archiveunp/";
 	unsigned long long best_size = 0;
+	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
 
 		unsigned long long acc_size_packed = 0,
@@ -480,27 +482,15 @@ void testarchive() {
 		wchar_t* source_dir = L"c:\\test\\test13";
 		
 		wchar_t filenames2[16][200], filenames3[16][200];
-		for (int i = 0; i < 13; i++) {	
-			wcscpy(filenames2[i], source_dir);
-			wcscat(filenames2[i], L"\\");
-			wcscat(filenames2[i], test_filenames[i]);
-
-			wcscpy(filenames3[i], destDir);
-			wcscat(filenames3[i], L"\\");
-			wcscat(filenames3[i], test_filenames[i]);
-		   		   
+		for (int i = 0; i < 13; i++) {
+			concat3w(filenames2[i], source_dir, L"\\", test_filenames[i]);
+			concat3w(filenames3[i], destDir, L"\\", test_filenames[i]);			
 		}
 
-		const char* packed_name = "c:/test/packed.bin";
-
 		int cl = clock();
-
 		archive_pack(source_dir, packed_name, profile);
-
 		int pack_time = (clock() - cl);
-	
-		long long size_packed = get_file_size_from_name(packed_name);
-
+		uint64_t size_packed = get_file_size_from_wname(packed_name);
 		acc_size_packed += size_packed;
 		
 		printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
@@ -524,7 +514,6 @@ void testarchive() {
 				return 1;
 			}		
 		}
-
 		best_size = presentResult(false, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		fuzzProfile(&profile, bestProfile);
 	}//end while true
@@ -539,8 +528,9 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
+	//testmeta();
 	//test16();
-	testarchive();
-	//onefile();
+	//testarchive();
+	onefile();
 }
 

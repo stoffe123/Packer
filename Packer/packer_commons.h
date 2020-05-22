@@ -1,6 +1,8 @@
 #ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
+#define BLOCK_SIZE 2510700
+
 static bool DOUBLE_CHECK_PACK = false;
 
 typedef struct value_freq_t {

@@ -25,8 +25,8 @@ typedef struct file_t {
 static file_t fileList[10000];
 
 // for untar
-static char filenames[2000][500];
-static uint64_t* sizes[2000];
+static char filenames[10000][500];
+static uint64_t* sizes[10000];
 
 void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 {
@@ -205,18 +205,18 @@ void archiveUntar(const char* src, wchar_t* dir) {
 }
 
 
-void archive_pack(const wchar_t* dir, const char* dest, packProfile_t profile) {
+void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile_t profile) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "archivedest");
 	archiveTar(dir, tmp);
-	block_pack(tmp, dest, profile);
+	block_pack(toUnicode(tmp), dest, profile);
 	remove(tmp);
 }
 
-void archive_unpack(const char* src, wchar_t* dir) {
+void archive_unpack(const wchar_t* src, wchar_t* dir) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "archiveunp");
-	block_unpack(src, tmp);
+	block_unpack(src, toUnicode(tmp));
 	archiveUntar(tmp, dir);
 	remove(tmp);
 }

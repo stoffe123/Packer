@@ -1,11 +1,14 @@
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
-#include "common_tools.h"
+#include <stringapiset.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+
+#include "common_tools.h"
 
 #define TEMP_DIR "c:/test/temp_files/"
 
@@ -31,11 +34,11 @@ uint64_t get_file_size_from_name(const char* name) {
 }
 
 uint64_t get_file_size_from_wname(wchar_t* name) {
-	wprintf(L"\n get_file_size_from_wname:%s", name);
+	//wprintf(L"\n get_file_size_from_wname:%s", name);
 	FILE* f;
 	errno_t err = _wfopen_s(&f, name, L"rb");
 	if (err != 0) {
-		wprintf(L"\n get_file_size_from_name: can't find file: %s", name);
+		wprintf(L"\n get_file_size_from_wname: can't find file: %s", name);
 		exit(0);
 	}
 	uint64_t res = get_file_size(f);
@@ -182,6 +185,19 @@ void concatw(wchar_t* dst, wchar_t* s1, wchar_t* s2) {
 	wcscat(dst, s2);
 }
 
+void concat3w(wchar_t* dst, wchar_t* s1, wchar_t* s2, wchar_t* s3) {
+	wcscpy(dst, s1);
+	wcscat(dst, s2);
+	wcscat(dst, s3);
+}
+
+void concat4w(wchar_t* dst, wchar_t* s1, wchar_t* s2, wchar_t* s3, wchar_t* s4) {
+	wcscpy(dst, s1);
+	wcscat(dst, s2);
+	wcscat(dst, s3);
+	wcscat(dst, s4);
+}
+
 void concat3(const char* dst, const char* s1, const char* s2, const char* s3) {
 	const size_t s1_length = strlen(s1);
 	const size_t s2_length = strlen(s2);
@@ -196,60 +212,30 @@ void concat_int(const char* dst, const char* s1, int i) {
 	concat(dst, s1, number);
 }
 
+void concat_intw(const wchar_t* dst, const wchar_t* s1, int i) {
+	const wchar_t number[30] = { 0 };
+	int_to_stringw(number, i);
+	concatw(dst, s1, number);
+}
+
+
 void int_to_string(const char* s, int64_t i) {
 	_itoa(i, s, 10);
 }
 
-bool files_equal(const char* source_filename, const char* dest_filename) {
-	FILE* f1, * f2;
-
-	fopen_s(&f1, source_filename, "rb");
-	if (!f1) {
-		printf("\nHittade inte utfil: %s", source_filename);
-		getchar();
-		exit(1);
-	}
-
-	fopen_s(&f2, dest_filename, "rb");
-	if (!f2) {
-		puts("Hittade inte utfil!");
-		getchar();
-		exit(1);
-	}
-	long f1_size = get_file_size(f1);
-	long f2_size = get_file_size(f2);
-	int res = 1;
-	if (f1_size != f2_size) {
-		printf("\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", source_filename, dest_filename);
-		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
-		res = 0;
-	}
-	unsigned char tmp1, tmp2;
-
-	size_t bytes = 0;
-	int count = 0;
-	while (!feof(f1) && !feof(f2)) {
-		fread(&tmp1, 1, 1, f1);
-		fread(&tmp2, 1, 1, f2);
-
-		if (tmp1 != tmp2) {
-
-			printf("\n Contents differ at position  %d ", count);
-			printf("\n File1:");
-			printf("%c", tmp1);
-			//print_string_rep(tmp1);
-			printf("\n File2:");
-			//print_string_rep(tmp2);
-			printf("%c", tmp2);
-			return 0;
-		}
-		count++;
-	}
-	fclose(f1);
-	fclose(f2);
-	return res;
+void int_to_stringw(const wchar_t* s, int64_t i) {
+	_itow(i, s, 10);
 }
 
+wchar_t* toUnicode(const char* string) {	
+	wchar_t* wstring[500] = { 0 };
+	MultiByteToWideChar(CP_ACP, 0, string, -1, wstring, 500);	
+	return wstring;
+}
+
+bool files_equal(const char* source_filename, const char* dest_filename) {
+	return files_equalw(toUnicode(source_filename), toUnicode(dest_filename));
+}
 
 bool files_equalw( wchar_t* source_filename,  wchar_t* dest_filename) {
 	FILE* f1, * f2;
