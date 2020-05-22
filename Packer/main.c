@@ -391,7 +391,7 @@ void test16() {
 
 			uint64_t size_org = get_file_size_from_wname(src);
 			printf("\n------------------------------------------------");
-			printf("\n Packing... %s with length:%d", src, size_org);
+			wprintf(L"\n Packing... %s with length:%d", src, size_org);
 
 			int cl = clock();
 
@@ -529,8 +529,8 @@ int main()
 	srand((unsigned)time(&t));
 
 	//testmeta();
-	//test16();
+	test16();
 	//testarchive();
-	onefile();
+	//onefile();
 }
 
