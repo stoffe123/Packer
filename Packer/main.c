@@ -358,12 +358,12 @@ void test16() {
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 218;
+	profile.offset_pages = 221;
 	profile.seqlen_pages = 206;
-	profile.rle_ratio = 86;
+	profile.rle_ratio = 96;
 	profile.twobyte_ratio = 85;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 62;
+	profile.recursive_limit = 114;
 	profile.twobyte_threshold_max = 1499;
 	profile.twobyte_threshold_divide = 805;
 	profile.twobyte_threshold_min = 50;
@@ -371,7 +371,7 @@ void test16() {
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 0; // 44200770;
+	unsigned long long best_size = 0; // 44188963;
 	while (true) {
 
 		//const char** test_filenames = get_test_filenames();
@@ -383,7 +383,7 @@ void test16() {
 		bool earlyBreak = true;
 		for (; kk < 16; kk++)
 		{
-			const wchar_t src[100] = { 0 };
+			const wchar_t src[200] = { 0 };
 			concatw(src, L"C:/test/test16/", test_filenames[kk]);
 
 			const wchar_t* dst = L"C:/test/unp";
