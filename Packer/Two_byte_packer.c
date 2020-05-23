@@ -30,7 +30,7 @@ static void move_buffer(unsigned int steps) {
 		uint64_t buffer_left = buffer_size - buffer_startpos;
 		if (buffer_left < buffer_min) {
 			//load new buffer!!			
-			debug("Load new buffer of: %d", buffer_size);
+			//debug("Load new buffer of: %d", buffer_size);
 
 			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 			for (uint64_t i = 0; i < (buffer_size - buffer_startpos); i++) {
@@ -82,9 +82,6 @@ value_freq_t find_best_two_byte() {
 
 int get_gain_threshhold() {
 
-	if (profile.twobyte_threshold_max == 0) {
-		return 3;
-	}
 	uint64_t res = source_size / profile.twobyte_threshold_divide;
 
 	if (res < profile.twobyte_threshold_min) {
@@ -93,7 +90,6 @@ int get_gain_threshhold() {
 	if (res > profile.twobyte_threshold_max) {
 		res = profile.twobyte_threshold_max;
 	}
-
 	return res;
 }
 
@@ -109,7 +105,7 @@ int create_two_byte_table() {
 	master_code = master.value;
 	int threshhold = get_gain_threshhold();
 	printf("\n Two byte packer gain threshhold %d", threshhold);
-	bool found_code = false;
+	bool found_twobyte = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
 		value_freq_t two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
@@ -117,15 +113,15 @@ int create_two_byte_table() {
 			break;
 		}
 		value_freq_t code = find_best_code();
-		found_code = (code.freq + threshhold < two_byte.freq);
-		if (found_code) {
+		found_twobyte = (code.freq + threshhold < two_byte.freq);
+		if (found_twobyte) {
 			//worthwile
 			pair_table[pair_table_pos++] = (uint8_t)code.value;
 			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value % 256);
 			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value / 256);
 			debug("\n Code %d for '%c%c' with freq:(%d,%d)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
 		}
-	} while (found_code);
+	} while (found_twobyte);
 
 	assert(pair_table_pos > 0, "two_byte_table_pos = 0 !!!");
 	pair_table[0] = (uint8_t)((pair_table_pos - START_CODES_SIZE) / 3);
