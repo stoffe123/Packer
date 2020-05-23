@@ -13,12 +13,12 @@ void CanonicalDecodeAndReplace(const char* src) {
 	rename(tmp, src);
 }
 
-bool CanonicalEncodeAndTest(const char* src) {
+uint64_t CanonicalEncodeAndTest(const char* src) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_canonicaled");
 	CanonicalEncode(src, tmp);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
+	uint64_t size_org = get_file_size_from_name(src);
+	uint64_t size_packed = get_file_size_from_name(tmp);
 	//printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
 	bool compression_success = (size_packed < size_org);
 	if (compression_success) {
@@ -42,7 +42,7 @@ bool CanonicalEncodeAndTest(const char* src) {
 	else {
 		remove(tmp);
 	}
-	return compression_success;
+	return size_packed;
 }
 
 

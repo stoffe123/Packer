@@ -29,7 +29,7 @@ void copyProfile(packProfile_t*, packProfile_t*);
 
 void CanonicalDecodeAndReplace(const char*);
 
-bool CanonicalEncodeAndTest(const char*);
+uint64_t CanonicalEncodeAndTest(const char*);
 
 bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit);
 

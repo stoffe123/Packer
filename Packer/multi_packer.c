@@ -49,6 +49,14 @@ void untar(FILE* in, pack_info_t pi) {
 	fclose(in);
 }
 
+bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
+	uint64_t size_org = get_file_size_from_name(src);
+	uint64_t size_packed = get_file_size_from_name(tmp);
+	double packed_ratio = ((double)size_packed / (double)size_org) * 100.0;
+	printf("\n %s packed %s  got ratio %.1f (limit %d)", packerName, src, packed_ratio, limit);
+	return packed_ratio < (double)limit;
+}
+
 void store(const char* src, const char* dst, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
 	fwrite(&pack_type, 1, 1, out_file);
@@ -117,12 +125,8 @@ bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 
 	char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobyted");
-	two_byte_pack(src, tmp, profile);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	double packed_ratio = (double)size_packed / (double)size_org;
-	printf("\n Two byte packed %s  got ratio %.2f (limit %d)", src, packed_ratio, profile.twobyte_ratio);
-	bool compression_success = (packed_ratio < ((double)profile.twobyte_ratio/100.0));  
+	two_byte_pack(src, tmp, profile);		
+	bool compression_success = testPack(src, tmp, "Two byte", profile.twobyte_ratio);
 	if (compression_success) {
 
 		if (DOUBLE_CHECK_PACK) {
@@ -146,15 +150,10 @@ bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 }
 
 bool RLEAdvancedPackAndTest(const char* src, packProfile_t profile) {
-
 	char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_rleadv");
 	RLE_advanced_pack(src, tmp, profile);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	double packed_ratio = (double)size_packed / (double)size_org;
-	printf("\n RLE advanced packed %s  got ratio %.2f (limit %d)", src, packed_ratio, 100);
-	bool compression_success = size_packed < size_org;
+	bool compression_success = testPack(src, tmp, "RLE Advanced", 100);
 	if (compression_success) {
 
 		if (DOUBLE_CHECK_PACK) {
@@ -236,7 +235,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 6);
 		}
-		uint64_t temp_filename_size = get_file_size_from_name(temp_filename);	
+		uint64_t before_seqpack_size = get_file_size_from_name(temp_filename);	
 		seq_pack_separate(temp_filename, base_dir, profile.offset_pages, profile.seqlen_pages);
 
 		const char seqlens_name[100] = { 0 };
@@ -261,28 +260,27 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 
 		//try to pack meta files!
 
-		// ---------- Pack seqlens -----------
-		if (temp_filename_size > 0 && get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
+		
+		if (before_seqpack_size > 0 && get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
 			
+			// ---------- Pack the meta files (seqlens/offsets) recursively
 			got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 1);
 			}
 
-			// ------------- Pack offsets --------------
-			
 			got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 2);
 			}
 		}
 
-		uint64_t packed_size = get_file_size_from_name(offsets_name) +
+		uint64_t size_after_seqpack = get_file_size_from_name(offsets_name) +
 			get_file_size_from_name(seqlens_name) +
 			get_file_size_from_name(main_name);
 
-		double seqPackRatio = ((double)packed_size) /
-			((double)temp_filename_size);
+		double seqPackRatio = ((double)size_after_seqpack) /
+			((double)before_seqpack_size);
 
 		bool seqPacked = seqPackRatio < ((double)profile.seq_ratio / (double)100);
 		/*
@@ -291,27 +289,35 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		}
 		*/
 		printf("\n Seqpacked %s and got ratio %.2f (limit %d)", temp_filename, seqPackRatio, profile.seq_ratio);
-		char tmp3[100] = { 0 };
+		char seqpacked_fallback[100] = { 0 };
 		if (seqPacked) {
 			pack_type = setKthBit(pack_type, 7);
 		    remove(temp_filename);
 		}
 		else {		
-			get_temp_file2(tmp3, "multi_seqpackedfallback");
-			copy_file(main_name, tmp3);
+			get_temp_file2(seqpacked_fallback, "multi_seqpackedfallback");
+			copy_file(main_name, seqpacked_fallback);
 			my_rename(temp_filename, main_name);
 		}
-		got_smaller = CanonicalEncodeAndTest(main_name);
-		if (got_smaller) {
+		char canonicalled[100];
+		get_temp_file2(canonicalled, "multi_canonicalled");
+		uint64_t size_before_canonical = get_file_size_from_name(main_name);
+		CanonicalEncode(main_name, canonicalled);
+		uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
+		if (size_after_canonical < size_before_canonical) 
+		 if (seqPacked ||
+	          (!seqPacked && size_after_canonical < size_after_seqpack)) {		
 			pack_type = setKthBit(pack_type, 0);
+			remove(main_name);
+			rename(canonicalled, main_name);
 		}
 		else { // huffman wasn't possible
 
 			if (!seqPacked) {
 				if (seqPackRatio < 1) {
-					printf("\n ** regret myself since huffman failed, take back seqpack w ratio %f", seqPackRatio);
+					printf("\n ** regret myself since huffman failed/was worse than seqpack, take back seqpack w ratio %f", seqPackRatio);
 					pack_type = setKthBit(pack_type, 7);
-					my_rename(tmp3, main_name);
+					my_rename(seqpacked_fallback, main_name);
 					seqPacked = true;
 				}
 			}
@@ -334,16 +340,16 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		}
 
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
-		packed_size = get_file_size_from_name(main_name) +
+		size_after_seqpack = get_file_size_from_name(main_name) +
 			(seqPacked ? get_file_size_from_name(offsets_name) +
 				get_file_size_from_name(seqlens_name) + 8 : 0);
 
 		uint64_t source_size = get_file_size_from_name(src);
-		do_store = packed_size >= source_size;
+		do_store = size_after_seqpack >= source_size;
 		if (!do_store) {
 			tar(dst, base_dir, pack_type);			
 		} 
-		remove(tmp3);
+		remove(seqpacked_fallback);
 		remove(seqlens_name);
 		remove(offsets_name);
 		remove(main_name);		
