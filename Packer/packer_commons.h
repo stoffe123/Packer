@@ -25,6 +25,8 @@ typedef struct packProfile_t {
 
 void printProfile(packProfile_t*);
 
+bool testPack(const char* src, const char* tmp, const char* packerName, int limit);
+
 void copyProfile(packProfile_t*, packProfile_t*);
 
 void CanonicalDecodeAndReplace(const char*);

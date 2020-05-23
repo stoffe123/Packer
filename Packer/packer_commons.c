@@ -13,6 +13,14 @@ void CanonicalDecodeAndReplace(const char* src) {
 	rename(tmp, src);
 }
 
+bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
+	uint64_t size_org = get_file_size_from_name(src);
+	uint64_t size_packed = get_file_size_from_name(tmp);
+	double packed_ratio = ((double)size_packed / (double)size_org) * 100.0;
+	printf("\n %s packed %s  got ratio %.1f (limit %d)", packerName, src, packed_ratio, limit);
+	return packed_ratio < (double)limit;
+}
+
 uint64_t CanonicalEncodeAndTest(const char* src) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_canonicaled");
@@ -49,12 +57,8 @@ uint64_t CanonicalEncodeAndTest(const char* src) {
 bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_seqpacked");
-	seq_pack(src, tmp, seqlen_pages, offset_pages);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	double pack_ratio = (double)size_packed / (double)size_org;
-	printf("\n SeqPacked:%s  got ratio: %f", src, pack_ratio);
-	bool compression_success = (pack_ratio < ((double)ratio_limit / (double)100));
+	seq_pack(src, tmp, seqlen_pages, offset_pages);	
+	bool compression_success = testPack(src, tmp, "Seq", ratio_limit);
 	if (compression_success) {
 		remove(src);
 		rename(tmp, src);
@@ -69,12 +73,8 @@ bool MultiPackAndTest(const char* src, packProfile_t profile,
 	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_seqpacked");
-	multi_pack(src, tmp, profile, seqlensProfile, offsetsProfile);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(tmp);
-	double pack_ratio = (double)size_packed / (double)size_org;
-	printf("\n MultiPacked:%s  got ratio: %f", src, pack_ratio);
-	bool compression_success = size_packed < size_org;
+	multi_pack(src, tmp, profile, seqlensProfile, offsetsProfile);	
+	bool compression_success = testPack(src, tmp, "Multi", 100);
 	if (compression_success) {
 
 		if (DOUBLE_CHECK_PACK) {

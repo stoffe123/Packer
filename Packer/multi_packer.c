@@ -49,14 +49,6 @@ void untar(FILE* in, pack_info_t pi) {
 	fclose(in);
 }
 
-bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
-	uint64_t size_org = get_file_size_from_name(src);
-	uint64_t size_packed = get_file_size_from_name(tmp);
-	double packed_ratio = ((double)size_packed / (double)size_org) * 100.0;
-	printf("\n %s packed %s  got ratio %.1f (limit %d)", packerName, src, packed_ratio, limit);
-	return packed_ratio < (double)limit;
-}
-
 void store(const char* src, const char* dst, unsigned char pack_type) {
 	FILE* out_file = fopen(dst, "wb");
 	fwrite(&pack_type, 1, 1, out_file);
@@ -176,7 +168,6 @@ bool RLEAdvancedPackAndTest(const char* src, packProfile_t profile) {
 	return compression_success;
 }
 
-
 void SeqUnpackAndReplace(const char* src) {
 	//printf("\n Seq unpacking (in place) %s", src);
 	const char tmp[100] = { 0 };
@@ -194,7 +185,6 @@ void MultiUnpackAndReplace(const char* src) {
 }
 
 void TwoByteUnpackAndReplace(const char* src) {
-
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobytedunp");
 	two_byte_unpack(src, tmp);	
@@ -305,13 +295,12 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		CanonicalEncode(main_name, canonicalled);
 		uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
 		if (size_after_canonical < size_before_canonical) 
-		 if (seqPacked ||
+			if (seqPacked ||
 	          (!seqPacked && size_after_canonical < size_after_seqpack)) {		
-			pack_type = setKthBit(pack_type, 0);
-			remove(main_name);
-			rename(canonicalled, main_name);
+			pack_type = setKthBit(pack_type, 0);			
+			my_rename(canonicalled, main_name);
 		}
-		else { // huffman wasn't possible
+		else { // Canonical didn't work
 
 			if (!seqPacked) {
 				if (seqPackRatio < 1) {
@@ -321,7 +310,6 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 					seqPacked = true;
 				}
 			}
-
 			profile.twobyte_threshold_max = 0;
 			profile.twobyte_ratio = 100;
 						
