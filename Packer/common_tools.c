@@ -257,7 +257,7 @@ bool files_equalw( wchar_t* source_filename,  wchar_t* dest_filename) {
 	long f2_size = get_file_size(f2);
 	int res = 1;
 	if (f1_size != f2_size) {
-		printf("\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", source_filename, dest_filename);
+		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", source_filename, dest_filename);
 		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
 		res = 0;
 	}

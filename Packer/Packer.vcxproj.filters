@@ -78,6 +78,9 @@
     <ClCompile Include="archive_packer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="seq_packer_commons.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
