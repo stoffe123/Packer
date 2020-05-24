@@ -259,7 +259,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/seqlens_fail";
+	const char* src = "c:/test/book_med.txt";
 	const char* unpacked_finished = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -277,9 +277,9 @@ void onefile() {
 	profile.twobyte_ratio = 83;
 	profile.seq_ratio = 82;
 	profile.recursive_limit = 230;
-	profile.twobyte_threshold_max = 1363;
-	profile.twobyte_threshold_divide = 1000;
-	profile.twobyte_threshold_min = 50;
+	profile.twobyte_threshold_max = 15;
+	profile.twobyte_threshold_divide = 1500;
+	profile.twobyte_threshold_min = 10;
 
 	offsetProfile.offset_pages = 105;
 	offsetProfile.seqlen_pages = 57;
@@ -308,6 +308,8 @@ void onefile() {
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
 	printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+	uint64_t size_packed = get_file_size_from_name(packed_name);
+	printf("\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 
 	printf("\n\n Comparing files!");
@@ -519,7 +521,7 @@ int main()
 
 	//testmeta();
 	//test16();
-	testarchive();
-	//onefile();
+	//testarchive();
+	onefile();
 }
 

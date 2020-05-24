@@ -182,8 +182,6 @@ void get_randw(const wchar_t* s) {
 	int_to_stringw(s, filename_count++);
 }
 
-
-
 void get_temp_file2(const char* dst, const char* s) {
 	char number[40] = { 0 };
 	get_rand(number);
@@ -245,7 +243,6 @@ void concat_intw(const wchar_t* dst, const wchar_t* s1, int i) {
 	int_to_stringw(number, i);
 	concatw(dst, s1, number);
 }
-
 
 void int_to_string(const char* s, int64_t i) {
 	_itoa(i, s, 10);

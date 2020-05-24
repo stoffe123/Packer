@@ -158,7 +158,6 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 //--------------------------------------------------------------------------------------------------------
 
 
-
 void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 
 	debug("\nTwo-byte pack pass=%d", pass);
@@ -166,23 +165,17 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 	buffer_startpos = 0;
 	buffer_min = 20;
 
-	errno_t err = _wfopen_s(&infil, src, L"rb");
-	if (err != 0) {
-		wprintf(L"\nTwo byte pack: hittade inte infil: %s", src);getchar();exit(1);
-	}
+	infil = openRead(src);	
 	source_size = get_file_size(infil);
 
 	uint64_t total_size = get_file_size(infil);
 	int pair_table_pos;
 	if (pass == 2) {		
-		err = _wfopen_s(&utfil, dest, L"wb");
-		if (err != 0) {
-			wprintf(L"\nTwo byte pack: Hittade inte utfil!%s", dest); getchar(); exit(1);
-		}
+		utfil = openWrite(dest);
+		
 		// start compression!
 
 		pair_table_pos = create_two_byte_table();
-
 
 		//write the metadata table
 		for (int i = 0; i < pair_table_pos; i++) {
