@@ -348,15 +348,15 @@ void test16() {
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 228;
+	profile.offset_pages = 229;
 	profile.seqlen_pages = 210;
 	profile.rle_ratio = 90;
-	profile.twobyte_ratio = 86;
+	profile.twobyte_ratio = 87;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 22;
+	profile.recursive_limit = 14;
 	profile.twobyte_threshold_max = 1180;
-	profile.twobyte_threshold_divide = 529;
-	profile.twobyte_threshold_min = 81;
+	profile.twobyte_threshold_divide = 530;
+	profile.twobyte_threshold_min = 37;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);

@@ -7,6 +7,8 @@
 #include "common_tools.h"
 #include "multi_packer.h"
 #include "packer_commons.h"
+#include "Two_byte_packer.h"
+#include "Two_byte_unpacker.h"
 #include "RLE_packer_advanced.h"
 //#include "huffman2.h"
 #include "canonical.h"
@@ -319,9 +321,9 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 			}	
 		}		
 		if (!isKthBitSet(pack_type, 0)) {
-			profile.twobyte_threshold_max = 500;
+			profile.twobyte_threshold_max = 55;
 			profile.twobyte_threshold_divide = 1000;
-			profile.twobyte_threshold_min = 50;
+			profile.twobyte_threshold_min = 45;
 			profile.twobyte_ratio = 100;
 			got_smaller = TwoBytePackAndTest(main_name, profile);
 			if (got_smaller) {

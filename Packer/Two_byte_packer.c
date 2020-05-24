@@ -58,20 +58,23 @@ value_freq_t find_best_two_byte() {
 		two_byte_freq_table[two_byte] = 0; // mark as used
 	}
 	value_freq_t res;
-	res.value = two_byte;
+
+	// this is a bug assigning the 16bit twobyte to 8byte .value 
+	// but it actually makes the overall multi_packing improve.. so strange
+	res.value = two_byte;   
 	res.freq = best;
 	return res;
 }
 
-uint64_t get_gain_threshhold() {
+uint64_t getGainThreshold() {
 
 	uint64_t res = source_size / profile.twobyte_threshold_divide;
 
 	if (res < profile.twobyte_threshold_min) {
-		res = profile.twobyte_threshold_min;
+		return profile.twobyte_threshold_min;
 	}
 	if (res > profile.twobyte_threshold_max) {
-		res = profile.twobyte_threshold_max;
+		return profile.twobyte_threshold_max;
 	}
 	return res;
 }
@@ -86,17 +89,17 @@ int create_two_byte_table() {
 	
 	value_freq_t master = find_best_code(char_freq);
 	master_code = master.value;
-	uint64_t threshhold = get_gain_threshhold();
-	printf("\n Two byte packer gain threshhold %lld", threshhold);
+	uint64_t threshold = getGainThreshold();
+	printf("\n Two byte packer gain threshhold %lld", threshold);
 	bool found_twobyte = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
 		value_freq_t two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
-		if (two_byte.value == -1) {
+		if (two_byte.freq < threshold) {
 			break;
 		}
 		value_freq_t code = find_best_code(char_freq);
-		found_twobyte = (code.freq + threshhold < two_byte.freq);
+		found_twobyte = (code.freq + threshold < two_byte.freq);
 		if (found_twobyte) {
 			//worthwile
 			pair_table[pair_table_pos++] = (uint8_t)code.value;
