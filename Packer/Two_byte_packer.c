@@ -159,28 +159,25 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 
 
 
-void two_byte_pack_internal(const char* src, const char* dest, int pass) {
+void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 
 	debug("\nTwo-byte pack pass=%d", pass);
 
 	buffer_startpos = 0;
 	buffer_min = 20;
 
-	infil = fopen(src, "rb");
-	if (!infil) {
-		printf("Hittade inte infil: %s", src);
-		getchar();
-		exit(1);
+	errno_t err = _wfopen_s(&infil, src, L"rb");
+	if (err != 0) {
+		wprintf(L"\nTwo byte pack: hittade inte infil: %s", src);getchar();exit(1);
 	}
 	source_size = get_file_size(infil);
 
-
 	uint64_t total_size = get_file_size(infil);
 	int pair_table_pos;
-	if (pass == 2) {
-		fopen_s(&utfil, dest, "wb");
-		if (!utfil) {
-			printf("\nHittade inte utfil!%s", dest); getchar(); exit(1);
+	if (pass == 2) {		
+		err = _wfopen_s(&utfil, dest, L"wb");
+		if (err != 0) {
+			wprintf(L"\nTwo byte pack: Hittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
 
@@ -251,13 +248,21 @@ void two_byte_pack_internal(const char* src, const char* dest, int pass) {
 }
 
 
-void two_byte_pack(const char* src, const char* dest, packProfile_t prof)
+void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile_t prof)
 {
 	profile = prof;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	two_byte_pack_internal(src, dest, 1); //analyse and build meta-data
 	two_byte_pack_internal(src, dest, 2); //pack
 	free(buffer);
+}
+
+
+void two_byte_pack(const char* src, const char* dest, packProfile_t prof) {
+	wchar_t d[500], s[500];
+	toUni(d, dest);
+	toUni(s, src);
+	two_byte_packw(s, d, prof);
 }
 
 

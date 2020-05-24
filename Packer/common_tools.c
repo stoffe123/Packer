@@ -11,6 +11,7 @@
 #include "common_tools.h"
 
 #define TEMP_DIR "c:/test/temp_files/"
+#define TEMP_DIRW L"c:/test/temp_files/"
 
 //Global for all threads
 uint64_t filename_count = 1000000;
@@ -78,13 +79,29 @@ void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_c
 	fclose(out);
 }
 
-void copy_chunkw(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy) {
+FILE* openWrite(const wchar_t* filename) {
 	FILE* out;
-	errno_t err = _wfopen_s(&out, dest_filename, L"wb");
+	errno_t err = _wfopen_s(&out, filename, L"wb");
 	if (err != 0) {
-		wprintf(L"\n copy_chunkw couldn't open file %s", dest_filename);
+		wprintf(L"\n Common_tools.c : can't create outfile %s", filename);
 		exit(1);
 	}
+	return out;
+}
+
+FILE* openRead(const wchar_t* filename) {
+	FILE* in;
+	errno_t err = _wfopen_s(&in, filename, L"rb");
+	if (err != 0) {
+		wprintf(L"\n Common_tools.c : can't find infile %s", filename);
+		exit(1);
+	}
+	return in;
+}
+
+void copy_chunkw(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy) {
+	FILE* out = openWrite(dest_filename);
+	
 	uint8_t ch;
 	for (int i = 0; i < size_to_copy; i++) {
 		size_t bytes_got = fread(&ch, 1, 1, source_file);
@@ -123,8 +140,7 @@ void append_to_file(FILE* main_file, const char* append_filename) {
 
 void append_to_filew(FILE* main_file, wchar_t* append_filename) {
 	wprintf(L"\n append_to_filew: %s", append_filename);
-	FILE* append_file; 	
-	errno_t err = _wfopen_s(&append_file, append_filename, L"rb");
+	FILE* append_file = openRead(append_filename); 		
 	int ch;
 	while ((ch = fgetc(append_file)) != EOF) {
 		fputc(ch, main_file);
@@ -162,10 +178,22 @@ void get_rand(const char* s) {
 	int_to_string(s, filename_count++);
 }
 
+void get_randw(const wchar_t* s) {
+	int_to_stringw(s, filename_count++);
+}
+
+
+
 void get_temp_file2(const char* dst, const char* s) {
 	char number[40] = { 0 };
 	get_rand(number);
 	concat3(dst, TEMP_DIR, s, number);
+}
+
+void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
+	wchar_t number[40] = { 0 };
+	get_randw(number);
+	concat3w(dst, TEMP_DIRW, s, number);
 }
 
 void get_clock_dir(const char* dir) {
@@ -227,37 +255,26 @@ void int_to_stringw(const wchar_t* s, int64_t i) {
 	_itow(i, s, 10);
 }
 
-wchar_t* toUnicode(const char* string) {	
-	wchar_t* wstring[500] = { 0 };
-	MultiByteToWideChar(CP_ACP, 0, string, -1, wstring, 500);	
-	return wstring;
+void toUni(const wchar_t* dst, const char* str) {	
+	MultiByteToWideChar(CP_ACP, 0, str, -1, dst, 500);	
 }
 
-bool files_equal(const char* source_filename, const char* dest_filename) {
-	return files_equalw(toUnicode(source_filename), toUnicode(dest_filename));
+bool files_equal(const char* f1, const char* f2) {
+	wchar_t u1[500], u2[500];
+	toUni(u1, f1);
+	toUni(u2, f2);
+	return files_equalw(u1,u2);
 }
 
-bool files_equalw( wchar_t* source_filename,  wchar_t* dest_filename) {
-	FILE* f1, * f2;
+bool files_equalw( wchar_t* name1,  wchar_t* name2) {
+	FILE* f1 = openRead(name1);	
+	FILE* f2 = openRead(name2);
 
-	errno_t err = _wfopen_s(&f1, source_filename, L"rb");
-	if (err != 0) {
-		wprintf(L"\n files_equalw: Hittade inte fil1: '%s'\n", source_filename);
-		getchar();
-		exit(1);
-	}
-
-	err = _wfopen_s(&f2, dest_filename, L"rb");
-	if (err != 0) {
-		wprintf(L"\n files_equalw: Hittade inte file2: '%s'\n", dest_filename);
-		getchar();
-		exit(1);
-	}
 	long f1_size = get_file_size(f1);
 	long f2_size = get_file_size(f2);
 	int res = 1;
 	if (f1_size != f2_size) {
-		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", source_filename, dest_filename);
+		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
 		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
 		res = 0;
 	}

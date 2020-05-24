@@ -147,7 +147,6 @@ void testmeta() {
 	seqlenProfile.twobyte_threshold_divide = 1000;
 	seqlenProfile.twobyte_threshold_min = 50;
 
-
 	//offsets
 	profile.offset_pages = 105;
 	profile.seqlen_pages = 57;
@@ -294,27 +293,17 @@ void onefile() {
 
 	//seq_pack_separate(src, "c:/test/", 219, 2);
 	//seq_pack(src, packed_name, 219, 2);
-	seq_pack(src, packed_name, 228, 210);
+	two_byte_pack(src, packed_name, profile);
 
 	int pack_time = (clock() - cl);
-	//printf("\n Packing finished time it took: %d", pack_time);
-	/*
-	long long size_packed = get_file_size_from_name(packed_name);
-
-	printf("\nLength of packed: %d", size_packed);
-
-	printf("  (%f)", (double)size_packed / (double)size_org);
-
-	acc_size_packed += size_packed;
-		*/
-
+		
 	acc_size_org += size_org;
 	//printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 	cl = clock();
 
 
 	//seq_unpack_separate("c:/test/main", dst, "c:/test/");
-	seq_unpack(packed_name, unpacked_finished);
+	two_byte_unpack(packed_name, unpacked_finished);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -342,17 +331,15 @@ void test16() {
 		L"repeatchar.txt",
 		L"bad.cdg",
 		L"did.csh",
-		L"rel.pdf",
-		L"tob.pdf",
+		L"rel.pdf",		
 		L"nex.doc",
 		L"amb.dll",
-		L"pazera.exe",
-		L"voc.wav", 	
 		L"bad.mp3",
-		L"aft.htm"
-		
+		L"aft.htm",
+		L"pazera.exe",
+		L"tob.pdf",
+		L"voc.wav"	
 	};
-
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
@@ -382,7 +369,7 @@ void test16() {
 		int before_suite = clock();
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 16; kk++)
+		for (; kk < 13; kk++)
 		{
 			const wchar_t src[200] = { 0 };
 			concatw(src, L"C:/test/test16/", test_filenames[kk]);
@@ -466,9 +453,9 @@ void testarchive() {
 	profile.twobyte_ratio = 73;
 	profile.seq_ratio = 100;
 	profile.recursive_limit = 79;
-	profile.twobyte_threshold_max = 1651;
-	profile.twobyte_threshold_divide = 926;
-	profile.twobyte_threshold_min = 49;
+	profile.twobyte_threshold_max = 1180;
+	profile.twobyte_threshold_divide = 529;
+	profile.twobyte_threshold_min = 81;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
@@ -531,8 +518,8 @@ int main()
 	srand((unsigned)time(&t));
 
 	//testmeta();
-	test16();
-	//testarchive();
+	//test16();
+	testarchive();
 	//onefile();
 }
 

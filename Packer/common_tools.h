@@ -62,7 +62,11 @@ void int_to_stringw(const wchar_t* dst, int64_t i);
 
 void get_rand(const char* dst);
 
+void get_randw(const wchar_t* dst);
+
 void get_temp_file2(const char* dst, const char* s);
+
+void get_temp_filew(const wchar_t* dst, const wchar_t* s);
 
 void get_clock_dir(const char* dst);
 
@@ -70,6 +74,10 @@ bool files_equal(const char* source_filename, const char* dest_filename);
 
 bool files_equalw(wchar_t* source_filename, wchar_t* dest_filename);
 
-wchar_t* toUnicode(const char* string);
+void toUni(const wchar_t* dst, const char* string);
+
+FILE* openWrite(const wchar_t* filename);
+
+FILE* openRead(const wchar_t* filename);
 
 #endif

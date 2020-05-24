@@ -115,7 +115,7 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 
 bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 
-	char tmp[100] = { 0 };
+	const char* tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobyted");
 	two_byte_pack(src, tmp, profile);		
 	bool compression_success = testPack(src, tmp, "Two byte", profile.twobyte_ratio);
@@ -267,14 +267,11 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		char main_rle_packed[100] = { 0 };
 		get_temp_file2(main_rle_packed, "multi.main_rle_packed");
 		RLE_advanced_pack(main_name, main_rle_packed);
+		uint64_t meta_size = get_file_size_from_name(offsets_name) +
+			get_file_size_from_name(seqlens_name);
+		uint64_t size_after_seqpack = meta_size + get_file_size_from_name(main_name);
 
-		uint64_t size_after_seqpack = get_file_size_from_name(offsets_name) +
-			get_file_size_from_name(seqlens_name) +
-			get_file_size_from_name(main_name);
-
-		uint64_t size_after_seq_and_rle = get_file_size_from_name(offsets_name) +
-			get_file_size_from_name(seqlens_name) +
-			get_file_size_from_name(main_rle_packed);
+		uint64_t size_after_seq_and_rle = meta_size + get_file_size_from_name(offsets_name);
 
 		double seqPackRatio = ((double)size_after_seqpack) /
 			((double)before_seqpack_size);
@@ -318,6 +315,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 						pack_type = setKthBit(pack_type, 4);
 					}
 				}
+				//no use try RLE advanced here gave no improvement
 			}
 
 			profile.twobyte_threshold_max = 500;

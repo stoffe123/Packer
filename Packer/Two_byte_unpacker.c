@@ -27,19 +27,19 @@ int get_two_byte_for_code(unsigned char code) {
 
 //--------------------------------------------------------------------------------------------------------
 
-void two_byte_unpack_internal(const char* src, const char* dest) {
+void two_byte_unpack_internal(const wchar_t* src, const wchar_t* dest) {
 
-	printf("\nTwo-byte unpack of %s", src);
+	wprintf(L"\nTwo-byte unpack of %s", src);
 
-	fopen_s(&infil, src, "rb");
-	if (!infil) {
-		printf("\nHittade inte utfil: %s", src);
+	errno_t err = _wfopen_s(&infil, src, L"rb");
+	if (err != 0) {
+		wprintf(L"\nTwo byte unpack: Hittade inte infil: %s", src);
 		getchar();
 		exit(1);
 	}
-	fopen_s(&utfil, dest, "wb");
-	if (!utfil) {
-		printf("\nHittade inte utfil! %s", dest);
+	err = _wfopen_s(&utfil, dest, L"wb");
+	if (err != 0) {
+		wprintf(L"\nTwo byte unpack: Hittade inte utfil! %s", dest);
 		getchar();
 		exit(1);
 	}
@@ -72,10 +72,16 @@ void two_byte_unpack_internal(const char* src, const char* dest) {
 	fclose(infil);
 }
 
+void two_byte_unpack(const char* src, const char* dest) {	
+	wchar_t d[500], s[500];
+	toUni(d, dest);
+	toUni(s, src);
+	two_byte_unpack_internal(s, d);
+}
 
-void two_byte_unpack(const char* src, const char* dest)
+void two_byte_unpackw(const wchar_t* src, const wchar_t* dest)
 {	
-	two_byte_unpack_internal(src, dest); //analyse and build meta-data	
+	two_byte_unpack_internal(src, dest); 
 }
 
 

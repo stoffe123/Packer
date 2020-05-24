@@ -120,12 +120,12 @@ uint64_t countDirectoryFiles(const wchar_t* sDir)
 
 	return count;
 }
-void archiveTar(char* dir, const char* dest) {
+void archiveTar(wchar_t* dir, const wchar_t* dest) {
 
 	uint32_t count = countDirectoryFiles(dir);
 	storeDirectoryFilenames(dir, count);
 
-	FILE* out = fopen(dest, "wb");
+	FILE* out = openWrite(dest);	
 	fwrite(&count, sizeof(count), 1, out);
 
 	//write sizes
@@ -167,9 +167,9 @@ void archiveTar(char* dir, const char* dest) {
 }
 
 
-void archiveUntar(const char* src, wchar_t* dir) {
+void archiveUntar(const wchar_t* src, wchar_t* dir) {
 
-	FILE* in = fopen(src, "rb");
+	FILE* in = openRead(src);	
 	uint32_t count;
 
 	fread(&count, sizeof(count), 1, in);
@@ -206,19 +206,19 @@ void archiveUntar(const char* src, wchar_t* dir) {
 
 
 void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile_t profile) {
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "archivedest");
+	const wchar_t tmp[100] = { 0 };
+	get_temp_filew(tmp, L"archivedest");
 	archiveTar(dir, tmp);
-	block_pack(toUnicode(tmp), dest, profile);
-	remove(tmp);
+	block_pack(tmp, dest, profile);
+	_wremove(tmp);
 }
 
 void archive_unpack(const wchar_t* src, wchar_t* dir) {
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "archiveunp");
-	block_unpack(src, toUnicode(tmp));
+	const wchar_t tmp[100] = { 0 };
+	get_temp_filew(tmp, L"archiveunp");
+	block_unpack(src, tmp);
 	archiveUntar(tmp, dir);
-	remove(tmp);
+	_wremove(tmp);
 }
 
 
