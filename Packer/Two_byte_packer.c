@@ -19,9 +19,9 @@ buffer_size = 2048, source_size;
 static   unsigned char* buffer;
 
 static   const char* base_dir;
-static   long two_byte_freq_table[65536] = { 0 };
+static   unsigned long two_byte_freq_table[65536] = { 0 };
 static   uint8_t pair_table[2048] = { 0 }, master_code;
-static   uint64_t char_freq[256];
+static   unsigned long char_freq[256];
 static packProfile_t profile;
 
 static void move_buffer(unsigned int steps) {
@@ -45,33 +45,16 @@ static void move_buffer(unsigned int steps) {
 	}
 }
 
-
-static value_freq_t find_best_code() {
-	unsigned char best_code;
-	uint64_t freq = ULONG_MAX;
-	for (unsigned int i = 0; i < 256; i++) {
-		if (char_freq[i] < freq) {
-			freq = char_freq[i];
-			best_code = i;
-		}
-	}
-	char_freq[best_code] = ULONG_MAX; // mark it as used!
-	value_freq_t res;
-	res.value = best_code;
-	res.freq = freq;
-	return res;
-}
-
 value_freq_t find_best_two_byte() {
-	long best = 0;
-	int two_byte = -1;
+	unsigned long best = 0;
+	uint64_t two_byte = 0;
 	for (unsigned int i = 0; i < 65536; i++) {
 		if (two_byte_freq_table[i] > best) {
 			best = two_byte_freq_table[i];
 			two_byte = i;
 		}
 	}
-	if (two_byte >= 0) {
+	if (best > 0) {
 		two_byte_freq_table[two_byte] = 0; // mark as used
 	}
 	value_freq_t res;
@@ -80,7 +63,7 @@ value_freq_t find_best_two_byte() {
 	return res;
 }
 
-int get_gain_threshhold() {
+uint64_t get_gain_threshhold() {
 
 	uint64_t res = source_size / profile.twobyte_threshold_divide;
 
@@ -97,14 +80,14 @@ int create_two_byte_table() {
 	debug("\n creating two_byte_table \n");
 
 	// extract one code to use with seqpack later
-	if (profile.twobyte_threshold_max > 0) {
-		find_best_code();
+	if (profile.twobyte_ratio != 100) {
+		find_best_code(char_freq);
 	}
-
-	value_freq_t master = find_best_code();
+	
+	value_freq_t master = find_best_code(char_freq);
 	master_code = master.value;
-	int threshhold = get_gain_threshhold();
-	printf("\n Two byte packer gain threshhold %d", threshhold);
+	uint64_t threshhold = get_gain_threshhold();
+	printf("\n Two byte packer gain threshhold %lld", threshhold);
 	bool found_twobyte = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
@@ -112,14 +95,14 @@ int create_two_byte_table() {
 		if (two_byte.value == -1) {
 			break;
 		}
-		value_freq_t code = find_best_code();
+		value_freq_t code = find_best_code(char_freq);
 		found_twobyte = (code.freq + threshhold < two_byte.freq);
 		if (found_twobyte) {
 			//worthwile
 			pair_table[pair_table_pos++] = (uint8_t)code.value;
 			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value % 256);
 			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value / 256);
-			debug("\n Code %d for '%c%c' with freq:(%d,%d)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
+			debug("\n Code %lu for '%c%c' with freq:(%lld,%lld)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
 		}
 	} while (found_twobyte);
 

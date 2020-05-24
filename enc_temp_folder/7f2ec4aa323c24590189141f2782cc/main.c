@@ -227,7 +227,7 @@ void testmeta() {
 			}
 			*/
 
-			multi_unpack(packed_name, dst);
+			//multi_unpack(packed_name, dst);
 			//seq_unpack_separate("c:/test/main", dst, "c:/test/");
 
 
@@ -237,14 +237,14 @@ void testmeta() {
 
 
 			printf("\n\n Comparing files!");
-			
+			/*
 			if (files_equal(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
 			else {
 				return 1;
 			}
-			
+			*/
 			earlyBreak = false;
 		}//end for
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);

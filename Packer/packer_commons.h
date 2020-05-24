@@ -5,6 +5,12 @@
 
 static bool DOUBLE_CHECK_PACK = false;
 
+typedef struct val_freq_t {
+	uint64_t value;
+	uint64_t freq;
+} val_freq_t;
+
+
 typedef struct value_freq_t {
 	uint8_t value;
 	uint64_t freq;

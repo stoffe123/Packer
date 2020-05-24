@@ -278,7 +278,7 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 
 		bool seqPacked = seqPackRatio < ((double)profile.seq_ratio / (double)100);
 		
-		printf("\n Seqpacked %s and got ratio %.2f (limit %d)", temp_filename, seqPackRatio, profile.seq_ratio);
+		printf("\n Seqpacked %s and got ratio %.1f (limit %d)", temp_filename, seqPackRatio * 100.0, profile.seq_ratio);
 		char seqpacked_fallback[100] = { 0 };
 		if (seqPacked) {
 			pack_type = setKthBit(pack_type, 7);
@@ -316,8 +316,9 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 					}
 				}
 				//no use try RLE advanced here gave no improvement
-			}
-
+			}	
+		}		
+		if (!isKthBitSet(pack_type, 0)) {
 			profile.twobyte_threshold_max = 500;
 			profile.twobyte_threshold_divide = 1000;
 			profile.twobyte_threshold_min = 50;

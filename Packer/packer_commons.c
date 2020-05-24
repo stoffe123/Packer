@@ -106,9 +106,8 @@ void printProfile(packProfile_t* profile) {
 	printf("\nTwo byte ratio:    %d", profile->twobyte_ratio);
 	printf("\nSeq ratio:         %d", profile->seq_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
-	printf("\nTwobyte threshold max:       %d", profile->twobyte_threshold_max);
-	printf("\nTwobyte threshold divide:    %d", profile->twobyte_threshold_divide);
-	printf("\nTwobyte threshold min:       %d", profile->twobyte_threshold_min);
+	printf("\nTwobyte threshold (max,divide,min): (%d, %d, %d)\n", 
+		profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
 }
 
 void copyProfile(packProfile_t* src, packProfile_t* dst) {
@@ -133,7 +132,7 @@ value_freq_t find_best_code(unsigned long* char_freq) {
 		}
 	}
 
-	printf("\n Found code: %d that occured: %d times.", best_code, freq);
+	//printf("\n Found code: %d that occured: %d times.", best_code, freq);
 
 	char_freq[best_code] = ULONG_MAX; // mark it as used!
 	value_freq_t res;
