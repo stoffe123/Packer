@@ -58,17 +58,7 @@ val_freq_t find_best_two_byte() {
 		two_byte_freq_table[two_byte] = 0; // mark as used
 	}
 	val_freq_t res;
-
-	
-    if (profile.twobyte_ratio < 100) {
-
-		// this is really strange cutting away the highest byte
-	    // but it actually makes the overall multi_packing improve.. so strange
-		res.value = (uint8_t)two_byte;
-	}
-	else {
-		res.value = two_byte;
-	}
+	res.value = two_byte;
 	res.freq = best;
 	return res;
 }

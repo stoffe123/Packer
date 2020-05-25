@@ -252,13 +252,15 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		//try to pack meta files!
 
 		
-		if (before_seqpack_size > 0 && get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
-			
+		if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
+
 			// ---------- Pack the meta files (seqlens/offsets) recursively
 			got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 1);
 			}
+		}
+		if (get_file_size_from_name(offsets_name) > profile.recursive_limit) {
 
 			got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile);
 			if (got_smaller) {

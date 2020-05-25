@@ -94,11 +94,11 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	}
 	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
-	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 10, 100);
+	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 99, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 800);
-	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 4000);
-	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 30, 2000);
-	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 500);
+	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 9000);
+	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 30, 4000);
+	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 1000);
 }
 
 
@@ -328,21 +328,21 @@ void test16() {
 		L"rel.pdf",		
 		
 		L"bad.mp3",
-		L"book.txt",
-		L"book_med.txt",		
-		L"empty.txt",
-		L"onechar.txt",
-		L"oneseq.txt",
-		L"repeatchar.txt",
+		
 		L"bad.cdg",
 		L"did.csh",
 		
 		L"nex.doc",
 		L"amb.dll",
-		
+		L"pazera.exe",
 		L"aft.htm",
-		L"pazera.exe"
-		
+			L"book_med.txt",
+		L"book.txt",
+	
+		L"empty.txt",
+		L"onechar.txt",
+		L"oneseq.txt",
+		L"repeatchar.txt"
 		
 	};
 	
@@ -351,21 +351,21 @@ void test16() {
 	init_taken();
 
 	packProfile_t profile;
-	profile.offset_pages = 229;
-	profile.seqlen_pages = 210;
-	profile.rle_ratio = 90;
-	profile.twobyte_ratio = 87;
+	profile.offset_pages = 239;
+	profile.seqlen_pages = 154;
+	profile.rle_ratio = 87;
+	profile.twobyte_ratio = 81;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 14;
-	profile.twobyte_threshold_max = 1180;
-	profile.twobyte_threshold_divide = 530;
-	profile.twobyte_threshold_min = 37;
+	profile.recursive_limit = 192;
+	profile.twobyte_threshold_max = 7000;
+	profile.twobyte_threshold_divide = 300;
+	profile.twobyte_threshold_min = 3000;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
 	unsigned long long best_size = 0; // 44180557;
-	//while (true) 
+	while (true) 
 	{
 
 		//const char** test_filenames = get_test_filenames();
@@ -416,7 +416,7 @@ void test16() {
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-
+			
 			printf("\n\n Comparing files!");		
 			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -424,6 +424,7 @@ void test16() {
 			else {
 				return 1;
 			}
+		
 		
 			earlyBreak = false;
 		}//end for
@@ -529,3 +530,4 @@ int main()
 	//onefile();
 }
 
+ 
