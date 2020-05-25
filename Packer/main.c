@@ -37,30 +37,6 @@ int fuzz(int i) {
 	return i;
 }
 
-
-int taken[1000];
-int taken_index;
-
-bool is_taken(int x, int y) {
-	for (int i = 0; i < taken_index; i++) {
-		if (taken[i] == x + 256 * y) {
-			return true;
-		}
-	}
-	return false;
-}
-
-void set_taken(int x, int y) {
-	taken[taken_index++] = x + 256 * y;
-}
-
-void init_taken() {
-	for (int i = 0; i < 1000; i++) {
-		taken[i] = 0;
-	}
-	taken_index = 0;
-}
-
 int fuzzVal(int r, int v) {
 	if (rand() % 2 == 0) {
 		r += (rand() % v + 1);
@@ -96,8 +72,8 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
 	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 99, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 800);
-	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 9000);
-	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 30, 4000);
+	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 13000);
+	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 3000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 1000);
 }
 
@@ -132,7 +108,6 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 }
 
 void testmeta() {
-	init_taken();
 
 	packProfile_t profile, bestProfile, seqlenProfile;
 
@@ -348,17 +323,15 @@ void test16() {
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
-	init_taken();
-
 	packProfile_t profile;
-	profile.offset_pages = 239;
-	profile.seqlen_pages = 154;
-	profile.rle_ratio = 87;
-	profile.twobyte_ratio = 81;
+	profile.offset_pages = 238;
+	profile.seqlen_pages = 156;
+	profile.rle_ratio = 84;
+	profile.twobyte_ratio = 89;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 192;
-	profile.twobyte_threshold_max = 7000;
-	profile.twobyte_threshold_divide = 300;
+	profile.recursive_limit = 136;
+	profile.twobyte_threshold_max = 8455;
+	profile.twobyte_threshold_divide = 104;
 	profile.twobyte_threshold_min = 3150;
 
 	packProfile_t bestProfile;
@@ -410,13 +383,13 @@ void test16() {
 
 			cl = clock();
 
-			//block_unpack(packed_name, dst);
+			block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");
 
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-			/*
+			
 			printf("\n\n Comparing files!");		
 			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -424,7 +397,6 @@ void test16() {
 			else {
 				return 1;
 			}
-			*/
 		
 			earlyBreak = false;
 		}//end for

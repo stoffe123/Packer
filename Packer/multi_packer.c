@@ -97,26 +97,17 @@ void my_rename(const char* f_old, const char* f_new) {
 }
 
 bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
-
 	RLE_simple_pack(src, dst);
-	int size_org = get_file_size_from_name(src);
-	int size_packed = get_file_size_from_name(dst);
-
-	double packed_ratio = (double)size_packed / (double)size_org;
-	double RLE_limit = (double)ratio / 100.0;
-	printf("\n ratio with RLE simple  %f (limit %f)", packed_ratio, RLE_limit);
-
-	bool compression_success = (packed_ratio < RLE_limit);
+	bool compression_success = testPack(src, dst, "RLE simple", ratio);
 	if (!compression_success) {
 		remove(dst);
-		copy_file(src, dst);
+		copy_file(src, dst);//src has to remain!
 	}
 	return compression_success;
 }
 
 
 bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
-
 	const char* tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobyted");
 	two_byte_pack(src, tmp, profile);		
@@ -124,7 +115,6 @@ bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 	if (compression_success) {
 
 		if (DOUBLE_CHECK_PACK) {
-			//test if compression worked!
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_maksure2bytre");
 			two_byte_unpack(tmp, tmp2);
