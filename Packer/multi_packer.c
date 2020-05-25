@@ -223,7 +223,6 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		char base_dir[100] = { 0 };
 		get_clock_dir(base_dir);
 		got_smaller = TwoBytePackAndTest(temp_filename, profile);
-		//got_smaller = false;
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 6);
 		}
@@ -296,39 +295,33 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		uint64_t size_before_canonical = get_file_size_from_name(main_name);
 		CanonicalEncode(main_name, canonicalled);
 		uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
-		if (size_after_canonical < size_before_canonical) 
+		if (size_after_canonical < size_before_canonical) {
 			if (seqPacked ||
-	          (!seqPacked && size_after_canonical < math_min(size_after_seq_and_rle, size_after_seqpack))) {
-			pack_type = setKthBit(pack_type, 0);			
-			my_rename(canonicalled, main_name);
-		}
-		else { // Canonical didn't work
-
-			if (!seqPacked) {
-				if (seqPackRatio < 1) {
-					printf("\n ** regret myself since huffman failed/was worse than seqpack, take back seqpack w ratio %f", seqPackRatio);
-					pack_type = setKthBit(pack_type, 7);
-					seqPacked = true;
-					if (size_after_seq_and_rle >= size_after_seqpack) {
-						my_rename(seqpacked_fallback, main_name);
-					}
-					else {
-						my_rename(main_rle_packed, main_name);
-						pack_type = setKthBit(pack_type, 4);
-					}
-				}
-				//no use try RLE advanced here gave no improvement
-			}	
-		}		
-		if (!isKthBitSet(pack_type, 0)) {
-			profile.twobyte_threshold_max = 55;
-			profile.twobyte_threshold_divide = 1000;
-			profile.twobyte_threshold_min = 45;
-			profile.twobyte_ratio = 100;
-			got_smaller = TwoBytePackAndTest(main_name, profile);
-			if (got_smaller) {
-				pack_type = setKthBit(pack_type, 3);
+				(!seqPacked && size_after_canonical < math_min(size_after_seq_and_rle, size_after_seqpack))) {
+				pack_type = setKthBit(pack_type, 0);
+				my_rename(canonicalled, main_name);
 			}
+			else { // Canonical didn't work
+
+				if (!seqPacked) {
+					if (seqPackRatio < 1) {
+						printf("\n ** regret myself since huffman failed/was worse than seqpack, take back seqpack w ratio %f", seqPackRatio);
+						pack_type = setKthBit(pack_type, 7);
+						seqPacked = true;
+						if (size_after_seq_and_rle >= size_after_seqpack) {
+							my_rename(seqpacked_fallback, main_name);
+						}
+						else {
+							my_rename(main_rle_packed, main_name);
+							pack_type = setKthBit(pack_type, 4);
+						}
+					}
+					//no use try RLE advanced here gave no improvement
+				}
+			}
+		}
+		if (!isKthBitSet(pack_type, 0)) {
+			//two byte packing here just made compression worse.. not sure why...
 		}
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 		size_after_seqpack = get_file_size_from_name(main_name) +

@@ -115,6 +115,9 @@ void copy_chunkw(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_cop
 
 void copy_the_rest(FILE* in, const char* dest_filename) {
 	FILE* out = fopen(dest_filename, "wb");
+	if (out == NULL) {
+		printf("\n Common_tools.c : can't find dest %s", dest_filename); exit(0);
+	}
 	uint8_t ch;
 	while (fread(&ch, 1, 1, in) == 1) {
 		fwrite(&ch, 1, 1, out);

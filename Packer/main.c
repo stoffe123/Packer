@@ -259,7 +259,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/book_med.txt";
+	const char* src = "c:/test/before_twobyte5";
 	const char* unpacked_finished = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -274,7 +274,7 @@ void onefile() {
 	profile.offset_pages = 219;
 	profile.seqlen_pages = 2;
 	profile.rle_ratio = 63;
-	profile.twobyte_ratio = 83;
+	profile.twobyte_ratio = 100;
 	profile.seq_ratio = 82;
 	profile.recursive_limit = 230;
 	profile.twobyte_threshold_max = 15;
@@ -324,7 +324,10 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = {
+	wchar_t test_filenames[16][100] = { L"tob.pdf", L"voc.wav",
+		L"rel.pdf",		
+		
+		L"bad.mp3",
 		L"book.txt",
 		L"book_med.txt",		
 		L"empty.txt",
@@ -333,14 +336,14 @@ void test16() {
 		L"repeatchar.txt",
 		L"bad.cdg",
 		L"did.csh",
-		L"rel.pdf",		
+		
 		L"nex.doc",
 		L"amb.dll",
-		L"bad.mp3",
+		
 		L"aft.htm",
-		L"pazera.exe",
-		L"tob.pdf",
-		L"voc.wav"	
+		L"pazera.exe"
+		
+		
 	};
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
@@ -362,7 +365,8 @@ void test16() {
 	copyProfile(&profile, &bestProfile);
 
 	unsigned long long best_size = 0; // 44180557;
-	while (true) {
+	//while (true) 
+	{
 
 		//const char** test_filenames = get_test_filenames();
 		unsigned long long acc_size_packed = 0,
@@ -413,9 +417,7 @@ void test16() {
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-			printf("\n\n Comparing files!");
-
-			
+			printf("\n\n Comparing files!");		
 			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}

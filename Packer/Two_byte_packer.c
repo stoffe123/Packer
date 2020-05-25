@@ -45,7 +45,7 @@ static void move_buffer(unsigned int steps) {
 	}
 }
 
-value_freq_t find_best_two_byte() {
+val_freq_t find_best_two_byte() {
 	unsigned long best = 0;
 	uint64_t two_byte = 0;
 	for (unsigned int i = 0; i < 65536; i++) {
@@ -57,11 +57,18 @@ value_freq_t find_best_two_byte() {
 	if (best > 0) {
 		two_byte_freq_table[two_byte] = 0; // mark as used
 	}
-	value_freq_t res;
+	val_freq_t res;
 
-	// this is a bug assigning the 16bit twobyte to 8byte .value 
-	// but it actually makes the overall multi_packing improve.. so strange
-	res.value = two_byte;   
+	
+    if (profile.twobyte_ratio < 100) {
+
+		// this is really strange cutting away the highest byte
+	    // but it actually makes the overall multi_packing improve.. so strange
+		res.value = (uint8_t)two_byte;
+	}
+	else {
+		res.value = two_byte;
+	}
 	res.freq = best;
 	return res;
 }
@@ -94,7 +101,7 @@ int create_two_byte_table() {
 	bool found_twobyte = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
-		value_freq_t two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
+		val_freq_t two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
 		if (two_byte.freq < threshold) {
 			break;
 		}
