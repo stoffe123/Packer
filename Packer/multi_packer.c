@@ -311,9 +311,18 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 				//no use try RLE advanced here gave no improvement
 			}
 		}
-		//if (!isKthBitSet(pack_type, 0)) {
-			//two byte packing here just made compression worse.. not sure why...
-		//}
+		if (!isKthBitSet(pack_type, 0)) {
+
+			packProfile_t lastTwoByteProfile;
+			lastTwoByteProfile.twobyte_ratio = 95;
+			lastTwoByteProfile.twobyte_threshold_max = 5000;
+			lastTwoByteProfile.twobyte_threshold_divide = 100;
+			lastTwoByteProfile.twobyte_threshold_min = 50;
+			got_smaller = TwoBytePackAndTest(main_name, lastTwoByteProfile);
+			if (got_smaller) {
+				pack_type = setKthBit(pack_type, 3);
+			}
+		}
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 		size_after_seqpack = get_file_size_from_name(main_name) +
 			(seqPacked ? get_file_size_from_name(offsets_name) +

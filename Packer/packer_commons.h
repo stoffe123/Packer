@@ -46,4 +46,6 @@ bool MultiPackAndTest(const char* src, packProfile_t profile,
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
+packProfile_t getPackProfile(int o, int s);
+
 #endif

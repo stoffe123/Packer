@@ -110,6 +110,20 @@ void printProfile(packProfile_t* profile) {
 		profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
 }
 
+packProfile_t getPackProfile(int o, int s) {
+	packProfile_t profile;
+	profile.offset_pages = o;
+	profile.seqlen_pages = s;
+	profile.rle_ratio = 84;
+	profile.twobyte_ratio = 89;
+	profile.seq_ratio = 100;
+	profile.recursive_limit = 136;
+	profile.twobyte_threshold_max = 10581;
+	profile.twobyte_threshold_divide = 27;
+	profile.twobyte_threshold_min = 3150;
+	return profile;
+}
+
 void copyProfile(packProfile_t* src, packProfile_t* dst) {
 	dst->offset_pages = src->offset_pages;
 	dst->seqlen_pages = src->seqlen_pages;
