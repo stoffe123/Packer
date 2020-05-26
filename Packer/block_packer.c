@@ -51,27 +51,26 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile_t profile) {
 		const char tmp2[100] = { 0 };
 		get_temp_file2(tmp2, "block_multipacked");
 
-		packProfile_t seqlenProfile;
-		seqlenProfile.offset_pages = 220;
-		seqlenProfile.seqlen_pages = 2;
-		seqlenProfile.rle_ratio = 82;
-		seqlenProfile.twobyte_ratio = 85;
+		packProfile_t seqlenProfile, offsetProfile;
+		seqlenProfile.offset_pages = 131;
+		seqlenProfile.seqlen_pages = 136;
+		seqlenProfile.rle_ratio = 52;
+		seqlenProfile.twobyte_ratio = 83;
 		seqlenProfile.seq_ratio = 68;
-		seqlenProfile.recursive_limit = 161;
-		seqlenProfile.twobyte_threshold_max = 596;
-		seqlenProfile.twobyte_threshold_divide = 1000;
-		seqlenProfile.twobyte_threshold_min = 50;
-		
-		packProfile_t offsetProfile;
-		offsetProfile.offset_pages = 105;
-		offsetProfile.seqlen_pages = 55;
-		offsetProfile.rle_ratio = 80;
-		offsetProfile.twobyte_ratio = 87;
-		offsetProfile.seq_ratio = 94;
-		offsetProfile.recursive_limit = 49;
-		offsetProfile.twobyte_threshold_max = 861;
-		offsetProfile.twobyte_threshold_divide = 1183;
-		offsetProfile.twobyte_threshold_min = 50;
+		seqlenProfile.recursive_limit = 443;
+		seqlenProfile.twobyte_threshold_max = 1399;
+		seqlenProfile.twobyte_threshold_divide = 57;
+		seqlenProfile.twobyte_threshold_min = 284;
+
+		offsetProfile.offset_pages = 109;
+		offsetProfile.seqlen_pages = 54;
+		offsetProfile.rle_ratio = 61;
+		offsetProfile.twobyte_ratio = 90;
+		offsetProfile.seq_ratio = 92;
+		offsetProfile.recursive_limit = 47;
+		offsetProfile.twobyte_threshold_max = 3062;
+		offsetProfile.twobyte_threshold_divide = 1367;
+		offsetProfile.twobyte_threshold_min = 898;
 
 
 		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);
