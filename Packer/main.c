@@ -59,7 +59,8 @@ int doFuzz(int r, int best, int min, int max) {
 }
 
 void fuzzProfile(packProfile_t* profile, packProfile_t best) {
-	if (rand() % 3 == 0) {
+	
+	if (rand() % 4 == 0) {
 		profile->offset_pages = rand() % 252;
 		profile->seqlen_pages = rand() % 252;
 	}
@@ -68,10 +69,12 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 		profile->offset_pages = fuzz(best.offset_pages);
 		profile->seqlen_pages = fuzz(best.seqlen_pages);
 	}
+	
 	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
 	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 99, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 800);
+
 	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 13000);
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 3000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 1000);
@@ -107,30 +110,32 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 	return best_size;
 }
 
+//------------------------------------------------------------------------------------------
+
 void testmeta() {
 
-	packProfile_t profile, bestProfile, seqlenProfile;
+	packProfile_t profile, bestProfile, seqlenProfile, offsetProfile;
 
-	seqlenProfile.offset_pages = 220;
-	seqlenProfile.seqlen_pages = 2;
-	seqlenProfile.rle_ratio = 82;
-	seqlenProfile.twobyte_ratio = 80;
-	seqlenProfile.seq_ratio = 68;
-	seqlenProfile.recursive_limit = 161;
-	seqlenProfile.twobyte_threshold_max = 4000;
-	seqlenProfile.twobyte_threshold_divide = 700;
-	seqlenProfile.twobyte_threshold_min = 800;
+	profile.offset_pages = 131;
+	profile.seqlen_pages = 136;
+	profile.rle_ratio = 52;
+	profile.twobyte_ratio = 83;
+	profile.seq_ratio = 68;
+	profile.recursive_limit = 443;
+	profile.twobyte_threshold_max = 1399;
+	profile.twobyte_threshold_divide = 57;
+	profile.twobyte_threshold_min = 284;
 
 	//offsets
-	profile.offset_pages = 109;
-	profile.seqlen_pages = 58;
-	profile.rle_ratio = 67;
-	profile.twobyte_ratio = 80;
-	profile.seq_ratio = 92;
-	profile.recursive_limit = 374;
-	profile.twobyte_threshold_max = 4000;
-	profile.twobyte_threshold_divide = 700;
-	profile.twobyte_threshold_min = 800;
+	offsetProfile.offset_pages = 109;
+	offsetProfile.seqlen_pages = 54;
+	offsetProfile.rle_ratio = 61;
+	offsetProfile.twobyte_ratio = 90;
+	offsetProfile.seq_ratio = 92;
+	offsetProfile.recursive_limit = 47;
+	offsetProfile.twobyte_threshold_max = 3062;
+	offsetProfile.twobyte_threshold_divide = 1367;
+	offsetProfile.twobyte_threshold_min = 898;
 
 	copyProfile(&profile, &bestProfile);
 
@@ -151,7 +156,7 @@ void testmeta() {
 
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/meta/offsets", kk + 1000);
+			concat_int(src, "C:/test/meta/seqlens", kk + 1000);
 
 			const char* dst = "C:/test/unp";
 
@@ -170,7 +175,7 @@ void testmeta() {
 				bool huffman = CanonicalEncodeAndTest(packed_name);
 				*/
 
-			multi_pack(src, packed_name, profile, seqlenProfile, profile);
+			multi_pack(src, packed_name, offsetProfile, profile, profile);
 
 			//seq_pack_separate(src, "c:/test/", 219, 2);
 			//seq_pack(src, packed_name, 219, 2);
@@ -202,7 +207,7 @@ void testmeta() {
 			}
 			*/
 
-			multi_unpack(packed_name, dst);
+			//multi_unpack(packed_name, dst);
 			//seq_unpack_separate("c:/test/main", dst, "c:/test/");
 
 
@@ -210,7 +215,7 @@ void testmeta() {
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-
+			/*
 			printf("\n\n Comparing files!");
 			
 			if (files_equal(src, dst)) {
@@ -219,13 +224,15 @@ void testmeta() {
 			else {
 				return 1;
 			}
-			
+			*/
 			earlyBreak = false;
 		}//end for
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		fuzzProfile(&profile, bestProfile);
 	}
 }//end test_meta
+
+//-------------------------------------------------------------------------------------------
 
 void onefile() {
 
@@ -297,6 +304,8 @@ void onefile() {
 	}
 }//onefile
 
+//---------------------------------------------------------------------------------------
+
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { L"tob.pdf", L"voc.wav",
@@ -330,14 +339,14 @@ void test16() {
 	profile.twobyte_ratio = 89;
 	profile.seq_ratio = 100;
 	profile.recursive_limit = 136;
-	profile.twobyte_threshold_max = 8455;
-	profile.twobyte_threshold_divide = 104;
+	profile.twobyte_threshold_max = 10581;
+	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
 
 	packProfile_t bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 0; // 44180557;
+	unsigned long long best_size = 0; // 44150988;
 	while (true) 
 	{
 
@@ -383,13 +392,14 @@ void test16() {
 
 			cl = clock();
 
-			block_unpack(packed_name, dst);
+			//block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");
 
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 			
+			/*
 			printf("\n\n Comparing files!");		
 			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -397,6 +407,7 @@ void test16() {
 			else {
 				return 1;
 			}
+			*/
 		
 			earlyBreak = false;
 		}//end for
@@ -404,6 +415,8 @@ void test16() {
 		fuzzProfile(&profile, bestProfile);
 	}//end while true
 }//end test suit 16
+
+//-----------------------------------------------------------------------------------------
 
 void testarchive() {
 	wchar_t* test_filenames[16] = {
@@ -501,5 +514,3 @@ int main()
 	//testarchive();
 	//onefile();
 }
-
- 
