@@ -392,14 +392,14 @@ void test16() {
 
 			cl = clock();
 
-			//block_unpack(packed_name, dst);
+			block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");
 
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 			
-			/*
+		
 			printf("\n\n Comparing files!");		
 			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -407,8 +407,7 @@ void test16() {
 			else {
 				return 1;
 			}
-			*/
-		
+	
 			earlyBreak = false;
 		}//end for
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
