@@ -22,7 +22,7 @@ static   const char* base_dir;
 static   unsigned long two_byte_freq_table[65536] = { 0 };
 static   uint8_t pair_table[2048] = { 0 }, master_code;
 static   unsigned long char_freq[256];
-static packProfile_t profile;
+static packProfile profile;
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;
@@ -224,7 +224,7 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 }
 
 
-void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile_t prof)
+void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 {
 	profile = prof;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
@@ -234,7 +234,7 @@ void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile_t prof)
 }
 
 
-void two_byte_pack(const char* src, const char* dest, packProfile_t prof) {
+void two_byte_pack(const char* src, const char* dest, packProfile prof) {
 	wchar_t d[500], s[500];
 	toUni(d, dest);
 	toUni(s, src);

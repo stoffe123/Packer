@@ -21,7 +21,7 @@ append_to_tar(FILE* utfil, char* src) {
 
 //----------------------------------------------------------------------------------------
 
-void block_pack(const wchar_t* src, const wchar_t* dst, packProfile_t profile) {
+void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	uint64_t src_size = get_file_size_from_wname(src);
 
@@ -51,9 +51,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile_t profile) {
 		const char tmp2[100] = { 0 };
 		get_temp_file2(tmp2, "block_multipacked");
 
-		packProfile_t seqlenProfile, offsetProfile;
-		seqlenProfile.offset_pages = 131;
-		seqlenProfile.seqlen_pages = 136;
+		packProfile seqlenProfile = getPackProfile(131, 136);
 		seqlenProfile.rle_ratio = 52;
 		seqlenProfile.twobyte_ratio = 83;
 		seqlenProfile.seq_ratio = 68;
@@ -61,9 +59,12 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile_t profile) {
 		seqlenProfile.twobyte_threshold_max = 1399;
 		seqlenProfile.twobyte_threshold_divide = 57;
 		seqlenProfile.twobyte_threshold_min = 284;
-
-		offsetProfile.offset_pages = 109;
-		offsetProfile.seqlen_pages = 54;
+		seqlenProfile.twobyte2_ratio = 99;
+		seqlenProfile.twobyte2_threshold_max = 4855;
+		seqlenProfile.twobyte2_threshold_divide = 962;
+		seqlenProfile.twobyte2_threshold_min = 26;
+		
+		packProfile offsetProfile = getPackProfile(109, 54);
 		offsetProfile.rle_ratio = 61;
 		offsetProfile.twobyte_ratio = 90;
 		offsetProfile.seq_ratio = 92;
@@ -71,6 +72,10 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile_t profile) {
 		offsetProfile.twobyte_threshold_max = 3062;
 		offsetProfile.twobyte_threshold_divide = 1367;
 		offsetProfile.twobyte_threshold_min = 898;
+		seqlenProfile.twobyte2_ratio = 99;
+		seqlenProfile.twobyte2_threshold_max = 5000;
+		seqlenProfile.twobyte2_threshold_divide = 100;
+		seqlenProfile.twobyte2_threshold_min = 50;
 
 
 		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);

@@ -69,8 +69,8 @@ bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int rat
 	return compression_success;
 }
 
-bool MultiPackAndTest(const char* src, packProfile_t profile,
-	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
+bool MultiPackAndTest(const char* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile) {
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_seqpacked");
 	multi_pack(src, tmp, profile, seqlensProfile, offsetsProfile);	
@@ -99,19 +99,22 @@ bool MultiPackAndTest(const char* src, packProfile_t profile,
 	return compression_success;
 }
 
-void printProfile(packProfile_t* profile) {
+void printProfile(packProfile* profile) {
 	printf("\n");
 	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);
 	printf("\nRLE ratio:         %d", profile->rle_ratio);
-	printf("\nTwo byte ratio:    %d", profile->twobyte_ratio);
+	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
 	printf("\nSeq ratio:         %d", profile->seq_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
-	printf("\nTwobyte threshold (max,divide,min): (%d, %d, %d)\n", 
+	printf("\nTwobyte threshold (max,divide,min): (%d, %d, %d)", 
 		profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
+	printf("\nTwobyte2 ratio:    %d", profile->twobyte2_ratio);
+	printf("\nTwobyte2 threshold (max,divide,min): (%d, %d, %d)\n",
+		profile->twobyte2_threshold_max, profile->twobyte2_threshold_divide, profile->twobyte2_threshold_min);
 }
 
-packProfile_t getPackProfile(int o, int s) {
-	packProfile_t profile;
+packProfile getPackProfile(int o, int s) {
+	packProfile profile;
 	profile.offset_pages = o;
 	profile.seqlen_pages = s;
 	profile.rle_ratio = 84;
@@ -121,10 +124,14 @@ packProfile_t getPackProfile(int o, int s) {
 	profile.twobyte_threshold_max = 10581;
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
+	profile.twobyte2_ratio = 95;
+	profile.twobyte2_threshold_max = 5000;
+	profile.twobyte2_threshold_divide = 100;
+	profile.twobyte2_threshold_min = 50;
 	return profile;
 }
 
-void copyProfile(packProfile_t* src, packProfile_t* dst) {
+void copyProfile(packProfile* src, packProfile* dst) {
 	dst->offset_pages = src->offset_pages;
 	dst->seqlen_pages = src->seqlen_pages;
 	dst->rle_ratio = src->rle_ratio;
@@ -134,6 +141,10 @@ void copyProfile(packProfile_t* src, packProfile_t* dst) {
 	dst->twobyte_threshold_max = src->twobyte_threshold_max;
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
+	dst->twobyte2_ratio = src->twobyte2_ratio;
+	dst->twobyte2_threshold_max = src->twobyte2_threshold_max;
+	dst->twobyte2_threshold_divide = src->twobyte2_threshold_divide;
+	dst->twobyte2_threshold_min = src->twobyte2_threshold_min;
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {

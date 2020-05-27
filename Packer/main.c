@@ -58,8 +58,10 @@ int doFuzz(int r, int best, int min, int max) {
 	return r;
 }
 
-void fuzzProfile(packProfile_t* profile, packProfile_t best) {
-	
+void fuzzProfile(packProfile* profile, packProfile best) {
+	if (rand() % 2 == 0) {
+		return;
+	}
 	if (rand() % 4 == 0) {
 		profile->offset_pages = rand() % 252;
 		profile->seqlen_pages = rand() % 252;
@@ -78,11 +80,16 @@ void fuzzProfile(packProfile_t* profile, packProfile_t best) {
 	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 13000);
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 3000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 1000);
+
+	profile->twobyte2_ratio = doFuzz(profile->twobyte2_ratio, best.twobyte2_ratio, 10, 100);
+	profile->twobyte2_threshold_max = doFuzz(profile->twobyte2_threshold_max, best.twobyte2_threshold_max, 40, 13000);
+	profile->twobyte2_threshold_divide = doFuzz(profile->twobyte2_threshold_divide, best.twobyte2_threshold_divide, 20, 3000);
+	profile->twobyte2_threshold_min = doFuzz(profile->twobyte2_threshold_min, best.twobyte2_threshold_min, 10, 1000);
 }
 
 
 unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned long long acc_size, unsigned long long acc_size_org,
-	unsigned long long best_size, packProfile_t profile, packProfile_t* best) {
+	unsigned long long best_size, packProfile profile, packProfile* best) {
 	if (!earlyBreak) {
 		long total_time = clock() - before_suite;
 		double size_kb = (double)acc_size / (double)1024;
@@ -114,21 +121,25 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 
 void testmeta() {
 
-	packProfile_t profile, bestProfile, seqlenProfile, offsetProfile;
+	
+	
+	packProfile bestProfile, seqlenProfile;
 
-	profile.offset_pages = 131;
-	profile.seqlen_pages = 136;
-	profile.rle_ratio = 52;
-	profile.twobyte_ratio = 83;
+	//seqlen testsuit 236758
+	packProfile profile = getPackProfile(199, 173);
+	profile.rle_ratio = 50;
+	profile.twobyte_ratio = 79;
 	profile.seq_ratio = 68;
-	profile.recursive_limit = 443;
-	profile.twobyte_threshold_max = 1399;
-	profile.twobyte_threshold_divide = 57;
-	profile.twobyte_threshold_min = 284;
+	profile.recursive_limit = 256;
+	profile.twobyte_threshold_max = 1211;
+	profile.twobyte_threshold_divide = 301;
+	profile.twobyte_threshold_min = 286;
+	profile.twobyte2_ratio = 99;
+	profile.twobyte2_threshold_max = 4855;
+	profile.twobyte2_threshold_divide = 962;
+	profile.twobyte2_threshold_min = 26;
 
-	//offsets
-	offsetProfile.offset_pages = 109;
-	offsetProfile.seqlen_pages = 54;
+	packProfile offsetProfile = getPackProfile(109, 54);
 	offsetProfile.rle_ratio = 61;
 	offsetProfile.twobyte_ratio = 90;
 	offsetProfile.seq_ratio = 92;
@@ -136,6 +147,10 @@ void testmeta() {
 	offsetProfile.twobyte_threshold_max = 3062;
 	offsetProfile.twobyte_threshold_divide = 1367;
 	offsetProfile.twobyte_threshold_min = 898;
+	offsetProfile.twobyte2_ratio = 95;
+	offsetProfile.twobyte2_threshold_max = 5000;
+	offsetProfile.twobyte2_threshold_divide = 100;
+	offsetProfile.twobyte2_threshold_min = 50;
 
 	copyProfile(&profile, &bestProfile);
 
@@ -252,7 +267,7 @@ void onefile() {
 
 	int cl = clock();
 
-	packProfile_t profile, offsetProfile;
+	packProfile profile, offsetProfile;
 	profile.offset_pages = 219;
 	profile.seqlen_pages = 2;
 	profile.rle_ratio = 63;
@@ -332,9 +347,7 @@ void test16() {
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
-	packProfile_t profile;
-	profile.offset_pages = 238;
-	profile.seqlen_pages = 156;
+	packProfile profile = getPackProfile(238, 156);;
 	profile.rle_ratio = 84;
 	profile.twobyte_ratio = 89;
 	profile.seq_ratio = 100;
@@ -342,8 +355,12 @@ void test16() {
 	profile.twobyte_threshold_max = 10581;
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
+	profile.twobyte2_ratio = 95;
+	profile.twobyte2_threshold_max = 5000;
+	profile.twobyte2_threshold_divide = 100;
+	profile.twobyte2_threshold_min = 50;
 
-	packProfile_t bestProfile;
+	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
 
 	unsigned long long best_size = 0; // 44150988;
@@ -437,7 +454,7 @@ void testarchive() {
 		L"pazera.exe"
 	};
 
-	packProfile_t profile;
+	packProfile profile;
 	profile.offset_pages = 221;
 	profile.seqlen_pages = 204;
 	profile.rle_ratio = 85;
@@ -448,7 +465,7 @@ void testarchive() {
 	profile.twobyte_threshold_divide = 529;
 	profile.twobyte_threshold_min = 81;
 
-	packProfile_t bestProfile;
+	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
 	wchar_t* destDir = L"c:/test/archiveunp/";
 	unsigned long long best_size = 0;

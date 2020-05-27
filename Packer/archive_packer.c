@@ -205,7 +205,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 }
 
 
-void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile_t profile) {
+void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"archivedest");
 	archiveTar(dir, tmp);

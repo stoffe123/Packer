@@ -107,7 +107,7 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 }
 
 
-bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
+bool TwoBytePackAndTest(const char* src, packProfile profile) {
 	const char* tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_twobyted");
 	two_byte_pack(src, tmp, profile);		
@@ -133,7 +133,7 @@ bool TwoBytePackAndTest(const char* src, packProfile_t profile) {
 	return compression_success;
 }
 
-bool RLEAdvancedPackAndTest(const char* src, packProfile_t profile) {
+bool RLEAdvancedPackAndTest(const char* src, packProfile profile) {
 	char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_rleadv");
 	RLE_advanced_pack(src, tmp, profile);
@@ -193,8 +193,8 @@ void RLEAdvancedUnpackAndReplace(const char* src) {
 
 //----------------------------------------------------------------------------------------
 
-void multi_pack(const char* src, const char* dst, packProfile_t profile,
-	packProfile_t seqlensProfile, packProfile_t offsetsProfile) {
+void multi_pack(const char* src, const char* dst, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile) {
  
 	printf("\n* Multi pack * %s => %s", src,dst);
 	printProfile(&profile);
@@ -313,12 +313,12 @@ void multi_pack(const char* src, const char* dst, packProfile_t profile,
 		}
 		if (!isKthBitSet(pack_type, 0)) {
 
-			packProfile_t lastTwoByteProfile;
-			lastTwoByteProfile.twobyte_ratio = 95;
-			lastTwoByteProfile.twobyte_threshold_max = 5000;
-			lastTwoByteProfile.twobyte_threshold_divide = 100;
-			lastTwoByteProfile.twobyte_threshold_min = 50;
-			got_smaller = TwoBytePackAndTest(main_name, lastTwoByteProfile);
+			packProfile twobyte2Profile;
+			twobyte2Profile.twobyte_ratio = profile.twobyte2_ratio;
+			twobyte2Profile.twobyte_threshold_max = profile.twobyte2_threshold_max;
+			twobyte2Profile.twobyte_threshold_divide = profile.twobyte2_threshold_divide;
+			twobyte2Profile.twobyte_threshold_min = profile.twobyte2_threshold_min;
+			got_smaller = TwoBytePackAndTest(main_name, twobyte2Profile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 3);
 			}

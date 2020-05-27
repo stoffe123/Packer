@@ -17,7 +17,7 @@ typedef struct value_freq_t {
 } value_freq_t;
 
 
-typedef struct packProfile_t {
+typedef struct packProfile {
 	int seqlen_pages;
 	int offset_pages;
 	int rle_ratio;
@@ -27,13 +27,17 @@ typedef struct packProfile_t {
 	int twobyte_threshold_max;
 	int twobyte_threshold_divide;
 	int twobyte_threshold_min;
-} packProfile_t;
+	int twobyte2_ratio;
+	int twobyte2_threshold_max;
+	int twobyte2_threshold_divide;
+	int twobyte2_threshold_min;
+} packProfile;
 
-void printProfile(packProfile_t*);
+void printProfile(packProfile*);
 
 bool testPack(const char* src, const char* tmp, const char* packerName, int limit);
 
-void copyProfile(packProfile_t*, packProfile_t*);
+void copyProfile(packProfile*, packProfile*);
 
 void CanonicalDecodeAndReplace(const char*);
 
@@ -41,11 +45,11 @@ uint64_t CanonicalEncodeAndTest(const char*);
 
 bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit);
 
-bool MultiPackAndTest(const char* src, packProfile_t profile,
-	packProfile_t seqlensProfile, packProfile_t offsetsProfile);
+bool MultiPackAndTest(const char* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile);
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
-packProfile_t getPackProfile(int o, int s);
+packProfile getPackProfile(int o, int s);
 
 #endif
