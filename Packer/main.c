@@ -347,23 +347,23 @@ void test16() {
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
-	packProfile profile = getPackProfile(238, 156);;
+	packProfile profile = getPackProfile(236, 158);
 	profile.rle_ratio = 84;
-	profile.twobyte_ratio = 89;
+	profile.twobyte_ratio = 94;
 	profile.seq_ratio = 100;
 	profile.recursive_limit = 136;
-	profile.twobyte_threshold_max = 10581;
-	profile.twobyte_threshold_divide = 27;
+	profile.twobyte_threshold_max = 11788;
+	profile.twobyte_threshold_divide = 69;
 	profile.twobyte_threshold_min = 3150;
-	profile.twobyte2_ratio = 95;
+	profile.twobyte2_ratio = 93;
 	profile.twobyte2_threshold_max = 5000;
-	profile.twobyte2_threshold_divide = 100;
-	profile.twobyte2_threshold_min = 50;
+	profile.twobyte2_threshold_divide = 309;
+	profile.twobyte2_threshold_min = 12;
 
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
 
-	unsigned long long best_size = 0; // 44150988;
+	unsigned long long best_size = 0; // 44141186; // (43107 kb)
 	while (true) 
 	{
 
@@ -409,14 +409,14 @@ void test16() {
 
 			cl = clock();
 
-			block_unpack(packed_name, dst);
+			//block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");
 
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 			
-		
+		/*
 			printf("\n\n Comparing files!");		
 			if (files_equalw(src, dst)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -424,6 +424,7 @@ void test16() {
 			else {
 				return 1;
 			}
+			*/
 	
 			earlyBreak = false;
 		}//end for
