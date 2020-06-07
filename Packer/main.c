@@ -390,7 +390,7 @@ void test16() {
 			int cl = clock();
 
 			block_pack(src, packed_name, profile);
-			//seq_pack_separate(src, "c:/test/", offset_pages, seqlen_pages);
+			//seq_pack_separate(src, "c:/test/", profile);
 
 			int pack_time = (clock() - cl);
 			//printf("\n Packing finished time it took: %d", pack_time);

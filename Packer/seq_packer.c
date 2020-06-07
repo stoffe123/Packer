@@ -3,12 +3,12 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "seq_packer.h"
-#include <inttypes.h>
 
-#include "seq_packer_commons.h"
+#include <inttypes.h>
 #include "packer_commons.h"
+#include "seq_packer_commons.h"
 #include "common_tools.h"
+#include "seq_packer.h"
 
 #define VERBOSE false
 
@@ -405,7 +405,9 @@ unsigned char check_pages(pages, size) {
 	return pages;
 }
 
-void seq_pack_internal(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages, bool sep) {
+void seq_pack_internal(const char* source_filename, const char* dest_filename, packProfile profile, bool sep) {
+	unsigned char offset_pages = profile.offset_pages,
+		seqlen_pages = profile.seqlen_pages;
 	long long source_size = get_file_size_from_name(source_filename);
 	printf("\nPages (%d,%d)", offset_pages, seqlen_pages);
 	unsigned char new_offset_pages = check_pages(offset_pages, source_size);
@@ -427,15 +429,15 @@ void seq_pack_internal(const char* source_filename, const char* dest_filename, u
 	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
 }
 
-void seq_pack(const char* source_filename, const char* dest_filename, unsigned char offset_pages, unsigned char seqlen_pages)
+void seq_pack(const char* source_filename, const char* dest_filename, packProfile profile)
 {
-	seq_pack_internal(source_filename, dest_filename, offset_pages, seqlen_pages, false);
+	seq_pack_internal(source_filename, dest_filename, profile, false);
 }
 
-void seq_pack_separate(const char* source_filename, const char* dir, unsigned char offset_pages, unsigned char seqlen_pages) {
+void seq_pack_separate(const char* source_filename, const char* dir, packProfile profile) {
 	base_dir = dir;
 	const char dest_filename[100] = { 0 };
 	concat(dest_filename, base_dir, "main");
-	seq_pack_internal(source_filename, dest_filename, offset_pages, seqlen_pages, true);
+	seq_pack_internal(source_filename, dest_filename, profile, true);
 }
 

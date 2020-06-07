@@ -208,7 +208,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			pack_type = setKthBit(pack_type, 6);
 		}
 		uint64_t before_seqpack_size = get_file_size_from_name(temp_filename);	
-		seq_pack_separate(temp_filename, base_dir, profile.offset_pages, profile.seqlen_pages);
+		seq_pack_separate(temp_filename, base_dir, profile);
 
 		const char seqlens_name[100] = { 0 };
 		const char offsets_name[100] = { 0 };
@@ -226,7 +226,6 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 
 		//try to pack meta files!
 
-		
 		if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
 
 			// ---------- Pack the meta files (seqlens/offsets) recursively
