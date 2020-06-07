@@ -36,14 +36,8 @@ uint64_t CanonicalEncodeAndTest(const char* src) {
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_maksurecanonical");
 			CanonicalDecode(tmp, tmp2);
-			bool sc = files_equal(tmp2, src);
-			if (!sc) {
-				printf("\n\n\n ** Failed to canoical pack: %s", src);
-				exit(1);
-			}
-			remove(tmp2);
+			doDoubleCheck(tmp2, src, "canonical");			
 		}
-
 		remove(src);
 		rename(tmp, src);
 	}
@@ -69,6 +63,15 @@ bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int rat
 	return compression_success;
 }
 
+void doDoubleCheck(const char* tmp2, const char* temp_filename, const char* type) {
+	bool sc = files_equal(tmp2, temp_filename);
+	if (!sc) {
+		printf("\n\n\n ** Failed to %s pack seperate: %s", type, temp_filename);
+		exit(1);
+	}
+	remove(tmp2);
+}
+
 bool MultiPackAndTest(const char* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile) {
 	const char tmp[100] = { 0 };
@@ -78,16 +81,10 @@ bool MultiPackAndTest(const char* src, packProfile profile,
 	if (compression_success) {
 
 		if (DOUBLE_CHECK_PACK) {
-			//test if compression worked!
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_makingsure");
 			multi_unpack(tmp, tmp2);
-			bool sc = files_equal(tmp2, src);
-			if (!sc) {
-				printf("\n\n\n ** Failed to multipack: %s", src);
-				exit(1);
-			}
-			remove(tmp2);
+			doDoubleCheck(tmp2, src, "multi");			
 		}
 
 		remove(src);

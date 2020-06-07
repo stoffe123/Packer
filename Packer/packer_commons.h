@@ -3,7 +3,7 @@
 
 #define BLOCK_SIZE 2110700
 
-static bool DOUBLE_CHECK_PACK = false;
+static bool DOUBLE_CHECK_PACK = true;
 
 typedef struct val_freq_t {
 	uint64_t value;
@@ -51,5 +51,7 @@ bool MultiPackAndTest(const char* src, packProfile profile,
 value_freq_t find_best_code(unsigned long* char_freq);
 
 packProfile getPackProfile(int o, int s);
+
+void doDoubleCheck(const char* tmp2, const char* temp_filename, const char* type);
 
 #endif

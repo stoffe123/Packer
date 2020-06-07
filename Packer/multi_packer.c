@@ -118,12 +118,7 @@ bool TwoBytePackAndTest(const char* src, packProfile profile) {
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_maksure2bytre");
 			two_byte_unpack(tmp, tmp2);
-			bool sc = files_equal(tmp2, src);
-			if (!sc) {
-				printf("\n\n\n ** Failed to two byte pack: %s", src);
-				exit(1);
-			}
-			remove(tmp2);
+			doDoubleCheck(tmp2, src, "twobyte");			
 		}		
 		my_rename(tmp, src);
 	}
@@ -141,16 +136,10 @@ bool RLEAdvancedPackAndTest(const char* src, packProfile profile) {
 	if (compression_success) {
 
 		if (DOUBLE_CHECK_PACK) {
-			//test if compression worked!
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_maksure");
 			RLE_advanced_unpack(tmp, tmp2);
-			bool sc = files_equal(tmp2, src);
-			if (!sc) {
-				printf("\n\n\n ** Failed to RLE advance pack: %s", src);
-				exit(1);
-			}
-			remove(tmp2);
+			doDoubleCheck(tmp2, src, "RLE advance");			
 		}		
 		my_rename(tmp, src);
 	}
@@ -191,6 +180,8 @@ void RLEAdvancedUnpackAndReplace(const char* src) {
 	my_rename(tmp, src);
 }
 
+
+
 //----------------------------------------------------------------------------------------
 
 void multi_pack(const char* src, const char* dst, packProfile profile,
@@ -227,16 +218,10 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		concat(main_name, base_dir, "main");
 
 		if (DOUBLE_CHECK_PACK) {
-			//test if seq_compression worked!
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_maksureseqpack");
 			seq_unpack_separate(main_name, tmp2, base_dir);
-			bool sc = files_equal(tmp2, temp_filename);
-			if (!sc) {
-				printf("\n\n\n ** Failed to seq pack seperate: %s", temp_filename);
-				exit(1);
-			}
-			remove(tmp2);
+			doDoubleCheck(tmp2, temp_filename, "seq");
 		}
 
 		//try to pack meta files!
