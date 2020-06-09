@@ -39,11 +39,7 @@ bool testPack(const char* src, const char* tmp, const char* packerName, int limi
 
 void copyProfile(packProfile*, packProfile*);
 
-void CanonicalDecodeAndReplace(const char*);
-
 uint64_t CanonicalEncodeAndTest(const char*);
-
-bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit);
 
 bool MultiPackAndTest(const char* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile);
@@ -52,6 +48,11 @@ value_freq_t find_best_code(unsigned long* char_freq);
 
 packProfile getPackProfile(int o, int s);
 
-void doDoubleCheck(const char* tmp2, const char* temp_filename, const char* type);
+void doDoubleCheck(const char* src, const char* packedName, const char* kind);
+
+bool packAndTest(const char* kind, const char* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile);
+
+void unpackByKind(const char* kind, const char* tmp, const char* tmp2);
 
 #endif

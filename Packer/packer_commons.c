@@ -4,14 +4,6 @@
 #include "packer_commons.h"
 
 
-void CanonicalDecodeAndReplace(const char* src) {
-	printf("\n Canonical unpacking (in place) %s", src);
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_canonicaldec");
-	CanonicalDecode(src, tmp);	
-	my_rename(tmp, src);
-}
-
 bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
 	uint64_t size_org = get_file_size_from_name(src);
 	uint64_t size_packed = get_file_size_from_name(tmp);
@@ -20,75 +12,105 @@ bool testPack(const char* src, const char* tmp, const char* packerName, int limi
 	return packed_ratio < (double)limit;
 }
 
+void doDoubleCheck2(const char* src, const char* packedName, const char* kind) {
+	if (DOUBLE_CHECK_PACK) {
+		const char tmp[100] = { 0 };
+		get_temp_file2(tmp, kind);
+		unpackByKind(kind, packedName, tmp);
+		doDoubleCheck(tmp, src, kind);
+	}
+	my_rename(packedName, src);
+}
+
+void doDoubleCheck(const char* tmp, const char* src, const char* type) {
+	bool sc = files_equal(tmp, src);
+	if (!sc) {
+		printf("\n\n\n ** Failed to %s pack seperate: %s", type, src);
+		exit(1);
+	}
+	remove(tmp);
+}
+
 uint64_t CanonicalEncodeAndTest(const char* src) {
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_canonicaled");
-	CanonicalEncode(src, tmp);
+	const char packedName[100] = { 0 };
+	get_temp_file2(packedName, "multi_canonicaled");
+	CanonicalEncode(src, packedName);
 	uint64_t size_org = get_file_size_from_name(src);
-	uint64_t size_packed = get_file_size_from_name(tmp);
+	uint64_t size_packed = get_file_size_from_name(packedName);
 	//printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
 	bool compression_success = (size_packed < size_org);
 	if (compression_success) {
 		
-		if (DOUBLE_CHECK_PACK) {
-			//test if compression worked!
-			const char tmp2[100] = { 0 };
-			get_temp_file2(tmp2, "multi_maksurecanonical");
-			CanonicalDecode(tmp, tmp2);
-			doDoubleCheck(tmp2, src, "canonical");			
-		}		
-		my_rename(tmp, src);
+		doDoubleCheck2(src, packedName, "canonical");
 	}
 	else {
-		remove(tmp);
+		remove(packedName);
 	}
 	return size_packed;
 }
 
 
-bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int ratio_limit) {
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_seqpacked");
-	seq_pack(src, tmp, seqlen_pages, offset_pages);	
-	bool compression_success = testPack(src, tmp, "Seq", ratio_limit);
-	if (compression_success) {		
-		my_rename(tmp, src);
+void unpackByKind(const char* kind, const char* tmp, const char* tmp2) {
+	if (equals(kind, "multi")) {
+		multi_unpack(tmp, tmp2);
 	}
-	else {
-		remove(tmp);
+	if (equals(kind, "rle simple")) {
+		RLE_simple_unpack(tmp, tmp2);
 	}
-	return compression_success;
+	if (equals(kind, "twobyte")) {
+		two_byte_unpack(tmp, tmp2);
+	}
+	if (equals(kind, "rle advanced")) {
+		RLE_advanced_unpack(tmp, tmp2);
+	}
+	if (equals(kind, "rle simple")) {
+		RLE_simple_unpack(tmp, tmp2);
+	}
+	if (equals(kind, "canonical")) {
+		CanonicalDecode(tmp, tmp2);
+	}
 }
 
-void doDoubleCheck(const char* tmp2, const char* temp_filename, const char* type) {
-	bool sc = files_equal(tmp2, temp_filename);
-	if (!sc) {
-		printf("\n\n\n ** Failed to %s pack seperate: %s", type, temp_filename);
+
+bool packAndTest(const char* kind, const char* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile) {
+
+	const char packedName[100] = { 0 };
+	const char tmp[100] = { 0 };
+	concat(tmp, "multi_", kind);
+	int limit = 100;
+	get_temp_file2(packedName, tmp);
+	if (equals(kind, "multi")) {
+		multi_pack(src, packedName, profile, seqlensProfile, offsetsProfile);
+	} 
+	else if (equals(kind, "rle simple")) {
+		RLE_simple_pack(src, packedName, profile);
+		limit = profile.rle_ratio;
+	}
+	else if (equals(kind, "twobyte")) {
+		two_byte_pack(src, packedName, profile);
+		limit = profile.twobyte_ratio;
+	}
+	else if (equals(kind, "rle advanced")) {
+		RLE_advanced_pack(src, packedName, profile);
+	}
+	else {
+		printf("\n kind=%s not found", kind);
 		exit(1);
 	}
-	remove(tmp2);
-}
 
-bool MultiPackAndTest(const char* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile) {
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_seqpacked");
-	multi_pack(src, tmp, profile, seqlensProfile, offsetsProfile);	
-	bool compression_success = testPack(src, tmp, "Multi", 100);
+	bool compression_success = testPack(src, packedName, kind, limit);
 	if (compression_success) {
-
-		if (DOUBLE_CHECK_PACK) {
-			const char tmp2[100] = { 0 };
-			get_temp_file2(tmp2, "multi_makingsure");
-			multi_unpack(tmp, tmp2);
-			doDoubleCheck(tmp2, src, "multi");			
-		}
-		my_rename(tmp, src);
+		doDoubleCheck2(src, packedName, kind);
 	}
 	else {
-		remove(tmp);
+		remove(packedName);
 	}
 	return compression_success;
+}
+
+bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile) {	
+	return packAndTest("multi", src, profile, seqlenProfile, offsetProfile);
 }
 
 void printProfile(packProfile* profile) {

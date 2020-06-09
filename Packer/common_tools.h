@@ -80,4 +80,6 @@ FILE* openWrite(const wchar_t* filename);
 
 FILE* openRead(const wchar_t* filename);
 
+bool equals(const char* s1, const char* s2);
+
 #endif

@@ -25,7 +25,6 @@ void unstore(FILE* in, const char* dst) {
 	fclose(in);
 }
 
-
 void untar(FILE* in, pack_info_t pi) {
 
 	// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
@@ -64,8 +63,6 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 	fwrite(&pack_type, 1, 1, out_file);
 	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 
-	
-	
 	if (isKthBitSet(pack_type, 7)) {
 
 		const char seqlens_name[100] = { 0 };
@@ -108,79 +105,37 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 
 
 bool TwoBytePackAndTest(const char* src, packProfile profile) {
-	const char* tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_twobyted");
-	two_byte_pack(src, tmp, profile);		
-	bool compression_success = testPack(src, tmp, "Two byte", profile.twobyte_ratio);
-	if (compression_success) {
-
-		if (DOUBLE_CHECK_PACK) {
-			const char tmp2[100] = { 0 };
-			get_temp_file2(tmp2, "multi_maksure2bytre");
-			two_byte_unpack(tmp, tmp2);
-			doDoubleCheck(tmp2, src, "twobyte");			
-		}		
-		my_rename(tmp, src);
-	}
-	else {
-		remove(tmp);
-	}
-	return compression_success;
+	return packAndTest("twobyte", src, profile, profile, profile);
 }
 
 bool RLEAdvancedPackAndTest(const char* src, packProfile profile) {
-	char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_rleadv");
-	RLE_advanced_pack(src, tmp, profile);
-	bool compression_success = testPack(src, tmp, "RLE Advanced", 100);
-	if (compression_success) {
-
-		if (DOUBLE_CHECK_PACK) {
-			const char tmp2[100] = { 0 };
-			get_temp_file2(tmp2, "multi_maksure");
-			RLE_advanced_unpack(tmp, tmp2);
-			doDoubleCheck(tmp2, src, "RLE advance");			
-		}		
-		my_rename(tmp, src);
-	}
-	else {
-		remove(tmp);
-	}
-	return compression_success;
+	return packAndTest("rle advanced", src, profile, profile, profile);
 }
 
-void SeqUnpackAndReplace(const char* src) {
-	//printf("\n Seq unpacking (in place) %s", src);
+void unpackAndReplace(const char* kind, const char* src) {
 	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_sequnpacked");
-	seq_unpack(src, tmp);	
-	my_rename(tmp, src);
-}
-
-void MultiUnpackAndReplace(const char* src) {
-	//printf("\n Seq unpacking (in place) %s", src);
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_sequnpacked");
-	multi_unpack(src, tmp);	
-	my_rename(tmp, src);
-}
-
-void TwoByteUnpackAndReplace(const char* src) {
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_twobytedunp");
-	two_byte_unpack(src, tmp);	
+	const char tmp2[100] = { 0 };
+	concat(tmp2, "multiunp_", kind);
+	get_temp_file2(tmp, tmp2);
+	unpackByKind(kind, src, tmp);
 	my_rename(tmp, src);
 }
 
 void RLEAdvancedUnpackAndReplace(const char* src) {
-
-	const char tmp[100] = { 0 };
-	get_temp_file2(tmp, "multi_rleadvunp");
-	RLE_advanced_unpack(src, tmp);	
-	my_rename(tmp, src);
+	unpackAndReplace("rle advanced", src);
 }
 
+void TwoByteUnpackAndReplace(const char* src) {
+	unpackAndReplace("twobyte", src);
+}
 
+void MultiUnpackAndReplace(const char* src) {
+	unpackAndReplace("multi", src);
+}
+
+void CanonicalDecodeAndReplace(const char* src) {
+	unpackAndReplace("canonical", src);
+}
 
 //----------------------------------------------------------------------------------------
 

@@ -255,6 +255,10 @@ void int_to_stringw(const wchar_t* s, int64_t i) {
 	_itow(i, s, 10);
 }
 
+bool equals(const char* s1, const char* s2) {
+	return strcmp(s1, s2) == 0;
+}
+
 void toUni(const wchar_t* dst, const char* str) {	
 	MultiByteToWideChar(CP_ACP, 0, str, -1, dst, 500);	
 }
