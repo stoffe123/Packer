@@ -8,9 +8,8 @@ void CanonicalDecodeAndReplace(const char* src) {
 	printf("\n Canonical unpacking (in place) %s", src);
 	const char tmp[100] = { 0 };
 	get_temp_file2(tmp, "multi_canonicaldec");
-	CanonicalDecode(src, tmp);
-	remove(src);
-	rename(tmp, src);
+	CanonicalDecode(src, tmp);	
+	my_rename(tmp, src);
 }
 
 bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
@@ -37,9 +36,8 @@ uint64_t CanonicalEncodeAndTest(const char* src) {
 			get_temp_file2(tmp2, "multi_maksurecanonical");
 			CanonicalDecode(tmp, tmp2);
 			doDoubleCheck(tmp2, src, "canonical");			
-		}
-		remove(src);
-		rename(tmp, src);
+		}		
+		my_rename(tmp, src);
 	}
 	else {
 		remove(tmp);
@@ -53,9 +51,8 @@ bool SeqPackAndTest(const char* src, int seqlen_pages, int offset_pages, int rat
 	get_temp_file2(tmp, "multi_seqpacked");
 	seq_pack(src, tmp, seqlen_pages, offset_pages);	
 	bool compression_success = testPack(src, tmp, "Seq", ratio_limit);
-	if (compression_success) {
-		remove(src);
-		rename(tmp, src);
+	if (compression_success) {		
+		my_rename(tmp, src);
 	}
 	else {
 		remove(tmp);
@@ -86,9 +83,7 @@ bool MultiPackAndTest(const char* src, packProfile profile,
 			multi_unpack(tmp, tmp2);
 			doDoubleCheck(tmp2, src, "multi");			
 		}
-
-		remove(src);
-		rename(tmp, src);
+		my_rename(tmp, src);
 	}
 	else {
 		remove(tmp);

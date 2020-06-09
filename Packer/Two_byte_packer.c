@@ -87,7 +87,7 @@ int create_two_byte_table() {
 	value_freq_t master = find_best_code(char_freq);
 	master_code = master.value;
 	uint64_t threshold = getGainThreshold();
-	printf("\n Two byte packer gain threshhold %lld", threshold);
+	debug("\n Two byte packer gain threshhold %lld", threshold);
 	bool found_twobyte = false;
 	int pair_table_pos = START_CODES_SIZE;
 	do {
@@ -109,7 +109,7 @@ int create_two_byte_table() {
 	assert(pair_table_pos > 0, "two_byte_table_pos = 0 !!!");
 	pair_table[0] = (uint8_t)((pair_table_pos - START_CODES_SIZE) / 3);
 	pair_table[1] = master_code;
-	printf("\nCreated two_byte table size: %d\n", pair_table_pos);
+	debug("\nCreated two_byte table size: %d\n", pair_table_pos);
 	return pair_table_pos;
 }
 

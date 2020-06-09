@@ -59,9 +59,7 @@ int doFuzz(int r, int best, int min, int max) {
 }
 
 void fuzzProfile(packProfile* profile, packProfile best) {
-	if (rand() % 2 == 0) {
-		return;
-	}
+	
 	if (rand() % 4 == 0) {
 		profile->offset_pages = rand() % 252;
 		profile->seqlen_pages = rand() % 252;
@@ -121,23 +119,21 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 
 void testmeta() {
 
-	
-	
-	packProfile bestProfile, seqlenProfile;
+	packProfile bestProfile, bestOffsetProfile, seqlenProfile;
 
 	//seqlen testsuit 236758
-	packProfile profile = getPackProfile(199, 173);
-	profile.rle_ratio = 50;
-	profile.twobyte_ratio = 79;
+	packProfile profile = getPackProfile(197, 49);
+	profile.rle_ratio = 73;
+	profile.twobyte_ratio = 84;
 	profile.seq_ratio = 68;
-	profile.recursive_limit = 256;
-	profile.twobyte_threshold_max = 1211;
-	profile.twobyte_threshold_divide = 301;
-	profile.twobyte_threshold_min = 286;
-	profile.twobyte2_ratio = 99;
-	profile.twobyte2_threshold_max = 4855;
-	profile.twobyte2_threshold_divide = 962;
-	profile.twobyte2_threshold_min = 26;
+	profile.recursive_limit = 100;
+	profile.twobyte_threshold_max = 454;
+	profile.twobyte_threshold_divide = 2346;
+	profile.twobyte_threshold_min = 332;
+	profile.twobyte2_ratio = 100;
+	profile.twobyte2_threshold_max = 116;
+	profile.twobyte2_threshold_divide = 1495;
+	profile.twobyte2_threshold_min = 63;
 
 	packProfile offsetProfile = getPackProfile(109, 54);
 	offsetProfile.rle_ratio = 61;
@@ -148,11 +144,12 @@ void testmeta() {
 	offsetProfile.twobyte_threshold_divide = 1367;
 	offsetProfile.twobyte_threshold_min = 898;
 	offsetProfile.twobyte2_ratio = 95;
-	offsetProfile.twobyte2_threshold_max = 5000;
-	offsetProfile.twobyte2_threshold_divide = 100;
-	offsetProfile.twobyte2_threshold_min = 50;
+	offsetProfile.twobyte2_threshold_max = 3000;
+	offsetProfile.twobyte2_threshold_divide = 1000;
+	offsetProfile.twobyte2_threshold_min = 22;
 
 	copyProfile(&profile, &bestProfile);
+	copyProfile(&offsetProfile, &bestOffsetProfile);
 
 	unsigned long long best_size = 0;
 	while (true) {
@@ -164,50 +161,44 @@ void testmeta() {
 		int before_suite = clock();
 		int kk = 0;
 		bool earlyBreak = true;
+		printProfile(&profile);
 		for (; kk < 34; kk++)
 		{
-			//const char* src = concat("C:/test/testsuite/", test_filenames[kk]);
-			//const char* src = "C:/test/book_seqlens";
-
 			const char src[100] = { 0 };
 
 			concat_int(src, "C:/test/meta/seqlens", kk + 1000);
-
 			const char* dst = "C:/test/unp";
-
 			const char* packed_name = "c:/test/packed.bin";
-
 			long long size_org = get_file_size_from_name(src);
-
 			printf("\n Packing... %s with length:%d", src, size_org);
-
 			int cl = clock();
-
-			printProfile(&profile);
-			/*
-				copy_file(src, packed_name);
-				bool seq = SeqPackAndTest(packed_name, offset_pages, seqlen_pages, ratio_limit);
-				bool huffman = CanonicalEncodeAndTest(packed_name);
-				*/
-
 			multi_pack(src, packed_name, offsetProfile, profile, profile);
-
-			//seq_pack_separate(src, "c:/test/", 219, 2);
-			//seq_pack(src, packed_name, 219, 2);
-
-			int pack_time = (clock() - cl);
-			//printf("\n Packing finished time it took: %d", pack_time);
+				
 			long long size_packed = get_file_size_from_name(packed_name);
-
-			printf("\nLength of packed: %d", size_packed);
-			printf("  (%f)", (double)size_packed / (double)size_org);
-
 			acc_size_packed += size_packed;
 			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
 			if (earlyBreak) {
 				break;
 			}
 			acc_size_org += size_org;
+
+
+			concat_int(src, "C:/test/meta/offsets", kk + 1000);
+			size_org = get_file_size_from_name(src);
+			printf("\n Packing... %s with length:%d", src, size_org);
+			
+			multi_pack(src, packed_name, offsetProfile, profile, offsetProfile);
+			int pack_time = (clock() - cl);
+		
+			size_packed = get_file_size_from_name(packed_name);
+			acc_size_packed += size_packed;
+			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
+			if (earlyBreak) {
+				break;
+			}
+			acc_size_org += size_org;
+
+
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
 			/*
@@ -242,8 +233,17 @@ void testmeta() {
 			*/
 			earlyBreak = false;
 		}//end for
+		unsigned long long old_best_size = best_size;
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		if (old_best_size != best_size) {
+			old_best_size = best_size;
+			copyProfile(&offsetProfile, &bestOffsetProfile);
+			
+		}
+		printf("\nBest Offset Profile:");
+		printProfile(&offsetProfile);
 		fuzzProfile(&profile, bestProfile);
+		fuzzProfile(&offsetProfile, bestOffsetProfile);
 	}
 }//end test_meta
 
@@ -256,7 +256,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/ambdll.rle";
+	const char* src = "c:/test/voc.wav";
 	const char* unpacked_finished = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -274,9 +274,9 @@ void onefile() {
 	profile.twobyte_ratio = 100;
 	profile.seq_ratio = 82;
 	profile.recursive_limit = 230;
-	profile.twobyte_threshold_max = 15;
-	profile.twobyte_threshold_divide = 1500;
-	profile.twobyte_threshold_min = 10;
+	profile.twobyte_threshold_max = 3;
+	profile.twobyte_threshold_divide = 2500;
+	profile.twobyte_threshold_min = 3;
 
 	offsetProfile.offset_pages = 105;
 	offsetProfile.seqlen_pages = 57;
@@ -364,8 +364,9 @@ void test16() {
 
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
+	
 
-	unsigned long long best_size = 0; // 44141186; // (43107 kb)
+	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
 	{
 
@@ -527,7 +528,7 @@ int main()
 	srand((unsigned)time(&t));
 
 	//testmeta();
-	//test16();
+	test16();
 	//testarchive();
-	onefile();
+	//onefile();
 }

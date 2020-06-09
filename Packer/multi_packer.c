@@ -188,7 +188,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile) {
  
 	printf("\n* Multi pack * %s => %s", src,dst);
-	printProfile(&profile);
+	//printProfile(&profile);
 	unsigned long long src_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 	bool do_store = src_size < 6;
@@ -278,14 +278,14 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			my_rename(canonicalled, main_name);
 		}
 		else { // Canonical didn't work
-
+			
 			if (!seqPacked) {
 				if (seqPackRatio < 1) {
 					printf("\n ** regret myself since huffman failed/was worse than seqpack, take back seqpack w ratio %f", seqPackRatio);
 					pack_type = setKthBit(pack_type, 7);
 					seqPacked = true;
 					if (size_after_seq_and_rle >= size_after_seqpack) {
-						my_rename(seqpacked_fallback, main_name);
+						my_rename(seqpacked_fallback, main_name);					
 					}
 					else {
 						my_rename(main_rle_packed, main_name);
@@ -317,6 +317,8 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		if (!do_store) {
 			tar(dst, base_dir, pack_type);			
 		} 
+		remove(canonicalled);
+		remove(main_rle_packed);
 		remove(seqpacked_fallback);
 		remove(seqlens_name);
 		remove(offsets_name);
@@ -327,7 +329,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		pack_type = 0;
 		store(src, dst, pack_type);
 	}
-	printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
+	//printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 }
 
 // ----------------------------------------------------------------
