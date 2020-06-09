@@ -3,7 +3,7 @@
 
 #define BLOCK_SIZE 2110700
 
-static bool DOUBLE_CHECK_PACK = true;
+static bool DOUBLE_CHECK_PACK = false;
 
 typedef struct val_freq_t {
 	uint64_t value;

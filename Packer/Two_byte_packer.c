@@ -113,8 +113,7 @@ int create_two_byte_table() {
 	return pair_table_pos;
 }
 
-unsigned int find_code_for_pair(unsigned char ch1, unsigned char ch2, int pair_table_pos) {
-	unsigned int val = ch1 + 256 * ch2;
+unsigned int find_code_for_pair(unsigned int val, int pair_table_pos) {
 	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
 		unsigned int table_val = pair_table[i + 1] +
 			256 * pair_table[i + 2];
@@ -153,21 +152,21 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 
 	uint64_t total_size = get_file_size(infil);
 	int pair_table_pos;
-	if (pass == 2) {		
-		utfil = openWrite(dest);
-		
-		// start compression!
-
+	if (pass >= 2) {		
 		pair_table_pos = create_two_byte_table();
 
-		//write the metadata table
-		for (int i = 0; i < pair_table_pos; i++) {
+		if (pass == 3) {
+			utfil = openWrite(dest);
 
-			putc(pair_table[i], utfil);
-			debug(" %d", pair_table[i]);
+			//write the metadata table
+			for (int i = 0; i < pair_table_pos; i++) {
+
+				putc(pair_table[i], utfil);
+				debug(" %d", pair_table[i]);
+			}
 		}
 	}
-	else {  // pass = 1
+	if (pass < 3) {
 		for (int i = 0; i < 65536; i++) {
 			two_byte_freq_table[i] = 0;
 		}
@@ -175,8 +174,6 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 			char_freq[i] = 0;
 		}
 	}
-
-	/* start compression */
 
 	buffer_endpos = fread(buffer, 1, buffer_size, infil);
 
@@ -186,26 +183,39 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 
 		unsigned char ch1 = buffer[buffer_startpos];
 		unsigned char ch2 = buffer[buffer_startpos + 1];
+		unsigned int val = ch1 + 256 * ch2;
+		if (pass >= 2) {
+			unsigned int code = find_code_for_pair(val, pair_table_pos);
 
-		if (pass == 2) {
-			unsigned int code = find_code_for_pair(ch1, ch2, pair_table_pos);
 			if (code == 256) {
 				// not found
-				if (is_code(ch1, pair_table_pos)) {
-					WRITE(utfil, master_code);
+				if (pass == 2) {
+					if (char_freq[ch1] < LONG_MAX) {
+						char_freq[ch1]++;
+					}
 				}
-				WRITE(utfil, ch1);
+				else {
+					if (is_code(ch1, pair_table_pos)) {
+						WRITE(utfil, master_code);
+					}
+					WRITE(utfil, ch1);
+				}
 				move_buffer(1);
 
 			}
 			else { // write the code for the pair
-				WRITE(utfil, (unsigned char)code);
+				if (pass == 2) {
+					if (two_byte_freq_table[val] < LONG_MAX) {
+						two_byte_freq_table[val]++;
+					}
+				}
+				else {
+					WRITE(utfil, (unsigned char)code);
+				}
 				move_buffer(2);
 			}
 		}
 		else { // pass == 1
-
-			long val = ch1 + 256 * ch2; // always low first
 			if (two_byte_freq_table[val] < LONG_MAX) {
 				two_byte_freq_table[val]++;
 			}
@@ -216,9 +226,8 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 		}
 	}//end while
 
-	if (pass == 2) {
+	if (pass == 3) {
 		fclose(utfil);
-
 	}
 	fclose(infil);
 }
@@ -228,8 +237,9 @@ void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 {
 	profile = prof;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-	two_byte_pack_internal(src, dest, 1); //analyse and build meta-data
-	two_byte_pack_internal(src, dest, 2); //pack
+	two_byte_pack_internal(src, dest, 1); //analyse and build metadata
+	two_byte_pack_internal(src, dest, 2); //simulate pack and adjust metadata
+	two_byte_pack_internal(src, dest, 3); //pack
 	free(buffer);
 }
 

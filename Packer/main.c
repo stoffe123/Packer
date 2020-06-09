@@ -256,7 +256,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/before_twobyte5";
+	const char* src = "c:/test/ambdll.rle";
 	const char* unpacked_finished = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -323,25 +323,27 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { L"tob.pdf", L"voc.wav",
+	wchar_t test_filenames[16][100] = { 
 		L"rel.pdf",		
 		
-		L"bad.mp3",
+		
 		
 		L"bad.cdg",
 		L"did.csh",
 		
 		L"nex.doc",
 		L"amb.dll",
-		L"pazera.exe",
+	    L"bad.mp3",
 		L"aft.htm",
-			L"book_med.txt",
+		L"book_med.txt",
 		L"book.txt",
-	
 		L"empty.txt",
 		L"onechar.txt",
 		L"oneseq.txt",
-		L"repeatchar.txt"
+		L"repeatchar.txt",
+		L"pazera.exe",
+	    L"voc.wav",
+		L"tob.pdf"
 		
 	};
 	
@@ -525,7 +527,7 @@ int main()
 	srand((unsigned)time(&t));
 
 	//testmeta();
-	test16();
+	//test16();
 	//testarchive();
-	//onefile();
+	onefile();
 }
