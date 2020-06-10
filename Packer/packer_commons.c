@@ -49,25 +49,25 @@ uint64_t CanonicalEncodeAndTest(const char* src) {
 	return size_packed;
 }
 
-
 void unpackByKind(const char* kind, const char* tmp, const char* tmp2) {
 	if (equals(kind, "multi")) {
 		multi_unpack(tmp, tmp2);
 	}
-	if (equals(kind, "rle simple")) {
+	else if (equals(kind, "rle simple")) {
 		RLE_simple_unpack(tmp, tmp2);
 	}
-	if (equals(kind, "twobyte")) {
+	else if (equals(kind, "twobyte")) {
 		two_byte_unpack(tmp, tmp2);
 	}
-	if (equals(kind, "rle advanced")) {
+	else if (equals(kind, "rle advanced")) {
 		RLE_advanced_unpack(tmp, tmp2);
 	}
-	if (equals(kind, "rle simple")) {
-		RLE_simple_unpack(tmp, tmp2);
-	}
-	if (equals(kind, "canonical")) {
+	else if (equals(kind, "canonical")) {
 		CanonicalDecode(tmp, tmp2);
+	}
+	else {
+		printf("\n kind=%s not found in packer_commons.unpackByKind", kind);
+		exit(1);
 	}
 }
 
@@ -95,7 +95,7 @@ bool packAndTest(const char* kind, const char* src, packProfile profile,
 		RLE_advanced_pack(src, packedName, profile);
 	}
 	else {
-		printf("\n kind=%s not found", kind);
+		printf("\n kind=%s not found in packer_commons.packAndTest", kind);
 		exit(1);
 	}
 

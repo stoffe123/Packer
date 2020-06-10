@@ -121,32 +121,32 @@ void testmeta() {
 
 	packProfile bestProfile, bestOffsetProfile;
 
-	//meta testsuit 859818
-	packProfile seqlenProfile = getPackProfile(213,186);
-	seqlenProfile.rle_ratio = 68;
-	seqlenProfile.twobyte_ratio = 58;
+	//meta testsuit 858972
+	packProfile seqlenProfile = getPackProfile(92,179);
+	seqlenProfile.rle_ratio = 66;
+	seqlenProfile.twobyte_ratio = 61;
 	seqlenProfile.seq_ratio = 68;
-	seqlenProfile.recursive_limit = 226;
-	seqlenProfile.twobyte_threshold_max = 6688;
-	seqlenProfile.twobyte_threshold_divide = 3398;
-	seqlenProfile.twobyte_threshold_min = 14;
-	seqlenProfile.twobyte2_ratio = 93;
-	seqlenProfile.twobyte2_threshold_max = 5598;
-	seqlenProfile.twobyte2_threshold_divide = 1818;
-	seqlenProfile.twobyte2_threshold_min = 651;
+	seqlenProfile.recursive_limit = 651;
+	seqlenProfile.twobyte_threshold_max = 9577;
+	seqlenProfile.twobyte_threshold_divide = 2160;
+	seqlenProfile.twobyte_threshold_min = 7;
+	seqlenProfile.twobyte2_ratio = 75;
+	seqlenProfile.twobyte2_threshold_max = 5386;
+	seqlenProfile.twobyte2_threshold_divide = 2570;
+	seqlenProfile.twobyte2_threshold_min = 635;
 
-	packProfile offsetProfile = getPackProfile(120, 41);
-	offsetProfile.rle_ratio = 60;
-	offsetProfile.twobyte_ratio = 71;
+	packProfile offsetProfile = getPackProfile(131, 247);
+	offsetProfile.rle_ratio = 38;
+	offsetProfile.twobyte_ratio = 77;
 	offsetProfile.seq_ratio = 92;
-	offsetProfile.recursive_limit = 732;
-	offsetProfile.twobyte_threshold_max = 101;
-	offsetProfile.twobyte_threshold_divide = 2040;
-	offsetProfile.twobyte_threshold_min = 858;
-	offsetProfile.twobyte2_ratio = 62;
-	offsetProfile.twobyte2_threshold_max = 1657;
-	offsetProfile.twobyte2_threshold_divide = 1164;
-	offsetProfile.twobyte2_threshold_min = 140;
+	offsetProfile.recursive_limit = 771;
+	offsetProfile.twobyte_threshold_max = 7170;
+	offsetProfile.twobyte_threshold_divide = 788;
+	offsetProfile.twobyte_threshold_min = 597;
+	offsetProfile.twobyte2_ratio = 11;
+	offsetProfile.twobyte2_threshold_max = 1299;
+	offsetProfile.twobyte2_threshold_divide = 297;
+	offsetProfile.twobyte2_threshold_min = 467;
 
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
@@ -529,8 +529,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	//testmeta();
-	test16();
+	testmeta();
+	//test16();
 	//testarchive();
 	//onefile();
 }
