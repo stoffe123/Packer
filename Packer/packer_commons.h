@@ -37,7 +37,7 @@ void printProfile(packProfile*);
 
 bool testPack(const char* src, const char* tmp, const char* packerName, int limit);
 
-void copyProfile(packProfile*, packProfile*);
+void copyProfile(packProfile* source, packProfile* dest);
 
 uint64_t CanonicalEncodeAndTest(const char*);
 

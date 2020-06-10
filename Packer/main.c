@@ -75,14 +75,14 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->seq_ratio = doFuzz(profile->seq_ratio, best.seq_ratio, 99, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 800);
 
-	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 40, 13000);
-	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 3000);
-	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 10, 1000);
+	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 3, 13000);
+	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
+	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
 	profile->twobyte2_ratio = doFuzz(profile->twobyte2_ratio, best.twobyte2_ratio, 10, 100);
-	profile->twobyte2_threshold_max = doFuzz(profile->twobyte2_threshold_max, best.twobyte2_threshold_max, 40, 13000);
-	profile->twobyte2_threshold_divide = doFuzz(profile->twobyte2_threshold_divide, best.twobyte2_threshold_divide, 20, 3000);
-	profile->twobyte2_threshold_min = doFuzz(profile->twobyte2_threshold_min, best.twobyte2_threshold_min, 10, 1000);
+	profile->twobyte2_threshold_max = doFuzz(profile->twobyte2_threshold_max, best.twobyte2_threshold_max, 3, 8000);
+	profile->twobyte2_threshold_divide = doFuzz(profile->twobyte2_threshold_divide, best.twobyte2_threshold_divide, 20, 4000);
+	profile->twobyte2_threshold_min = doFuzz(profile->twobyte2_threshold_min, best.twobyte2_threshold_min, 3, 800);
 }
 
 
@@ -119,36 +119,36 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 
 void testmeta() {
 
-	packProfile bestProfile, bestOffsetProfile, seqlenProfile;
+	packProfile bestProfile, bestOffsetProfile;
 
-	//meta testsuit 1021896
-	packProfile profile = getPackProfile(154, 45);
-	profile.rle_ratio = 70;
-	profile.twobyte_ratio = 84;
-	profile.seq_ratio = 68;
-	profile.recursive_limit = 197;
-	profile.twobyte_threshold_max = 2260;
-	profile.twobyte_threshold_divide = 723;
-	profile.twobyte_threshold_min = 784;
-	profile.twobyte2_ratio = 84;
-	profile.twobyte2_threshold_max = 4633;
-	profile.twobyte2_threshold_divide = 1426;
-	profile.twobyte2_threshold_min = 432;
+	//meta testsuit 859818
+	packProfile seqlenProfile = getPackProfile(213,186);
+	seqlenProfile.rle_ratio = 68;
+	seqlenProfile.twobyte_ratio = 58;
+	seqlenProfile.seq_ratio = 68;
+	seqlenProfile.recursive_limit = 226;
+	seqlenProfile.twobyte_threshold_max = 6688;
+	seqlenProfile.twobyte_threshold_divide = 3398;
+	seqlenProfile.twobyte_threshold_min = 14;
+	seqlenProfile.twobyte2_ratio = 93;
+	seqlenProfile.twobyte2_threshold_max = 5598;
+	seqlenProfile.twobyte2_threshold_divide = 1818;
+	seqlenProfile.twobyte2_threshold_min = 651;
 
-	packProfile offsetProfile = getPackProfile(21, 32);
-	offsetProfile.rle_ratio = 39;
-	offsetProfile.twobyte_ratio = 77;
+	packProfile offsetProfile = getPackProfile(120, 41);
+	offsetProfile.rle_ratio = 60;
+	offsetProfile.twobyte_ratio = 71;
 	offsetProfile.seq_ratio = 92;
-	offsetProfile.recursive_limit = 230;
-	offsetProfile.twobyte_threshold_max = 2745;
-	offsetProfile.twobyte_threshold_divide = 1099;
-	offsetProfile.twobyte_threshold_min = 75;
-	offsetProfile.twobyte2_ratio = 49;
-	offsetProfile.twobyte2_threshold_max = 726;
-	offsetProfile.twobyte2_threshold_divide = 1766;
-	offsetProfile.twobyte2_threshold_min = 290;
+	offsetProfile.recursive_limit = 732;
+	offsetProfile.twobyte_threshold_max = 101;
+	offsetProfile.twobyte_threshold_divide = 2040;
+	offsetProfile.twobyte_threshold_min = 858;
+	offsetProfile.twobyte2_ratio = 62;
+	offsetProfile.twobyte2_threshold_max = 1657;
+	offsetProfile.twobyte2_threshold_divide = 1164;
+	offsetProfile.twobyte2_threshold_min = 140;
 
-	copyProfile(&profile, &bestProfile);
+	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
 
 	unsigned long long best_size = 0;
@@ -161,18 +161,19 @@ void testmeta() {
 		int before_suite = clock();
 		int kk = 0;
 		bool earlyBreak = true;
-		printProfile(&profile);
+		printProfile(&seqlenProfile);
 		for (; kk < 34; kk++)
 		{
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/meta/seqlens", kk + 1000);
+			concat_int(src, "C:/test/meta2/", kk + 101);
+			concat(src, src, "seqlens");
 			const char* dst = "C:/test/unp";
 			const char* packed_name = "c:/test/packed.bin";
 			long long size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			int cl = clock();
-			multi_pack(src, packed_name, offsetProfile, profile, profile);
+			multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile);
 				
 			long long size_packed = get_file_size_from_name(packed_name);
 			acc_size_packed += size_packed;
@@ -183,11 +184,12 @@ void testmeta() {
 			acc_size_org += size_org;
 
 
-			concat_int(src, "C:/test/meta/offsets", kk + 1000);
+			concat_int(src, "C:/test/meta2/", kk + 101); 
+			concat(src, src, "offsets");
 			size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
-			multi_pack(src, packed_name, offsetProfile, profile, offsetProfile);
+			multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
 			int pack_time = (clock() - cl);
 		
 			size_packed = get_file_size_from_name(packed_name);
@@ -234,15 +236,15 @@ void testmeta() {
 			earlyBreak = false;
 		}//end for
 		unsigned long long old_best_size = best_size;
-		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, seqlenProfile, &bestProfile);
+		printf("Offset Profile:");
+		printProfile(&offsetProfile);
 		if (old_best_size != best_size) {
 			old_best_size = best_size;
 			copyProfile(&offsetProfile, &bestOffsetProfile);
 			
 		}
-		printf("\nBest Offset Profile:");
-		printProfile(&offsetProfile);
-		fuzzProfile(&profile, bestProfile);
+		fuzzProfile(&seqlenProfile, bestProfile);
 		fuzzProfile(&offsetProfile, bestOffsetProfile);
 	}
 }//end test_meta

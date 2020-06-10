@@ -121,10 +121,10 @@ void printProfile(packProfile* profile) {
 	printf("\nSeq ratio:         %d", profile->seq_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
 	printf("\nTwobyte threshold (max,divide,min): (%d, %d, %d)", 
-		profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
+	profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
 	printf("\nTwobyte2 ratio:    %d", profile->twobyte2_ratio);
 	printf("\nTwobyte2 threshold (max,divide,min): (%d, %d, %d)\n",
-		profile->twobyte2_threshold_max, profile->twobyte2_threshold_divide, profile->twobyte2_threshold_min);
+	profile->twobyte2_threshold_max, profile->twobyte2_threshold_divide, profile->twobyte2_threshold_min);
 }
 
 packProfile getPackProfile(int o, int s) {
