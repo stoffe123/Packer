@@ -26,9 +26,8 @@ unsigned char lastByte, longRangeCode = 255;
 static const char* base_dir = "c:/test/";
 static bool separate_files = false;
 
-static uint32_t nextChar[BLOCK_SIZE * 2];
-
-static uint32_t lastChar[256];
+static uint32_t nextChar[BLOCK_SIZE * 2],
+                lastChar[256];
 
 static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 	uint32_t lastPos = lastChar[ch];
@@ -43,7 +42,7 @@ static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 }
 
 static void display_progress(uint32_t buffer_pos, uint8_t pass) {
-	if (buffer_pos % 48000 == 0 && pass == 2 && !VERBOSE) {
+	if (buffer_pos % 24000 == 0 && pass == 2 && !VERBOSE) {
 		printf("*");
 	}
 }
@@ -78,8 +77,7 @@ void out_seqlen(unsigned long seqlen, unsigned char pages, unsigned char seqlen_
 				break;
 			}
 		}
-		assert(page < pages,
-			">>>>>>>> ERROR in seq_packer.out_seqlen: no seqlen coding found");
+		assert(page < pages, "seq_packer.out_seqlen: no seqlen coding found");
 	}
 }
 
@@ -100,12 +98,8 @@ void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMa
 					break;
 				}
 			}
-			const char* msg =
-				">>>>>>>> ERROR in seq_packer.out_offset: no offset coding found for offset:";
-
-
+			const char* msg = "seq_packer.out_offset: no offset coding found for offset:";
 			assert(page < pages, msg);
-
 		}
 	}
 	else {  // long range
