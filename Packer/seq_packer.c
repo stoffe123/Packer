@@ -194,47 +194,32 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 				}
 
 				offset = 0;
-				int32_t nextChar_pos = buffer_pos;
-				int32_t nextCh;
+				int32_t nextChar_pos = buffer_pos, nextCh;
+				long diff;
 				while (offset < offset_max)
 				{
 					// find matching sequence		
-					if ((nextCh = nextChar[nextChar_pos]) == 0) {
-						break;
-					}
-					if ((offset += nextCh) >= offset_max) {
+					if (((nextCh = nextChar[nextChar_pos]) == 0) ||
+						((offset += nextCh) >= offset_max)) {
 						break;
 					}
 					nextChar_pos += nextCh;
-					if (offset < 3) {
-						continue;
-					}
-
-					//printf("\n File %s  Buffer pos %d", src, buffer_pos);
-					/*
-					if (ch != buffer[buffer_pos + offset]) {
-						printf("ch = buffer[buffer[buffer_pos + offset]] in seqpacker\n");
-
-						exit(0);
-					}
-					*/
-
-					if (buffer[buffer_pos + 1] != buffer[buffer_pos + offset + 1]) {
-						continue;
-					}
-					if (buffer[buffer_pos + 2] != buffer[buffer_pos + offset + 2]) {
+					if ((offset < 3) || 
+						(buffer[buffer_pos + 1] != buffer[buffer_pos + offset + 1]) ||
+						(buffer[buffer_pos + 2] != buffer[buffer_pos + offset + 2])) {
 						continue;
 					}
 					seq_len = 3;
 
-					while (buffer[buffer_pos + seq_len] == buffer[buffer_pos + offset + seq_len] && seq_len < offset
-						&& buffer_pos + offset + seq_len < absolute_end - 1 &&
+					while (buffer[buffer_pos + seq_len] == buffer[buffer_pos + offset + seq_len] && 
+						seq_len < offset &&
+						buffer_pos + offset + seq_len < absolute_end - 1 &&
 						seq_len < max_seqlen)
 					{
 						seq_len++;
 					}
-					long diff = (buffer_pos + offset + seq_len) - absolute_end;
-					if (diff > 0) {
+					diff = (buffer_pos + offset + seq_len) - absolute_end;
+					if ((diff > 0) || ((diff = (buffer_pos + seq_len) - buffer_endpos) > 0)) {
 						if (seq_len <= diff) {
 							continue;
 						}
@@ -243,17 +228,6 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 							assert(seq_len >= 0, "seq_len >= 0");
 						}
 					}
-					diff = (buffer_pos + seq_len) - buffer_endpos;
-					if (diff > 0) {
-						if (seq_len <= diff) {
-							continue;
-						}
-						else {
-							seq_len -= diff;
-							assert(seq_len >= 0, "seq_len >= 0");
-						}
-					}
-
 					//check if better than the best!
 
 					if (seq_len > best_seqlen && (offset - seq_len) <= longest_offset) {
@@ -262,11 +236,10 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 						}
 						best_seqlen = seq_len;
 						best_offset = offset - seq_len;
-						assert(best_seqlen <= max_seqlen, "best_seq_len <= max_seqlen i seq_packer.pack_internal");
-
-						if (best_seqlen == max_seqlen) {
+						if (best_seqlen >= max_seqlen) {
+							best_seqlen = max_seqlen;
 							break;
-						}
+						}						
 					}
 				}
 			}

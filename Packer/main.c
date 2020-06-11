@@ -122,31 +122,31 @@ void testmeta() {
 	packProfile bestProfile, bestOffsetProfile;
 
 	//meta testsuit 858724
-	packProfile seqlenProfile = getPackProfile(56, 143);
+	packProfile seqlenProfile = getPackProfile(53, 143);
 	seqlenProfile.rle_ratio = 63;
 	seqlenProfile.twobyte_ratio = 56;
 	seqlenProfile.seq_ratio = 68;
-	seqlenProfile.recursive_limit = 653;
-	seqlenProfile.twobyte_threshold_max = 10354;
-	seqlenProfile.twobyte_threshold_divide = 1718;
+	seqlenProfile.recursive_limit = 614;
+	seqlenProfile.twobyte_threshold_max = 9642;
+	seqlenProfile.twobyte_threshold_divide = 2988;
 	seqlenProfile.twobyte_threshold_min = 24;
-	seqlenProfile.twobyte2_ratio = 76;
-	seqlenProfile.twobyte2_threshold_max = 6113;
-	seqlenProfile.twobyte2_threshold_divide = 586;
-	seqlenProfile.twobyte2_threshold_min = 543;
+	seqlenProfile.twobyte2_ratio = 48;
+	seqlenProfile.twobyte2_threshold_max = 6361;
+	seqlenProfile.twobyte2_threshold_divide = 329;
+	seqlenProfile.twobyte2_threshold_min = 659;
 
-	packProfile offsetProfile = getPackProfile(96, 207);
-	offsetProfile.rle_ratio = 42;
-	offsetProfile.twobyte_ratio = 80;
+	packProfile offsetProfile = getPackProfile(89, 216);
+	offsetProfile.rle_ratio = 56;
+	offsetProfile.twobyte_ratio = 83;
 	offsetProfile.seq_ratio = 92;
-	offsetProfile.recursive_limit = 701;
-	offsetProfile.twobyte_threshold_max = 8837;
-	offsetProfile.twobyte_threshold_divide = 490;
-	offsetProfile.twobyte_threshold_min = 868;
-	offsetProfile.twobyte2_ratio = 40;
-	offsetProfile.twobyte2_threshold_max = 3914;
-	offsetProfile.twobyte2_threshold_divide = 197;
-	offsetProfile.twobyte2_threshold_min = 244;
+	offsetProfile.recursive_limit = 679;
+	offsetProfile.twobyte_threshold_max = 10801;
+	offsetProfile.twobyte_threshold_divide = 316;
+	offsetProfile.twobyte_threshold_min = 946;
+	offsetProfile.twobyte2_ratio = 48;
+	offsetProfile.twobyte2_threshold_max = 4079;
+	offsetProfile.twobyte2_threshold_divide = 290;
+	offsetProfile.twobyte2_threshold_min = 309;
 
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
