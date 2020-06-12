@@ -326,7 +326,7 @@ void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
 		L"rel.pdf",		
-		
+		 L"voc.wav",
 		
 		
 		L"bad.cdg",
@@ -343,7 +343,7 @@ void test16() {
 		L"oneseq.txt",
 		L"repeatchar.txt",
 		L"pazera.exe",
-	    L"voc.wav",
+	   
 		L"tob.pdf"
 		
 	};

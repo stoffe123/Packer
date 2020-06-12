@@ -270,6 +270,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		uint64_t source_size = get_file_size_from_name(src);
 		do_store = size_after_seqpack >= source_size;
 		if (!do_store) {
+            
 			tar(dst, base_dir, pack_type);			
 		} 
 		remove(canonicalled);
@@ -280,9 +281,37 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		remove(main_name);		
 	}
 	if (do_store) {
-		printf("\n  CHOOOSING STORE in multi_packer !!! ");
+
 		pack_type = 0;
-		store(src, dst, pack_type);
+		char tempsrc[100];
+		get_temp_file2(tempsrc, "multi_tempsrc");
+		copy_file(src, tempsrc);
+		RLE_advanced_pack(src, tempsrc);
+		if (get_file_size_from_name(tempsrc) < get_file_size_from_name(src)) {
+			printf("\n  RLE_advanced worked!!!!! instead of store");
+			pack_type = setKthBit(pack_type, 4);
+		}
+		else {
+			packProfile prof = getPackProfile(0, 0);
+			prof.twobyte_ratio = 100;
+			prof.twobyte_threshold_divide = 1;
+			prof.twobyte_threshold_max = 3;
+			prof.twobyte_threshold_min = 3;
+			two_byte_pack(src, tempsrc, prof);
+			if (get_file_size_from_name(tempsrc) < get_file_size_from_name(src)) {
+				printf("\n  Two-byte worked!!!!! instead of store");
+				pack_type = setKthBit(pack_type, 6);
+				
+			}
+		}
+		if (pack_type == 0) {
+
+			printf("\n  CHOOOSING STORE in multi_packer !!! ");
+			store(src, dst, pack_type);
+		}
+		else {
+			store(tempsrc, dst, pack_type);
+		}
 	}
 	//printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 }
