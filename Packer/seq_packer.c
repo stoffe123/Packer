@@ -42,18 +42,18 @@ static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 }
 
 static void display_progress(uint32_t buffer_pos, uint8_t pass) {
-	if (buffer_pos % 24000 == 0 && pass == 2 && !VERBOSE) {
+	if (buffer_pos % 12000 == 0 && pass == 2 && !VERBOSE) {
 		printf("*");
 	}
 }
 
 void write_seqlen(uint64_t c) {
-	debug("\nwrite_seqlen:%d", c);
+	//debug("\nwrite_seqlen:%d", c);
 	fwrite(&c, 1, 1, (separate_files ? seq_lens_file : utfil));
 }
 
 void write_offset(uint64_t c) {
-	debug("\nwrite_offset:%d", c);
+	//debug("\nwrite_offset:%d", c);
 	fwrite(&c, 1, 1, (separate_files ? offsets_file : utfil));
 }
 
@@ -62,7 +62,7 @@ void out_seqlen(unsigned long seqlen, unsigned char pages, unsigned char seqlen_
 	unsigned int lowest_special = last_byte + 1 - pages;
 	assert(seqlen >= seqlen_min, "seqlen >= seqlen_min in seq_packer.out_seqlen");
 	seqlen -= seqlen_min;
-	debug("\nseqlen after subtract %d = %d", seqlen_min, seqlen);
+	//debug("\nseqlen after subtract %d = %d", seqlen_min, seqlen);
 	//len = 255 is used for code occurence ... len =254 for next block
 	if (seqlen < lowest_special || pages == 0) {
 		write_seqlen(seqlen);
@@ -276,7 +276,7 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 			display_progress(buffer_pos, pass);
 		}
 		else { // insert code triple instead of the matching sequence!
-			debug("\n  seqlenmin:%d  offset:%d", seqlen_min, best_offset);
+			//debug("\n  seqlenmin:%d  offset:%d", seqlen_min, best_offset);
 			assertSmallerOrEqual(buffer_pos + best_offset + best_seqlen + best_seqlen, absolute_end,
 				"buffer_startpos + best_offset + best_seqlen*2 <= absolute_end in seq_packer.pack_internal");
 

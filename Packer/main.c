@@ -257,7 +257,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/voc.wav";
+	const char* src = "c:/test/amb.dll";
 	const char* unpacked_finished = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -290,8 +290,8 @@ void onefile() {
 	offsetProfile.twobyte_threshold_min = 50;
 
 	//seq_pack_separate(src, "c:/test/", 219, 2);
-	//seq_pack(src, packed_name, 219, 2);
-	two_byte_pack(src, packed_name, profile);
+	seq_pack(src, packed_name, profile);
+	//two_byte_pack(src, packed_name, profile);
 
 	int pack_time = (clock() - cl);
 		
@@ -299,9 +299,9 @@ void onefile() {
 	//printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 	cl = clock();
 
-
 	//seq_unpack_separate("c:/test/main", dst, "c:/test/");
-	two_byte_unpack(packed_name, unpacked_finished);
+	seq_unpack(packed_name, unpacked_finished);
+	//two_byte_unpack(packed_name, unpacked_finished);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -529,8 +529,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	testmeta();
-    //test16();
+	//testmeta();
+    test16();
 	//testarchive();
-	//onefile();
+	onefile();
 }
