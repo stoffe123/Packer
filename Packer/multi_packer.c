@@ -291,14 +291,10 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		prof.rle_ratio = 100;
 		prof.twobyte_ratio = 100;
 		prof.seq_ratio = 100;
-		prof.twobyte2_ratio = 100;
 		prof.twobyte_threshold_divide = 1;
 		prof.twobyte_threshold_max = 3;
 		prof.twobyte_threshold_min = 3;
-		prof.twobyte2_threshold_divide = 1;
-		prof.twobyte2_threshold_max = 3;
-		prof.twobyte2_threshold_min = 3;
-
+		
 		if (profile.seqlen_pages > 0 && source_size > 10) {
 			char multipacked[100];
 			get_temp_file2(multipacked, "multi_multipacked");

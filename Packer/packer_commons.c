@@ -99,14 +99,14 @@ bool packAndTest(const char* kind, const char* src, packProfile profile,
 		exit(1);
 	}
 
-	bool compression_success = testPack(src, packedName, kind, limit);
-	if (compression_success) {
+	bool under_limit = testPack(src, packedName, kind, limit);
+	if (under_limit) {
 		doDoubleCheck2(src, packedName, kind);
 	}
 	else {
 		remove(packedName);
 	}
-	return compression_success;
+	return under_limit;
 }
 
 bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile) {	
@@ -118,13 +118,9 @@ void printProfile(packProfile* profile) {
 	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);
 	printf("\nRLE ratio:         %d", profile->rle_ratio);
 	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
-	printf("\nSeq ratio:         %d", profile->seq_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
 	printf("\nTwobyte threshold (max,divide,min): (%d, %d, %d)", 
 	profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
-	printf("\nTwobyte2 ratio:    %d", profile->twobyte2_ratio);
-	printf("\nTwobyte2 threshold (max,divide,min): (%d, %d, %d)\n",
-	profile->twobyte2_threshold_max, profile->twobyte2_threshold_divide, profile->twobyte2_threshold_min);
 }
 
 packProfile getPackProfile(int o, int s) {
@@ -138,10 +134,6 @@ packProfile getPackProfile(int o, int s) {
 	profile.twobyte_threshold_max = 10581;
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
-	profile.twobyte2_ratio = 95;
-	profile.twobyte2_threshold_max = 5000;
-	profile.twobyte2_threshold_divide = 100;
-	profile.twobyte2_threshold_min = 50;
 	return profile;
 }
 
@@ -155,10 +147,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_max = src->twobyte_threshold_max;
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
-	dst->twobyte2_ratio = src->twobyte2_ratio;
-	dst->twobyte2_threshold_max = src->twobyte2_threshold_max;
-	dst->twobyte2_threshold_divide = src->twobyte2_threshold_divide;
-	dst->twobyte2_threshold_min = src->twobyte2_threshold_min;
+	
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {
