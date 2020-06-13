@@ -148,22 +148,41 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 	unsigned char pack_type = 0;
 	bool do_store = source_size < 6;
 	if (!do_store) {
-		char temp_filename[100] = { 0 };
-		get_temp_file2(temp_filename, "multi_rlepacked");
+		char before_seqpack[100] = { 0 };
+		get_temp_file2(before_seqpack, "multi_rlepacked");
 
-		bool got_smaller = RLE_pack_and_test(src, temp_filename, profile.rle_ratio);
+		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 5);
 		}
 
+		char just_two_byte[100] = { 0 };
+		get_temp_file2(just_two_byte, "multi_just_two_byte");
+		packProfile prof = getPackProfile(0, 0);
+		prof.twobyte_ratio = 100;
+		prof.rle_ratio = 100;
+		prof.twobyte_ratio = 100;
+		prof.seq_ratio = 100;
+		prof.twobyte_threshold_divide = 1;
+		prof.twobyte_threshold_max = 3;
+		prof.twobyte_threshold_min = 3;
+		two_byte_pack(src, just_two_byte, prof);
+		uint64_t just_two_byte_size = get_file_size_from_name(just_two_byte);
+
+		
 		char base_dir[100] = { 0 };
 		get_clock_dir(base_dir);
-		got_smaller = TwoBytePackAndTest(temp_filename, profile);
+		got_smaller = TwoBytePackAndTest(before_seqpack, profile);
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 6);
 		}
-		uint64_t before_seqpack_size = get_file_size_from_name(temp_filename);	
-		seq_pack_separate(temp_filename, base_dir, profile);
+		uint64_t before_seqpack_size = get_file_size_from_name(before_seqpack);	
+		
+		char canonical_instead_of_seqpack[100] = { 0 };
+		get_temp_file2(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
+		CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
+		uint64_t size_canonical_instead_of_seqpack = get_file_size_from_name(canonical_instead_of_seqpack);
+		seq_pack_separate(before_seqpack, base_dir, profile);
 
 		const char seqlens_name[100] = { 0 };
 		const char offsets_name[100] = { 0 };
@@ -176,7 +195,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			const char tmp2[100] = { 0 };
 			get_temp_file2(tmp2, "multi_maksureseqpack");
 			seq_unpack_separate(main_name, tmp2, base_dir);
-			doDoubleCheck(tmp2, temp_filename, "seq");
+			doDoubleCheck(tmp2, before_seqpack, "seq");
 		}
 
 		//try to pack meta files!
@@ -196,60 +215,56 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 				pack_type = setKthBit(pack_type, 2);
 			}
 		}
-		char main_rle_packed[100] = { 0 };
-		get_temp_file2(main_rle_packed, "multi.main_rle_packed");
-		RLE_advanced_pack(main_name, main_rle_packed);
+		//char main_rle_packed[100] = { 0 };
+		//get_temp_file2(main_rle_packed, "multi.main_rle_packed");
+		//RLE_advanced_pack(main_name, main_rle_packed);
 		uint64_t meta_size = get_file_size_from_name(offsets_name) +
 			get_file_size_from_name(seqlens_name);
-		uint64_t size_after_seqpack = meta_size + get_file_size_from_name(main_name);
+		uint64_t size_after_multipack = meta_size + get_file_size_from_name(main_name);
 
-		uint64_t size_after_seq_and_rle = meta_size + get_file_size_from_name(offsets_name);
+		//uint64_t size_after_seq_and_rle = meta_size + get_file_size_from_name(offsets_name);
 
-		double seqPackRatio = ((double)size_after_seqpack) /
+		double seqPackRatio = ((double)size_after_multipack) /
 			((double)before_seqpack_size);
 
-		bool seqPacked = seqPackRatio < ((double)profile.seq_ratio / (double)100);
+		bool seqPacked = seqPackRatio < 1;
 		
-		printf("\n Seqpacked %s and got ratio %.1f (limit %d)", temp_filename, seqPackRatio * 100.0, profile.seq_ratio);
+		printf("\n Seqpacked %s and got ratio %.3f (limit %d)", before_seqpack, seqPackRatio * 100.0, profile.seq_ratio);
 		char seqpacked_fallback[100] = { 0 };
 		if (seqPacked) {
 			pack_type = setKthBit(pack_type, 7);
-		    remove(temp_filename);
+		    remove(before_seqpack);
 		}
 		else {		
 			get_temp_file2(seqpacked_fallback, "multi_seqpackedfallback");
 			copy_file(main_name, seqpacked_fallback);
-			my_rename(temp_filename, main_name);
+			my_rename(before_seqpack, main_name);
 		}
 		char canonicalled[100];
 		get_temp_file2(canonicalled, "multi_canonicalled");
 		uint64_t size_before_canonical = get_file_size_from_name(main_name);
 		CanonicalEncode(main_name, canonicalled);
 		uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
-		if (size_after_canonical < size_before_canonical &&
-			(seqPacked ||
-				(!seqPacked && size_after_canonical < math_min(size_after_seq_and_rle, size_after_seqpack)))) {
-			pack_type = setKthBit(pack_type, 0);
+		if (size_after_canonical < size_before_canonical) {
+			pack_type = setKthBit(pack_type, 0); 
 			my_rename(canonicalled, main_name);
 		}
-		else { // Canonical didn't work
-			
-			if (!seqPacked) {
-				if (seqPackRatio < 1) {
-					printf("\n ** regret myself since huffman failed/was worse than seqpack, take back seqpack w ratio %f", seqPackRatio);
-					pack_type = setKthBit(pack_type, 7);
-					seqPacked = true;
-					if (size_after_seq_and_rle >= size_after_seqpack) {
-						my_rename(seqpacked_fallback, main_name);					
-					}
-					else {
-						my_rename(main_rle_packed, main_name);
-						pack_type = setKthBit(pack_type, 4);
-					}
-				}
-				//no use try RLE advanced here gave no improvement
-			}
+		uint64_t seq_size = get_file_size_from_name(main_name) + meta_size;
+		if (just_two_byte_size < seq_size && just_two_byte_size < size_canonical_instead_of_seqpack) {
+			printf("\n USING JUST twobyte on this.. no seqpack!");
+			pack_type = 0;
+			pack_type = setKthBit(pack_type, 3);			
+			my_rename(just_two_byte, main_name);
 		}
+		else if (size_canonical_instead_of_seqpack < seq_size && size_canonical_instead_of_seqpack < just_two_byte_size) {
+			printf("\n USING JUST canonical on this.. no seqpack!");
+			pack_type = setKthBit(pack_type, 0); // canonical on
+			pack_type = clearKthBit(pack_type, 7); // seqpack off
+			my_rename(canonical_instead_of_seqpack, main_name);
+		} 
+		
+		/*
+		
 		if (!isKthBitSet(pack_type, 0)) {
 
 			packProfile twobyte2Profile;
@@ -262,19 +277,22 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 				pack_type = setKthBit(pack_type, 3);
 			}
 		}
+		*/
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
-		size_after_seqpack = get_file_size_from_name(main_name) +
-			(seqPacked ? get_file_size_from_name(offsets_name) +
+		
+		size_after_multipack = get_file_size_from_name(main_name) +
+			(isKthBitSet(pack_type, 7) ? get_file_size_from_name(offsets_name) +
 				get_file_size_from_name(seqlens_name) + 8 : 0);
 
 		uint64_t source_size = get_file_size_from_name(src);
-		do_store = size_after_seqpack >= source_size;
+		do_store = size_after_multipack >= source_size;
 		if (!do_store) {
             
 			tar(dst, base_dir, pack_type);			
 		} 
 		remove(canonicalled);
-		remove(main_rle_packed);
+		remove(canonical_instead_of_seqpack);
+		remove(just_two_byte);
 		remove(seqpacked_fallback);
 		remove(seqlens_name);
 		remove(offsets_name);

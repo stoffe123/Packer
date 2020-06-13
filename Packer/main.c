@@ -324,9 +324,9 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { 
+	wchar_t test_filenames[16][100] = { L"bad.mp3",
 		L"rel.pdf",		
-		 L"voc.wav",
+		
 		
 		
 		L"bad.cdg",
@@ -334,7 +334,7 @@ void test16() {
 		
 		L"nex.doc",
 		L"amb.dll",
-	    L"bad.mp3",
+	 
 		L"aft.htm",
 		L"book_med.txt",
 		L"book.txt",
@@ -343,6 +343,7 @@ void test16() {
 		L"oneseq.txt",
 		L"repeatchar.txt",
 		L"pazera.exe",
+		 L"voc.wav",
 	   
 		L"tob.pdf"
 		
