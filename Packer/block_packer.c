@@ -90,8 +90,9 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	FILE* infil = openRead(src);
 
 	uint32_t size;
+	//todo read packtype here and if bit 7 is set don't read size, just read til the end!
+	//will save 16*4 = 64 bytes total in test suit 16
 	while (fread(&size, sizeof(size), 1, infil) == 1) {
-
 
 		const char tmp[100] = { 0 };
 		get_temp_file2(tmp, "block_tobeunpacked");

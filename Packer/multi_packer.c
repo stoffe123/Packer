@@ -281,37 +281,47 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		remove(main_name);		
 	}
 	if (do_store) {
-
+		
 		pack_type = 0;
-		char tempsrc[100];
-		get_temp_file2(tempsrc, "multi_tempsrc");
-		copy_file(src, tempsrc);
-		RLE_advanced_pack(src, tempsrc);
-		if (get_file_size_from_name(tempsrc) < get_file_size_from_name(src)) {
-			printf("\n  RLE_advanced worked!!!!! instead of store");
-			pack_type = setKthBit(pack_type, 4);
-		}
-		else {
-			packProfile prof = getPackProfile(0, 0);
-			prof.twobyte_ratio = 100;
-			prof.twobyte_threshold_divide = 1;
-			prof.twobyte_threshold_max = 3;
-			prof.twobyte_threshold_min = 3;
-			two_byte_pack(src, tempsrc, prof);
-			if (get_file_size_from_name(tempsrc) < get_file_size_from_name(src)) {
+		packProfile prof = getPackProfile(0, 0);
+		prof.twobyte_ratio = 100;
+		prof.rle_ratio = 100;
+		prof.twobyte_ratio = 100;
+		prof.seq_ratio = 100;
+		prof.twobyte2_ratio = 100;
+		prof.twobyte_threshold_divide = 1;
+		prof.twobyte_threshold_max = 3;
+		prof.twobyte_threshold_min = 3;
+		prof.twobyte2_threshold_divide = 1;
+		prof.twobyte2_threshold_max = 3;
+		prof.twobyte2_threshold_min = 3;
+
+		if (profile.seqlen_pages > 0) {
+			char multipacked[100];
+			get_temp_file2(multipacked, "multi_multipacked");
+			char twobytepacked[100];
+			get_temp_file2(twobytepacked, "multi_twobytepacked");
+			multi_pack(src, multipacked, prof, prof, prof);
+			if (get_file_size_from_name(multipacked) < get_file_size_from_name(src)) {
+				printf("\n  multipack 0,0 worked!!!!! instead of store");
+				my_rename(multipacked, dst);
+				return;
+			}
+			two_byte_pack(src, twobytepacked, prof);
+			if (get_file_size_from_name(twobytepacked) < get_file_size_from_name(src)) {
 				printf("\n  Two-byte worked!!!!! instead of store");
 				pack_type = setKthBit(pack_type, 6);
-				
+				store(twobytepacked, dst, pack_type);
+				return;
 			}
-		}
+
+		}		
 		if (pack_type == 0) {
 
 			printf("\n  CHOOOSING STORE in multi_packer !!! ");
 			store(src, dst, pack_type);
 		}
-		else {
-			store(tempsrc, dst, pack_type);
-		}
+		
 	}
 	//printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 }
