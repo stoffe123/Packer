@@ -144,9 +144,9 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
  
 	printf("\n* Multi pack * %s => %s", src,dst);
 	//printProfile(&profile);
-	unsigned long long src_size = get_file_size_from_name(src);
+	unsigned long long source_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
-	bool do_store = src_size < 6;
+	bool do_store = source_size < 6;
 	if (!do_store) {
 		char temp_filename[100] = { 0 };
 		get_temp_file2(temp_filename, "multi_rlepacked");
@@ -296,32 +296,34 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		prof.twobyte2_threshold_max = 3;
 		prof.twobyte2_threshold_min = 3;
 
-		if (profile.seqlen_pages > 0) {
+		if (profile.seqlen_pages > 0 && source_size > 10) {
 			char multipacked[100];
 			get_temp_file2(multipacked, "multi_multipacked");
 			char twobytepacked[100];
 			get_temp_file2(twobytepacked, "multi_twobytepacked");
 			multi_pack(src, multipacked, prof, prof, prof);
-			if (get_file_size_from_name(multipacked) < get_file_size_from_name(src)) {
+			uint64_t multipacked_size = get_file_size_from_name(multipacked);
+
+			two_byte_pack(src, twobytepacked, prof);
+			uint64_t twobytepacked_size = get_file_size_from_name(twobytepacked);
+
+			printf("\n Last try before store: multipacked:%d twobytepacked:%d original:%d",
+				multipacked_size, twobytepacked_size, source_size);
+
+			if (multipacked_size < twobytepacked_size && multipacked_size < source_size) {
 				printf("\n  multipack 0,0 worked!!!!! instead of store");
 				my_rename(multipacked, dst);
 				return;
 			}
-			two_byte_pack(src, twobytepacked, prof);
-			if (get_file_size_from_name(twobytepacked) < get_file_size_from_name(src)) {
+			else if (twobytepacked_size < multipacked_size && twobytepacked_size < source_size) {
 				printf("\n  Two-byte worked!!!!! instead of store");
 				pack_type = setKthBit(pack_type, 6);
 				store(twobytepacked, dst, pack_type);
 				return;
 			}
-
-		}		
-		if (pack_type == 0) {
-
-			printf("\n  CHOOOSING STORE in multi_packer !!! ");
-			store(src, dst, pack_type);
 		}
-		
+		printf("\n  CHOOOSING STORE in multi_packer !!! ");
+		store(src, dst, pack_type);	
 	}
 	//printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 }
