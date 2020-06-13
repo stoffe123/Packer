@@ -157,6 +157,13 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 	//printProfile(&profile);
 	unsigned long long source_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
+		
+	packProfile twobyte100Profile = getPackProfile(0, 0);
+	twobyte100Profile.twobyte_ratio = 100;
+	twobyte100Profile.twobyte_threshold_divide = 1;
+	twobyte100Profile.twobyte_threshold_max = 3;
+	twobyte100Profile.twobyte_threshold_min = 3;
+
 	bool do_store = source_size < 6;
 	if (!do_store) {
 		char before_seqpack[100] = { 0 };
@@ -169,15 +176,8 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 
 		char just_two_byte[100] = { 0 };
 		get_temp_file2(just_two_byte, "multi_just_two_byte");
-		packProfile prof = getPackProfile(0, 0);
-		prof.twobyte_ratio = 100;
-		prof.rle_ratio = 100;
-		prof.twobyte_ratio = 100;
-		prof.seq_ratio = 100;
-		prof.twobyte_threshold_divide = 1;
-		prof.twobyte_threshold_max = 3;
-		prof.twobyte_threshold_min = 3;
-		two_byte_pack(src, just_two_byte, prof);
+		
+		two_byte_pack(src, just_two_byte, twobyte100Profile);
 		uint64_t just_two_byte_size = get_file_size_from_name(just_two_byte);
 
 		
@@ -287,13 +287,11 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		
 		pack_type = 0;
 		packProfile prof = getPackProfile(0, 0);
-		prof.twobyte_ratio = 100;
-		prof.rle_ratio = 100;
-		prof.twobyte_ratio = 100;
-		prof.seq_ratio = 100;
-		prof.twobyte_threshold_divide = 1;
-		prof.twobyte_threshold_max = 3;
-		prof.twobyte_threshold_min = 3;
+		prof.twobyte_ratio = 90;
+		prof.rle_ratio = 90;				
+		prof.twobyte_threshold_divide = 100;
+		prof.twobyte_threshold_max = 100;
+		prof.twobyte_threshold_min = 20;
 		
 		if (profile.seqlen_pages > 0 && source_size > 10) {
 			char multipacked[100];
@@ -303,7 +301,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			multi_pack(src, multipacked, prof, prof, prof);
 			uint64_t multipacked_size = get_file_size_from_name(multipacked);
 
-			two_byte_pack(src, twobytepacked, prof);
+			two_byte_pack(src, twobytepacked, twobyte100Profile);
 			uint64_t twobytepacked_size = get_file_size_from_name(twobytepacked);
 
 			printf("\n Last try before store: multipacked:%d twobytepacked:%d original:%d",

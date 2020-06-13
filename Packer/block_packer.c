@@ -44,32 +44,22 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		const char tmp2[100] = { 0 };
 		get_temp_file2(tmp2, "block_multipacked");
 
-		//meta testsuit 858724
-		packProfile seqlenProfile = getPackProfile(53, 143);
-		seqlenProfile.rle_ratio = 63;
-		seqlenProfile.twobyte_ratio = 56;
-		seqlenProfile.seq_ratio = 68;
-		seqlenProfile.recursive_limit = 614;
-		seqlenProfile.twobyte_threshold_max = 9642;
-		seqlenProfile.twobyte_threshold_divide = 2988;
+		//meta testsuit 850544
+		packProfile seqlenProfile = getPackProfile(55, 145);
+		seqlenProfile.rle_ratio = 65;
+		seqlenProfile.twobyte_ratio = 61;
+		seqlenProfile.recursive_limit = 644;
+		seqlenProfile.twobyte_threshold_max = 9299;
+		seqlenProfile.twobyte_threshold_divide = 3925;
 		seqlenProfile.twobyte_threshold_min = 24;
-		seqlenProfile.twobyte2_ratio = 48;
-		seqlenProfile.twobyte2_threshold_max = 6361;
-		seqlenProfile.twobyte2_threshold_divide = 329;
-		seqlenProfile.twobyte2_threshold_min = 659;
 
-		packProfile offsetProfile = getPackProfile(89, 216);
-		offsetProfile.rle_ratio = 56;
-		offsetProfile.twobyte_ratio = 83;
-		offsetProfile.seq_ratio = 92;
-		offsetProfile.recursive_limit = 679;
-		offsetProfile.twobyte_threshold_max = 10801;
-		offsetProfile.twobyte_threshold_divide = 316;
-		offsetProfile.twobyte_threshold_min = 946;
-		offsetProfile.twobyte2_ratio = 48;
-		offsetProfile.twobyte2_threshold_max = 4079;
-		offsetProfile.twobyte2_threshold_divide = 290;
-		offsetProfile.twobyte2_threshold_min = 309;
+		packProfile offsetProfile = getPackProfile(90, 217);
+		offsetProfile.rle_ratio = 47;
+		offsetProfile.twobyte_ratio = 87;
+		offsetProfile.recursive_limit = 543;
+		offsetProfile.twobyte_threshold_max = 12152;
+		offsetProfile.twobyte_threshold_divide = 1271;
+		offsetProfile.twobyte_threshold_min = 963;
 
 		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);
 		remove(tmp);
