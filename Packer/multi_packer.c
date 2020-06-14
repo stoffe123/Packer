@@ -13,6 +13,12 @@
 //#include "huffman2.h"
 #include "canonical.h"
 
+typedef struct packCandidate_t {
+	const char* filename;
+	unsigned char packType;
+	uint64_t size;
+} packCandidate_t;
+
 
 typedef struct pack_info_t {
 	unsigned char pack_type;
@@ -137,6 +143,23 @@ void CanonicalDecodeAndReplace(const char* src) {
 	unpackAndReplace("canonical", src);
 }
 
+packCandidate_t getPackCandidate2(const char* filename, unsigned char packType, uint64_t filesize) {
+	packCandidate_t cand;
+	cand.filename = filename;
+	cand.packType = packType;
+	if (filesize == 0) {
+		filesize = get_file_size_from_name(filename);
+	}
+	cand.size = filesize;
+	return cand;
+}
+
+packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
+	return getPackCandidate2(filename, packType, 0);
+}
+
+
+
 /* ----------------------------------------------------------------------------------------
 
  Bit layout packtype
@@ -153,6 +176,9 @@ void CanonicalDecodeAndReplace(const char* src) {
 void multi_pack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile) {
  
+	packCandidate_t packCandidates[100];
+	int candidatesIndex = 0;
+
 	printf("\n* Multi pack * %s => %s", src,dst);
 	//printProfile(&profile);
 	unsigned long long source_size = get_file_size_from_name(src);
@@ -175,11 +201,14 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		}
 
 		char just_two_byte[100] = { 0 };
-		get_temp_file2(just_two_byte, "multi_just_two_byte");
-		
+		get_temp_file2(just_two_byte, "multi_just_two_byte");		
 		two_byte_pack(src, just_two_byte, twobyte100Profile);
-		uint64_t just_two_byte_size = get_file_size_from_name(just_two_byte);
+		packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
 
+		char just_canonical[100] = { 0 };
+		get_temp_file2(just_canonical, "multi_just_canonical");
+		CanonicalEncode(src, just_canonical);
+		packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		
 		char base_dir[100] = { 0 };
 		get_clock_dir(base_dir);
@@ -192,7 +221,8 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		char canonical_instead_of_seqpack[100] = { 0 };
 		get_temp_file2(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
 		CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
-		uint64_t size_canonical_instead_of_seqpack = get_file_size_from_name(canonical_instead_of_seqpack);
+		packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));		
+		
 		seq_pack_separate(before_seqpack, base_dir, profile);
 
 		const char seqlens_name[100] = { 0 };
@@ -252,25 +282,24 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			my_rename(canonicalled, main_name);
 		}
 		uint64_t size_including_seq = get_file_size_from_name(main_name) + meta_size;
-		if (just_two_byte_size < size_including_seq && just_two_byte_size < size_canonical_instead_of_seqpack) {
-			printf("\n USING JUST twobyte on this.. no seqpack!");
-			pack_type = 0;
-			pack_type = setKthBit(pack_type, 6);			
-			my_rename(just_two_byte, main_name);
+
+		packCandidate_t bestCandidate = packCandidates[0];
+		for (int i = 0; i < candidatesIndex; i++) {
+			if (packCandidates[i].size < bestCandidate.size) {
+				bestCandidate = packCandidates[i];				
+			}
 		}
-		else if (size_canonical_instead_of_seqpack < size_including_seq && size_canonical_instead_of_seqpack < just_two_byte_size) {
-			printf("\n USING JUST canonical on this.. no seqpack!");
-			pack_type = setKthBit(pack_type, 0); // canonical on
-			pack_type = clearKthBit(pack_type, 7); // seqpack off
-			my_rename(canonical_instead_of_seqpack, main_name);
-		} 
+		if (bestCandidate.size < size_including_seq) {
+			pack_type = bestCandidate.packType;
+			my_rename(bestCandidate.filename, main_name);
+		}
+		
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 		
 		size_after_multipack = get_file_size_from_name(main_name) +
 			(isKthBitSet(pack_type, 7) ? get_file_size_from_name(offsets_name) +
 				get_file_size_from_name(seqlens_name) + 8 : 0);
 
-		uint64_t source_size = get_file_size_from_name(src);
 		do_store = size_after_multipack >= source_size;
 		if (!do_store) {
             

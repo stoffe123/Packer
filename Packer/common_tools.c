@@ -134,6 +134,10 @@ void copy_file(const char* src, const char* dst) {
 
 void append_to_file(FILE* main_file, const char* append_filename) {
 	FILE* append_file = fopen(append_filename, "rb");
+	if (append_file == NULL) {
+		printf("\n Failed to open file: %s", append_filename);
+		exit(1);
+	}
 	int ch;
 	while ((ch = fgetc(append_file)) != EOF) {
 		fputc(ch, main_file);

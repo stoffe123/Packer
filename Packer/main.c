@@ -102,7 +102,7 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 			printf("\n Not enough this time...\n");
 		}
 	}
-	printf("\n  STATUS: %.0f kb   (%llu)", round((double)best_size / 1024.0), best_size);
+	printf("\n  STATUS:\n%.0f kb   (%llu)", round((double)best_size / 1024.0), best_size);
 	printProfile(best);
 	printf("\n");
 	return best_size;
@@ -185,19 +185,8 @@ void testmeta() {
 
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
-			/*
-			if (huffman) {
-				CanonicalDecodeAndReplace(packed_name);
-			}
-			if (seq) {
-				seq_unpack(packed_name, dst);
-			}
-			else {
-				copy_file(packed_name, dst);
-			}
-			*/
-
-			//multi_unpack(packed_name, dst);
+		
+			multi_unpack(packed_name, dst);
 			//seq_unpack_separate("c:/test/main", dst, "c:/test/");
 
 
@@ -205,7 +194,7 @@ void testmeta() {
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-			/*
+			
 			printf("\n\n Comparing files!");
 			
 			if (files_equal(src, dst)) {
@@ -214,7 +203,7 @@ void testmeta() {
 			else {
 				return 1;
 			}
-			*/
+		
 			earlyBreak = false;
 		}//end for
 		unsigned long long old_best_size = best_size;
@@ -307,7 +296,22 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { L"bad.mp3",
+	wchar_t test_filenames[16][100] = { 
+
+		L"book_med.txt",
+
+		L"empty.txt",
+		L"onechar.txt",
+		L"oneseq.txt",
+		L"repeatchar.txt",
+		L"book.txt",
+		
+		
+		
+		
+		
+		
+		L"bad.mp3",
 		L"rel.pdf",		
 		
 		
@@ -319,12 +323,7 @@ void test16() {
 		L"amb.dll",
 	 
 		L"aft.htm",
-		L"book_med.txt",
-		L"book.txt",
-		L"empty.txt",
-		L"onechar.txt",
-		L"oneseq.txt",
-		L"repeatchar.txt",
+		
 		L"pazera.exe",
 		 L"voc.wav",
 	   
@@ -502,7 +501,6 @@ void testarchive() {
 		best_size = presentResult(false, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		fuzzProfile(&profile, bestProfile);
 	}//end while true
-
 }
 
 //-------------------------------------------------------------------------------
