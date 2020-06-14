@@ -199,7 +199,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 5);
 		}
-
+	
 		char just_two_byte[100] = { 0 };
 		get_temp_file2(just_two_byte, "multi_just_two_byte");		
 		two_byte_pack(src, just_two_byte, twobyte100Profile);
@@ -300,14 +300,15 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			(isKthBitSet(pack_type, 7) ? get_file_size_from_name(offsets_name) +
 				get_file_size_from_name(seqlens_name) + 8 : 0);
 
-		do_store = size_after_multipack >= source_size;
+		do_store = size_after_multipack + 1 >= source_size;
 		if (!do_store) {
             
 			tar(dst, base_dir, pack_type);			
 		} 
+		for (int i = 0; i < candidatesIndex; i++) {
+			remove(packCandidates[i].filename);				
+		}
 		remove(canonicalled);
-		remove(canonical_instead_of_seqpack);
-		remove(just_two_byte);
 		remove(seqlens_name);
 		remove(offsets_name);
 		remove(main_name);		
@@ -325,29 +326,16 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		if (profile.seqlen_pages > 0 && source_size > 10) {
 			char multipacked[100];
 			get_temp_file2(multipacked, "multi_multipacked");
-			char twobytepacked[100];
-			get_temp_file2(twobytepacked, "multi_twobytepacked");
 			multi_pack(src, multipacked, prof, prof, prof);
 			uint64_t multipacked_size = get_file_size_from_name(multipacked);
 
-			two_byte_pack(src, twobytepacked, twobyte100Profile);
-			uint64_t twobytepacked_size = get_file_size_from_name(twobytepacked);
-
-			printf("\n Last try before store: multipacked:%d twobytepacked:%d original:%d",
-				multipacked_size, twobytepacked_size, source_size);
-
-			if (multipacked_size < twobytepacked_size && multipacked_size < source_size) {
+			if (multipacked_size < source_size) {
 				printf("\n  multipack 0,0 worked!!!!! instead of store");
 				my_rename(multipacked, dst);
 				return;
 			}
-			else if (twobytepacked_size < multipacked_size && twobytepacked_size < source_size) {
-				printf("\n  Two-byte worked!!!!! instead of store");
-				pack_type = setKthBit(pack_type, 6);
-				store(twobytepacked, dst, pack_type);
-				return;
-			}
-		}
+			remove(multipacked);
+		}		
 		printf("\n  CHOOOSING STORE in multi_packer !!! ");
 		store(src, dst, pack_type);	
 	}

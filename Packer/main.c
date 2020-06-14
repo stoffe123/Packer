@@ -114,20 +114,20 @@ void testmeta() {
 
 	packProfile bestProfile, bestOffsetProfile;
 
-	//meta testsuit 850544
-	packProfile seqlenProfile = getPackProfile(55, 145);
+	//meta testsuit 849813
+	packProfile seqlenProfile = getPackProfile(53, 148);
 	seqlenProfile.rle_ratio = 65;
-	seqlenProfile.twobyte_ratio = 61;
-	seqlenProfile.recursive_limit = 644;
+	seqlenProfile.twobyte_ratio = 67;
+	seqlenProfile.recursive_limit = 10;
 	seqlenProfile.twobyte_threshold_max = 9299;
 	seqlenProfile.twobyte_threshold_divide = 3925;
 	seqlenProfile.twobyte_threshold_min = 24;
 	
-	packProfile offsetProfile = getPackProfile(90, 217);
-	offsetProfile.rle_ratio = 47;
+	packProfile offsetProfile = getPackProfile(93, 219);
+	offsetProfile.rle_ratio = 54;
 	offsetProfile.twobyte_ratio = 87;
-	offsetProfile.recursive_limit = 543;
-	offsetProfile.twobyte_threshold_max = 12152;
+	offsetProfile.recursive_limit = 169;
+	offsetProfile.twobyte_threshold_max = 11509;
 	offsetProfile.twobyte_threshold_divide = 1271;
 	offsetProfile.twobyte_threshold_min = 963;
 	
@@ -297,38 +297,22 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
-
 		L"book_med.txt",
-
 		L"empty.txt",
 		L"onechar.txt",
 		L"oneseq.txt",
 		L"repeatchar.txt",
 		L"book.txt",
-		
-		
-		
-		
-		
-		
 		L"bad.mp3",
 		L"rel.pdf",		
-		
-		
-		
 		L"bad.cdg",
 		L"did.csh",
-		
 		L"nex.doc",
 		L"amb.dll",
-	 
 		L"aft.htm",
-		
 		L"pazera.exe",
-		 L"voc.wav",
-	   
-		L"tob.pdf"
-		
+		L"voc.wav",
+		L"tob.pdf"		
 	};
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
@@ -511,8 +495,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	//testmeta();
-    test16();
+	testmeta();
+    //test16();
 	//testarchive();
 	onefile();
 }

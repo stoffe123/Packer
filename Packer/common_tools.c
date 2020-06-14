@@ -10,8 +10,7 @@
 
 #include "common_tools.h"
 
-#define TEMP_DIR "c:/test/temp_files/"
-#define TEMP_DIRW L"c:/test/temp_files/"
+
 
 //Global for all threads
 uint64_t filename_count = 1000000;

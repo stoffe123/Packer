@@ -9,6 +9,9 @@
 #define math_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define math_min(x,y) ((x) <= (y)) ? (x) : (y)
 
+#define TEMP_DIR "c:/test/temp_files/"
+#define TEMP_DIRW L"c:/test/temp_files/"
+
 
 uint64_t get_file_size(const FILE* f);
 
