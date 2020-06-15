@@ -179,7 +179,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
 void multi_pack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile) {
 
-	int canonicalRecursiveLimit = 1;
+	int canonicalRecursiveLimit = 10;
  
 	packCandidate_t packCandidates[100];
 	int candidatesIndex = 0;

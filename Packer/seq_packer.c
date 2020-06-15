@@ -337,6 +337,10 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 	else {
+		if (seqlen_pages + offset_pages > 0) {
+			WRITE(utfil, seqlen_pages);
+			WRITE(utfil, offset_pages);
+		}
 		unsigned char packType = 0;
 		if (code_occurred) {
 			packType = setKthBit(packType, 0);
@@ -344,9 +348,10 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		if (useLongRange) {
 			packType = setKthBit(packType, 1);
 		}
-		WRITE(utfil, packType);
-		WRITE(utfil, seqlen_pages);
-		WRITE(utfil, offset_pages);
+		if (seqlen_pages + offset_pages == 0) {
+			packType = setKthBit(packType, 2); // slimseq
+		}
+		WRITE(utfil, packType);	
 		WRITE(utfil, code);
 		fclose(utfil);
 		if (separate_files) {

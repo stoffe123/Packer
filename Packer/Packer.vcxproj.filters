@@ -81,6 +81,12 @@
     <ClCompile Include="seq_packer_commons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="canonical_header_packer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="canonical_header_unpacker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -150,6 +156,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="archive_packer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="canonical_header_packer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

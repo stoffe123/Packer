@@ -168,11 +168,18 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 	fclose(infil);
 
 	uint8_t code = read_byte_from_file();
-	offset_pages = read_byte_from_file();
-	seqlen_pages = read_byte_from_file();
 	unsigned char packType = read_byte_from_file();
 	code_occurred = isKthBitSet(packType, 0);
 	useLongRange = isKthBitSet(packType, 1);
+	if (isKthBitSet(packType, 2)) {
+		offset_pages = 0;
+		seqlen_pages = 0;
+	}
+	else {		
+		offset_pages = read_byte_from_file();
+		seqlen_pages = read_byte_from_file();
+	}
+
 
 	uint64_t lastByteOffset = (useLongRange ? 254 : 255);
 	uint64_t lowestSpecialOffset = lastByteOffset + 1 - offset_pages;
