@@ -96,8 +96,10 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 }
 
 void my_rename(const char* f_old, const char* f_new) {
-	remove(f_new);
-	rename(f_old, f_new);
+	if (!equals(f_old, f_new)) {
+		remove(f_new);
+		rename(f_old, f_new);
+	}
 }
 
 bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
@@ -238,6 +240,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 6);
 		}
+		packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, pack_type);
 		uint64_t before_seqpack_size = get_file_size_from_name(before_seqpack);	
 		
 		if (source_size > canonicalRecursiveLimit) {
@@ -299,38 +302,30 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 				}
 				remove(canonicalled);
 			}
+			packCandidates[candidatesIndex++] = getPackCandidate2(main_name, pack_type, get_file_size_from_name(main_name) + meta_size);
 		}
 		else {
 			printf("\n Normal seqpack did not work");
-			my_rename(before_seqpack, main_name);
 		}
-				
-		// this is really wrong since we should look at bit 7 and if seqpack was skipped
-		size_after_seq = get_file_size_from_name(main_name) +
-			(isKthBitSet(pack_type, 7) ? meta_size : 0);
-		
 		packCandidate_t bestCandidate = packCandidates[0];
 		for (int i = 1; i < candidatesIndex; i++) {
 			if (packCandidates[i].size < bestCandidate.size) {
 				bestCandidate = packCandidates[i];				
 			}
 		}
-		if (bestCandidate.size < size_after_seq && bestCandidate.size + 1 < source_size) {
+		do_store = bestCandidate.size + 1 >= source_size;
+		if (!do_store) {
 			pack_type = bestCandidate.packType;
 			if (equals(bestCandidate.filename, slim_multipacked)) {
-				my_rename(slim_multipacked, dst);
-				return;
+				printf("\n Using only slimseq");
+				my_rename(slim_multipacked, dst);				
 			}
-			my_rename(bestCandidate.filename, main_name);
-		}
-		
-		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
-		
-		do_store = size_after_seq + 1 >= source_size && bestCandidate.size + 1 >= source_size;
-		if (!do_store) {
-            
-			tar(dst, base_dir, pack_type);			
-		} 
+			else {
+				my_rename(bestCandidate.filename, main_name);
+				printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
+				tar(dst, base_dir, pack_type);
+			}
+		}								
 		for (int i = 0; i < candidatesIndex; i++) {
 			remove(packCandidates[i].filename);				
 		}
@@ -345,7 +340,6 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		printf("\n  CHOOOSING STORE in multi_packer");
 		store(src, dst, pack_type);	
 	}
-	//printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
 }
 
 // ----------------------------------------------------------------
