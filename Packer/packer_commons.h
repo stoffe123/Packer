@@ -3,6 +3,8 @@
 
 #define BLOCK_SIZE 2110700
 
+//  16,777,215  is largest number for 24 bits  in multipacker.tar
+
 static bool DOUBLE_CHECK_PACK = false;
 
 typedef struct val_freq_t {

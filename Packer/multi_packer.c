@@ -36,9 +36,9 @@ void untar(FILE* in, pack_info_t pi) {
 	// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
 	uint32_t size1 = 0;
 	if (isKthBitSet(pi.pack_type, 7)) {
-		fread(&size1, sizeof(size1), 1, in);
+		fread(&size1, 3, 1, in);
 		uint32_t size2 = 0;
-		fread(&size2, sizeof(size2), 1, in);
+		fread(&size2, 3, 1, in);
 		//printf("\n untar size1=%d, size2=%d\n", size1, size2);
 		const char seqlens_name[100] = { 0 };
 		const char offsets_name[100] = { 0 };
@@ -78,11 +78,12 @@ void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
 
 		uint32_t size_seqlens = get_file_size_from_name(seqlens_name);
 
-		// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
-		fwrite(&size_seqlens, sizeof(size_seqlens), 1, out_file);
+		// 3 byte (24 bit) file size can handle meta files up to 16,777,215 bytes
+		// this invokes an upper limit on the BLOCK_SIZE
+		fwrite(&size_seqlens, 3, 1, out_file);
 
 		uint32_t size_offsets = get_file_size_from_name(offsets_name);
-		fwrite(&size_offsets, sizeof(size_offsets), 1, out_file);
+		fwrite(&size_offsets, 3, 1, out_file);
 
 		append_to_file(out_file, seqlens_name);
 		append_to_file(out_file, offsets_name);
@@ -279,14 +280,11 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			}
 		}
 		uint64_t meta_size = get_file_size_from_name(offsets_name) +
-			get_file_size_from_name(seqlens_name);
-		uint64_t size_after_multipack = meta_size + get_file_size_from_name(main_name);
+			get_file_size_from_name(seqlens_name) + 6;
+		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
 
-		double seqPackRatio = ((double)size_after_multipack) /
-			((double)before_seqpack_size);
-
-		printf("\n Seqpacked %s and got ratio %.3f (limit %d)", before_seqpack, seqPackRatio * 100.0, profile.seq_ratio);
-		if (seqPackRatio < 1) {
+		if (size_after_seq < before_seqpack_size) {
+			printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 			pack_type = setKthBit(pack_type, 7);
 			remove(before_seqpack);
 			if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
@@ -303,12 +301,13 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			}
 		}
 		else {
+			printf("\n Normal seqpack did not work");
 			my_rename(before_seqpack, main_name);
 		}
 				
 		// this is really wrong since we should look at bit 7 and if seqpack was skipped
-		size_after_multipack = get_file_size_from_name(main_name) +
-			(isKthBitSet(pack_type, 7) ? meta_size + 8 : 0);
+		size_after_seq = get_file_size_from_name(main_name) +
+			(isKthBitSet(pack_type, 7) ? meta_size : 0);
 		
 		packCandidate_t bestCandidate = packCandidates[0];
 		for (int i = 1; i < candidatesIndex; i++) {
@@ -316,7 +315,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 				bestCandidate = packCandidates[i];				
 			}
 		}
-		if (bestCandidate.size < size_after_multipack && bestCandidate.size + 1 < source_size) {
+		if (bestCandidate.size < size_after_seq && bestCandidate.size + 1 < source_size) {
 			pack_type = bestCandidate.packType;
 			if (equals(bestCandidate.filename, slim_multipacked)) {
 				my_rename(slim_multipacked, dst);
@@ -327,7 +326,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 		
-		do_store = size_after_multipack + 1 >= source_size && bestCandidate.size + 1 >= source_size;
+		do_store = size_after_seq + 1 >= source_size && bestCandidate.size + 1 >= source_size;
 		if (!do_store) {
             
 			tar(dst, base_dir, pack_type);			
@@ -343,7 +342,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		
 		pack_type = 0;
 		
-		printf("\n  CHOOOSING STORE in multi_packer !!! ");
+		printf("\n  CHOOOSING STORE in multi_packer");
 		store(src, dst, pack_type);	
 	}
 	//printf("\n => result: %s  size:%d", dst, get_file_size_from_name(dst));
