@@ -114,7 +114,7 @@ void testmeta() {
 
 	packProfile bestProfile, bestOffsetProfile;
 
-	//meta testsuit 849417
+	//meta testsuit 849396
 	packProfile seqlenProfile = getPackProfile(53, 149);
 	seqlenProfile.rle_ratio = 64;
 	seqlenProfile.twobyte_ratio = 62;
@@ -504,8 +504,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	testmeta();
-    //test16();
+	//testmeta();
+    test16();
 	//testarchive();
     //onefile();
 }

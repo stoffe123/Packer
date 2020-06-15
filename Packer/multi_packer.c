@@ -244,8 +244,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			get_temp_file2(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
 			CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
 			packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));
-		}
-		
+		}		
 		seq_pack_separate(before_seqpack, base_dir, profile);
 
 		const char seqlens_name[100] = { 0 };
@@ -290,33 +289,34 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		if (seqPackRatio < 1) {
 			pack_type = setKthBit(pack_type, 7);
 			remove(before_seqpack);
+			if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
+				char canonicalled[100];
+				get_temp_file2(canonicalled, "multi_canonicalled");
+				uint64_t size_before_canonical = get_file_size_from_name(main_name);
+				CanonicalEncode(main_name, canonicalled);
+				uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
+				if (size_after_canonical < size_before_canonical) {
+					pack_type = setKthBit(pack_type, 0);
+					my_rename(canonicalled, main_name);
+				}
+				remove(canonicalled);
+			}
 		}
 		else {
 			my_rename(before_seqpack, main_name);
 		}
+				
+		// this is really wrong since we should look at bit 7 and if seqpack was skipped
+		size_after_multipack = get_file_size_from_name(main_name) +
+			(isKthBitSet(pack_type, 7) ? meta_size + 8 : 0);
 		
-		if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
-			char canonicalled[100];
-			get_temp_file2(canonicalled, "multi_canonicalled");
-			uint64_t size_before_canonical = get_file_size_from_name(main_name);
-			CanonicalEncode(main_name, canonicalled);
-			uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
-			if (size_after_canonical < size_before_canonical) {
-				pack_type = setKthBit(pack_type, 0);
-				my_rename(canonicalled, main_name);
-			}
-			remove(canonicalled);
-		}
-		uint64_t size_including_seq = get_file_size_from_name(main_name) + meta_size;
-		
-
 		packCandidate_t bestCandidate = packCandidates[0];
 		for (int i = 1; i < candidatesIndex; i++) {
 			if (packCandidates[i].size < bestCandidate.size) {
 				bestCandidate = packCandidates[i];				
 			}
 		}
-		if (bestCandidate.size < size_including_seq && bestCandidate.size + 1 < source_size) {
+		if (bestCandidate.size < size_after_multipack && bestCandidate.size + 1 < source_size) {
 			pack_type = bestCandidate.packType;
 			if (equals(bestCandidate.filename, slim_multipacked)) {
 				my_rename(slim_multipacked, dst);
@@ -327,10 +327,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 		
-		size_after_multipack = get_file_size_from_name(main_name) +
-			(isKthBitSet(pack_type, 7) ? meta_size + 8 : 0);
-
-		do_store = size_after_multipack + 1 >= source_size;
+		do_store = size_after_multipack + 1 >= source_size && bestCandidate.size + 1 >= source_size;
 		if (!do_store) {
             
 			tar(dst, base_dir, pack_type);			
