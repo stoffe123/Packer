@@ -130,7 +130,7 @@ packProfile getPackProfile(int o, int s) {
 	profile.rle_ratio = 84;
 	profile.twobyte_ratio = 89;
 	profile.seq_ratio = 100;
-	profile.recursive_limit = 136;
+	profile.recursive_limit = 15;
 	profile.twobyte_threshold_max = 10581;
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;

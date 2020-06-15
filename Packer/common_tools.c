@@ -279,11 +279,11 @@ bool files_equalw( wchar_t* name1,  wchar_t* name2) {
 
 	long f1_size = get_file_size(f1);
 	long f2_size = get_file_size(f2);
-	int res = 1;
+	bool result = true;
 	if (f1_size != f2_size) {
 		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
 		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
-		res = 0;
+		result = false;
 	}
 	unsigned char tmp1, tmp2;
 
@@ -302,11 +302,11 @@ bool files_equalw( wchar_t* name1,  wchar_t* name2) {
 			printf("\n File2:");
 			//print_string_rep(tmp2);
 			printf("%c", tmp2);
-			return 0;
+			return false;
 		}
 		count++;
 	}
 	fclose(f1);
 	fclose(f2);
-	return res;
+	return result;
 }

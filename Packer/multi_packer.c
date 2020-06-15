@@ -166,7 +166,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  0 - canonical
  1 - seqlens multipack 
  2 - offset multipack
- 3 -
+ 3 - 
  4 - 
  5 - RLE simple
  6 - Two byte 
@@ -175,6 +175,8 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
 
 void multi_pack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile) {
+
+	int canonicalRecursiveLimit = 1;
  
 	packCandidate_t packCandidates[100];
 	int candidatesIndex = 0;
@@ -195,6 +197,23 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		char before_seqpack[100] = { 0 };
 		get_temp_file2(before_seqpack, "multi_rlepacked");
 
+		packProfile prof = getPackProfile(0, 0);
+		prof.twobyte_ratio = 90;
+		prof.rle_ratio = 90;
+		prof.recursive_limit = 10;
+		prof.twobyte_threshold_divide = 100;
+		prof.twobyte_threshold_max = 100;
+		prof.twobyte_threshold_min = 20;
+
+		char slim_multipacked[100];
+		if (profile.seqlen_pages + profile.offset_pages > 0 && source_size > 10) {	
+			get_temp_file2(slim_multipacked, "multi_multipacked");
+			multi_pack(src, slim_multipacked, prof, prof, prof);
+			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
+		}
+
+
+
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
 		if (got_smaller) {
 			pack_type = setKthBit(pack_type, 5);
@@ -205,10 +224,12 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		two_byte_pack(src, just_two_byte, twobyte100Profile);
 		packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
 
-		char just_canonical[100] = { 0 };
-		get_temp_file2(just_canonical, "multi_just_canonical");
-		CanonicalEncode(src, just_canonical);
-		packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
+		if (source_size > canonicalRecursiveLimit) {
+			char just_canonical[100] = { 0 };
+			get_temp_file2(just_canonical, "multi_just_canonical");
+			CanonicalEncode(src, just_canonical);
+			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
+		}
 		
 		char base_dir[100] = { 0 };
 		get_clock_dir(base_dir);
@@ -218,10 +239,12 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		}
 		uint64_t before_seqpack_size = get_file_size_from_name(before_seqpack);	
 		
-		char canonical_instead_of_seqpack[100] = { 0 };
-		get_temp_file2(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
-		CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
-		packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));		
+		if (source_size > canonicalRecursiveLimit) {
+			char canonical_instead_of_seqpack[100] = { 0 };
+			get_temp_file2(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
+			CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
+			packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));
+		}
 		
 		seq_pack_separate(before_seqpack, base_dir, profile);
 
@@ -272,33 +295,40 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			my_rename(before_seqpack, main_name);
 		}
 		
-		char canonicalled[100];
-		get_temp_file2(canonicalled, "multi_canonicalled");
-		uint64_t size_before_canonical = get_file_size_from_name(main_name);
-		CanonicalEncode(main_name, canonicalled);
-		uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
-		if (size_after_canonical < size_before_canonical) {
-			pack_type = setKthBit(pack_type, 0); 
-			my_rename(canonicalled, main_name);
+		if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
+			char canonicalled[100];
+			get_temp_file2(canonicalled, "multi_canonicalled");
+			uint64_t size_before_canonical = get_file_size_from_name(main_name);
+			CanonicalEncode(main_name, canonicalled);
+			uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
+			if (size_after_canonical < size_before_canonical) {
+				pack_type = setKthBit(pack_type, 0);
+				my_rename(canonicalled, main_name);
+			}
+			remove(canonicalled);
 		}
 		uint64_t size_including_seq = get_file_size_from_name(main_name) + meta_size;
+		
 
 		packCandidate_t bestCandidate = packCandidates[0];
-		for (int i = 0; i < candidatesIndex; i++) {
+		for (int i = 1; i < candidatesIndex; i++) {
 			if (packCandidates[i].size < bestCandidate.size) {
 				bestCandidate = packCandidates[i];				
 			}
 		}
-		if (bestCandidate.size < size_including_seq) {
+		if (bestCandidate.size < size_including_seq && bestCandidate.size + 1 < source_size) {
 			pack_type = bestCandidate.packType;
+			if (equals(bestCandidate.filename, slim_multipacked)) {
+				my_rename(slim_multipacked, dst);
+				return;
+			}
 			my_rename(bestCandidate.filename, main_name);
 		}
 		
 		printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
 		
 		size_after_multipack = get_file_size_from_name(main_name) +
-			(isKthBitSet(pack_type, 7) ? get_file_size_from_name(offsets_name) +
-				get_file_size_from_name(seqlens_name) + 8 : 0);
+			(isKthBitSet(pack_type, 7) ? meta_size + 8 : 0);
 
 		do_store = size_after_multipack + 1 >= source_size;
 		if (!do_store) {
@@ -308,7 +338,6 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		for (int i = 0; i < candidatesIndex; i++) {
 			remove(packCandidates[i].filename);				
 		}
-		remove(canonicalled);
 		remove(seqlens_name);
 		remove(offsets_name);
 		remove(main_name);		
@@ -316,26 +345,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 	if (do_store) {
 		
 		pack_type = 0;
-		packProfile prof = getPackProfile(0, 0);
-		prof.twobyte_ratio = 90;
-		prof.rle_ratio = 90;				
-		prof.twobyte_threshold_divide = 100;
-		prof.twobyte_threshold_max = 100;
-		prof.twobyte_threshold_min = 20;
 		
-		if (profile.seqlen_pages > 0 && source_size > 10) {
-			char multipacked[100];
-			get_temp_file2(multipacked, "multi_multipacked");
-			multi_pack(src, multipacked, prof, prof, prof);
-			uint64_t multipacked_size = get_file_size_from_name(multipacked);
-
-			if (multipacked_size < source_size) {
-				printf("\n  multipack 0,0 worked!!!!! instead of store");
-				my_rename(multipacked, dst);
-				return;
-			}
-			remove(multipacked);
-		}		
 		printf("\n  CHOOOSING STORE in multi_packer !!! ");
 		store(src, dst, pack_type);	
 	}
