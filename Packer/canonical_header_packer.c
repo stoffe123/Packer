@@ -23,7 +23,10 @@ void writeHalfbyte(FILE* file, int halfbyte)
 		pos = 0;
 		break;
 	case -2:  /* flush */
-		if (pos == 1) WRITE(file, byte);
+		//tricky part here if we get a trailing value
+		//we want that trailing value to be a code
+		//so we can ignore it in the unpacker
+		if (pos == 1) WRITE(file, (uint64_t)15 + byte);
 		break;
 	default:
 		if (pos == 0)
@@ -33,7 +36,7 @@ void writeHalfbyte(FILE* file, int halfbyte)
 		}
 		else
 		{
-			WRITE(file, halfbyte + byte);
+			WRITE(file, (uint64_t)halfbyte + byte);
 			pos = 0;
 		}
 	}
@@ -47,7 +50,9 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 
 	FILE* infil = NULL, * utfil = NULL;
 	unsigned long char_freq[256] = { 0 };
-	unsigned long long max_runlength = 17;
+	unsigned long long max_runlength = 33;
+
+	printf("\n canonical_header_pack: %s", src);
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -71,31 +76,42 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 
 		unsigned char first_char = read_char;
 		runlength = 1;
-		while ((read_char = fgetc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
-			runlength++;
+
+		if (read_char < 14) {
+
+			while ((read_char = fgetc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
+				runlength++;
+			}
 		}
-
-		/* now we found the longest runlength in the window! */
-
-		assert(runlength > 0, "runlength > 0 in RLE_simple_packer.RLE_pack_internal");
+		else {
+			read_char = fgetc(infil);
+		}
 		if (runlength < MIN_RUNLENGTH) {
 			
 				for (int i = 0; i < runlength; i++) {
-					if (first_char == code || first_char >=15) {
+					if (first_char == code || first_char >=14) {
 						//has to escape this char!
 						writeHalfbyte(utfil, code);
 						writeHalfbyte(utfil, 15); //15 is signal for escape!
-						WRITE(utfil, first_char); //write full byte!
+						writeHalfbyte(utfil, first_char % 16); 
+						writeHalfbyte(utfil, first_char / 16);
 					}
 					else {
 						writeHalfbyte(utfil, first_char);
 					}
 				}
 		}
-		else { // Runlength found!	
-				writeHalfbyte(utfil, code);
-				writeHalfbyte(utfil, first_char);
-				writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
+		else { // Runlength found!					
+				if (runlength < 18) {
+					writeHalfbyte(utfil, 15);
+					writeHalfbyte(utfil, first_char);
+					writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
+				}
+				else {
+					writeHalfbyte(utfil, 14);
+					writeHalfbyte(utfil, first_char);
+					writeHalfbyte(utfil, runlength - 18);
+				}
 		}
 	}//end while
 	writeHalfbyte(utfil, -2); // flush

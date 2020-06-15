@@ -51,7 +51,7 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 
 	FILE* infil, * utfil;
 
-	//printf("\n\n Unpacking %s", source_filename);
+	printf("\n canonical_header_unpack: %s", source_filename);
 	unsigned long i;
 
 
@@ -71,24 +71,28 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 	code = 15;
 	readHalfbyte(infil, -1); // init
 
-	unsigned char cc;
+	int cc;
 	while ((cc = readHalfbyte(infil, 0)) != -1) {
 
-		if (cc == code) {
+		if (cc == 15 || cc == 14) {
 			int byte = readHalfbyte(infil, 0);
-			if (byte == 15) {
+			if (byte == -1) {
+				//encountered a trailing value => ignore
+				break;
+			}
+			if (byte == 15 && cc == 15) {
 				//escape sequence
 				unsigned int escapedByte = readHalfbyte(infil, 0) + 16 * readHalfbyte(infil, 0);
 				putc(escapedByte, utfil);
 			}
 			else {
 				int runlength = readHalfbyte(infil, 0);
-				runlength += MIN_RUNLENGTH;
+				runlength += (cc == 15 ? MIN_RUNLENGTH : 18);
 				for (int i = 0; i < runlength; i++) {
 					putc(byte, utfil);
 				}
 			}
-		}
+		} 
 		else {
 			putc(cc, utfil);
 		}

@@ -12,6 +12,7 @@
 #include "Two_byte_unpacker.h"
 #include "RLE_packer_advanced.h"
 #include "archive_packer.h"
+#include "canonical_header_packer.h"
 
 //#include "huffman2.h"
 //#include "canonical.h"
@@ -239,7 +240,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/book_med.txt";
+	const char* src = "c:/test/amb.dll";
 	const char* unpacked = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -250,7 +251,7 @@ void onefile() {
 
 	int cl = clock();
 
-	//meta testsuit 849766
+	//meta testsuit 838297
 	packProfile seqlenProfile = getPackProfile(53, 149);
 	seqlenProfile.rle_ratio = 64;
 	seqlenProfile.twobyte_ratio = 62;
@@ -271,7 +272,8 @@ void onefile() {
 	//seq_pack(src, packed_name, profile);
 	//two_byte_pack(src, packed_name, profile);
 	//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
-	CanonicalEncode(src, packed_name);
+	//RLE_simple_pack(src, packed_name);
+	canonical_header_pack(src, packed_name);
 
 	int pack_time = (clock() - cl);
 		
@@ -282,7 +284,8 @@ void onefile() {
 	//seq_unpack_separate("c:/test/main", dst, "c:/test/");
 	//two_byte_unpack(packed_name, unpacked_finished);
 	//multi_unpack(packed_name, unpacked_finished);
-	CanonicalDecode(packed_name, unpacked);
+	//RLE_simple_unpack(packed_name, unpacked);
+	canonical_header_unpack(packed_name, unpacked);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -306,7 +309,7 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
-
+		L"amb.dll",
 		L"empty.txt",
 		L"onechar.txt",
 		L"oneseq.txt",
@@ -321,7 +324,7 @@ void test16() {
 		L"bad.cdg",
 		L"did.csh",
 		L"nex.doc",
-		L"amb.dll",
+		
 		L"aft.htm",
 		L"pazera.exe",
 		
@@ -392,6 +395,7 @@ void test16() {
 			printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
 			cl = clock();
+			
 			
 			block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");

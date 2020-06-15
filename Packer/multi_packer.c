@@ -349,6 +349,10 @@ void multi_unpack(const char* src, const char* dst) {
 	printf("\n Multiunpack of %s  =>  %s", src, dst);
 	pack_info_t pi;
 	FILE* in = fopen(src, "rb");
+	if (in == NULL) {
+		printf("\n Couldn't open file %s ", src);
+		exit(1);
+	}
 	unsigned char pack_type;
 	fread(&pack_type, 1, 1, in);
 	pi.pack_type = pack_type;

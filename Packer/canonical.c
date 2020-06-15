@@ -42,8 +42,7 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "multi_packer.h"
-#include "RLE_simple_unpacker.h"
-#include "RLE_simple_packer.h"
+#include "canonical_header_packer.h"
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -213,7 +212,7 @@ int CanonicalDecodeFile(FILE* inFile, FILE* outFile)
     }
 
     /* populate list with code length from file header */
-    if (0 != ReadHeader(canonicalList, bInFile))
+    if (ReadHeader(canonicalList, bInFile) != 0)
     {
         BitArrayDestroy(code);
         inFile = BitFileToFILE(bInFile);
@@ -625,21 +624,37 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     prof.twobyte_threshold_divide = 100;
     prof.twobyte_threshold_max = 100;
     prof.twobyte_threshold_min = 20;
-    RLE_simple_pack(headerFilename, packedFilename);
+    canonical_header_pack(headerFilename, packedFilename);
     int size = get_file_size_from_name(packedFilename);
     printf("\n packed canonical header down to %d bytes", size);
    
     FILE* packedFile = fopen(packedFilename, "rb");
-    if (size < 4 || size > 259) {
-        printf("\n wrong size of canonical header: %d", size);
-        exit(1);
+    
+    if (size < 4 || size > 258) {
+        printf("\n wrong size of canonical header: %d  => reverting to just store", size);
+        size = 3;
+        headerFile = fopen(headerFilename, "rb");
     }
-    BitFilePutChar(size - 4, bfp);
+    BitFilePutChar(size - 3, bfp);
+
     byte_t ch;
-    while (fread(&ch, 1, 1, packedFile) == 1) {            
+    while (fread(&ch, 1, 1, (size == 3 ? headerFile : packedFile)) == 1) {            
          BitFilePutChar(ch, bfp);
     }
     fclose(packedFile);
+    if (size == 3) {
+        fclose(headerFile);
+    }
+
+    if (DOUBLE_CHECK_PACK) {
+        const char tmp[100] = { 0 };
+        get_temp_file2(tmp, "canonical_doublecheckpack");
+        canonical_header_unpack(packedFilename, tmp);
+        if (!files_equal(tmp, headerFilename)) {
+            printf("\n failed to pack: %s", headerFilename);
+            exit(1);
+        }
+    }
     remove(packedFilename);
     remove(headerFilename);
 
@@ -681,13 +696,19 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     char unpFilename[100] = { 0 };
     get_temp_file2(unpFilename, "canonical_rheadunp");
 
-    int size = BitFileGetChar(bfp) + 4;
-    for (int i = 0; i < size; i++) {
+    int size = BitFileGetChar(bfp);
+    int bytesToCopy = (size == 0 ? NUM_CHARS : size + 3);
+    for (int i = 0; i < bytesToCopy; i++) {
         uint8_t ch = BitFileGetChar(bfp);
         fwrite(&ch, 1, 1, file);
     }
     fclose(file);
-    RLE_simple_unpack(packedFilename, unpFilename);
+    if (size > 0) {
+        canonical_header_unpack(packedFilename, unpFilename);
+    }
+    else {
+        my_rename(packedFilename, unpFilename);
+    }
     FILE* unpFile = fopen(unpFilename, "rb");
 
     /* read the code length */
