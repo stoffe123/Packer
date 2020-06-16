@@ -67,7 +67,7 @@ void get_rand(const char* dst);
 
 void get_randw(const wchar_t* dst);
 
-void get_temp_file2(const char* dst, const char* s);
+void getTempFile(const char* dst, const char* s);
 
 void get_temp_filew(const wchar_t* dst, const wchar_t* s);
 

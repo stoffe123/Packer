@@ -27,10 +27,10 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	FILE* utfil = openWrite(dst);
 	FILE* infil = openRead(src);
-	uint64_t tmp_size;
+	uint64_t chunkSize;
 	do {
-		const char tmp[100] = { 0 };
-		get_temp_file2(tmp, "block_chunck");
+		const char chunkFilename[100] = { 0 };
+		getTempFile(chunkFilename, "block_chunck");
 		uint64_t read_size = BLOCK_SIZE;
 
 		//workaround for a bug that even 2 powers cause bug
@@ -38,11 +38,11 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		if (read_size % 256 == 0) {
 			read_size--;
 		}
-		copy_chunk(infil, tmp, read_size);
-		tmp_size = get_file_size_from_name(tmp);
+		copy_chunk(infil, chunkFilename, read_size);
+		chunkSize = get_file_size_from_name(chunkFilename);
 
-		const char tmp2[100] = { 0 };
-		get_temp_file2(tmp2, "block_multipacked");
+		const char packedFilename[100] = { 0 };
+		getTempFile(packedFilename, "block_multipacked");
 
 		//meta testsuit 849813
 		packProfile seqlenProfile = getPackProfile(53, 148);
@@ -61,12 +61,12 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		offsetProfile.twobyte_threshold_divide = 1271;
 		offsetProfile.twobyte_threshold_min = 963;
 
-		multi_pack(tmp, tmp2, profile, seqlenProfile, offsetProfile);
-		remove(tmp);
+		multi_pack(chunkFilename, packedFilename, profile, seqlenProfile, offsetProfile);
+		remove(chunkFilename);
 
-		append_to_tar(utfil, tmp2);
-		remove(tmp2);
-	} while (tmp_size == BLOCK_SIZE);
+		append_to_tar(utfil, packedFilename);
+		remove(packedFilename);
+	} while (chunkSize == BLOCK_SIZE);
 
 	fclose(infil);
 	fclose(utfil);
@@ -85,11 +85,11 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	while (fread(&size, sizeof(size), 1, infil) == 1) {
 
 		const char tmp[100] = { 0 };
-		get_temp_file2(tmp, "block_tobeunpacked");
+		getTempFile(tmp, "block_tobeunpacked");
 		copy_chunk(infil, tmp, size);
 
 		const char tmp2[100] = { 0 };
-		get_temp_file2(tmp2, "block_multiunpacked");
+		getTempFile(tmp2, "block_multiunpacked");
 		multi_unpack(tmp, tmp2);
 
 		remove(tmp);

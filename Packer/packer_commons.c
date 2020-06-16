@@ -15,7 +15,7 @@ bool testPack(const char* src, const char* tmp, const char* packerName, int limi
 void doDoubleCheck2(const char* src, const char* packedName, const char* kind) {
 	if (DOUBLE_CHECK_PACK) {
 		const char tmp[100] = { 0 };
-		get_temp_file2(tmp, kind);
+		getTempFile(tmp, kind);
 		unpackByKind(kind, packedName, tmp);
 		doDoubleCheck(tmp, src, kind);
 	}
@@ -33,7 +33,7 @@ void doDoubleCheck(const char* tmp, const char* src, const char* type) {
 
 uint64_t CanonicalEncodeAndTest(const char* src) {
 	const char packedName[100] = { 0 };
-	get_temp_file2(packedName, "multi_canonicaled");
+	getTempFile(packedName, "multi_canonicaled");
 	CanonicalEncode(src, packedName);
 	uint64_t size_org = get_file_size_from_name(src);
 	uint64_t size_packed = get_file_size_from_name(packedName);
@@ -79,7 +79,7 @@ bool packAndTest(const char* kind, const char* src, packProfile profile,
 	const char tmp[100] = { 0 };
 	concat(tmp, "multi_", kind);
 	int limit = 100;
-	get_temp_file2(packedName, tmp);
+	getTempFile(packedName, tmp);
 	if (equals(kind, "multi")) {
 		multi_pack(src, packedName, profile, seqlensProfile, offsetsProfile);
 	} 

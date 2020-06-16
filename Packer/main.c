@@ -115,22 +115,22 @@ void testmeta() {
 
 	packProfile bestProfile, bestOffsetProfile;
 
-	//meta testsuit 849396
-	packProfile seqlenProfile = getPackProfile(53, 149);
-	seqlenProfile.rle_ratio = 64;
-	seqlenProfile.twobyte_ratio = 62;
-	seqlenProfile.recursive_limit = 10;
-	seqlenProfile.twobyte_threshold_max = 8373;
-	seqlenProfile.twobyte_threshold_divide = 3598;
-	seqlenProfile.twobyte_threshold_min = 24;
+	//meta testsuit 837907
+	packProfile seqlenProfile = getPackProfile(52, 149);
+	seqlenProfile.rle_ratio = 44;
+	seqlenProfile.twobyte_ratio = 58;
+	seqlenProfile.recursive_limit = 159;
+	seqlenProfile.twobyte_threshold_max = 9736;
+	seqlenProfile.twobyte_threshold_divide = 3437;
+	seqlenProfile.twobyte_threshold_min = 15;
 	
-	packProfile offsetProfile = getPackProfile(72, 56);
-	offsetProfile.rle_ratio = 56;
-	offsetProfile.twobyte_ratio = 82;
-	offsetProfile.recursive_limit = 220;
-	offsetProfile.twobyte_threshold_max = 11235;
-	offsetProfile.twobyte_threshold_divide = 1906;
-	offsetProfile.twobyte_threshold_min = 913;
+	packProfile offsetProfile = getPackProfile(74, 56);
+	offsetProfile.rle_ratio = 58;
+	offsetProfile.twobyte_ratio = 89;
+	offsetProfile.recursive_limit = 203;
+	offsetProfile.twobyte_threshold_max = 2781;
+	offsetProfile.twobyte_threshold_divide = 2025;
+	offsetProfile.twobyte_threshold_min = 670;
 	
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);

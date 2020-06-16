@@ -608,7 +608,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
    
     char headerFilename[100] = { 0 };
-    get_temp_file2(headerFilename, "canonical_header");
+    getTempFile(headerFilename, "canonical_header");
     FILE* headerFile = fopen(headerFilename, "wb");
     for (int i = 0; i < NUM_CHARS; i++)
     {
@@ -617,7 +617,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     }
     fclose(headerFile);
     char packedFilename[100] = { 0 };
-    get_temp_file2(packedFilename, "canonical_header_packed");
+    getTempFile(packedFilename, "canonical_header_packed");
     canonical_header_pack(headerFilename, packedFilename);
     int size = get_file_size_from_name(packedFilename);
     printf("\n packed canonical header down to %d bytes", size);
@@ -653,32 +653,8 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     if (size == 0) {
         fclose(headerFile);
     }
-
-    if (DOUBLE_CHECK_PACK) {
-        const char tmp[100] = { 0 };
-        get_temp_file2(tmp, "canonical_doublecheckpack");
-        canonical_header_unpack(packedFilename, tmp);
-        if (!files_equal(tmp, headerFilename)) {
-            printf("\n failed to pack: %s", headerFilename);
-            exit(1);
-        }
-    }
     remove(packedFilename);
     remove(headerFilename);
-
-    /* write out code size for each symbol */
-    //printf("\n ---- \n");    
-    /*
-    for (int i = 0; i < NUM_CHARS; i++)
-
-    {
-        byte_t len = cl[i].codeLen;
-        BitFilePutChar(len, bfp);
-        //printf("%d ", len);        
-    }
-
-    //printf("\n ------------ \n");
-    */
 }
 
 /****************************************************************************
@@ -698,11 +674,11 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
 
     char packedFilename[100] = { 0 };
-    get_temp_file2(packedFilename, "canonical_packedheader");
+    getTempFile(packedFilename, "canonical_packedheader");
     FILE* file = fopen(packedFilename, "wb");
 
     char unpFilename[100] = { 0 };
-    get_temp_file2(unpFilename, "canonical_headerunpacked");
+    getTempFile(unpFilename, "canonical_headerunpacked");
 
     int size = BitFileGetChar(bfp);
     int bytesToCopy = NUM_CHARS;

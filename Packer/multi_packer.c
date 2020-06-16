@@ -125,7 +125,7 @@ void unpackAndReplace(const char* kind, const char* src) {
 	const char tmp[100] = { 0 };
 	const char tmp2[100] = { 0 };
 	concat(tmp2, "multiunp_", kind);
-	get_temp_file2(tmp, tmp2);
+	getTempFile(tmp, tmp2);
 	unpackByKind(kind, src, tmp);
 	my_rename(tmp, src);
 }
@@ -173,7 +173,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  4 - 
  5 - RLE simple
  6 - Two byte 
- 7 - 
+ 7 - Sequence pack
  */
 
 void multi_pack(const char* src, const char* dst, packProfile profile,
@@ -198,7 +198,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 	bool do_store = source_size < 6;
 	if (!do_store) {
 		char before_seqpack[100] = { 0 };
-		get_temp_file2(before_seqpack, "multi_rlepacked");
+		getTempFile(before_seqpack, "multi_rlepacked");
 
 		packProfile prof = getPackProfile(0, 0);
 		prof.twobyte_ratio = 90;
@@ -210,14 +210,14 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 
 		char slim_multipacked[100];
 		if (profile.seqlen_pages + profile.offset_pages > 0 && source_size > 10) {	
-			get_temp_file2(slim_multipacked, "multi_multipacked");
+			getTempFile(slim_multipacked, "multi_multipacked");
 			multi_pack(src, slim_multipacked, prof, prof, prof);
 			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
 		}
 
 		if (source_size < 300) {
 			char head_pack[100] = { 0 };
-			get_temp_file2(head_pack, "multi_head_pack");
+			getTempFile(head_pack, "multi_head_pack");
 			canonical_header_pack(src, head_pack);
 			packCandidates[candidatesIndex++] = getPackCandidate(head_pack, setKthBit(0, 3));
 		}
@@ -228,13 +228,13 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		}
 	
 		char just_two_byte[100] = { 0 };
-		get_temp_file2(just_two_byte, "multi_just_two_byte");		
+		getTempFile(just_two_byte, "multi_just_two_byte");		
 		two_byte_pack(src, just_two_byte, twobyte100Profile);
 		packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
 
 		if (source_size > canonicalRecursiveLimit) {
 			char just_canonical[100] = { 0 };
-			get_temp_file2(just_canonical, "multi_just_canonical");
+			getTempFile(just_canonical, "multi_just_canonical");
 			CanonicalEncode(src, just_canonical);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		}
@@ -250,7 +250,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		
 		if (source_size > canonicalRecursiveLimit) {
 			char canonical_instead_of_seqpack[100] = { 0 };
-			get_temp_file2(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
+			getTempFile(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
 			CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
 			packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));
 		}		
@@ -265,7 +265,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 
 		if (DOUBLE_CHECK_PACK) {
 			const char tmp2[100] = { 0 };
-			get_temp_file2(tmp2, "multi_maksureseqpack");
+			getTempFile(tmp2, "multi_maksureseqpack");
 			seq_unpack_separate(main_name, tmp2, base_dir);
 			doDoubleCheck(tmp2, before_seqpack, "seq");
 		}
@@ -297,7 +297,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			remove(before_seqpack);
 			if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
 				char canonicalled[100];
-				get_temp_file2(canonicalled, "multi_canonicalled");
+				getTempFile(canonicalled, "multi_canonicalled");
 				uint64_t size_before_canonical = get_file_size_from_name(main_name);
 				CanonicalEncode(main_name, canonicalled);
 				uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
@@ -391,7 +391,7 @@ void multi_unpack(const char* src, const char* dst) {
 		}		
 	}
 	const char seq_dst[100] = { 0 };
-	get_temp_file2(seq_dst, "multi_seqsepunp");
+	getTempFile(seq_dst, "multi_seqsepunp");
 	if (seqPacked) {
 		printf("\n SEQ unpack separate of %smain", base_dir);
 		seq_unpack_separate(main_name, seq_dst, base_dir);

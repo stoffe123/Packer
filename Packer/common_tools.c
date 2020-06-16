@@ -188,7 +188,7 @@ void get_randw(const wchar_t* s) {
 	int_to_stringw(s, filename_count++);
 }
 
-void get_temp_file2(const char* dst, const char* s) {
+void getTempFile(const char* dst, const char* s) {
 	char number[40] = { 0 };
 	get_rand(number);
 	concat3(dst, TEMP_DIR, s, number);
