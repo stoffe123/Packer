@@ -47,6 +47,7 @@ void writeHalfbyte(FILE* file, int halfbyte)
 value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 
 	unsigned char code = 15;
+	unsigned char code2 = 14;
 
 	FILE* infil = NULL, * utfil = NULL;
 	unsigned long char_freq[256] = { 0 };
@@ -77,7 +78,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 		unsigned char first_char = read_char;
 		runlength = 1;
 
-		if (read_char < 14) {
+		if (read_char < 16 && read_char != code) {
 
 			while ((read_char = fgetc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
 				runlength++;
@@ -92,7 +93,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 					if (first_char == code || first_char >=14) {
 						//has to escape this char!
 						writeHalfbyte(utfil, code);
-						writeHalfbyte(utfil, 15); //15 is signal for escape!
+						writeHalfbyte(utfil, code); //code here is signal for escape!
 						writeHalfbyte(utfil, first_char % 16); 
 						writeHalfbyte(utfil, first_char / 16);
 					}

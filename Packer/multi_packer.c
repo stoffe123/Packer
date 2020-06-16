@@ -320,7 +320,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		}
 		do_store = bestCandidate.size + 1 >= source_size;
 		if (!do_store) {
-			printf("\nWinner is %s  packed %d down to %d", bestCandidate.filename, source_size, bestCandidate.size);
+			printf("\nWinner is %s  packed %d > %d", bestCandidate.filename, source_size, bestCandidate.size);
 			pack_type = bestCandidate.packType;
 			if (equals(bestCandidate.filename, slim_multipacked)) {
 				printf("\n Using only slimseq");

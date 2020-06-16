@@ -11,7 +11,6 @@
 // canonical header unpacker
 
 //Global vars
-static   unsigned char code;
 
 static   long long read_packedfile_pos;
 
@@ -68,26 +67,26 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 		exit(1);
 	}
 
-	code = 15;
+	unsigned char code = 15, code2 = 14;
 	readHalfbyte(infil, -1); // init
 
 	int cc;
 	while ((cc = readHalfbyte(infil, 0)) != -1) {
 
-		if (cc == 15 || cc == 14) {
+		if (cc == code || cc == code2) {
 			int byte = readHalfbyte(infil, 0);
 			if (byte == -1) {
 				//encountered a trailing value => ignore
 				break;
 			}
-			if (byte == 15 && cc == 15) {
+			if (byte == code && cc == code) {
 				//escape sequence
 				unsigned int escapedByte = readHalfbyte(infil, 0) + 16 * readHalfbyte(infil, 0);
 				putc(escapedByte, utfil);
 			}
 			else {
 				int runlength = readHalfbyte(infil, 0);
-				runlength += (cc == 15 ? MIN_RUNLENGTH : 18);
+				runlength += (cc == code ? MIN_RUNLENGTH : 18);
 				for (int i = 0; i < runlength; i++) {
 					putc(byte, utfil);
 				}
