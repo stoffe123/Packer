@@ -151,9 +151,9 @@ void copyProfile(packProfile* src, packProfile* dst) {
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {
-	unsigned char best_code;
-	unsigned long freq = ULONG_MAX;
-	for (unsigned int i = 0; i < 256; i++) {
+	unsigned char best_code = 0;
+	unsigned long freq = char_freq[0];
+	for (unsigned int i = 1; i < 256; i++) {
 		if (char_freq[i] < freq) {
 			freq = char_freq[i];
 			best_code = i;

@@ -29,10 +29,7 @@ typedef struct packProfile {
 	int twobyte_threshold_max;
 	int twobyte_threshold_divide;
 	int twobyte_threshold_min;
-	int twobyte2_ratio;
-	int twobyte2_threshold_max;
-	int twobyte2_threshold_divide;
-	int twobyte2_threshold_min;
+	int canonical_size_limit;	
 } packProfile;
 
 void printProfile(packProfile*);

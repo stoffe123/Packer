@@ -341,11 +341,7 @@ void test16() {
 	profile.twobyte_threshold_max = 11788;
 	profile.twobyte_threshold_divide = 159;
 	profile.twobyte_threshold_min = 3150;
-	profile.twobyte2_ratio = 93;
-	profile.twobyte2_threshold_max = 5000;
-	profile.twobyte2_threshold_divide = 309;
-	profile.twobyte2_threshold_min = 54;
-
+	
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
 	

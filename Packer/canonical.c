@@ -618,13 +618,6 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     fclose(headerFile);
     char packedFilename[100] = { 0 };
     get_temp_file2(packedFilename, "canonical_header_packed");
-    packProfile prof = getPackProfile(0, 0);
-    prof.twobyte_ratio = 90;
-    prof.rle_ratio = 90;
-    prof.recursive_limit = 10;
-    prof.twobyte_threshold_divide = 100;
-    prof.twobyte_threshold_max = 100;
-    prof.twobyte_threshold_min = 20;
     canonical_header_pack(headerFilename, packedFilename);
     int size = get_file_size_from_name(packedFilename);
     printf("\n packed canonical header down to %d bytes", size);
@@ -749,7 +742,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
         {
             fprintf(stderr, "\n Error in canonical.c: malformed file header.\n");
             errno = EILSEQ;     /* Illegal byte sequence seems reasonable */
-            return -1;
+            exit(1);
         }
     }
     fclose(unpFile);
