@@ -50,7 +50,6 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 	unsigned char code2 = 14;
 
 	FILE* infil = NULL, * utfil = NULL;
-	unsigned long char_freq[256] = { 0 };
 	unsigned long long max_runlength = 33;
 
 	printf("\n canonical_header_pack: %s", src);
@@ -104,12 +103,12 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 		}
 		else { // Runlength found!					
 				if (runlength < 18) {
-					writeHalfbyte(utfil, 15);
+					writeHalfbyte(utfil, code);
 					writeHalfbyte(utfil, first_char);
 					writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
 				}
 				else {
-					writeHalfbyte(utfil, 14);
+					writeHalfbyte(utfil, code2);
 					writeHalfbyte(utfil, first_char);
 					writeHalfbyte(utfil, runlength - 18);
 				}

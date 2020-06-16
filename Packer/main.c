@@ -240,7 +240,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/seqtest";
+	const char* src = "c:/test/canonical_header";
 	const char* unpackedFilename = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
@@ -271,9 +271,9 @@ void onefile() {
 	//seq_pack_separate(src, "c:/test/", 219, 2);
 	//seq_pack(src, packed_name, profile);
 	//two_byte_pack(src, packed_name, profile);
-	multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
+	//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
 	//RLE_simple_pack(src, packed_name);
-	//canonical_header_pack(src, packed_name);
+	canonical_header_pack(src, packed_name);
 
 	int pack_time = (clock() - cl);
 		
@@ -283,9 +283,9 @@ void onefile() {
 
 	//seq_unpack_separate("c:/test/main", dst, "c:/test/");
 	//two_byte_unpack(packed_name, unpackedFilename);
-	multi_unpack(packed_name, unpackedFilename);
+	//multi_unpack(packed_name, unpackedFilename);
 	//RLE_simple_unpack(packed_name, unpackedFilename);
-	//canonical_header_unpack(packed_name, unpackedFilename);
+	canonical_header_unpack(packed_name, unpackedFilename);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -512,8 +512,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	//testmeta();
-    test16();
+	testmeta();
+    //test16();
 	//testarchive();
     //onefile();
 }
