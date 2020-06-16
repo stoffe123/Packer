@@ -98,8 +98,7 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 		}
 	}
 	fclose(infil);
-	fclose(utfil);
-	
+	fclose(utfil);	
 }
 
 int canonical_header_unpack(const char* src, const char* dest) {

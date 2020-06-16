@@ -169,7 +169,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  0 - canonical
  1 - seqlens multipack 
  2 - offset multipack
- 3 - 
+ 3 - canonical header pack
  4 - 
  5 - RLE simple
  6 - Two byte 
@@ -215,7 +215,12 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
 		}
 
-
+		if (source_size < 300) {
+			char head_pack[100] = { 0 };
+			get_temp_file2(head_pack, "multi_head_pack");
+			canonical_header_pack(src, head_pack);
+			packCandidates[candidatesIndex++] = getPackCandidate(head_pack, setKthBit(0, 3));
+		}
 
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
 		if (got_smaller) {
@@ -315,6 +320,7 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		}
 		do_store = bestCandidate.size + 1 >= source_size;
 		if (!do_store) {
+			printf("\nWinner is %s  packed %d down to %d", bestCandidate.filename, source_size, bestCandidate.size);
 			pack_type = bestCandidate.packType;
 			if (equals(bestCandidate.filename, slim_multipacked)) {
 				printf("\n Using only slimseq");
@@ -345,8 +351,6 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 // ----------------------------------------------------------------
 
 void multi_unpack(const char* src, const char* dst) {
-
-	printf("\n Multiunpack of %s  =>  %s", src, dst);
 	pack_info_t pi;
 	FILE* in = fopen(src, "rb");
 	if (in == NULL) {
@@ -355,6 +359,7 @@ void multi_unpack(const char* src, const char* dst) {
 	}
 	unsigned char pack_type;
 	fread(&pack_type, 1, 1, in);
+	printf("\n Multiunpack of %s  =>  %s   with packtype %d", src, dst, pack_type);
 	pi.pack_type = pack_type;
 	if (pack_type == 0) {
 		printf("\n  UNSTORE!!  ");
@@ -375,12 +380,7 @@ void multi_unpack(const char* src, const char* dst) {
 
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
 		CanonicalDecodeAndReplace(main_name);
-	}
-	else {
-		if (isKthBitSet(pack_type, 3)) {
-			TwoByteUnpackAndReplace(main_name);
-		}	
-	}
+	}	
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
 		if (isKthBitSet(pack_type, 1)) {
@@ -402,11 +402,16 @@ void multi_unpack(const char* src, const char* dst) {
 	if (isKthBitSet(pack_type, 6)) {
 		TwoByteUnpackAndReplace(seq_dst);
 	}
-	if (isKthBitSet(pack_type, 5)) {
-		RLE_simple_unpack(seq_dst, dst);
+	if (isKthBitSet(pack_type, 3)) {
+		canonical_header_unpack(seq_dst, dst);
 	}
 	else {
-		my_rename(seq_dst, dst);
+		if (isKthBitSet(pack_type, 5)) {
+			RLE_simple_unpack(seq_dst, dst);
+		}
+		else {
+			my_rename(seq_dst, dst);
+		}
 	}
 	remove(seq_dst);
 

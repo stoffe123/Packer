@@ -162,7 +162,7 @@ void testmeta() {
 
 			concat_int(src, "C:/test/meta2/", kk + 101);
 			concat(src, src, "seqlens");
-			const char* dst = "C:/test/unp";
+			const char* unpackedFilename = "C:/test/unp";
 			const char* packed_name = "c:/test/packed.bin";
 			long long size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
@@ -197,7 +197,7 @@ void testmeta() {
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
 		
-			multi_unpack(packed_name, dst);
+			multi_unpack(packed_name, unpackedFilename);
 			//seq_unpack_separate("c:/test/main", dst, "c:/test/");
 
 
@@ -208,7 +208,7 @@ void testmeta() {
 			
 			printf("\n\n Comparing files!");
 			
-			if (files_equal(src, dst)) {
+			if (files_equal(src, unpackedFilename)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
 			else {
@@ -240,8 +240,8 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/amb.dll";
-	const char* unpacked = "C:/test/unp";
+	const char* src = "c:/test/seqtest";
+	const char* unpackedFilename = "C:/test/unp";
 
 	const char* packed_name = "c:/test/packed.bin";
 
@@ -271,9 +271,9 @@ void onefile() {
 	//seq_pack_separate(src, "c:/test/", 219, 2);
 	//seq_pack(src, packed_name, profile);
 	//two_byte_pack(src, packed_name, profile);
-	//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
+	multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
 	//RLE_simple_pack(src, packed_name);
-	canonical_header_pack(src, packed_name);
+	//canonical_header_pack(src, packed_name);
 
 	int pack_time = (clock() - cl);
 		
@@ -282,10 +282,10 @@ void onefile() {
 	cl = clock();
 
 	//seq_unpack_separate("c:/test/main", dst, "c:/test/");
-	//two_byte_unpack(packed_name, unpacked_finished);
-	//multi_unpack(packed_name, unpacked_finished);
-	//RLE_simple_unpack(packed_name, unpacked);
-	canonical_header_unpack(packed_name, unpacked);
+	//two_byte_unpack(packed_name, unpackedFilename);
+	multi_unpack(packed_name, unpackedFilename);
+	//RLE_simple_unpack(packed_name, unpackedFilename);
+	//canonical_header_unpack(packed_name, unpackedFilename);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -296,7 +296,7 @@ void onefile() {
 
 	printf("\n\n Comparing files!");
 
-	if (files_equal(src, unpacked)) {
+	if (files_equal(src, unpackedFilename)) {
 		printf("\n ****** SUCCESS ****** (equal)\n");
 	}
 	else {

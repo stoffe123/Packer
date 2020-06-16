@@ -705,11 +705,11 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
 
     char packedFilename[100] = { 0 };
-    get_temp_file2(packedFilename, "canonical_rheader");
+    get_temp_file2(packedFilename, "canonical_packedheader");
     FILE* file = fopen(packedFilename, "wb");
 
     char unpFilename[100] = { 0 };
-    get_temp_file2(unpFilename, "canonical_rheadunp");
+    get_temp_file2(unpFilename, "canonical_headerunpacked");
 
     int size = BitFileGetChar(bfp);
     int bytesToCopy = NUM_CHARS;
@@ -747,7 +747,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
         }
         else
         {
-            fprintf(stderr, "error: malformed file header.\n");
+            fprintf(stderr, "\n Error in canonical.c: malformed file header.\n");
             errno = EILSEQ;     /* Illegal byte sequence seems reasonable */
             return -1;
         }
