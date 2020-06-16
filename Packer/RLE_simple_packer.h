@@ -7,6 +7,12 @@ void RLE_simple_pack(const char* src, const char* dest);
 
 void RLE_simple_pack_separate(const char* src, const char* dest, const char* base_dir);
 
+
+void RLE_simple_unpack(const char* src, const char* dest);
+
+void RLE_simple_unpack_separate(const char* src, const char* dest, const char* base_dir);
+
+
 DWORD WINAPI thread_RLE_simple_pack(LPVOID lpParam);
 
 

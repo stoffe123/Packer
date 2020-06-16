@@ -10,7 +10,7 @@
 #include "Two_byte_packer.h"
 #include "Two_byte_unpacker.h"
 #include "RLE_packer_advanced.h"
-//#include "huffman2.h"
+#include "RLE_simple_packer.h"
 #include "canonical.h"
 
 typedef struct packCandidate_t {

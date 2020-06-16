@@ -43,6 +43,7 @@
 #include "packer_commons.h"
 #include "multi_packer.h"
 #include "canonical_header_packer.h"
+#include "RLE_simple_packer.h"
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -629,20 +630,34 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     printf("\n packed canonical header down to %d bytes", size);
    
     FILE* packedFile = fopen(packedFilename, "rb");
-    
-    if (size < 4 || size > 258) {
+    int RLE_size = 0;
+    if (size < 3 || size >= 256) {
         printf("\n wrong size of canonical header: %d  => reverting to just store", size);
-        size = 3;
-        headerFile = fopen(headerFilename, "rb");
+        size = 0; // flag for store
+        fclose(packedFile);
+        remove(packedFilename);
+        RLE_simple_pack(headerFilename, packedFilename);        
+        RLE_size = get_file_size_from_name(packedFilename);
+        printf("\n Trying RLE got size %d", RLE_size);
+        if (RLE_size >= 3 && RLE_size < 256) {
+            size = 1; // flag for RLE
+            packedFile = fopen(packedFilename, "rb");
+        }
+        else {            
+            headerFile = fopen(headerFilename, "rb");
+        }
     }
-    BitFilePutChar(size - 3, bfp);
+    BitFilePutChar(size, bfp);
+    if (size == 1) {
+        BitFilePutChar(RLE_size, bfp);
+    }
 
     byte_t ch;
-    while (fread(&ch, 1, 1, (size == 3 ? headerFile : packedFile)) == 1) {            
+    while (fread(&ch, 1, 1, (size == 0 ? headerFile : packedFile)) == 1) {            
          BitFilePutChar(ch, bfp);
     }
     fclose(packedFile);
-    if (size == 3) {
+    if (size == 0) {
         fclose(headerFile);
     }
 
@@ -697,16 +712,25 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     get_temp_file2(unpFilename, "canonical_rheadunp");
 
     int size = BitFileGetChar(bfp);
-    int bytesToCopy = (size == 0 ? NUM_CHARS : size + 3);
+    int bytesToCopy = NUM_CHARS;
+	if (size == 1) { // RLE case
+		bytesToCopy = BitFileGetChar(bfp);
+	}
+	else if (size > 1) {
+		bytesToCopy = size;
+	}
     for (int i = 0; i < bytesToCopy; i++) {
         uint8_t ch = BitFileGetChar(bfp);
         fwrite(&ch, 1, 1, file);
     }
     fclose(file);
-    if (size > 0) {
+    if (size > 1) {
         canonical_header_unpack(packedFilename, unpFilename);
     }
-    else {
+    else if (size == 1) {
+        RLE_simple_unpack(packedFilename, unpFilename);
+
+    } else { // store
         my_rename(packedFilename, unpFilename);
     }
     FILE* unpFile = fopen(unpFilename, "rb");

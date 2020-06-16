@@ -182,7 +182,6 @@
     <ClInclude Include="RLE_packer_advanced.h" />
     <ClInclude Include="RLE_simple_packer.h" />
     <ClInclude Include="RLE_simple_packer_commons.h" />
-    <ClInclude Include="RLE_simple_unpacker.h" />
     <ClInclude Include="seq_packer.h" />
     <ClInclude Include="seq_packer_commons.h" />
     <ClInclude Include="seq_unpacker.h" />

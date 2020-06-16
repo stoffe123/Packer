@@ -137,9 +137,6 @@
     <ClInclude Include="RLE_simple_packer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="RLE_simple_unpacker.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="RLE_simple_packer_commons.h">
       <Filter>Source Files</Filter>
     </ClInclude>
