@@ -89,7 +89,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 		if (runlength < MIN_RUNLENGTH) {
 			
 				for (int i = 0; i < runlength; i++) {
-					if (first_char == code || first_char >=14) {
+					if (first_char >= 14) {
 						//has to escape this char!
 						writeHalfbyte(utfil, code);
 						writeHalfbyte(utfil, code); //code here is signal for escape!

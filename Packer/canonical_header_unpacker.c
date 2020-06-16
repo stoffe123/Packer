@@ -76,7 +76,7 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 		if (cc == code || cc == code2) {
 			int byte = readHalfbyte(infil, 0);
 			if (byte == -1) {
-				//encountered a trailing value => ignore
+				//encountered a trailing value at end of file => ignore
 				break;
 			}
 			if (byte == code && cc == code) {
@@ -85,13 +85,8 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 				putc(escapedByte, utfil);
 			}
 			else {
-				int runlength = readHalfbyte(infil, 0);
-				if (cc == code) {
-					runlength += MIN_RUNLENGTH;
-				}
-				else {  //code2 case
-					runlength = 18 + runlength + 16 * readHalfbyte(infil, 0);
-				}
+				int runlength = readHalfbyte(infil, 0);				
+				runlength += (cc == code ? MIN_RUNLENGTH : (18 + 16 * readHalfbyte(infil, 0)));				
 				for (int i = 0; i < runlength; i++) {
 					putc(byte, utfil);
 				}
