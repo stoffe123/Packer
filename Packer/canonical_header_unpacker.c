@@ -86,7 +86,12 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 			}
 			else {
 				int runlength = readHalfbyte(infil, 0);
-				runlength += (cc == code ? MIN_RUNLENGTH : 18);
+				if (cc == code) {
+					runlength += MIN_RUNLENGTH;
+				}
+				else {  //code2 case
+					runlength = 18 + runlength + 16 * readHalfbyte(infil, 0);
+				}
 				for (int i = 0; i < runlength; i++) {
 					putc(byte, utfil);
 				}

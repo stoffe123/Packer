@@ -50,7 +50,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 	unsigned char code2 = 14;
 
 	FILE* infil = NULL, * utfil = NULL;
-	unsigned long long max_runlength = 33;
+	unsigned long long max_runlength = 273;
 
 	printf("\n canonical_header_pack: %s", src);
 
@@ -69,7 +69,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 
 	/* start compression */
 
-	unsigned int runlength = 1;
+	int runlength = 1;
 
 	int read_char = fgetc(infil);
 	while (read_char != EOF) {
@@ -110,7 +110,9 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 				else {
 					writeHalfbyte(utfil, code2);
 					writeHalfbyte(utfil, first_char);
-					writeHalfbyte(utfil, runlength - 18);
+					runlength -= 18;
+					writeHalfbyte(utfil, runlength % 16);
+					writeHalfbyte(utfil, runlength / 16);
 				}
 		}
 	}//end while
