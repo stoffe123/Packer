@@ -178,6 +178,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
 
 void multi_pack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile) {
+	static int metacount = 101;
 
 	int canonicalRecursiveLimit = 20;
  
@@ -287,6 +288,17 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 				pack_type = setKthBit(pack_type, 2);
 			}
 		}
+
+		/*
+		char tmp100[100] = { 0 };
+		concat_int(tmp100, "c:/test/meta3/offsets", metacount);
+		copy_file(offsets_name, tmp100);
+		
+		concat_int(tmp100, "c:/test/meta3/seqlens", metacount);
+		copy_file(seqlens_name, tmp100);
+		metacount++;
+		*/
+
 		uint64_t meta_size = get_file_size_from_name(offsets_name) +
 			get_file_size_from_name(seqlens_name) + 6;
 		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);

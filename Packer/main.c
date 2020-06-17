@@ -156,12 +156,11 @@ void testmeta() {
 		printf("\n\n and offset profile:");
 		printProfile(&offsetProfile);
 		printf("\n-------------------------------");
-		for (; kk < 34; kk++)
+		for (; kk < 38; kk++)
 		{
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/meta2/", kk + 101);
-			concat(src, src, "seqlens");
+			concat_int(src, "C:/test/meta3/seqlens", kk + 101);			
 			const char* unpackedFilename = "C:/test/unp";
 			const char* packed_name = "c:/test/packed.bin";
 			long long size_org = get_file_size_from_name(src);
@@ -177,8 +176,7 @@ void testmeta() {
 			}
 			acc_size_org += size_org;
 
-			concat_int(src, "C:/test/meta2/", kk + 101); 
-			concat(src, src, "offsets");
+			concat_int(src, "C:/test/meta3/offsets", kk + 101); 			
 			size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
@@ -309,10 +307,11 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
+		L"oneseq.txt",
 		L"amb.dll",
 		L"empty.txt",
 		L"onechar.txt",
-		L"oneseq.txt",
+		
 		L"repeatchar.txt",
 		L"book.txt",
 
@@ -508,8 +507,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	testmeta();
-    //test16();
+	//testmeta();
+    test16();
 	//testarchive();
-    onefile();
+    //onefile();
 }
