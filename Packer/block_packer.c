@@ -9,21 +9,14 @@
 #include "canonical.h"
 
 // tar contents of src => utfil
-append_to_tar(FILE* utfil, char* src, uint32_t size) {
-	//write size
+append_to_tar(FILE* utfil, char* src, uint32_t size, uint8_t packType) {
+
 	if (size == 0) {
-		size = 255;
-		fwrite(&size, 1, 1, utfil);
+		packType = setKthBit(packType, 4);
 	}
-	else {
-		printf("\n   WRITTEN BLOCK SIZE : %d", size);
-		uint8_t byte1, byte2, byte3;
-		byte1 = (size & 0xFF0000) >> 16;
-		byte2 = (size & 0x00FF00) >> 8;
-		byte3 = (size & 0x0000FF);
-		fwrite(&byte1, 1, 1, utfil);
-		fwrite(&byte2, 1, 1, utfil);
-		fwrite(&byte3, 1, 1, utfil);
+	fwrite(&packType, 1, 1, utfil);
+	if (size > 0) {
+		fwrite(&size, 3, 1, utfil);
 	}
 
 	//write contents
@@ -77,13 +70,13 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		offsetProfile.twobyte_threshold_divide = 1271;
 		offsetProfile.twobyte_threshold_min = 963;
 
-		multi_pack(chunkFilename, packedFilename, profile, seqlenProfile, offsetProfile);
+		uint8_t packType = multiPack(chunkFilename, packedFilename, profile, seqlenProfile, offsetProfile);
 		remove(chunkFilename);
 		uint32_t size = get_file_size_from_name(packedFilename);
 		if (chunkSize < BLOCK_SIZE) {
 			size = 0;
 		}
-		append_to_tar(utfil, packedFilename, size);
+		append_to_tar(utfil, packedFilename, size, packType);
 		remove(packedFilename);
 	} while (chunkSize == BLOCK_SIZE);
 
@@ -102,25 +95,23 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	//will save 16*4 = 64 bytes total in test suit 16
 	while (true) {
 
-		uint8_t byte1, byte2, byte3;
+		uint8_t packType;
 		const char tmp[100] = { 0 };
 		getTempFile(tmp, "block_tobeunpacked");
-		if (fread(&byte1, 1, 1, infil) == 0) {
+		if (fread(&packType, 1, 1, infil) == 0) {
 			break;
 		}
-		if (byte1 == 255) {
+		if (isKthBitSet(packType, 4)) {
 			copy_the_rest(infil, tmp);
 		}
 		else {
-			fread(&byte2, 1, 1, infil);
-			fread(&byte3, 1, 1, infil);
-			uint32_t size = byte1 * 65536 + byte2 * 256 + byte3;
-			printf("\n   CALULCATED BLOCK SIZE : %d", size);
+			uint32_t size = 0;
+			fread(&size, 3, 1, infil);			
 			copy_chunk(infil, tmp, size);
 		}
 		const char tmp2[100] = { 0 };
 		getTempFile(tmp2, "block_multiunpacked");
-		multi_unpack(tmp, tmp2);
+		multiUnpack(tmp, tmp2, packType);
 
 		remove(tmp);
 

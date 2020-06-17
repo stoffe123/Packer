@@ -13,9 +13,12 @@
 //#include "huffman2.h"
 #include "canonical.h"
 
-void multi_pack(const char* , const char* , packProfile profile, packProfile seqlenProfile, packProfile offsetProfile);
+uint8_t multiPack(const char* , const char* , packProfile profile, packProfile seqlenProfile, packProfile offsetProfile);
+
+void multiUnpack(const char* src, const char* dst, int packType);
+
+void multi_pack(const char*, const char*, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile);
 
 void multi_unpack(const char* src, const char* dst);
-
 
 #endif

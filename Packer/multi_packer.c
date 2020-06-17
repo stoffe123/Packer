@@ -56,17 +56,21 @@ void untar(FILE* in, pack_info_t pi) {
 	fclose(in);
 }
 
-void store(const char* src, const char* dst, unsigned char pack_type) {
+void store(const char* src, const char* dst, uint8_t pack_type, bool storePackType) {
 	FILE* out_file = fopen(dst, "wb");
-	fwrite(&pack_type, 1, 1, out_file);
+	if (storePackType) {
+		fwrite(&pack_type, 1, 1, out_file);
+	}
 	append_to_file(out_file, src);
 	fclose(out_file);
 }
 
-void tar(const char* dst, const char* base_dir, unsigned char pack_type) {
+void tar(const char* dst, const char* base_dir, uint8_t pack_type, bool storePackType) {
 	FILE* out_file = fopen(dst, "wb");
 
-	fwrite(&pack_type, 1, 1, out_file);
+	if (storePackType) {
+		fwrite(&pack_type, 1, 1, out_file);
+	}
 	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 
 	if (isKthBitSet(pack_type, 7)) {
@@ -170,14 +174,14 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  1 - seqlens multipack 
  2 - offset multipack
  3 - canonical header pack
- 4 - 
+ 4 - last block chunk
  5 - RLE simple
  6 - Two byte 
  7 - Sequence pack
  */
 
-void multi_pack(const char* src, const char* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile) {
+uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, bool storePackType) {
 	static int metacount = 101;
 
 	int canonicalRecursiveLimit = 20;
@@ -210,9 +214,10 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		prof.twobyte_threshold_min = 20;
 
 		char slim_multipacked[100];
+		uint8_t slimPackType = 0;
 		if (profile.seqlen_pages + profile.offset_pages > 0 && source_size > 10) {	
-			getTempFile(slim_multipacked, "multi_multipacked");
-			multi_pack(src, slim_multipacked, prof, prof, prof);
+			getTempFile(slim_multipacked, "multi_multipacked");			
+			slimPackType = multiPackInternal(src, slim_multipacked, prof, prof, prof, storePackType);			
 			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
 		}
 
@@ -336,12 +341,13 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 			pack_type = bestCandidate.packType;
 			if (equals(bestCandidate.filename, slim_multipacked)) {
 				printf("\n Using only slimseq");
-				my_rename(slim_multipacked, dst);				
+				my_rename(slim_multipacked, dst);	
+				pack_type = slimPackType;
 			}
 			else {
 				my_rename(bestCandidate.filename, main_name);
 				printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
-				tar(dst, base_dir, pack_type);
+				tar(dst, base_dir, pack_type, storePackType);
 			}
 		}								
 		for (int i = 0; i < candidatesIndex; i++) {
@@ -356,21 +362,25 @@ void multi_pack(const char* src, const char* dst, packProfile profile,
 		pack_type = 0;
 		
 		printf("\n  CHOOOSING STORE in multi_packer");
-		store(src, dst, pack_type);	
+		store(src, dst, pack_type, storePackType);	
 	}
+	return pack_type;
 }
 
 // ----------------------------------------------------------------
 
-void multi_unpack(const char* src, const char* dst) {
+
+
+void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bool readPackTypeFromFile) {
 	pack_info_t pi;
 	FILE* in = fopen(src, "rb");
 	if (in == NULL) {
 		printf("\n Couldn't open file %s ", src);
 		exit(1);
 	}
-	unsigned char pack_type;
-	fread(&pack_type, 1, 1, in);
+	if (readPackTypeFromFile) {
+		fread(&pack_type, 1, 1, in);
+	}
 	printf("\n Multiunpack of %s  =>  %s   with packtype %d", src, dst, pack_type);
 	pi.pack_type = pack_type;
 	if (pack_type == 0) {
@@ -430,4 +440,22 @@ void multi_unpack(const char* src, const char* dst) {
 	remove(seqlens_name);
 	remove(offsets_name);
 	remove(main_name);
+}
+
+uint8_t multiPack(const char* src, const char* dst, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile) {
+	return multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, false);
+}
+
+void multi_pack(const char* src, const char* dst, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile) {
+	multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, true);
+}
+
+void multiUnpack(const char* src, const char* dst, uint8_t pack_type) {
+	multiUnpackInternal(src, dst, pack_type, false);
+}
+
+void multi_unpack(const char* src, const char* dst) {
+	multiUnpackInternal(src, dst, 0, true);
 }

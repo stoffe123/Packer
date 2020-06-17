@@ -176,6 +176,16 @@ void testmeta() {
 			}
 			acc_size_org += size_org;
 
+			multi_unpack(packed_name, unpackedFilename);
+			printf("\n\n Comparing files!");
+			if (files_equal(src, unpackedFilename)) {
+				printf("\n ****** SUCCESS ****** (equal)\n");
+			}
+			else {
+				exit(1);
+			}
+
+
 			concat_int(src, "C:/test/meta3/offsets", kk + 101); 			
 			size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
@@ -195,17 +205,14 @@ void testmeta() {
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
 		
-			multi_unpack(packed_name, unpackedFilename);
-			//seq_unpack_separate("c:/test/main", dst, "c:/test/");
-
+			multi_unpack(packed_name, unpackedFilename);			
 
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
 			
-			printf("\n\n Comparing files!");
-			
+			printf("\n\n Comparing files!");			
 			if (files_equal(src, unpackedFilename)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
@@ -238,16 +245,25 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const char* src = "c:/test/canonical_header";
-	const char* unpackedFilename = "C:/test/unp";
+	const wchar_t* src = L"c:/test/canonical_header";
+	const wchar_t* unpackedFilename = L"C:/test/offsets103";
 
-	const char* packed_name = "c:/test/packed.bin";
+	const wchar_t* packed_name = L"c:/test/packed.bin";
 
-	long long size_org = get_file_size_from_name(src);
+	long long size_org = get_file_size_from_wname(src);
 
 	printf("\n Packing... %s with length:%d", src, size_org);
 
 	int cl = clock();
+
+	packProfile profile = getPackProfile(237, 159);
+	profile.rle_ratio = 85;
+	profile.twobyte_ratio = 90;
+	profile.seq_ratio = 100;
+	profile.recursive_limit = 242;
+	profile.twobyte_threshold_max = 11788;
+	profile.twobyte_threshold_divide = 159;
+	profile.twobyte_threshold_min = 3150;
 
 	//meta testsuit 838297
 	packProfile seqlenProfile = getPackProfile(53, 149);
@@ -271,7 +287,7 @@ void onefile() {
 	//two_byte_pack(src, packed_name, profile);
 	//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
 	//RLE_simple_pack(src, packed_name);
-	canonical_header_pack(src, packed_name);
+	block_pack(src, packed_name, profile);
 
 	int pack_time = (clock() - cl);
 		
@@ -283,18 +299,18 @@ void onefile() {
 	//two_byte_unpack(packed_name, unpackedFilename);
 	//multi_unpack(packed_name, unpackedFilename);
 	//RLE_simple_unpack(packed_name, unpackedFilename);
-	canonical_header_unpack(packed_name, unpackedFilename);
+	block_unpack(packed_name, unpackedFilename);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
 	printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-	uint64_t size_packed = get_file_size_from_name(packed_name);
+	uint64_t size_packed = get_file_size_from_wname(packed_name);
 	printf("\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 
 	printf("\n\n Comparing files!");
 
-	if (files_equal(src, unpackedFilename)) {
+	if (files_equalw(src, unpackedFilename)) {
 		printf("\n ****** SUCCESS ****** (equal)\n");
 	}
 	else {
@@ -308,18 +324,20 @@ void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
 		L"oneseq.txt",
-		L"amb.dll",
+		L"book.txt",
+		
+		
 		L"empty.txt",
 		L"onechar.txt",
-		
+			L"book_med.txt",
 		L"repeatchar.txt",
-		L"book.txt",
-
+		L"rel.pdf",
+		L"amb.dll",
 		L"voc.wav",
-		L"book_med.txt",
+	
 		
 		L"bad.mp3",
-		L"rel.pdf",		
+		
 		L"bad.cdg",
 		L"did.csh",
 		L"nex.doc",
@@ -390,8 +408,7 @@ void test16() {
 			printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
 			cl = clock();
-			
-			
+
 			block_unpack(packed_name, dst);
 			//seq_unpack_separate("main", dst, "c:/test/");
 
