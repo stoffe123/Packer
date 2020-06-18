@@ -7,7 +7,6 @@
 #include <stdint.h>
 
 #include "packer_commons.h"
-#include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "common_tools.h"
 //#include "huffman2.h"
@@ -15,7 +14,7 @@
 
 uint8_t multiPack(const char* , const char* , packProfile profile, packProfile seqlenProfile, packProfile offsetProfile);
 
-void multiUnpack(const char* src, const char* dst, int packType);
+void multiUnpack(const char* src, const char* dst, uint8_t pack_type);
 
 void multi_pack(const char*, const char*, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile);
 

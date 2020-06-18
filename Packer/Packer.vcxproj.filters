@@ -92,9 +92,6 @@
     <ClInclude Include="common_tools.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="seq_unpacker.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="seq_packer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -147,9 +144,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Two_byte_packer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Two_byte_unpacker.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="archive_packer.h">

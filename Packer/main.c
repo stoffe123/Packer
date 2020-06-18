@@ -1,15 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "common_tools.h"
-#include "seq_unpacker.h"  
+#include "common_tools.h"  
 #include "seq_packer.h"  
 #include "multi_packer.h"
 #include "block_packer.h"
 #include <Windows.h>
 #include "packer_commons.h"
 #include "Two_byte_packer.h"
-#include "Two_byte_unpacker.h"
 #include "RLE_packer_advanced.h"
 #include "archive_packer.h"
 #include "canonical_header_packer.h"
@@ -283,11 +281,11 @@ void onefile() {
 	offsetProfile.twobyte_threshold_min = 913;
 
 	//seq_pack_separate(src, "c:/test/", 219, 2);
-	//seq_pack(src, packed_name, profile);
+	seqPack(src, packed_name, profile);
 	//two_byte_pack(src, packed_name, profile);
 	//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
 	//RLE_simple_pack(src, packed_name);
-	block_pack(src, packed_name, profile);
+	//block_pack(src, packed_name, profile);
 
 	int pack_time = (clock() - cl);
 		
@@ -299,13 +297,14 @@ void onefile() {
 	//two_byte_unpack(packed_name, unpackedFilename);
 	//multi_unpack(packed_name, unpackedFilename);
 	//RLE_simple_unpack(packed_name, unpackedFilename);
-	block_unpack(packed_name, unpackedFilename);
+	//block_unpack(packed_name, unpackedFilename);
+	seqUnpack(packed_name, unpackedFilename);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
 	printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 	uint64_t size_packed = get_file_size_from_wname(packed_name);
-	printf("\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
+	wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 
 	printf("\n\n Comparing files!");

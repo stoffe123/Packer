@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
-#include "seq_unpacker.h"
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "seq_packer_commons.h"
@@ -63,13 +62,13 @@ uint64_t transform_seqlen(uint64_t seqlen, bool code_occurred, uint8_t pages) {
 	return seqlen;
 }
 
-uint64_t get_offset(uint8_t pages, bool useLongRange, uint64_t offsetPagesMax, uint64_t lastByteOffset, 
+uint64_t get_offset(uint8_t pages, bool useLongRange, uint64_t offsetPagesMax, uint64_t lastByteOffset,
 	uint64_t lowestSpecialOffset) {
 
 	uint64_t offset = read_offset();
 
 	if (useLongRange && offset == 255) {
-		offset = read_offset() + read_offset() * (uint64_t)256 + offsetPagesMax;		
+		offset = read_offset() + read_offset() * (uint64_t)256 + offsetPagesMax;
 	}
 	else {
 		if (offset >= lowestSpecialOffset && offset <= lastByteOffset) {
@@ -128,22 +127,24 @@ uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset
 
 //------------------------------------------------------------------------------
 
-void seq_unpack_internal(const char* source_filename, const char* dest_filename, const char* base_dir)
+void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_filename,
+	const wchar_t* base_dir, bool sep)
 {
+	separate_files = sep;
 	uint8_t offset_pages, seqlen_pages;
 	bool code_occurred, useLongRange;
 
 	static FILE* infil, * utfil, * seqlens_file, * offsets_file;
-	
+
 	if (separate_files) {
-		const char seqlens_name[100] = { 0 };
-		const char offsets_name[100] = { 0 };
-		concat(seqlens_name, base_dir, "seqlens");
-		concat(offsets_name, base_dir, "offsets");
-		seqlens_file = fopen(seqlens_name, "rb");
+		const wchar_t seqlens_name[100] = { 0 };
+		const wchar_t offsets_name[100] = { 0 };
+		concatw(seqlens_name, base_dir, L"seqlens");
+		concatw(offsets_name, base_dir, L"offsets");
+		seqlens_file = openRead(seqlens_name);
 		seqlens_pos = fread(&seqlens, 1, BLOCK_SIZE, seqlens_file);
 		fclose(seqlens_file);
-		offsets_file = fopen(offsets_name, "rb");
+		offsets_file = openRead(offsets_name);
 		offsets_pos = fread(&offsets, 1, BLOCK_SIZE, offsets_file);
 		fclose(offsets_file);
 	}
@@ -151,23 +152,13 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 	//printf("\n\n Unpacking %s", source_filename);
 	uint8_t cc;
 
-	fopen_s(&infil, source_filename, "rb");
-	if (!infil) {
-		printf("\nHittade inte utfil %s", source_filename);
-		getchar();
-		exit(1);
-	}
-	fopen_s(&utfil, dest_filename, "wb");
-	if (!utfil) {
-		printf("\nHittade inte utfil %s", dest_filename);
-		getchar();
-		exit(1);
-	}
+	infil = openRead(source_filename);
+	utfil = openWrite(dest_filename);
 	packed_file_end = fread(&buf, 1, BLOCK_SIZE * 2, infil);
 	debug("\n packed_file_end %d", packed_file_end);
 	fclose(infil);
 
-	
+
 	unsigned char packType = read_byte_from_file();
 	code_occurred = isKthBitSet(packType, 0);
 	useLongRange = isKthBitSet(packType, 1);
@@ -175,7 +166,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 		offset_pages = 0;
 		seqlen_pages = 0;
 	}
-	else {		
+	else {
 		offset_pages = read_byte_from_file();
 		seqlen_pages = read_byte_from_file();
 	}
@@ -190,9 +181,9 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 
 	buf_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, code, useLongRange, lastByteOffset, lowestSpecialOffset);
 	debug("\n buf_pos after wraparound %d", buf_pos);
-	
+
 	uint64_t offsetPagesMax = offset_pages * (uint64_t)256 + (useLongRange ? 255 : 256);
-	
+
 
 	if (VERBOSE) {
 		printf("\nwrap around:\n");
@@ -215,7 +206,7 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 				offset = get_offset(offset_pages, useLongRange, offsetPagesMax, lastByteOffset, lowestSpecialOffset);
 
 				unsigned char seqlen_min = getSeqlenMin(offset, lowestSpecialOffset, offsetPagesMax);
-				
+
 				seqlen += seqlen_min;
 
 				uint64_t match_index = buf_pos + offset + seqlen;
@@ -255,13 +246,22 @@ void seq_unpack_internal(const char* source_filename, const char* dest_filename,
 	fclose(utfil);
 }
 
-void seq_unpack(const char* source_filename, const char* dest_filename) {
-	separate_files = false;
-	seq_unpack_internal(source_filename, dest_filename, "");
+void seq_unpack(const char* src, const char* dst) {
+	wchar_t srcw[500], dstw[500];
+	toUni(srcw, src);
+	toUni(dstw, dst);
+	seq_unpack_internal(srcw, dstw, L"", false);
 }
 
-void seq_unpack_separate(const char* src, const char* dest_filename, const char* base_dir)
+void seq_unpack_separate(const char* src, const char* dst, const char* base_dir)
 {
-	separate_files = true;
-	seq_unpack_internal(src, dest_filename, base_dir);
+	wchar_t srcw[500], dstw[500], basew[500];
+	toUni(srcw, src);
+	toUni(dstw, dst);
+	toUni(basew, base_dir);
+	seq_unpack_internal(srcw, dstw, basew, true);
+}
+
+void seqUnpack(const wchar_t* src, const wchar_t* dst) {
+	seq_unpack_internal(src, dst, L"", false);
 }

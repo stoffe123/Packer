@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "seq_unpacker.h"
 #include "common_tools.h"
 #include "RLE_simple_packer_commons.h"
-#include "seq_packer_commons.h"
 
 // RLE simple  - unpacker
 

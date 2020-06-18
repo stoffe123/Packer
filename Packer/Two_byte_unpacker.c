@@ -79,7 +79,7 @@ void two_byte_unpack(const char* src, const char* dest) {
 	two_byte_unpack_internal(s, d);
 }
 
-void two_byte_unpackw(const wchar_t* src, const wchar_t* dest)
+void twoByteUnpack(const wchar_t* src, const wchar_t* dest)
 {	
 	two_byte_unpack_internal(src, dest); 
 }

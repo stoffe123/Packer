@@ -233,7 +233,7 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 }
 
 
-void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
+void twoBytePack(const wchar_t* src, const wchar_t* dest, packProfile prof)
 {
 	profile = prof;
 	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
@@ -248,7 +248,7 @@ void two_byte_pack(const char* src, const char* dest, packProfile prof) {
 	wchar_t d[500], s[500];
 	toUni(d, dest);
 	toUni(s, src);
-	two_byte_packw(s, d, prof);
+	twoBytePack(s, d, prof);
 }
 
 

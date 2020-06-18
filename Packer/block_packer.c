@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
-#include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "multi_packer.h"

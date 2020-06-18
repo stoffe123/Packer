@@ -9,7 +9,6 @@
 #include <strsafe.h>
 #pragma comment(lib, "User32.lib")
 
-#include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "multi_packer.h"

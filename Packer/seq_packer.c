@@ -23,7 +23,7 @@ static  unsigned char buffer[BLOCK_SIZE * 3];
 size_t absolute_end, buffer_endpos;
 static bool code_occurred = false, useLongRange = false;
 unsigned char lastByte, longRangeCode = 255;
-static const char* base_dir = "c:/test/";
+static const wchar_t* base_dir = L"c:/test/";
 static bool separate_files = false;
 
 static uint32_t nextChar[BLOCK_SIZE * 2],
@@ -112,7 +112,7 @@ void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMa
 }
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const char* src, const char* dest_filename, unsigned char pass,
+void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass,
 	unsigned char offset_pages, unsigned char seqlen_pages)
 {
 	static unsigned char code;
@@ -130,13 +130,8 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	uint32_t buffer_pos = 0;
 	debug("Seq_packer pass: %d", pass);
 
-	infil = fopen(src, "rb");
-	if (!infil) {
-		printf("\nSeq_packer: Hittade inte infil: %s", src);
-		getchar();
-		exit(1);
-	}
-
+	infil = openRead(src);
+	
 	if (pass == 2) {
 		
 		/*
@@ -149,18 +144,14 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 	*/
 
 		if (separate_files) {
-			const char seqlens_name[100] = { 0 };
-			const char offsets_name[100] = { 0 };
-			concat(seqlens_name, base_dir, "seqlens");
-			concat(offsets_name, base_dir, "offsets");
-			seq_lens_file = fopen(seqlens_name, "wb");
-			offsets_file = fopen(offsets_name, "wb");
+			const wchar_t seqlens_name[100] = { 0 };
+			const wchar_t offsets_name[100] = { 0 };
+			concatw(seqlens_name, base_dir, L"seqlens");
+			concatw(offsets_name, base_dir, L"offsets");
+			seq_lens_file = openWrite(seqlens_name);
+			offsets_file = openWrite(offsets_name);
 		}
-		fopen_s(&utfil, dest_filename, "wb");
-		if (!utfil) {
-			printf("\nHittade inte utfil: %s", dest_filename); getchar(); exit(1);
-		}
-
+		utfil = openWrite(dest_filename);
 	}
 
 	printf("\n");
@@ -382,10 +373,10 @@ unsigned char check_pages(pages, size) {
 	return pages;
 }
 
-void seq_pack_internal(const char* source_filename, const char* dest_filename, packProfile profile, bool sep) {
+void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filename, packProfile profile, bool sep) {
 	unsigned char offset_pages = profile.offset_pages,
 		seqlen_pages = profile.seqlen_pages;
-	long long source_size = get_file_size_from_name(source_filename);
+	long long source_size = get_file_size_from_wname(source_filename);
 	printf("\nPages (%d,%d)", offset_pages, seqlen_pages);
 	unsigned char new_offset_pages = check_pages(offset_pages, source_size);
 	useLongRange = true;
@@ -406,15 +397,25 @@ void seq_pack_internal(const char* source_filename, const char* dest_filename, p
 	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
 }
 
-void seq_pack(const char* source_filename, const char* dest_filename, packProfile profile)
+void seq_pack(const char* src, const char* dst, packProfile profile)
 {
-	seq_pack_internal(source_filename, dest_filename, profile, false);
+	wchar_t u1[500], u2[500];
+	toUni(u1, src);
+	toUni(u2, dst);
+	seq_pack_internal(u1, u2, profile, false);
 }
 
-void seq_pack_separate(const char* source_filename, const char* dir, packProfile profile) {
-	base_dir = dir;
-	const char dest_filename[100] = { 0 };
-	concat(dest_filename, base_dir, "main");
-	seq_pack_internal(source_filename, dest_filename, profile, true);
+void seqPack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
+	seq_pack_internal(src, dst, profile, false);
+}
+
+void seq_pack_separate(const char* src, const char* dir, packProfile profile) {
+	wchar_t srcw[500], dirw[500];
+	toUni(srcw, src);
+	toUni(dirw, dir);
+	base_dir = dirw;
+	const wchar_t dest_filename[100] = { 0 };
+	concatw(dest_filename, base_dir, L"main");
+	seq_pack_internal(srcw, dest_filename, profile, true);
 }
 

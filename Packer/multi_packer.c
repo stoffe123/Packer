@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
-#include "seq_unpacker.h"  
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "multi_packer.h"
 #include "packer_commons.h"
 #include "Two_byte_packer.h"
-#include "Two_byte_unpacker.h"
 #include "RLE_packer_advanced.h"
 #include "RLE_simple_packer.h"
 #include "canonical.h"
