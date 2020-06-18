@@ -38,7 +38,7 @@ bool isCanonicalHeaderPacked(int packType) {
 }
 
 int bytesForMetaFilesize(int packType) {
-	return (isKthBitSet(packType, 3) ? 1 : 3);
+	return (isKthBitSet(packType, 3) ? 2 : 3);
 }
 
 void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
@@ -87,7 +87,7 @@ uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storeP
 	if (isKthBitSet(packType, 7)) {
 		size_seqlens = get_file_size_from_name(seqlens_name);
 		size_offsets = get_file_size_from_name(offsets_name);
-		if (size_seqlens < 256 && size_offsets < 256) {
+		if (size_seqlens < 65536 && size_offsets < 65536) {
 			packType = setKthBit(packType, 3);
 		}
 		else {
