@@ -29,24 +29,35 @@ void unstore(FILE* in, const char* dst) {
 	fclose(in);
 }
 
+bool isSeqPacked(int packType) {
+	return isKthBitSet(packType, 7);
+}
+
+bool isCanonicalHeaderPacked(int packType) {
+	return (isKthBitSet(packType, 1) && isKthBitSet(packType, 2) && !isKthBitSet(packType, 7));
+}
+
+int bytesForMetaFilesize(int packType) {
+	return (isKthBitSet(packType, 3) ? 1 : 3);
+}
+
+void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
+	const char metaName[100] = { 0 };
+	concat(metaName, pi.dir, name);
+	copy_chunk(in, metaName, size);
+}
 void untar(FILE* in, pack_info_t pi) {
 
-	// 4 byte (32 bit) file size can handle meta files up to 4,19 GB
-	uint32_t size1 = 0;
 	if (isKthBitSet(pi.pack_type, 7)) {
-		fread(&size1, 3, 1, in);
-		uint32_t size2 = 0;
-		fread(&size2, 3, 1, in);
-		//printf("\n untar size1=%d, size2=%d\n", size1, size2);
-		const char seqlens_name[100] = { 0 };
-		const char offsets_name[100] = { 0 };
-		
-		concat(seqlens_name, pi.dir, "seqlens");
-		concat(offsets_name, pi.dir, "offsets");
-		
+		int bytes = bytesForMetaFilesize(pi.pack_type);
+		uint32_t size1 = 0;
+ 		fread(&size1, bytes, 1, in);
+		copyMeta(in, pi, "seqlens", size1);
 
-		copy_chunk(in, seqlens_name, size1);
-		copy_chunk(in, offsets_name, size2);
+		uint32_t size2 = 0;
+		fread(&size2, bytes, 1, in);
+		//printf("\n untar size1=%d, size2=%d\n", size1, size2);
+		copyMeta(in, pi, "offsets", size2);
 	}
 	const char main_name[100] = { 0 };
 	concat(main_name, pi.dir, "main");
@@ -63,38 +74,47 @@ void store(const char* src, const char* dst, uint8_t pack_type, bool storePackTy
 	fclose(out_file);
 }
 
-void tar(const char* dst, const char* base_dir, uint8_t pack_type, bool storePackType) {
-	FILE* out_file = fopen(dst, "wb");
+uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storePackType) {
 
+	const char seqlens_name[100] = { 0 };
+	const char offsets_name[100] = { 0 };
+	concat(seqlens_name, base_dir, "seqlens");
+	concat(offsets_name, base_dir, "offsets");
+	uint32_t size_seqlens;
+	uint32_t size_offsets;
+	FILE* outFile = fopen(dst, "wb");
+
+	if (isKthBitSet(packType, 7)) {
+		size_seqlens = get_file_size_from_name(seqlens_name);
+		size_offsets = get_file_size_from_name(offsets_name);
+		if (size_seqlens < 256 && size_offsets < 256) {
+			packType = setKthBit(packType, 3);
+		}
+		else {
+			packType = clearKthBit(packType, 3);
+		}
+	}
 	if (storePackType) {
-		fwrite(&pack_type, 1, 1, out_file);
+		fwrite(&packType, 1, 1, outFile);
 	}
 	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 
-	if (isKthBitSet(pack_type, 7)) {
-
-		const char seqlens_name[100] = { 0 };
-		const char offsets_name[100] = { 0 };
-		concat(seqlens_name, base_dir, "seqlens");
-		concat(offsets_name, base_dir, "offsets");
-
-		uint32_t size_seqlens = get_file_size_from_name(seqlens_name);
+	if (isKthBitSet(packType, 7)) {
+		int bytes = bytesForMetaFilesize(packType);
 
 		// 3 byte (24 bit) file size can handle meta files up to 16,777,215 bytes
 		// this invokes an upper limit on the BLOCK_SIZE
-		fwrite(&size_seqlens, 3, 1, out_file);
-
-		uint32_t size_offsets = get_file_size_from_name(offsets_name);
-		fwrite(&size_offsets, 3, 1, out_file);
-
-		append_to_file(out_file, seqlens_name);
-		append_to_file(out_file, offsets_name);
+		fwrite(&size_seqlens, bytes, 1, outFile);
+		append_to_file(outFile, seqlens_name);
+		fwrite(&size_offsets, bytes, 1, outFile);
+		append_to_file(outFile, offsets_name);
 	}
 	const char main_name[100] = { 0 };
 	concat(main_name, base_dir, "main");
-	append_to_file(out_file, main_name);
+	append_to_file(outFile, main_name);
 
-	fclose(out_file);
+	fclose(outFile);
+	return packType;
 }
 
 void my_rename(const char* f_old, const char* f_new) {
@@ -171,11 +191,13 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  0 - canonical
  1 - seqlens multipack 
  2 - offset multipack
- 3 - canonical header pack
+ 3   1-byte seqlen/offset file length
  4 - last block chunk
  5 - RLE simple
  6 - Two byte 
  7 - Sequence pack
+
+ Canonical header pack =>  bit 7 = 0   bit 1 = 1   bit 2 = 1
  */
 
 uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
@@ -223,7 +245,9 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			char head_pack[100] = { 0 };
 			getTempFile(head_pack, "multi_head_pack");
 			canonical_header_pack(src, head_pack);
-			packCandidates[candidatesIndex++] = getPackCandidate(head_pack, setKthBit(0, 3));
+			int pt = setKthBit(0, 1);
+			pt = setKthBit(pt, 2);
+			packCandidates[candidatesIndex++] = getPackCandidate(head_pack, pt);
 		}
 
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
@@ -323,7 +347,12 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 				remove(canonicalled);
 			}
 			packCandidates[candidatesIndex++] = getPackCandidate2(main_name, pack_type, get_file_size_from_name(main_name) + meta_size);
-		}		
+		}
+		else {
+			//seqpack not used so clear metafile pack bits
+			pack_type = clearKthBit(pack_type, 1);
+			pack_type = clearKthBit(pack_type, 2);
+		}
 		packCandidate_t bestCandidate = packCandidates[0];
 		for (int i = 1; i < candidatesIndex; i++) {
 			if (packCandidates[i].size < bestCandidate.size) {
@@ -342,7 +371,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			else {
 				my_rename(bestCandidate.filename, main_name);
 				printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
-				tar(dst, base_dir, pack_type, storePackType);
+				pack_type = tar(dst, base_dir, pack_type, storePackType);
 			}
 		}								
 		for (int i = 0; i < candidatesIndex; i++) {
@@ -419,7 +448,7 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	if (isKthBitSet(pack_type, 6)) {
 		TwoByteUnpackAndReplace(seq_dst);
 	}
-	if (isKthBitSet(pack_type, 3)) {
+	if (isCanonicalHeaderPacked(pack_type)) {
 		canonical_header_unpack(seq_dst, dst);
 	}
 	else {
