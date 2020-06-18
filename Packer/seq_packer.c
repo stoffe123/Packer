@@ -337,6 +337,9 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 
 	}
 	else {
+		if (code != 0) {
+			WRITE(utfil, code);
+		}
 		if (seqlen_pages + offset_pages > 0) {
 			WRITE(utfil, seqlen_pages);
 			WRITE(utfil, offset_pages);
@@ -351,8 +354,10 @@ void pack_internal(const char* src, const char* dest_filename, unsigned char pas
 		if (seqlen_pages + offset_pages == 0) {
 			packType = setKthBit(packType, 2); // slimseq
 		}
+		if (code == 0) {
+			packType = setKthBit(packType, 3);
+		}
 		WRITE(utfil, packType);	
-		WRITE(utfil, code);
 		fclose(utfil);
 		if (separate_files) {
 			fclose(seq_lens_file);

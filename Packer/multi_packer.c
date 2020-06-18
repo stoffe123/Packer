@@ -309,7 +309,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
 
 		if (size_after_seq < before_seqpack_size) {
-			printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
+			//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 			pack_type = setKthBit(pack_type, 7);
 			remove(before_seqpack);
 			if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
@@ -325,10 +325,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 				remove(canonicalled);
 			}
 			packCandidates[candidatesIndex++] = getPackCandidate2(main_name, pack_type, get_file_size_from_name(main_name) + meta_size);
-		}
-		else {
-			printf("\n Normal seqpack did not work");
-		}
+		}		
 		packCandidate_t bestCandidate = packCandidates[0];
 		for (int i = 1; i < candidatesIndex; i++) {
 			if (packCandidates[i].size < bestCandidate.size) {

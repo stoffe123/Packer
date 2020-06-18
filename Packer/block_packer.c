@@ -40,7 +40,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		getTempFile(chunkFilename, "block_chunck");
 		uint64_t read_size = BLOCK_SIZE;
 
-		assert(read_size < 16711679, "too large blocksize must be < 16711679");
+		assert(read_size < 16777215, "too large blocksize must be < 16777215");
 
 		//workaround for a bug that even 2 powers cause bug
 		//this bug should be fixed but it is hard
@@ -53,22 +53,22 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		const char packedFilename[100] = { 0 };
 		getTempFile(packedFilename, "block_multipacked");
 
-		//meta testsuit 849813
-		packProfile seqlenProfile = getPackProfile(53, 148);
-		seqlenProfile.rle_ratio = 65;
-		seqlenProfile.twobyte_ratio = 67;
-		seqlenProfile.recursive_limit = 10;
-		seqlenProfile.twobyte_threshold_max = 9299;
-		seqlenProfile.twobyte_threshold_divide = 3925;
-		seqlenProfile.twobyte_threshold_min = 24;
+		//meta testsuit 939269
+		packProfile seqlenProfile = getPackProfile(46, 149);
+		seqlenProfile.rle_ratio = 26;
+		seqlenProfile.twobyte_ratio = 65;
+		seqlenProfile.recursive_limit = 305;
+		seqlenProfile.twobyte_threshold_max = 9616;
+		seqlenProfile.twobyte_threshold_divide = 3270;
+		seqlenProfile.twobyte_threshold_min = 10;
 
-		packProfile offsetProfile = getPackProfile(93, 219);
-		offsetProfile.rle_ratio = 54;
+		packProfile offsetProfile = getPackProfile(71, 57);
+		offsetProfile.rle_ratio = 93;
 		offsetProfile.twobyte_ratio = 87;
-		offsetProfile.recursive_limit = 169;
-		offsetProfile.twobyte_threshold_max = 11509;
-		offsetProfile.twobyte_threshold_divide = 1271;
-		offsetProfile.twobyte_threshold_min = 963;
+		offsetProfile.recursive_limit = 233;
+		offsetProfile.twobyte_threshold_max = 1963;
+		offsetProfile.twobyte_threshold_divide = 3070;
+		offsetProfile.twobyte_threshold_min = 373;
 
 		uint8_t packType = multiPack(chunkFilename, packedFilename, profile, seqlenProfile, offsetProfile);
 		remove(chunkFilename);
