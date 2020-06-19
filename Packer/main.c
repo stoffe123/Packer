@@ -158,7 +158,9 @@ void testmeta() {
 		{
 			const char src[100] = { 0 };
 
-			concat_int(src, "C:/test/meta3/seqlens", kk + 101);			
+			const char* metaDir = "D:/Dropbox/Personal/Programmering/Compression/test/meta3/";
+			concat(src, metaDir, "seqlens");
+			concat_int(src, src, kk + 101);			
 			const char* unpackedFilename = "C:/test/unp";
 			const char* packed_name = "c:/test/packed.bin";
 			long long size_org = get_file_size_from_name(src);
@@ -184,7 +186,8 @@ void testmeta() {
 			}
 
 
-			concat_int(src, "C:/test/meta3/offsets", kk + 101); 			
+			concat(src, metaDir, "offsets");
+			concat_int(src, src, kk + 101);
 			size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
@@ -523,8 +526,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	//testmeta();
-    test16();
+	testmeta();
+    //test16();
 	//testarchive();
     //onefile();
 }
