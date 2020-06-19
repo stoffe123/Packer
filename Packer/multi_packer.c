@@ -11,6 +11,8 @@
 #include "RLE_simple_packer.h"
 #include "canonical.h"
 
+#define META_SIZE_MAX 1048575
+
 typedef struct packCandidate_t {
 	const char* filename;
 	unsigned char packType;
@@ -37,10 +39,6 @@ bool isCanonicalHeaderPacked(int packType) {
 	return (isKthBitSet(packType, 1) && isKthBitSet(packType, 2) && !isKthBitSet(packType, 7));
 }
 
-int bytesForMetaFilesize(int packType) {
-	return (isKthBitSet(packType, 3) ? 2 : 3);
-}
-
 void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
 	const char metaName[100] = { 0 };
 	concat(metaName, pi.dir, name);
@@ -49,15 +47,23 @@ void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
 void untar(FILE* in, pack_info_t pi) {
 
 	if (isKthBitSet(pi.pack_type, 7)) {
-		int bytes = bytesForMetaFilesize(pi.pack_type);
-		uint32_t size1 = 0;
- 		fread(&size1, bytes, 1, in);
-		copyMeta(in, pi, "seqlens", size1);
-
-		uint32_t size2 = 0;
-		fread(&size2, bytes, 1, in);
-		//printf("\n untar size1=%d, size2=%d\n", size1, size2);
-		copyMeta(in, pi, "offsets", size2);
+		
+		uint32_t seqlens_size = 0;
+		uint32_t offsets_size = 0;
+		uint64_t sizeBlob = 0;
+		if (isKthBitSet(pi.pack_type, 3)) {
+			fread(&seqlens_size, 2, 1, in);
+			fread(&offsets_size, 2, 1, in);
+		}
+		else {
+			//can handle sizes up to 1,048,575 bytes
+			//if bigger => seqpack should have been skipped before
+			fread(&sizeBlob, 5, 1, in);
+			offsets_size = (sizeBlob & 0xFFFFF00000) >> 20;
+			seqlens_size = sizeBlob & 0x00000FFFFF;
+		}
+		copyMeta(in, pi, "seqlens", seqlens_size);
+		copyMeta(in, pi, "offsets", offsets_size);
 	}
 	const char main_name[100] = { 0 };
 	concat(main_name, pi.dir, "main");
@@ -80,8 +86,8 @@ uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storeP
 	const char offsets_name[100] = { 0 };
 	concat(seqlens_name, base_dir, "seqlens");
 	concat(offsets_name, base_dir, "offsets");
-	uint32_t size_seqlens;
-	uint32_t size_offsets;
+	uint32_t size_seqlens = 0;
+	uint32_t size_offsets = 0;
 	FILE* outFile = fopen(dst, "wb");
 
 	if (isKthBitSet(packType, 7)) {
@@ -100,13 +106,17 @@ uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storeP
 	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 
 	if (isKthBitSet(packType, 7)) {
-		int bytes = bytesForMetaFilesize(packType);
-
-		// 3 byte (24 bit) file size can handle meta files up to 16,777,215 bytes
-		// this invokes an upper limit on the BLOCK_SIZE
-		fwrite(&size_seqlens, bytes, 1, outFile);
+		if (isKthBitSet(packType, 3)) {
+			fwrite(&size_seqlens, 2, 1, outFile);
+			fwrite(&size_offsets, 2, 1, outFile);
+		}
+		else {
+			uint64_t sizeBlob = size_offsets;
+			sizeBlob = sizeBlob << 20;
+			sizeBlob += size_seqlens;
+		    fwrite(&sizeBlob, 5, 1, outFile);
+		}
 		append_to_file(outFile, seqlens_name);
-		fwrite(&size_offsets, bytes, 1, outFile);
 		append_to_file(outFile, offsets_name);
 	}
 	const char main_name[100] = { 0 };
@@ -326,11 +336,19 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		metacount++;
 		*/
 
-		uint64_t meta_size = get_file_size_from_name(offsets_name) +
-			get_file_size_from_name(seqlens_name) + 6;
+		uint64_t offsets_size = get_file_size_from_name(offsets_name);
+		uint64_t seqlens_size = get_file_size_from_name(seqlens_name);
+		uint64_t meta_size = offsets_size +
+			seqlens_size + ((offsets_size < 65536 && seqlens_size < 65536) ? 4 : 5);
 		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
 
-		if (size_after_seq < before_seqpack_size) {
+		// we use 5 bytes for two sizes  20 bits each
+		bool metaTooLarge = offsets_size > META_SIZE_MAX || seqlens_size > META_SIZE_MAX;  
+		if (metaTooLarge) {
+			printf("\n meta size too large for file %s .. size was %d and %d", src, offsets_size, seqlens_size);
+		}
+
+		if (size_after_seq < before_seqpack_size && !metaTooLarge) {
 			//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 			pack_type = setKthBit(pack_type, 7);
 			remove(before_seqpack);
@@ -359,7 +377,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 				bestCandidate = packCandidates[i];				
 			}
 		}
-		do_store = bestCandidate.size + 1 >= source_size;
+		do_store = bestCandidate.size >= source_size;
 		if (!do_store) {
 			printf("\nWinner is %s  packed %d > %d", bestCandidate.filename, source_size, bestCandidate.size);
 			pack_type = bestCandidate.packType;

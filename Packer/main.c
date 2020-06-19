@@ -114,21 +114,21 @@ void testmeta() {
 	packProfile bestProfile, bestOffsetProfile;
 
 	//meta testsuit 939269
-	packProfile seqlenProfile = getPackProfile(46, 149);
-	seqlenProfile.rle_ratio = 26;
-	seqlenProfile.twobyte_ratio = 65;
+	packProfile seqlenProfile = getPackProfile(49, 150);
+	seqlenProfile.rle_ratio = 30;
+	seqlenProfile.twobyte_ratio = 63;
 	seqlenProfile.recursive_limit = 305;
-	seqlenProfile.twobyte_threshold_max = 9616;
-	seqlenProfile.twobyte_threshold_divide = 3270;
+	seqlenProfile.twobyte_threshold_max = 10877;
+	seqlenProfile.twobyte_threshold_divide = 3184;
 	seqlenProfile.twobyte_threshold_min = 10;
 	
-	packProfile offsetProfile = getPackProfile(71, 57);
-	offsetProfile.rle_ratio = 93;
-	offsetProfile.twobyte_ratio = 87;
-	offsetProfile.recursive_limit = 233;
-	offsetProfile.twobyte_threshold_max = 1963;
-	offsetProfile.twobyte_threshold_divide = 3070;
-	offsetProfile.twobyte_threshold_min = 373;
+	packProfile offsetProfile = getPackProfile(74, 140);
+	offsetProfile.rle_ratio = 96;
+	offsetProfile.twobyte_ratio = 94;
+	offsetProfile.recursive_limit = 264;
+	offsetProfile.twobyte_threshold_max = 1339;
+	offsetProfile.twobyte_threshold_divide = 3010;
+	offsetProfile.twobyte_threshold_min = 336;
 	
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
@@ -325,6 +325,8 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
+		L"amb.dll",
+		L"aft.htm",
 		L"oneseq.txt",
 		L"book.txt",
 		
@@ -334,7 +336,7 @@ void test16() {
 			L"book_med.txt",
 		L"repeatchar.txt",
 		L"rel.pdf",
-		L"amb.dll",
+		
 		L"voc.wav",
 	
 		
@@ -344,7 +346,7 @@ void test16() {
 		L"did.csh",
 		L"nex.doc",
 		
-		L"aft.htm",
+		
 		L"pazera.exe",
 		
 		L"tob.pdf"		
@@ -526,8 +528,8 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 
-	testmeta();
-    //test16();
+	//testmeta();
+    test16();
 	//testarchive();
     //onefile();
 }
