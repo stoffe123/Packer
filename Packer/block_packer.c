@@ -53,7 +53,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		getTempFile(packedFilename, "block_multipacked");
 
 		//meta testsuit 939269
-		packProfile seqlenProfile = getPackProfile(46, 149);
+		packProfile seqlenProfile = getPackProfile(46, 149, 10);
 		seqlenProfile.rle_ratio = 26;
 		seqlenProfile.twobyte_ratio = 65;
 		seqlenProfile.recursive_limit = 305;
@@ -61,7 +61,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		seqlenProfile.twobyte_threshold_divide = 3270;
 		seqlenProfile.twobyte_threshold_min = 10;
 
-		packProfile offsetProfile = getPackProfile(71, 57);
+		packProfile offsetProfile = getPackProfile(71, 57, 10);
 		offsetProfile.rle_ratio = 93;
 		offsetProfile.twobyte_ratio = 87;
 		offsetProfile.recursive_limit = 233;

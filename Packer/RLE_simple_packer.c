@@ -127,9 +127,6 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 	fclose(infil);
 
 	if (pass == 1) {
-		//skip best code, save that for seqlen packer
-		find_best_code(char_freq);
-		
 		return find_best_code(char_freq);
 	}
 	else {

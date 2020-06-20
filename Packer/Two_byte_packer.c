@@ -79,11 +79,6 @@ uint64_t getGainThreshold() {
 int create_two_byte_table() {
 	debug("\n creating two_byte_table \n");
 
-	// extract one code to use with seqpack later
-	if (profile.twobyte_ratio != 100) {
-		find_best_code(char_freq);
-	}
-	
 	value_freq_t master = find_best_code(char_freq);
 	master_code = master.value;
 	uint64_t threshold = getGainThreshold();

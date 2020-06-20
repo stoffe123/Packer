@@ -22,6 +22,7 @@ typedef struct value_freq_t {
 typedef struct packProfile {
 	int seqlen_pages;
 	int offset_pages;
+	int distance_pages;
 	int rle_ratio;
 	int twobyte_ratio;
 	int seq_ratio;
@@ -45,7 +46,7 @@ bool MultiPackAndTest(const char* src, packProfile profile,
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
-packProfile getPackProfile(int o, int s);
+packProfile getPackProfile(int o, int s, int d);
 
 void doDoubleCheck(const char* src, const char* packedName, const char* kind);
 

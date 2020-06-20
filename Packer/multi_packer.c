@@ -50,20 +50,15 @@ void untar(FILE* in, pack_info_t pi) {
 		
 		uint32_t seqlens_size = 0;
 		uint32_t offsets_size = 0;
-		uint64_t sizeBlob = 0;
-		if (isKthBitSet(pi.pack_type, 3)) {
-			fread(&seqlens_size, 2, 1, in);
-			fread(&offsets_size, 2, 1, in);
-		}
-		else {
-			//can handle sizes up to 1,048,575 bytes
-			//if bigger => seqpack should have been skipped before
-			fread(&sizeBlob, 5, 1, in);
-			offsets_size = (sizeBlob & 0xFFFFF00000) >> 20;
-			seqlens_size = sizeBlob & 0x00000FFFFF;
-		}
+		uint32_t distances_size = 0;
+
+		fread(&seqlens_size, 3, 1, in);
+		fread(&offsets_size, 3, 1, in);
+		fread(&distances_size, 3, 1, in);
+
 		copyMeta(in, pi, "seqlens", seqlens_size);
 		copyMeta(in, pi, "offsets", offsets_size);
+		copyMeta(in, pi, "distances", distances_size);
 	}
 	const char main_name[100] = { 0 };
 	concat(main_name, pi.dir, "main");
@@ -84,40 +79,33 @@ uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storeP
 
 	const char seqlens_name[100] = { 0 };
 	const char offsets_name[100] = { 0 };
+	const char distances_name[100] = { 0 };
 	concat(seqlens_name, base_dir, "seqlens");
 	concat(offsets_name, base_dir, "offsets");
+	concat(distances_name, base_dir, "distances");
 	uint32_t size_seqlens = 0;
 	uint32_t size_offsets = 0;
+	uint32_t size_distances = 0;
 	FILE* outFile = fopen(dst, "wb");
 
 	if (isKthBitSet(packType, 7)) {
 		size_seqlens = get_file_size_from_name(seqlens_name);
 		size_offsets = get_file_size_from_name(offsets_name);
-		if (size_seqlens < 65536 && size_offsets < 65536) {
-			packType = setKthBit(packType, 3);
-		}
-		else {
-			packType = clearKthBit(packType, 3);
-		}
+		size_distances = get_file_size_from_name(distances_name);
 	}
 	if (storePackType) {
 		fwrite(&packType, 1, 1, outFile);
 	}
-	//assert(pack_type < 64, concat("pack_type < 16 in multipacker.tar dst=", dst));
 
 	if (isKthBitSet(packType, 7)) {
-		if (isKthBitSet(packType, 3)) {
-			fwrite(&size_seqlens, 2, 1, outFile);
-			fwrite(&size_offsets, 2, 1, outFile);
-		}
-		else {
-			uint64_t sizeBlob = size_offsets;
-			sizeBlob = sizeBlob << 20;
-			sizeBlob += size_seqlens;
-		    fwrite(&sizeBlob, 5, 1, outFile);
-		}
+
+		fwrite(&size_seqlens, 3, 1, outFile);
+		fwrite(&size_offsets, 3, 1, outFile);
+		fwrite(&size_distances, 3, 1, outFile);
+
 		append_to_file(outFile, seqlens_name);
 		append_to_file(outFile, offsets_name);
+		append_to_file(outFile, distances_name);
 	}
 	const char main_name[100] = { 0 };
 	concat(main_name, base_dir, "main");
@@ -201,7 +189,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  0 - canonical
  1 - seqlens multipack 
  2 - offset multipack
- 3   1-byte seqlen/offset file length
+ 3   distances multipack
  4 - last block chunk
  5 - RLE simple
  6 - Two byte 
@@ -224,7 +212,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	unsigned long long source_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 		
-	packProfile twobyte100Profile = getPackProfile(0, 0);
+	packProfile twobyte100Profile = getPackProfile(0, 0, 0);
 	twobyte100Profile.twobyte_ratio = 100;
 	twobyte100Profile.twobyte_threshold_divide = 1;
 	twobyte100Profile.twobyte_threshold_max = 3;
@@ -235,7 +223,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		char before_seqpack[100] = { 0 };
 		getTempFile(before_seqpack, "multi_rlepacked");
 
-		packProfile prof = getPackProfile(0, 0);
+		packProfile prof = getPackProfile(0, 0, 0);
 		prof.twobyte_ratio = 90;
 		prof.rle_ratio = 90;
 		prof.recursive_limit = 10;
@@ -296,12 +284,15 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 
 		const char seqlens_name[100] = { 0 };
 		const char offsets_name[100] = { 0 };
+		const char distances_name[100] = { 0 };
 		const char main_name[100] = { 0 };
 		concat(seqlens_name, base_dir, "seqlens");
 		concat(offsets_name, base_dir, "offsets");
+		concat(distances_name, base_dir, "distances");
 		concat(main_name, base_dir, "main");
 
 		if (DOUBLE_CHECK_PACK) {
+			printf("\n double checking the seqpack of: %s", before_seqpack);
 			const char tmp2[100] = { 0 };
 			getTempFile(tmp2, "multi_maksureseqpack");
 			seq_unpack_separate(main_name, tmp2, base_dir);
@@ -325,6 +316,13 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 				pack_type = setKthBit(pack_type, 2);
 			}
 		}
+		if (get_file_size_from_name(distances_name) > profile.recursive_limit) {
+
+			got_smaller = MultiPackAndTest(distances_name, offsetsProfile, seqlensProfile, offsetsProfile);
+			if (got_smaller) {
+				pack_type = setKthBit(pack_type, 3);
+			}
+		}
 
 		/*
 		char tmp100[100] = { 0 };
@@ -338,12 +336,13 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 
 		uint64_t offsets_size = get_file_size_from_name(offsets_name);
 		uint64_t seqlens_size = get_file_size_from_name(seqlens_name);
+		uint64_t distances_size = get_file_size_from_name(distances_name);
 		uint64_t meta_size = offsets_size +
-			seqlens_size + ((offsets_size < 65536 && seqlens_size < 65536) ? 4 : 5);
+			seqlens_size + distances_size + 9;
 		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
 
 		// we use 5 bytes for two sizes  20 bits each
-		bool metaTooLarge = offsets_size > META_SIZE_MAX || seqlens_size > META_SIZE_MAX;  
+		bool metaTooLarge = false; //  offsets_size > META_SIZE_MAX || seqlens_size > META_SIZE_MAX;
 		if (metaTooLarge) {
 			printf("\n meta size too large for file %s .. size was %d and %d", src, offsets_size, seqlens_size);
 		}
@@ -435,12 +434,15 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	pi.dir = base_dir;
 	untar(in, pi);
 
+	const char main_name[100] = { 0 };
 	const char seqlens_name[100] = { 0 };
 	const char offsets_name[100] = { 0 };
-	const char main_name[100] = { 0 };
+	const char distances_name[100] = { 0 };
+	concat(main_name, base_dir, "main");
 	concat(seqlens_name, base_dir, "seqlens");
 	concat(offsets_name, base_dir, "offsets");
-	concat(main_name, base_dir, "main");
+	concat(distances_name, base_dir, "distances");
+	
 
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
 		CanonicalDecodeAndReplace(main_name);
@@ -452,7 +454,10 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 		}
 		if (isKthBitSet(pack_type, 2)) {			
 			MultiUnpackAndReplace(offsets_name);
-		}		
+		}
+		if (isKthBitSet(pack_type, 3)) {
+			MultiUnpackAndReplace(distances_name);
+		}
 	}
 	const char seq_dst[100] = { 0 };
 	getTempFile(seq_dst, "multi_seqsepunp");

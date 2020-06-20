@@ -25,7 +25,7 @@ void doDoubleCheck2(const char* src, const char* packedName, const char* kind) {
 void doDoubleCheck(const char* tmp, const char* src, const char* type) {
 	bool sc = files_equal(tmp, src);
 	if (!sc) {
-		printf("\n\n\n ** Failed to %s pack seperate: %s", type, src);
+		printf("\n\n\n ** Failed to %s pack: %s", type, src);
 		exit(1);
 	}
 	remove(tmp);
@@ -115,7 +115,7 @@ bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenPr
 
 void printProfile(packProfile* profile) {
 	printf("\n");
-	printf("\nPages:       (%d, %d)", profile->offset_pages, profile->seqlen_pages);
+	printf("\nPages:       (%d, %d %d)", profile->offset_pages, profile->seqlen_pages, profile->distance_pages);
 	printf("\nRLE ratio:         %d", profile->rle_ratio);
 	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
@@ -123,10 +123,11 @@ void printProfile(packProfile* profile) {
 	profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
 }
 
-packProfile getPackProfile(int o, int s) {
+packProfile getPackProfile(int o, int s, int d) {
 	packProfile profile;
 	profile.offset_pages = o;
 	profile.seqlen_pages = s;
+	profile.distance_pages = d;
 	profile.rle_ratio = 84;
 	profile.twobyte_ratio = 89;
 	profile.seq_ratio = 100;
@@ -140,6 +141,7 @@ packProfile getPackProfile(int o, int s) {
 void copyProfile(packProfile* src, packProfile* dst) {
 	dst->offset_pages = src->offset_pages;
 	dst->seqlen_pages = src->seqlen_pages;
+	dst->distance_pages = src->distance_pages;
 	dst->rle_ratio = src->rle_ratio;
 	dst->twobyte_ratio = src->twobyte_ratio;
 	dst->seq_ratio = src->seq_ratio;

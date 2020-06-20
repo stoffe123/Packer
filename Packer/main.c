@@ -62,10 +62,12 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	if (rand() % 4 == 0) {
 		profile->offset_pages = rand() % 252;
 		profile->seqlen_pages = rand() % 252;
+		profile->distance_pages = rand() % 252;
 	}
 	else {
 		profile->offset_pages = fuzz(best.offset_pages);
 		profile->seqlen_pages = fuzz(best.seqlen_pages);
+		profile->distance_pages = fuzz(best.distance_pages);
 	}
 	
 	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
@@ -114,7 +116,7 @@ void testmeta() {
 	packProfile bestProfile, bestOffsetProfile;
 
 	//meta testsuit 939269
-	packProfile seqlenProfile = getPackProfile(49, 150);
+	packProfile seqlenProfile = getPackProfile(49, 150, 10);
 	seqlenProfile.rle_ratio = 30;
 	seqlenProfile.twobyte_ratio = 63;
 	seqlenProfile.recursive_limit = 305;
@@ -122,7 +124,7 @@ void testmeta() {
 	seqlenProfile.twobyte_threshold_divide = 3184;
 	seqlenProfile.twobyte_threshold_min = 10;
 	
-	packProfile offsetProfile = getPackProfile(74, 140);
+	packProfile offsetProfile = getPackProfile(74, 140, 10);
 	offsetProfile.rle_ratio = 96;
 	offsetProfile.twobyte_ratio = 94;
 	offsetProfile.recursive_limit = 264;
@@ -164,7 +166,7 @@ void testmeta() {
 			const char* unpackedFilename = "C:/test/unp";
 			const char* packed_name = "c:/test/packed.bin";
 			long long size_org = get_file_size_from_name(src);
-			printf("\n Packing... %s with length:%d", src, size_org);
+			printf("\n Packing %s      length:%d", src, size_org);
 			int cl = clock();
 			multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile);
 				
@@ -241,13 +243,10 @@ void testmeta() {
 
 void onefile() {
 
-	unsigned long long acc_size_packed = 0,
-		acc_size_org = 0;
-
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/canonical_header";
-	const wchar_t* unpackedFilename = L"C:/test/offsets103";
+	const wchar_t* src = L"c:/test/failseq";
+	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 
@@ -257,7 +256,7 @@ void onefile() {
 
 	int cl = clock();
 
-	packProfile profile = getPackProfile(237, 159);
+	packProfile profile = getPackProfile(237, 159, 10);
 	profile.rle_ratio = 85;
 	profile.twobyte_ratio = 90;
 	profile.seq_ratio = 100;
@@ -267,7 +266,7 @@ void onefile() {
 	profile.twobyte_threshold_min = 3150;
 
 	//meta testsuit 838297
-	packProfile seqlenProfile = getPackProfile(53, 149);
+	packProfile seqlenProfile = getPackProfile(53, 149, 10);
 	seqlenProfile.rle_ratio = 64;
 	seqlenProfile.twobyte_ratio = 62;
 	seqlenProfile.recursive_limit = 10;
@@ -275,7 +274,7 @@ void onefile() {
 	seqlenProfile.twobyte_threshold_divide = 3598;
 	seqlenProfile.twobyte_threshold_min = 24;
 
-	packProfile offsetProfile = getPackProfile(72, 56);
+	packProfile offsetProfile = getPackProfile(72, 56, 10);
 	offsetProfile.rle_ratio = 56;
 	offsetProfile.twobyte_ratio = 82;
 	offsetProfile.recursive_limit = 220;
@@ -283,8 +282,8 @@ void onefile() {
 	offsetProfile.twobyte_threshold_divide = 1906;
 	offsetProfile.twobyte_threshold_min = 913;
 
-	//seq_pack_separate(src, "c:/test/", 219, 2);
-	seqPack(src, packed_name, profile);
+	seqPackSeparate(src, L"c:/test/", profile);
+	//seqPack(src, packed_name, profile);
 	//two_byte_pack(src, packed_name, profile);
 	//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
 	//RLE_simple_pack(src, packed_name);
@@ -292,16 +291,14 @@ void onefile() {
 
 	int pack_time = (clock() - cl);
 		
-	acc_size_org += size_org;
-	//printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 	cl = clock();
 
-	//seq_unpack_separate("c:/test/main", dst, "c:/test/");
+	seqUnpackSeparate(L"c:/test/main", unpackedFilename, L"c:/test/");
 	//two_byte_unpack(packed_name, unpackedFilename);
 	//multi_unpack(packed_name, unpackedFilename);
 	//RLE_simple_unpack(packed_name, unpackedFilename);
 	//block_unpack(packed_name, unpackedFilename);
-	seqUnpack(packed_name, unpackedFilename);
+	//seqUnpack(packed_name, unpackedFilename);
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -325,36 +322,40 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
+		L"pazera.exe",
+			L"voc.wav",
+			L"bad.cdg",
+			L"did.csh",
+			L"aft.htm",
 		L"amb.dll",
-		L"aft.htm",
-		L"oneseq.txt",
 		L"book.txt",
+		L"oneseq.txt",
 		
-		
+	
 		L"empty.txt",
 		L"onechar.txt",
-			L"book_med.txt",
+		L"book_med.txt",
 		L"repeatchar.txt",
 		L"rel.pdf",
 		
-		L"voc.wav",
+	
 	
 		
 		L"bad.mp3",
 		
-		L"bad.cdg",
-		L"did.csh",
+	
+	
 		L"nex.doc",
 		
 		
-		L"pazera.exe",
+		
 		
 		L"tob.pdf"		
 	};
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
-	packProfile profile = getPackProfile(237, 159);
+	packProfile profile = getPackProfile(237, 159, 50);
 	profile.rle_ratio = 85;
 	profile.twobyte_ratio = 90;
 	profile.seq_ratio = 100;
