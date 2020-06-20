@@ -325,12 +325,17 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 
 		/*
-		char tmp100[100] = { 0 };
-		concat_int(tmp100, "c:/test/meta3/offsets", metacount);
+		char tmp7[100] = { 0 };
+		concat_int(tmp7, "c:/test/meta3/offsets", metacount);
 		copy_file(offsets_name, tmp100);
 		
-		concat_int(tmp100, "c:/test/meta3/seqlens", metacount);
+		concat_int(tmp7, "c:/test/meta3/seqlens", metacount);
 		copy_file(seqlens_name, tmp100);
+
+		concat_int(tmp7, "c:/test/meta3/distances", metacount);
+		copy_file(distances_name, tmp100);
+
+
 		metacount++;
 		*/
 
@@ -341,7 +346,6 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			seqlens_size + distances_size + 9;
 		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
 
-		// we use 5 bytes for two sizes  20 bits each
 		bool metaTooLarge = false; //  offsets_size > META_SIZE_MAX || seqlens_size > META_SIZE_MAX;
 		if (metaTooLarge) {
 			printf("\n meta size too large for file %s .. size was %d and %d", src, offsets_size, seqlens_size);

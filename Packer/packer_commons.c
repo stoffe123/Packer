@@ -115,11 +115,11 @@ bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenPr
 
 void printProfile(packProfile* profile) {
 	printf("\n");
-	printf("\nPages:       (%d, %d %d)", profile->offset_pages, profile->seqlen_pages, profile->distance_pages);
+	printf("\nPages:       (%d %d %d)", profile->offset_pages, profile->seqlen_pages, profile->distance_pages);
 	printf("\nRLE ratio:         %d", profile->rle_ratio);
 	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
-	printf("\nTwobyte threshold (max,divide,min): (%d, %d, %d)", 
+	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", 
 	profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
 }
 
