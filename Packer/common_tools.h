@@ -85,4 +85,6 @@ FILE* openRead(const wchar_t* filename);
 
 bool equals(const char* s1, const char* s2);
 
+bool equalsw(const wchar_t* s1, const wchar_t* s2);
+
 #endif

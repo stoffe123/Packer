@@ -262,6 +262,11 @@ bool equals(const char* s1, const char* s2) {
 	return strcmp(s1, s2) == 0;
 }
 
+bool equalsw(const wchar_t* s1, const wchar_t* s2) {
+	return wcscmp(s1, s2) == 0;
+}
+
+
 void toUni(const wchar_t* dst, const char* str) {	
 	MultiByteToWideChar(CP_ACP, 0, str, -1, dst, 500);	
 }
