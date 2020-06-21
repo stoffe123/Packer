@@ -21,8 +21,7 @@ static buffer_size = BLOCK_SIZE * 3;
 static  unsigned char buffer[BLOCK_SIZE * 3];
 
 size_t absolute_end, buffer_endpos;
-static bool useLongRange = false;
-unsigned char lastByte, longRangeCode = 255;
+
 static const wchar_t* base_dir = L"c:/test/";
 static bool separate_files = false;
 
@@ -31,6 +30,10 @@ lastChar[256],
 distances[BLOCK_SIZE],
 distanceFreq[BLOCK_SIZE],
 distancesPos;
+
+offsets[BLOCK_SIZE],
+offsetFreq[BLOCK_SIZE],
+offsetsPos;
 
 typedef struct pageCoding_t {
 	uint64_t pages;
@@ -107,10 +110,18 @@ void out_distance(uint64_t distance) {
 	}
 }
 
+void out_offset(uint64_t offset) {
+	offsets[offsetsPos++] = offset;
+	if (offsetFreq[offset] < UINT32_MAX) {
+		offsetFreq[offset]++;
+	}
+}
+
+
 void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, uint64_t useLongRange) {
 	if (distance <= pageMax) {
-		uint64_t last_byte = useLongRange ? 254 : 255;
-		uint64_t lowest_special = last_byte + 1 - pages;
+		uint64_t last_byte = getLastByte(useLongRange);
+		uint64_t lowest_special = getLowestSpecial(pages, useLongRange);
 		if (distance < lowest_special) {
 			write_distance(distance);
 		}
@@ -144,48 +155,60 @@ void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, 
 			write_distance(distance / 256);
 		}
 		write_distance(distance % 256);
-		write_distance(longRangeCode);
+		write_distance(255);
 	}
 }
 
-void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMax) {
-	if (offset < offsetPageMax) {
-		unsigned int last_byte = useLongRange ? 254 : 255;
-		unsigned int lowest_special = last_byte + 1 - pages;
-		if (offset < lowest_special) {
-			write_offset(offset);
+void convert_offset(unsigned long distance, unsigned char pages, uint64_t pageMax,
+	uint64_t useLongRange) {
+	if (distance <= pageMax) {
+		uint64_t last_byte = getLastByte(useLongRange);
+		uint64_t lowest_special = getLowestSpecial(pages, useLongRange);
+		if (distance < lowest_special) {
+			write_offset(distance);
 		}
 		else {
-			unsigned long page = 0;
+			uint64_t page = 0;
 			for (; page < pages; page++) {
 
-				if (offset < (lowest_special + (256 * (page + 1)))) {
-					write_offset(offset - (lowest_special + (256 * page)));
+				if (distance < (lowest_special + ((uint64_t)256 * (page + 1)))) {
+					write_offset(distance - (lowest_special + ((uint64_t)256 * page)));
 					write_offset(last_byte - page);//special code
 					break;
 				}
 			}
-			const char* msg = "seq_packer.out_offset: no offset coding found for offset:";
+			const char* msg = "seq_packer.out_distance: no coding found for distance:";
 			assert(page < pages, msg);
 		}
 	}
 	else {  // long range
-		offset -= offsetPageMax;
-		assert(offset < 65536, " offset < 65536 in seqpacker");
-		write_offset(offset / 256);
-		write_offset(offset % 256);
-		write_offset(longRangeCode);
+		if (!useLongRange) {
+			printf("\n seqpacker: long range was needed but not set!! distance %d pages %d pagemax %d",
+				distance, pages, pageMax);
+			exit(1);
+		}
+		distance -= (pageMax + 1);
+
+		if (useLongRange >= 3) {
+			write_offset(distance / 65536);
+			distance %= 65536;
+		}
+		if (useLongRange >= 2) {
+			write_offset(distance / 256);
+		}
+		write_offset(distance % 256);
+		write_offset(255);
 	}
 }
 
-uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax, uint64_t useLongRange)
+uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax, uint64_t useLongRange, int32_t* freqTable, int32_t pos)
 {
 	uint64_t size = 0;
 
 	//1 bytes
 	for (int i = 0; i < lowestSpecial; i++) {
 
-		size += distanceFreq[i];
+		size += freqTable[i];
 
 	}
 	uint64_t freqs = size;
@@ -193,23 +216,20 @@ uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax, uint64_t useLon
 	// 2 bytes
 	for (int i = lowestSpecial; i <= pagesMax; i++) {
 
-		size += (distanceFreq[i] * (uint64_t)2);
-		freqs += distanceFreq[i];
+		size += (freqTable[i] * (uint64_t)2);
+		freqs += freqTable[i];
 
 	}
 	// long ranges
-	uint64_t longRangeFreq = distancesPos - freqs;
+	uint64_t longRangeFreq = pos - freqs;
 	if (useLongRange == 0 && longRangeFreq > 0) {
-		printf("\n seqpacker: useLongRange == 0 && longRangeFreq > 0");
+		printf("\n seqpacker.calcMetaSize: useLongRange == 0 && longRangeFreq > 0");
 		exit(1);
 	}
 	size += (longRangeFreq * (useLongRange + 1));
 	return size;
 }
 
-uint64_t calcPageMax(uint64_t pages, uint64_t useLongRange) {
-    return 	pages* (uint64_t)256 + ((useLongRange ? 254 : 255) - pages);
-}
 
 uint64_t calcUseLongRange(uint64_t pageMax, uint64_t highestDistance) {
 	if (pageMax >= highestDistance) {
@@ -235,7 +255,7 @@ pageCoding_t createDistanceFile() {
 	printf("\n Highest distance was %d", highestDistance);
 	pageCoding_t pageCoding;
 	pageCoding.pages = 0;
-	pageCoding.useLongRange = true;
+	pageCoding.useLongRange = 0;
 
 	uint32_t bestSize = UINT32_MAX;
 
@@ -254,7 +274,7 @@ pageCoding_t createDistanceFile() {
 		uint64_t lastByte = (useLongRange ? 254 : 255);
 		uint64_t lowestSpecial = lastByte + 1 - pages;
 
-		uint32_t size = calcMetaSize(lowestSpecial, pageMax, useLongRange);
+		uint32_t size = calcMetaSize(lowestSpecial, pageMax, useLongRange, distanceFreq, distancesPos);
 		if (size < bestSize) {
 			bestSize = size;		    
 			pageCoding.pages = pages;
@@ -278,22 +298,79 @@ pageCoding_t createDistanceFile() {
 	if (bestSize != size2) {
 		exit(1);
 	}
+	printf("\n distance_pages %d useLongrange %d", pageCoding.pages, pageCoding.useLongRange);
+	return pageCoding;
+}
+
+pageCoding_t createOffsetFile() {
+
+	//determine highest offset
+	uint64_t highestOffset = BLOCK_SIZE - 1;
+	while (highestOffset > 0 && offsetFreq[highestOffset] == 0) {
+		highestOffset--;
+	}
+	printf("\n Highest offset was %d", highestOffset);
+	pageCoding_t pageCoding;
+	pageCoding.pages = 0;
+	pageCoding.useLongRange = 0;
+
+	uint32_t bestSize = UINT32_MAX;
+
+	uint64_t bestPage = 0;
+	uint64_t highestPageTry = 253;
+
+	//test all pages!
+	for (uint64_t pages = 0; pages < highestPageTry; pages++) {
+
+		//calc pageMax without using longRange to see if longRange could be skipped
+		uint64_t pageMax = calcPageMax(pages, false);
+		uint64_t useLongRange = calcUseLongRange(pageMax, highestOffset);
+
+
+		pageMax = calcPageMax(pages, useLongRange);
+		uint64_t lastByte = (useLongRange ? 254 : 255);
+		uint64_t lowestSpecial = lastByte + 1 - pages;
+
+		uint32_t size = calcMetaSize(lowestSpecial, pageMax, useLongRange, offsetFreq, offsetsPos);
+		if (size < bestSize) {
+			bestSize = size;
+			pageCoding.pages = pages;
+			pageCoding.useLongRange = useLongRange;
+		}
+		//printf("\n pages %d gave size %d useOffsetLongRange %d", pages, size, useLongRange);
+		if (highestOffset < 256) {
+			break;
+		}
+	}
+	const wchar_t offsets_name[100] = { 0 };
+	concatw(offsets_name, base_dir, L"offsets");
+	offsets_file = openWrite(offsets_name);
+	uint64_t pageMax = calcPageMax(pageCoding.pages, pageCoding.useLongRange);
+	for (int i = 0; i < offsetsPos; i++) {
+		convert_offset(offsets[i], pageCoding.pages, pageMax, pageCoding.useLongRange);
+	}
+	fclose(offsets_file);
+	uint64_t size2 = get_file_size_from_wname(offsets_name);
+	printf("\n   comparing sizes ... %d %d", bestSize, size2);
+	if (bestSize != size2) {
+		exit(1);
+	}
+	printf("\n offset_pages %d useLongrange %d", pageCoding.pages, pageCoding.useLongRange);
 	return pageCoding;
 }
 
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass,
-	unsigned char offset_pages, unsigned char seqlen_pages)
+void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass, unsigned char seqlen_pages)
 {
 	unsigned int max_seqlen = 258 - seqlen_pages + seqlen_pages * 256; //  -seqlen_pages är nog fel!!
-	uint64_t offsetPagesMax = offset_pages * (uint64_t)256 + (useLongRange ? 255 : 256),
+	
 
-		offset,
-		winsize = offsetPagesMax + (useLongRange ? 65536 : 0) + max_seqlen + max_seqlen - 3,  // -3 safety!
-		best_offset = 0, lowest_special_offset = ((useLongRange ? (uint64_t)255 : (uint64_t)256) - offset_pages),
-		min_seq_len = 3, offsets[1024] = { 0 }, seq_lens[258] = { 0 },
-		longest_offset = lowest_special_offset + ((uint64_t)256 * offset_pages) - 1;
+	uint64_t	offset,
+		winsize = 125536,  // change this later!
+		best_offset = 0,
+		min_seq_len = 3;
+	
 	long long  best_seqlen, seq_len;
 	uint64_t distance = 1; // point one byte past the beginning!
 	uint32_t buffer_pos = 0;
@@ -304,18 +381,18 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	if (pass == 2) {
 			
 		debug("\nWinsize: %d", winsize);
-		debug("\npages: (%d, %d)", offset_pages, seqlen_pages);
+		debug("\nseqlen pages: %d",  seqlen_pages);
 		debug("\nmax_seqlen: %d", max_seqlen);
 
 		if (separate_files) {
 			const wchar_t seqlens_name[100] = { 0 };
-			const wchar_t offsets_name[100] = { 0 };
+			
 			
 			concatw(seqlens_name, base_dir, L"seqlens");
-			concatw(offsets_name, base_dir, L"offsets");
+		
 		
 			seq_lens_file = openWrite(seqlens_name);
-			offsets_file = openWrite(offsets_name);
+			
 			
 		}
 		utfil = openWrite(dest_filename);
@@ -388,10 +465,12 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 					}
 					//check if better than the best!
 
-					if (seq_len > best_seqlen && (offset - seq_len) <= longest_offset) {
+					if (seq_len > best_seqlen) { //&& (offset - seq_len) <= longest_offset) {
+						/*
 						if (offset >= offsetPagesMax && seq_len < 6) {
 							continue;
 						}
+						*/
 						best_seqlen = seq_len;
 						best_offset = offset - seq_len;
 						if (best_seqlen >= max_seqlen) {
@@ -403,7 +482,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 			}
 		}
 		/* now we found the longest sequence in the window! */
-		unsigned char seqlen_min = getSeqlenMin(best_offset, lowest_special_offset, offsetPagesMax);
+		unsigned char seqlen_min = getSeqlenMin(best_offset);
 			
 		if (best_seqlen < seqlen_min)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
@@ -428,13 +507,9 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 
 			//debug("Found sequence seq_len=%d, offset=%d, at bufferstartpos=%d", best_seq_len, best_offset, buffer_startpos);
 
-			if (pass == 1) {
-				//offsets[best_seq_offset]++;// += (best_seq_len - 2);
-				seq_lens[best_seqlen]++;
-			}
-			else if (pass == 2) {  // Write triplet!
+			 if (pass == 2) {  // Write triplet!
 
-				out_offset(best_offset, offset_pages, offsetPagesMax);
+				out_offset(best_offset);
 
 				out_seqlen(best_seqlen, seqlen_pages, seqlen_min);
 				//if (best_seqlen > 230) {
@@ -469,23 +544,29 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		out_distance(distance);
 		debug("\n distance to first code: %d", distance);
 
-		pageCoding_t pageCoding = createDistanceFile();
+		pageCoding_t pageCoding = createOffsetFile();
+		uint8_t offsetPages = pageCoding.pages;
+		uint64_t useOffsetLongRange = pageCoding.useLongRange;
 
+		pageCoding = createDistanceFile();
 		uint8_t distancePages = pageCoding.pages;
 		uint64_t useDistanceLongRange = pageCoding.useLongRange;
 
-		printf("\n best distance_pages %d useLongrange %d", distancePages, useDistanceLongRange);
+		
 
 
-		bool slimCase = (seqlen_pages + offset_pages + distancePages == 0);
+		bool slimCase = (seqlen_pages + offsetPages + distancePages == 0);
 		if (!slimCase) {
 			WRITE(utfil, seqlen_pages);
-			WRITE(utfil, offset_pages);
+			WRITE(utfil, offsetPages);
 			WRITE(utfil, distancePages);
 		}
 		unsigned char packType = 0;
-		if (useLongRange) {
+		if (useOffsetLongRange / 2 == 1) {
 			packType = setKthBit(packType, 1);
+		}
+		if (useOffsetLongRange % 2 == 1) {
+			packType = setKthBit(packType, 2);
 		}
 		if (useDistanceLongRange / 2 == 1) {
 			packType = setKthBit(packType, 3);
@@ -500,7 +581,6 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		fclose(utfil);
 		if (separate_files) {
 			fclose(seq_lens_file);
-			fclose(offsets_file);
 		}
 	}
 	fclose(infil);
@@ -528,11 +608,14 @@ void initGlobalArrays() {
 	for (int i = 0; i < BLOCK_SIZE; i++) {
 		distances[i] = 0;
 		distanceFreq[i] = 0;
+		offsets[i] = 0;
+		offsetFreq[i] = 0;
 	}
 	for (int i = 0; i < BLOCK_SIZE * 2; i++) {
 		nextChar[i] = 0;
 	}
 	distancesPos = 0;
+	offsetsPos = 0;
 }
 
 void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filename, packProfile profile, bool sep) {
@@ -542,17 +625,13 @@ void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filen
 	long long source_size = get_file_size_from_wname(source_filename);
 	printf("\nPages (%d,%d)", offset_pages, seqlen_pages);
 	unsigned char new_offset_pages = check_pages(offset_pages, source_size);
-	useLongRange = true;
-	if (new_offset_pages < offset_pages) {
-		offset_pages = new_offset_pages;
-		useLongRange = false;
-	}
+	
 	seqlen_pages = check_pages(seqlen_pages, source_size);
 	printf("=> (%d,%d)", offset_pages, seqlen_pages);
 	separate_files = sep;
 	initGlobalArrays();
-	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages);
-	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
+	pack_internal(source_filename, dest_filename, 1, seqlen_pages);
+	pack_internal(source_filename, dest_filename, 2, seqlen_pages);
 }
 
 void seq_pack(const char* src, const char* dst, packProfile profile)

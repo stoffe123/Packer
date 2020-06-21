@@ -4,9 +4,22 @@
 #include <stdint.h>
 
 
-unsigned char getSeqlenMin(uint64_t best_offset,uint64_t lowest_special_offset,uint64_t offsetPagesMax) {
-	if (best_offset < lowest_special_offset) {
+unsigned char getSeqlenMin(uint64_t best_offset) {
+	if (best_offset < 256) {
 		return 3;
 	}
-	return (best_offset >= offsetPagesMax) ? 6 : 4;
+	return (best_offset >= 40000) ? 6 : 4;
+}
+
+
+uint64_t getLastByte(uint64_t longRange) {
+	return longRange ? 254 : 255;
+}
+
+uint64_t getLowestSpecial(uint64_t pages, uint64_t longRange) {
+	return getLastByte(longRange) + 1 - pages;
+}
+
+uint64_t calcPageMax(uint64_t pages, uint64_t useLongRange) {
+	return 	pages * (uint64_t)256 + ((useLongRange ? 254 : 255) - pages);
 }

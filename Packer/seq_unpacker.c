@@ -74,14 +74,17 @@ uint64_t transform_seqlen(uint64_t seqlen, bool code_occurred, uint8_t pages) {
 	return seqlen;
 }
 
-uint64_t get_distance(uint8_t pages, uint64_t useLongRange, uint64_t distancePagesMax, uint64_t lastByteDistance,
-	uint64_t lowestSpecialDistance) {
+uint64_t get_distance(uint8_t pages, uint64_t useLongRange) {
+
+	uint64_t pageMax = calcPageMax(pages, useLongRange);
+	uint64_t lastByte = getLastByte(useLongRange);
+	uint64_t lowestSpecial = getLowestSpecial(pages, useLongRange);
 
 	uint64_t distance = read_distance();
 
 	if (useLongRange && distance == 255) {
 
-		distance = read_distance() + distancePagesMax + 1;
+		distance = read_distance() + pageMax + 1;
 		if (useLongRange >= 2) {
 			distance += read_distance() * (uint64_t)256;
 		}
@@ -90,32 +93,46 @@ uint64_t get_distance(uint8_t pages, uint64_t useLongRange, uint64_t distancePag
 		}			
 	}
 	else {
-		if (distance >= lowestSpecialDistance && distance <= lastByteDistance) {
-			uint64_t page = lastByteDistance - distance;
-			distance = lowestSpecialDistance + (page * 256) + read_distance();
+		if (distance >= lowestSpecial && distance <= lastByte) {
+			uint64_t page = lastByte - distance;
+			distance = lowestSpecial + (page * 256) + read_distance();
 		}
 	}
 	return distance;
 }
 
-uint64_t get_offset(uint8_t pages, bool useLongRange, uint64_t offsetPagesMax, uint64_t lastByteOffset,
-	uint64_t lowestSpecialOffset) {
+uint64_t get_offset(uint8_t pages, uint64_t useLongRange) {
+
+	uint64_t pageMax = calcPageMax(pages, useLongRange);
+	uint64_t lastByte = getLastByte(useLongRange);
+	uint64_t lowestSpecial= getLowestSpecial(pages, useLongRange);
 
 	uint64_t offset = read_offset();
 
 	if (useLongRange && offset == 255) {
-		offset = read_offset() + read_offset() * (uint64_t)256 + offsetPagesMax;
+
+		offset = read_offset() + pageMax + 1;
+		if (useLongRange >= 2) {
+			offset += read_offset() * (uint64_t)256;
+		}
+		if (useLongRange >= 3) {
+			offset += read_offset() * (uint64_t)65536;
+		}
 	}
 	else {
-		if (offset >= lowestSpecialOffset && offset <= lastByteOffset) {
-			uint64_t page = lastByteOffset - offset;
-			offset = lowestSpecialOffset + (page * 256) + read_offset();
+		if (offset >= lowestSpecial && offset <= lastByte) {
+			uint64_t page = lastByte - offset;
+			offset = lowestSpecial + (page * 256) + read_offset();
 		}
 	}
 	return offset;
 }
 
-uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset_pages, bool useLongRange, uint64_t lastByteOffset, uint64_t lowestSpecialOffset) {
+uint64_t copyWrapAround(bool code_occurred, uint8_t seqlen_pages, uint8_t offset_pages, uint64_t useLongRange) {
+
+	uint64_t lastByteOffset = getLastByte(useLongRange);
+	uint64_t lowestSpecialOffset = getLastByte(offset_pages, useLongRange);
+
 	uint8_t* temp_ar = malloc(packed_file_end);
 	long long i = packed_file_end; //index to read from packed
 	long long j = packed_file_end;  //index to write to temp array
@@ -165,9 +182,8 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	const wchar_t* base_dir, bool sep)
 {
 	separate_files = sep;
-	uint8_t offset_pages, seqlen_pages, distance_pages;
-	bool useLongRange;
-	uint64_t useDistanceLongRange;
+	uint8_t offset_pages, seqlen_pages, distance_pages;	
+	uint64_t useDistanceLongRange, useLongRange;
 
 	static FILE* infil, * utfil, * seqlens_file, * offsets_file, * distances_file;
 
@@ -178,9 +194,11 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 		concatw(seqlens_name, base_dir, L"seqlens");
 		concatw(offsets_name, base_dir, L"offsets");
 		concatw(distances_name, base_dir, L"distances");
+
 		seqlens_file = openRead(seqlens_name);
 		seqlens_pos = fread(&seqlens, 1, BLOCK_SIZE, seqlens_file);
 		fclose(seqlens_file);
+
 		offsets_file = openRead(offsets_name);
 		offsets_pos = fread(&offsets, 1, BLOCK_SIZE, offsets_file);
 		fclose(offsets_file);
@@ -199,9 +217,13 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	fclose(infil);
 
 	unsigned char packType = read_byte_from_file();
-	useLongRange = isKthBitSet(packType, 1);
+	
 	useDistanceLongRange = isKthBitSet(packType, 4) ? 1 : 0;
 	useDistanceLongRange += isKthBitSet(packType, 3) ? 2 : 0;
+
+	useLongRange = isKthBitSet(packType, 2) ? 1 : 0;
+	useLongRange += isKthBitSet(packType, 1) ? 2 : 0;
+
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
 		seqlen_pages = 0;
@@ -214,20 +236,10 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 		
 	}
 
-	uint64_t lastByteOffset = (useLongRange ? 254 : 255);
-	uint64_t lowestSpecialOffset = lastByteOffset + 1 - offset_pages;
-	uint64_t lastByteDistance = (useDistanceLongRange ? 254 : 255);
-	uint64_t lowestSpecialDistance = lastByteDistance + 1 - distance_pages;
-
-	uint64_t offsetPagesMax = offset_pages * (uint64_t)256 + (useLongRange ? 255 : 256);
-	uint64_t distancePagesMax = distance_pages * (uint64_t)256 + ((useDistanceLongRange ? (uint64_t)254 : (uint64_t)255)
-		                                                            - distance_pages);
-	
-
-	uint64_t lastDistance = get_distance(distance_pages, useDistanceLongRange, distancePagesMax, lastByteDistance, lowestSpecialDistance);
+	uint64_t lastDistance = get_distance(distance_pages, useDistanceLongRange);
 
 	bool code_occurred = false;
-	buf_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, useLongRange, lastByteOffset, lowestSpecialOffset);
+	buf_pos = copyWrapAround(code_occurred, seqlen_pages, offset_pages, useLongRange);
 	
 	debug(" \n pages=(%d, %d, %d)", offset_pages, seqlen_pages, distance_pages);
 	
@@ -250,14 +262,14 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 			cc = read_byte_from_file();
 		}
 		if (distance++ == lastDistance) {
-			lastDistance = get_distance(distance_pages, useDistanceLongRange, distancePagesMax, lastByteDistance, lowestSpecialDistance);
+			lastDistance = get_distance(distance_pages, useDistanceLongRange);
 			distance = 0;
 			uint64_t offset, seqlen = read_seqlen();
 			
 				seqlen = transform_seqlen(seqlen, code_occurred, seqlen_pages);
-				offset = get_offset(offset_pages, useLongRange, offsetPagesMax, lastByteOffset, lowestSpecialOffset);
+				offset = get_offset(offset_pages, useLongRange);
 
-				unsigned char seqlen_min = getSeqlenMin(offset, lowestSpecialOffset, offsetPagesMax);
+				unsigned char seqlen_min = getSeqlenMin(offset);
 
 				seqlen += seqlen_min;
 

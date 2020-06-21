@@ -245,7 +245,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/fail";
+	const wchar_t* src = L"c:/test/book.txt";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -321,10 +321,10 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { 
+	wchar_t test_filenames[16][100] = { L"book.txt",
 			L"pazera.exe",
 		L"aft.htm",
-		L"book.txt",
+		
 		L"voc.wav",
 		L"amb.dll",
 	
