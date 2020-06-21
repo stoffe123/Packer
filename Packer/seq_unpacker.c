@@ -206,8 +206,8 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	}
 
 	uint64_t lastByteOffset = (useLongRange ? 254 : 255);
-	uint64_t lastByteDistance = (useDistanceLongRange ? 254 : 255);
 	uint64_t lowestSpecialOffset = lastByteOffset + 1 - offset_pages;
+	uint64_t lastByteDistance = (useDistanceLongRange ? 254 : 255);
 	uint64_t lowestSpecialDistance = lastByteDistance + 1 - distance_pages;
 
 	uint64_t offsetPagesMax = offset_pages * (uint64_t)256 + (useLongRange ? 255 : 256);

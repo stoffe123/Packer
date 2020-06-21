@@ -169,6 +169,34 @@ void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMa
 	}
 }
 
+uint64_t calulcateMetaSize(uint64_t lowestSpecial, uint64_t pagesMax)
+{
+	uint64_t size = 0;
+
+	//1 bytes
+	for (int i = 0; i < lowestSpecial; i++) {
+
+		size += distanceFreq[i];
+
+	}
+	uint64_t freqs = size;
+
+	// 2 bytes
+	for (int i = lowestSpecial; i <= pagesMax; i++) {
+
+		size += (distanceFreq[i] * (uint64_t)2);
+		freqs += distanceFreq[i];
+
+	}
+	// long ranges
+	size += ((distancesPos - freqs) * 4);
+	return size;
+}
+
+uint64_t calcPageMax(uint64_t pages, bool useLongRange) {
+    return 	pages* (uint64_t)256 + ((useLongRange ? 254 : 255) - pages);
+}
+
 pageCoding_t createDistanceFile() {
 
 	//determine highest distance
@@ -180,44 +208,45 @@ pageCoding_t createDistanceFile() {
 	pageCoding_t pageCoding;
 	pageCoding.pages = 0;
 	pageCoding.useLongRange = true;
-	
+
 	uint32_t bestSize = UINT32_MAX;
-	
+
 	uint64_t bestPage = 0;
 	uint64_t highestPageTry = 253;
-	
-	const wchar_t distances_name[100] = { 0 };
-	concatw(distances_name, base_dir, L"distances");
 
 	//test all pages!
 	for (uint64_t pages = 0; pages < highestPageTry; pages++) {
 
 		//calc pageMax without using longRange to see if longRange could be skipped
-		uint64_t pageMax = pages * (uint64_t)256 + (255 - pages);
+		uint64_t pageMax = calcPageMax(pages, false);
 		bool useLongRange = (pageMax < highestDistance);
 
-		const wchar_t testFile[100] = { 0 };
-		get_temp_filew(testFile, L"seqpacker_trydistances");
-		distances_file = openWrite(testFile);
-		pageMax = pages * (uint64_t)256 + (useLongRange ? 254 : 255) - pages;
-		for (int i = 0; i < distancesPos; i++) {
-			convert_distance(distances[i], pages, pageMax, useLongRange);
-		}
-		fclose(distances_file);
-		uint32_t size = get_file_size_from_wname(testFile);
+
+		pageMax = calcPageMax(pages, useLongRange);
+		uint64_t lastByte = (useLongRange ? 254 : 255);
+		uint64_t lowestSpecial = lastByte + 1 - pages;
+
+		uint32_t size = calulcateMetaSize(lowestSpecial, pageMax);
 		if (size < bestSize) {
-			bestSize = size;
-			_wremove(distances_name);
-			_wrename(testFile, distances_name);
+			bestSize = size;		    
 			pageCoding.pages = pages;
 			pageCoding.useLongRange = useLongRange;
 		}
 		//printf("\n pages %d gave size %d useDistanceLongRange %d", pages, size, useLongRange);
-		remove(testFile);
 		if (highestDistance < 256) {
 			break;
 		}
 	}
+	const wchar_t distances_name[100] = { 0 };
+	concatw(distances_name, base_dir, L"distances");
+	distances_file = openWrite(distances_name);
+	uint64_t pageMax = calcPageMax(pageCoding.pages, pageCoding.useLongRange);
+	for (int i = 0; i < distancesPos; i++) {
+		convert_distance(distances[i], pageCoding.pages, pageMax, pageCoding.useLongRange);
+	}
+	fclose(distances_file);
+	uint64_t size2 = get_file_size_from_wname(distances_name);
+	printf("\n   comparing sizes ... %d %d", bestSize, size2);
 	return pageCoding;
 }
 
