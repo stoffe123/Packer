@@ -22,13 +22,21 @@ static  unsigned char buffer[BLOCK_SIZE * 3];
 
 size_t absolute_end, buffer_endpos;
 static bool useLongRange = false;
-static bool useDistanceLongRange = true;
 unsigned char lastByte, longRangeCode = 255;
 static const wchar_t* base_dir = L"c:/test/";
 static bool separate_files = false;
 
 static uint32_t nextChar[BLOCK_SIZE * 2],
-                lastChar[256];
+lastChar[256],
+distances[BLOCK_SIZE],
+distanceFreq[BLOCK_SIZE],
+distancesPos;
+
+typedef struct pageCoding_t {
+	uint64_t pages;
+	bool useLongRange;
+} pageCoding_t;
+
 
 static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 	uint32_t lastPos = lastChar[ch];
@@ -88,9 +96,16 @@ void out_seqlen(unsigned long seqlen, unsigned char pages, unsigned char seqlen_
 	}
 }
 
-void out_distance(uint64_t distance, unsigned char pages, uint64_t distancePageMax) {
-	if (distance < distancePageMax) {
-		uint64_t last_byte = useDistanceLongRange ? 254 : 255;
+void out_distance(uint64_t distance) {
+	distances[distancesPos++] = distance;
+	if (distanceFreq[distance] < UINT32_MAX) {
+		distanceFreq[distance]++;	
+	}
+}
+
+void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, bool useLongRange) {
+	if (distance <= pageMax) {
+		uint64_t last_byte = useLongRange ? 254 : 255;
 		uint64_t lowest_special = last_byte + 1 - pages;
 		if (distance < lowest_special) {
 			write_distance(distance);
@@ -110,7 +125,12 @@ void out_distance(uint64_t distance, unsigned char pages, uint64_t distancePageM
 		}
 	}
 	else {  // long range
-		distance -= distancePageMax;
+		if (!useLongRange) {
+			printf("\n seqpacker: long range was needed but not set!! distance %d pages %d pagemax %d",
+				distance, pages, pageMax);
+			exit(1);
+		}
+		distance -= pageMax;
 		//assert(distance < 65536, " distance too large in seqpacker");
 		write_distance(distance / 65536);
 		write_distance(distance / 256);
@@ -148,15 +168,67 @@ void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMa
 		write_offset(longRangeCode);
 	}
 }
+
+pageCoding_t createDistanceFile() {
+
+	//determine highest distance
+	int highestDistance = BLOCK_SIZE - 1;
+	while (highestDistance > 0 && distanceFreq[highestDistance] == 0) {
+		highestDistance--;
+	}
+	printf("\n Highest distance was %d", highestDistance);
+	pageCoding_t pageCoding;
+	pageCoding.pages = 0;
+	pageCoding.useLongRange = true;
+	
+	uint32_t bestSize = UINT32_MAX;
+	
+	uint64_t bestPage = 0;
+	uint64_t highestPageTry = 253;
+	
+	const wchar_t distances_name[100] = { 0 };
+	concatw(distances_name, base_dir, L"distances");
+
+	//test all pages!
+	for (uint64_t pages = 0; pages < highestPageTry; pages++) {
+
+		//calc pageMax without using longRange to see if longRange could be skipped
+		uint64_t pageMax = pages * (uint64_t)256 + (255 - pages);
+		bool useLongRange = (pageMax < highestDistance);
+
+		const wchar_t testFile[100] = { 0 };
+		get_temp_filew(testFile, L"seqpacker_trydistances");
+		distances_file = openWrite(testFile);
+		pageMax = pages * (uint64_t)256 + (useLongRange ? 254 : 255) - pages;
+		for (int i = 0; i < distancesPos; i++) {
+			convert_distance(distances[i], pages, pageMax, useLongRange);
+		}
+		fclose(distances_file);
+		uint32_t size = get_file_size_from_wname(testFile);
+		if (size < bestSize) {
+			bestSize = size;
+			_wremove(distances_name);
+			_wrename(testFile, distances_name);
+			pageCoding.pages = pages;
+			pageCoding.useLongRange = useLongRange;
+		}
+		//printf("\n pages %d gave size %d useDistanceLongRange %d", pages, size, useLongRange);
+		remove(testFile);
+		if (highestDistance < 256) {
+			break;
+		}
+	}
+	return pageCoding;
+}
+
 //--------------------------------------------------------------------------------------------------------
 
 void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass,
-	unsigned char offset_pages, unsigned char seqlen_pages, unsigned char distance_pages)
+	unsigned char offset_pages, unsigned char seqlen_pages)
 {
-	useDistanceLongRange = true;
 	unsigned int max_seqlen = 258 - seqlen_pages + seqlen_pages * 256; //  -seqlen_pages är nog fel!!
 	uint64_t offsetPagesMax = offset_pages * (uint64_t)256 + (useLongRange ? 255 : 256),
-		distancePagesMax = distance_pages * (uint64_t)256 + (useDistanceLongRange ? 255 : 256),
+
 		offset,
 		winsize = offsetPagesMax + (useLongRange ? 65536 : 0) + max_seqlen + max_seqlen - 3,  // -3 safety!
 		best_offset = 0, lowest_special_offset = ((useLongRange ? (uint64_t)255 : (uint64_t)256) - offset_pages),
@@ -170,25 +242,21 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	infil = openRead(src);
 	
 	if (pass == 2) {
-		
-		
+			
 		debug("\nWinsize: %d", winsize);
-		debug("\npages: (%d, %d, %d)", offset_pages, seqlen_pages, distance_pages);
+		debug("\npages: (%d, %d)", offset_pages, seqlen_pages);
 		debug("\nmax_seqlen: %d", max_seqlen);
-		
-		
-	
 
 		if (separate_files) {
 			const wchar_t seqlens_name[100] = { 0 };
 			const wchar_t offsets_name[100] = { 0 };
-			const wchar_t distances_name[100] = { 0 };
+			
 			concatw(seqlens_name, base_dir, L"seqlens");
 			concatw(offsets_name, base_dir, L"offsets");
-			concatw(distances_name, base_dir, L"distances");
+		
 			seq_lens_file = openWrite(seqlens_name);
 			offsets_file = openWrite(offsets_name);
-			distances_file = openWrite(distances_name);
+			
 		}
 		utfil = openWrite(dest_filename);
 	}
@@ -320,7 +388,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 
 				//}
 			    /* note file is read backwards during unpack! */
-				out_distance(distance, distance_pages, distancePagesMax);
+				out_distance(distance);
 				distance = 0;
 			}
 			buffer_pos += best_seqlen;
@@ -336,45 +404,40 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		printf("\n\n");
 	}
 
+	if (pass == 2) {
 
-	if (pass == 1) {
-
-#if false
-		printf("\n\n SEQ_LEN frequency:\n");
-		for (int i = 0; i < 257; i++) {
-			printf("%d,", seq_lens[i]);
-		}
-
-		printf("\n\n OFFSET :\n");
-		for (int i = 0; i < 1024; i++) {
-			printf("%d,", offsets[i]);
-		}
-#endif
-
-	}
-	else {
-	
-		out_distance(distance, distance_pages, distancePagesMax);
+		out_distance(distance);
 		debug("\n distance to first code: %d", distance);
-		bool slimCase = (seqlen_pages + offset_pages + distance_pages == 0);
-		if  (!slimCase) {
+
+		pageCoding_t pageCoding = createDistanceFile();
+
+		uint8_t distancePages = pageCoding.pages;
+		bool useDistanceLongRange = pageCoding.useLongRange;
+
+		printf("\n best distance_pages %d useLongrange %d", distancePages, useDistanceLongRange);
+
+
+		bool slimCase = (seqlen_pages + offset_pages + distancePages == 0);
+		if (!slimCase) {
 			WRITE(utfil, seqlen_pages);
 			WRITE(utfil, offset_pages);
-			WRITE(utfil, distance_pages);
+			WRITE(utfil, distancePages);
 		}
 		unsigned char packType = 0;
 		if (useLongRange) {
+			packType = setKthBit(packType, 0);
+		}
+		if (useDistanceLongRange) {
 			packType = setKthBit(packType, 1);
 		}
 		if (slimCase) {
 			packType = setKthBit(packType, 2);
 		}
-		WRITE(utfil, packType);	
+		WRITE(utfil, packType);
 		fclose(utfil);
 		if (separate_files) {
 			fclose(seq_lens_file);
 			fclose(offsets_file);
-			fclose(distances_file);
 		}
 	}
 	fclose(infil);
@@ -395,6 +458,20 @@ unsigned char check_pages(pages, size) {
 	return pages;
 }
 
+void initGlobalArrays() {
+	for (int i = 0; i < 256; i++) {
+		lastChar[i] = INT32_MAX;
+	}
+	for (int i = 0; i < BLOCK_SIZE; i++) {
+		distances[i] = 0;
+		distanceFreq[i] = 0;
+	}
+	for (int i = 0; i < BLOCK_SIZE * 2; i++) {
+		nextChar[i] = 0;
+	}
+	distancesPos = 0;
+}
+
 void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filename, packProfile profile, bool sep) {
 	unsigned char offset_pages = profile.offset_pages,
 		seqlen_pages = profile.seqlen_pages,
@@ -410,14 +487,9 @@ void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filen
 	seqlen_pages = check_pages(seqlen_pages, source_size);
 	printf("=> (%d,%d)", offset_pages, seqlen_pages);
 	separate_files = sep;
-	for (int i = 0; i < 256; i++) {
-		lastChar[i] = INT32_MAX;
-	}
-	for (int i = 0; i < BLOCK_SIZE * 2; i++) {
-		nextChar[i] = 0;
-	}
-	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages, distance_pages);
-	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages, distance_pages);
+	initGlobalArrays();
+	pack_internal(source_filename, dest_filename, 1, offset_pages, seqlen_pages);
+	pack_internal(source_filename, dest_filename, 2, offset_pages, seqlen_pages);
 }
 
 void seq_pack(const char* src, const char* dst, packProfile profile)

@@ -245,14 +245,14 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/book.txt";
+	const wchar_t* src = L"c:/test/short.txt";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 
 	long long size_org = get_file_size_from_wname(src);
 
-	printf("\n Packing... %s with length:%d", src, size_org);
+	wprintf(L"\n Packing... %s with length:%d", src, size_org);
 
 	int cl = clock();
 
@@ -322,14 +322,18 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
-		L"book.txt",
+			L"voc.wav",
+		L"amb.dll",
+			L"pazera.exe",
 		L"aft.htm",
-		L"pazera.exe",
+		L"book.txt",
+		
+	
 		
 			L"bad.cdg",
 			L"did.csh",
 			
-		L"amb.dll",
+		
 		
 		L"oneseq.txt",
 		L"empty.txt",
@@ -337,7 +341,7 @@ void test16() {
 		L"book_med.txt",
 		L"repeatchar.txt",
 		L"rel.pdf",
-			L"voc.wav",
+		
 		L"bad.mp3",
 		L"nex.doc",
 		L"tob.pdf"		

@@ -159,7 +159,7 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 {
 	separate_files = sep;
 	uint8_t offset_pages, seqlen_pages, distance_pages;
-	bool useLongRange, useDistanceLongRange = true;
+	bool useLongRange, useDistanceLongRange;
 
 	static FILE* infil, * utfil, * seqlens_file, * offsets_file, * distances_file;
 
@@ -191,7 +191,8 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	fclose(infil);
 
 	unsigned char packType = read_byte_from_file();
-	useLongRange = isKthBitSet(packType, 1);
+	useLongRange = isKthBitSet(packType, 0);
+	useDistanceLongRange = isKthBitSet(packType, 1);
 	if (isKthBitSet(packType, 2)) {
 		offset_pages = 0;
 		seqlen_pages = 0;
@@ -210,7 +211,9 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	uint64_t lowestSpecialDistance = lastByteDistance + 1 - distance_pages;
 
 	uint64_t offsetPagesMax = offset_pages * (uint64_t)256 + (useLongRange ? 255 : 256);
-	uint64_t distancePagesMax = distance_pages * (uint64_t)256 + (useDistanceLongRange ? 255 : 256);
+	uint64_t distancePagesMax = distance_pages * (uint64_t)256 + ((useDistanceLongRange ? (uint64_t)254 : (uint64_t)255)
+		                                                            - distance_pages);
+	
 
 	uint64_t lastDistance = get_distance(distance_pages, useDistanceLongRange, distancePagesMax, lastByteDistance, lowestSpecialDistance);
 
