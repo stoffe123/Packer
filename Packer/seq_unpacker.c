@@ -74,14 +74,20 @@ uint64_t transform_seqlen(uint64_t seqlen, bool code_occurred, uint8_t pages) {
 	return seqlen;
 }
 
-uint64_t get_distance(uint8_t pages, bool useLongRange, uint64_t distancePagesMax, uint64_t lastByteDistance,
+uint64_t get_distance(uint8_t pages, uint64_t useLongRange, uint64_t distancePagesMax, uint64_t lastByteDistance,
 	uint64_t lowestSpecialDistance) {
 
 	uint64_t distance = read_distance();
 
 	if (useLongRange && distance == 255) {
-		distance = read_distance() + read_distance() * (uint64_t)256 + read_distance() * (uint64_t)65536 
-			+ distancePagesMax + 1;
+
+		distance = read_distance() + distancePagesMax + 1;
+		if (useLongRange >= 2) {
+			distance += read_distance() * (uint64_t)256;
+		}
+		if (useLongRange >= 3) {
+			distance += read_distance() * (uint64_t)65536;
+		}			
 	}
 	else {
 		if (distance >= lowestSpecialDistance && distance <= lastByteDistance) {

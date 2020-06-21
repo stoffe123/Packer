@@ -67,6 +67,10 @@ void write_offset(uint64_t c) {
 }
 
 void write_distance(uint64_t c) {
+	if (c > 255) {
+		printf("\n write_distance called with value > 255 was %d", c);
+		exit(1);
+	}
 	//debug("\nwrite_offset:%d", c);
 	fwrite(&c, 1, 1, (separate_files ? distances_file : utfil));
 }
@@ -103,7 +107,7 @@ void out_distance(uint64_t distance) {
 	}
 }
 
-void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, bool useLongRange) {
+void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, uint64_t useLongRange) {
 	if (distance <= pageMax) {
 		uint64_t last_byte = useLongRange ? 254 : 255;
 		uint64_t lowest_special = last_byte + 1 - pages;
@@ -131,9 +135,14 @@ void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, 
 			exit(1);
 		}
 		distance -= (pageMax + 1);
-		//assert(distance < 65536, " distance too large in seqpacker");
-		write_distance(distance / 65536);
-		write_distance(distance / 256);
+		
+		if (useLongRange >= 3) {
+			write_distance(distance / 65536);
+			distance %= 65536;
+		}
+		if (useLongRange >= 2) {
+			write_distance(distance / 256);
+		}
 		write_distance(distance % 256);
 		write_distance(longRangeCode);
 	}
@@ -169,7 +178,7 @@ void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMa
 	}
 }
 
-uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax)
+uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax, uint64_t useLongRange)
 {
 	uint64_t size = 0;
 
@@ -189,7 +198,12 @@ uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax)
 
 	}
 	// long ranges
-	size += ((distancesPos - freqs) * 4);
+	uint64_t longRangeFreq = distancesPos - freqs;
+	if (useLongRange == 0 && longRangeFreq > 0) {
+		printf("\n seqpacker: useLongRange == 0 && longRangeFreq > 0");
+		exit(1);
+	}
+	size += (longRangeFreq * (useLongRange + 1));
 	return size;
 }
 
@@ -240,7 +254,7 @@ pageCoding_t createDistanceFile() {
 		uint64_t lastByte = (useLongRange ? 254 : 255);
 		uint64_t lowestSpecial = lastByte + 1 - pages;
 
-		uint32_t size = calcMetaSize(lowestSpecial, pageMax);
+		uint32_t size = calcMetaSize(lowestSpecial, pageMax, useLongRange);
 		if (size < bestSize) {
 			bestSize = size;		    
 			pageCoding.pages = pages;
@@ -261,6 +275,9 @@ pageCoding_t createDistanceFile() {
 	fclose(distances_file);
 	uint64_t size2 = get_file_size_from_wname(distances_name);
 	printf("\n   comparing sizes ... %d %d", bestSize, size2);
+	if (bestSize != size2) {
+		exit(1);
+	}
 	return pageCoding;
 }
 

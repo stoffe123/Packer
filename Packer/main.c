@@ -322,11 +322,12 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
+			L"pazera.exe",
 		L"aft.htm",
 		L"book.txt",
 		L"voc.wav",
 		L"amb.dll",
-		L"pazera.exe",
+	
         L"bad.cdg",
         L"did.csh",
 		L"oneseq.txt",
