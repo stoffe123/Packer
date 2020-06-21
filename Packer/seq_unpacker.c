@@ -80,7 +80,8 @@ uint64_t get_distance(uint8_t pages, bool useLongRange, uint64_t distancePagesMa
 	uint64_t distance = read_distance();
 
 	if (useLongRange && distance == 255) {
-		distance = read_distance() + read_distance() * (uint64_t)256 + read_distance() * (uint64_t)65536 + distancePagesMax;
+		distance = read_distance() + read_distance() * (uint64_t)256 + read_distance() * (uint64_t)65536 
+			+ distancePagesMax + 1;
 	}
 	else {
 		if (distance >= lowestSpecialDistance && distance <= lastByteDistance) {
@@ -159,7 +160,8 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 {
 	separate_files = sep;
 	uint8_t offset_pages, seqlen_pages, distance_pages;
-	bool useLongRange, useDistanceLongRange;
+	bool useLongRange;
+	uint64_t useDistanceLongRange;
 
 	static FILE* infil, * utfil, * seqlens_file, * offsets_file, * distances_file;
 
@@ -191,9 +193,10 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	fclose(infil);
 
 	unsigned char packType = read_byte_from_file();
-	useLongRange = isKthBitSet(packType, 0);
-	useDistanceLongRange = isKthBitSet(packType, 1);
-	if (isKthBitSet(packType, 2)) {
+	useLongRange = isKthBitSet(packType, 1);
+	useDistanceLongRange = isKthBitSet(packType, 4) ? 1 : 0;
+	useDistanceLongRange += isKthBitSet(packType, 3) ? 2 : 0;
+	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
 		seqlen_pages = 0;
 		distance_pages = 0;

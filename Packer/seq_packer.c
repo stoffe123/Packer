@@ -34,7 +34,7 @@ distancesPos;
 
 typedef struct pageCoding_t {
 	uint64_t pages;
-	bool useLongRange;
+	uint64_t useLongRange;
 } pageCoding_t;
 
 
@@ -51,7 +51,7 @@ static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 }
 
 static void display_progress(uint32_t buffer_pos, uint8_t pass) {
-	if (buffer_pos % 12000 == 0 && pass == 2 && !VERBOSE) {
+	if (buffer_pos % 24000 == 0 && pass == 2 && !VERBOSE) {
 		printf("*");
 	}
 }
@@ -130,7 +130,7 @@ void convert_distance(uint64_t distance, unsigned char pages, uint64_t pageMax, 
 				distance, pages, pageMax);
 			exit(1);
 		}
-		distance -= pageMax;
+		distance -= (pageMax + 1);
 		//assert(distance < 65536, " distance too large in seqpacker");
 		write_distance(distance / 65536);
 		write_distance(distance / 256);
@@ -169,7 +169,7 @@ void out_offset(unsigned long offset, unsigned char pages, uint64_t offsetPageMa
 	}
 }
 
-uint64_t calulcateMetaSize(uint64_t lowestSpecial, uint64_t pagesMax)
+uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax)
 {
 	uint64_t size = 0;
 
@@ -193,14 +193,28 @@ uint64_t calulcateMetaSize(uint64_t lowestSpecial, uint64_t pagesMax)
 	return size;
 }
 
-uint64_t calcPageMax(uint64_t pages, bool useLongRange) {
+uint64_t calcPageMax(uint64_t pages, uint64_t useLongRange) {
     return 	pages* (uint64_t)256 + ((useLongRange ? 254 : 255) - pages);
+}
+
+uint64_t calcUseLongRange(uint64_t pageMax, uint64_t highestDistance) {
+	if (pageMax >= highestDistance) {
+		return 0;
+	}
+	uint64_t max = highestDistance - (pageMax + 1);
+	if (max < 256) {
+		return 1;
+	}
+	if (max < 65536) {
+		return 2;
+	}
+	return 3;
 }
 
 pageCoding_t createDistanceFile() {
 
 	//determine highest distance
-	int highestDistance = BLOCK_SIZE - 1;
+	uint64_t highestDistance = BLOCK_SIZE - 1;
 	while (highestDistance > 0 && distanceFreq[highestDistance] == 0) {
 		highestDistance--;
 	}
@@ -219,14 +233,14 @@ pageCoding_t createDistanceFile() {
 
 		//calc pageMax without using longRange to see if longRange could be skipped
 		uint64_t pageMax = calcPageMax(pages, false);
-		bool useLongRange = (pageMax < highestDistance);
+		uint64_t useLongRange = calcUseLongRange(pageMax, highestDistance);
 
 
 		pageMax = calcPageMax(pages, useLongRange);
 		uint64_t lastByte = (useLongRange ? 254 : 255);
 		uint64_t lowestSpecial = lastByte + 1 - pages;
 
-		uint32_t size = calulcateMetaSize(lowestSpecial, pageMax);
+		uint32_t size = calcMetaSize(lowestSpecial, pageMax);
 		if (size < bestSize) {
 			bestSize = size;		    
 			pageCoding.pages = pages;
@@ -441,7 +455,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		pageCoding_t pageCoding = createDistanceFile();
 
 		uint8_t distancePages = pageCoding.pages;
-		bool useDistanceLongRange = pageCoding.useLongRange;
+		uint64_t useDistanceLongRange = pageCoding.useLongRange;
 
 		printf("\n best distance_pages %d useLongrange %d", distancePages, useDistanceLongRange);
 
@@ -454,13 +468,16 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		}
 		unsigned char packType = 0;
 		if (useLongRange) {
-			packType = setKthBit(packType, 0);
-		}
-		if (useDistanceLongRange) {
 			packType = setKthBit(packType, 1);
 		}
+		if (useDistanceLongRange / 2 == 1) {
+			packType = setKthBit(packType, 3);
+		}
+		if (useDistanceLongRange % 2 == 1) {
+			packType = setKthBit(packType, 4);
+		}
 		if (slimCase) {
-			packType = setKthBit(packType, 2);
+			packType = setKthBit(packType, 0);
 		}
 		WRITE(utfil, packType);
 		fclose(utfil);
