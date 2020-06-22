@@ -59,17 +59,6 @@ int doFuzz(int r, int best, int min, int max) {
 
 void fuzzProfile(packProfile* profile, packProfile best) {
 	
-	if (rand() % 4 == 0) {
-		profile->offset_pages = rand() % 252;
-		profile->seqlen_pages = rand() % 252;
-		profile->distance_pages = rand() % 252;
-	}
-	else {
-		profile->offset_pages = fuzz(best.offset_pages);
-		profile->seqlen_pages = fuzz(best.seqlen_pages);
-		profile->distance_pages = fuzz(best.distance_pages);
-	}
-	
 	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 700);
@@ -80,6 +69,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
 	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 1, 255);
+	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
 }
 
 
@@ -152,7 +142,7 @@ void testmeta() {
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
 	copyProfile(&distanceProfile, &bestDistanceProfile);
-
+	bool unpack = false;
 	unsigned long long best_size = 0;
 	while (true) {
 		/*
@@ -173,6 +163,7 @@ void testmeta() {
 		printProfile(&seqlenProfile);
 		printf("\n\n and offset profile:");
 		printProfile(&offsetProfile);
+		
 		printf("\n-------------------------------");
 		for (; kk < 38; kk++)
 		{
@@ -195,13 +186,15 @@ void testmeta() {
 				break;
 			}
 			acc_size_org += size_org;
-			multi_unpack(packed_name, unpackedFilename);
-			printf("\n\n Comparing files!");
-			if (files_equal(src, unpackedFilename)) {
-				printf("\n ****** SUCCESS ****** (equal)\n");
-			}
-			else {
-				exit(1);
+			if (unpack) {
+				multi_unpack(packed_name, unpackedFilename);
+				printf("\n\n Comparing files!");
+				if (files_equal(src, unpackedFilename)) {
+					printf("\n ****** SUCCESS ****** (equal)\n");
+				}
+				else {
+					exit(1);
+				}
 			}
 
 
@@ -220,13 +213,15 @@ void testmeta() {
 				break;
 			}
 			acc_size_org += size_org;
-			multi_unpack(packed_name, unpackedFilename);
-			printf("\n\n Comparing files!");
-			if (files_equal(src, unpackedFilename)) {
-				printf("\n ****** SUCCESS ****** (equal)\n");
-			}
-			else {
-				exit(1);
+			if (unpack) {
+				multi_unpack(packed_name, unpackedFilename);
+				printf("\n\n Comparing files!");
+				if (files_equal(src, unpackedFilename)) {
+					printf("\n ****** SUCCESS ****** (equal)\n");
+				}
+				else {
+					exit(1);
+				}
 			}
 
 			concat(src, metaDir, "distances");
@@ -245,7 +240,7 @@ void testmeta() {
 			}
 			acc_size_org += size_org;
 
-			multi_unpack(packed_name, unpackedFilename);		
+			if (unpack) multi_unpack(packed_name, unpackedFilename);
 
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
@@ -254,13 +249,14 @@ void testmeta() {
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
 			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-			
-			printf("\n\n Comparing files!");			
-			if (files_equal(src, unpackedFilename)) {
-				printf("\n ****** SUCCESS ****** (equal)\n");
-			}
-			else {
-				exit(1);
+			if (unpack) {
+				printf("\n\n Comparing files!");
+				if (files_equal(src, unpackedFilename)) {
+					printf("\n ****** SUCCESS ****** (equal)\n");
+				}
+				else {
+					exit(1);
+				}
 			}
 		
 			earlyBreak = false;
@@ -301,17 +297,16 @@ void onefile() {
 
 	int cl = clock();
 
-	packProfile profile = getPackProfile(237, 159, 10);
+	packProfile profile = getPackProfile();
 	profile.rle_ratio = 85;
 	profile.twobyte_ratio = 90;
-	profile.seq_ratio = 100;
 	profile.recursive_limit = 242;
 	profile.twobyte_threshold_max = 11788;
 	profile.twobyte_threshold_divide = 159;
 	profile.twobyte_threshold_min = 3150;
 
 	//meta testsuit 838297
-	packProfile seqlenProfile = getPackProfile(53, 149, 10);
+	packProfile seqlenProfile = getPackProfile();
 	seqlenProfile.rle_ratio = 64;
 	seqlenProfile.twobyte_ratio = 62;
 	seqlenProfile.recursive_limit = 10;
@@ -368,45 +363,43 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { L"book.txt",
-			L"oneseq.txt",
+	wchar_t test_filenames[16][100] = { 
+		L"rel.pdf",
+		L"did.csh",	
+		L"tob.pdf",
+		L"pazera.exe",
+		L"voc.wav",
+		L"amb.dll",
+        L"bad.cdg",
+		L"bad.mp3",
+		L"nex.doc",		
+		L"aft.htm",
+		L"book.txt",
+		L"oneseq.txt",
 		L"empty.txt",
 		L"onechar.txt",
 		L"book_med.txt",
-		L"repeatchar.txt",
-			L"aft.htm",
-		L"rel.pdf",
-		L"did.csh",
-		
-			L"pazera.exe",
-	
-		
-		L"voc.wav",
-		L"amb.dll",
-	
-        L"bad.cdg",
-        
-	
-		L"bad.mp3",
-		L"nex.doc",
-		L"tob.pdf"		
+		L"repeatchar.txt",		
 	};
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
-	packProfile profile = getPackProfile(237, 159, 50);
-	profile.rle_ratio = 85;
-	profile.twobyte_ratio = 90;
-	profile.seq_ratio = 100;
+	//43965493 w winsize = 95536
+	packProfile profile = getPackProfile();
+	profile.rle_ratio = 93;
+	profile.twobyte_ratio = 89;
 	profile.recursive_limit = 242;
-	profile.twobyte_threshold_max = 11788;
-	profile.twobyte_threshold_divide = 159;
+	profile.twobyte_threshold_max = 11951;
+	profile.twobyte_threshold_divide = 260;
 	profile.twobyte_threshold_min = 3150;
+	profile.seqlenMinLimit3 = 80;
+	profile.seqlenMinLimit4 = 185;
+	profile.blockSizeMinus = 139;
 	
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
 	
-
+	bool unpack = false;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
 	{
@@ -452,22 +445,22 @@ void test16() {
 			printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
 			cl = clock();
+			if (unpack) {
+				block_unpack(packed_name, dst);
+				//seq_unpack_separate("main", dst, "c:/test/");
 
-			block_unpack(packed_name, dst);
-			//seq_unpack_separate("main", dst, "c:/test/");
+				int unpack_time = (clock() - cl);
+				//printf("\n Unpacking finished time it took: %d", unpack_time);
+				printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-			int unpack_time = (clock() - cl);
-			//printf("\n Unpacking finished time it took: %d", unpack_time);
-			printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-		
-			printf("\n\n Comparing files!");		
-			if (files_equalw(src, dst)) {
-				printf("\n ****** SUCCESS ****** (equal)\n");
+				printf("\n\n Comparing files!");
+				if (files_equalw(src, dst)) {
+					printf("\n ****** SUCCESS ****** (equal)\n");
+				}
+				else {
+					exit(1);
+				}
 			}
-			else {
-				exit(1);
-			}
-		
 	
 			earlyBreak = false;
 		}//end for
@@ -499,15 +492,15 @@ void testarchive() {
 	};
 
 	packProfile profile;
-	profile.offset_pages = 221;
-	profile.seqlen_pages = 204;
 	profile.rle_ratio = 85;
 	profile.twobyte_ratio = 73;
-	profile.seq_ratio = 100;
 	profile.recursive_limit = 79;
 	profile.twobyte_threshold_max = 1180;
 	profile.twobyte_threshold_divide = 529;
 	profile.twobyte_threshold_min = 81;
+	profile.seqlenMinLimit3 = 80;
+	profile.seqlenMinLimit4 = 185;
+	profile.blockSizeMinus = 139;
 
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);

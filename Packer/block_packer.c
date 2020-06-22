@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
@@ -33,19 +33,20 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	FILE* utfil = openWrite(dst);
 	FILE* infil = openRead(src);
-	uint64_t chunkSize;
+	uint64_t chunkSize, read_size;
 	do {
 		const char chunkFilename[100] = { 0 };
 		getTempFile(chunkFilename, "block_chunck");
-		uint64_t read_size = BLOCK_SIZE;
+		read_size = BLOCK_SIZE - profile.blockSizeMinus * 10000;
 
 		assert(read_size < 16777215, "too large blocksize must be < 16777215");
 
 		//workaround for a bug that even 2 powers cause bug
 		//this bug should be fixed but it is hard
 		if (read_size % 256 == 0) {
-			read_size--;
+		 	read_size--;
 		}
+		printf("\n Real blocksize used %d", read_size);
 		copy_chunk(infil, chunkFilename, read_size);
 		chunkSize = get_file_size_from_name(chunkFilename);
 
@@ -87,12 +88,12 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 			offsetProfile, distanceProfile);
 		remove(chunkFilename);
 		uint32_t size = get_file_size_from_name(packedFilename);
-		if (chunkSize < BLOCK_SIZE) {
+		if (chunkSize < read_size) {
 			size = 0;
 		}
 		append_to_tar(utfil, packedFilename, size, packType);
 		remove(packedFilename);
-	} while (chunkSize == BLOCK_SIZE);
+	} while (chunkSize == read_size);
 
 	fclose(infil);
 	fclose(utfil);
@@ -105,7 +106,7 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	FILE* utfil = openWrite(dst);
 	FILE* infil = openRead(src);
 
-	//todo read packtype here and if bit 7 is set don't read size, just read til the end!
+	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
 	while (true) {
 
@@ -120,6 +121,8 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 		}
 		else {
 			uint32_t size = 0;
+			//3 bytes can handle block sizes up to 16777216‬
+			//note that these are the sizes of the compressed chunks!
 			fread(&size, 3, 1, infil);			
 			copy_chunk(infil, tmp, size);
 		}

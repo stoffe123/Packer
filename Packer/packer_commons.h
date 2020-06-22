@@ -1,9 +1,10 @@
-#ifndef PACKER_COMMONS_H
+﻿#ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
 #include <stdbool.h>
 
-#define BLOCK_SIZE 2110700
+//3 bytes can handle block sizes up to 16777216‬
+#define BLOCK_SIZE 3500000
 
 //  16777215  is largest number for 24 bits in multipacker.tar
 
@@ -22,19 +23,16 @@ typedef struct value_freq_t {
 
 
 typedef struct packProfile {
-	int seqlen_pages;
-	int offset_pages;
-	int distance_pages;
 	int rle_ratio;
 	int twobyte_ratio;
-	int seq_ratio;
 	int recursive_limit;
 	int twobyte_threshold_max;
 	int twobyte_threshold_divide;
 	int twobyte_threshold_min;
-	int canonical_size_limit;		
+	int canonical_size_limit; // not used	 	
 	int seqlenMinLimit4;
 	int seqlenMinLimit3;
+	int blockSizeMinus;
 } packProfile;
 
 void printProfile(packProfile*);
@@ -50,7 +48,7 @@ bool MultiPackAndTest(const char* src, packProfile profile,
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
-packProfile getPackProfile(int o, int s, int d);
+packProfile getPackProfile();
 
 void doDoubleCheck(const char* src, const char* packedName, const char* kind);
 
