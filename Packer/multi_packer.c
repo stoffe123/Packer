@@ -134,11 +134,11 @@ bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 
 
 bool TwoBytePackAndTest(const char* src, packProfile profile) {
-	return packAndTest("twobyte", src, profile, profile, profile);
+	return packAndTest("twobyte", src, profile, profile, profile, profile);
 }
 
 bool RLEAdvancedPackAndTest(const char* src, packProfile profile) {
-	return packAndTest("rle advanced", src, profile, profile, profile);
+	return packAndTest("rle advanced", src, profile, profile, profile, profile);
 }
 
 void unpackAndReplace(const char* kind, const char* src) {
@@ -199,7 +199,7 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
  */
 
 uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, bool storePackType) {
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile, bool storePackType) {
 	static int metacount = 101;
 
 	int canonicalRecursiveLimit = 20;
@@ -303,44 +303,41 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 
 		//try to pack meta files!
-
+		
 		if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
 
 			// ---------- Pack the meta files (seqlens/offsets) recursively
-			got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile);
+			got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 1);
 			}
 		}
 		if (get_file_size_from_name(offsets_name) > profile.recursive_limit) {
 
-			got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile);
+			got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 2);
 			}
 		}
 		if (get_file_size_from_name(distances_name) > profile.recursive_limit) {
 
-			got_smaller = MultiPackAndTest(distances_name, offsetsProfile, seqlensProfile, offsetsProfile);
+			got_smaller = MultiPackAndTest(distances_name, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 3);
 			}
 		}
-
 		/*
-		char tmp7[100] = { 0 };
-		concat_int(tmp7, "c:/test/meta3/offsets", metacount);
-		copy_file(offsets_name, tmp100);
 		
-		concat_int(tmp7, "c:/test/meta3/seqlens", metacount);
-		copy_file(seqlens_name, tmp100);
-
-		concat_int(tmp7, "c:/test/meta3/distances", metacount);
-		copy_file(distances_name, tmp100);
-
-
+		char tmp7[100] = { 0 };
+		concat_int(tmp7, "c:/test/meta/offsets", metacount);
+		copy_file(offsets_name, tmp7);
+		concat_int(tmp7, "c:/test/meta/seqlens", metacount);
+		copy_file(seqlens_name, tmp7);
+		concat_int(tmp7, "c:/test/meta/distances", metacount);
+		copy_file(distances_name, tmp7);
 		metacount++;
 		*/
+
 
 		uint64_t offsets_size = get_file_size_from_name(offsets_name);
 		uint64_t seqlens_size = get_file_size_from_name(seqlens_name);
@@ -403,6 +400,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 		remove(seqlens_name);
 		remove(offsets_name);
+		remove(distances_name);
 		remove(main_name);		
 	}
 	if (do_store) {
@@ -497,13 +495,13 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 }
 
 uint8_t multiPack(const char* src, const char* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile) {
-	return multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, false);
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+	return multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, false);
 }
 
 void multi_pack(const char* src, const char* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile) {
-	multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, true);
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+	multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, true);
 }
 
 void multiUnpack(const char* src, const char* dst, uint8_t pack_type) {

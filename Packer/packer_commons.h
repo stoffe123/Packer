@@ -1,11 +1,13 @@
 #ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
+#include <stdbool.h>
+
 #define BLOCK_SIZE 2110700
 
 //  16777215  is largest number for 24 bits in multipacker.tar
 
-static bool DOUBLE_CHECK_PACK = true;
+static bool DOUBLE_CHECK_PACK = false;
 
 typedef struct val_freq_t {
 	uint64_t value;
@@ -30,7 +32,9 @@ typedef struct packProfile {
 	int twobyte_threshold_max;
 	int twobyte_threshold_divide;
 	int twobyte_threshold_min;
-	int canonical_size_limit;	
+	int canonical_size_limit;		
+	int seqlenMinLimit4;
+	int seqlenMinLimit3;
 } packProfile;
 
 void printProfile(packProfile*);
@@ -42,7 +46,7 @@ void copyProfile(packProfile* source, packProfile* dest);
 uint64_t CanonicalEncodeAndTest(const char*);
 
 bool MultiPackAndTest(const char* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile);
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
@@ -51,7 +55,7 @@ packProfile getPackProfile(int o, int s, int d);
 void doDoubleCheck(const char* src, const char* packedName, const char* kind);
 
 bool packAndTest(const char* kind, const char* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile);
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
 
 void unpackByKind(const char* kind, const char* tmp, const char* tmp2);
 

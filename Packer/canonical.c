@@ -620,7 +620,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     getTempFile(packedFilename, "canonical_header_packed");
     canonical_header_pack(headerFilename, packedFilename);
     int size = get_file_size_from_name(packedFilename);
-    printf("\n packed canonical header down to %d bytes", size);
+    //printf("\n packed canonical header down to %d bytes", size);
    
     FILE* packedFile = fopen(packedFilename, "rb");
     int RLE_size = 0;

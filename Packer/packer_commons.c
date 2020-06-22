@@ -73,7 +73,7 @@ void unpackByKind(const char* kind, const char* tmp, const char* tmp2) {
 
 
 bool packAndTest(const char* kind, const char* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile) {
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
 
 	const char packedName[100] = { 0 };
 	const char tmp[100] = { 0 };
@@ -81,7 +81,7 @@ bool packAndTest(const char* kind, const char* src, packProfile profile,
 	int limit = 100;
 	getTempFile(packedName, tmp);
 	if (equals(kind, "multi")) {
-		multi_pack(src, packedName, profile, seqlensProfile, offsetsProfile);
+		multi_pack(src, packedName, profile, seqlensProfile, offsetsProfile, distancesProfile);
 	} 
 	else if (equals(kind, "rle simple")) {
 		RLE_simple_pack(src, packedName, profile);
@@ -109,18 +109,20 @@ bool packAndTest(const char* kind, const char* src, packProfile profile,
 	return under_limit;
 }
 
-bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile) {	
-	return packAndTest("multi", src, profile, seqlenProfile, offsetProfile);
+bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile, 
+	packProfile distancesProfile) {
+	return packAndTest("multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
 }
 
 void printProfile(packProfile* profile) {
 	printf("\n");
-	printf("\nPages:       (%d %d %d)", profile->offset_pages, profile->seqlen_pages, profile->distance_pages);
 	printf("\nRLE ratio:         %d", profile->rle_ratio);
 	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
-	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", 
-	profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
+	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
+	printf("\nSeqlenMin limit3:   %d", profile->seqlenMinLimit3);
+	printf("\nSeqlenMin limit4:   %d", profile->seqlenMinLimit4);
+	
 }
 
 packProfile getPackProfile(int o, int s, int d) {
@@ -135,6 +137,8 @@ packProfile getPackProfile(int o, int s, int d) {
 	profile.twobyte_threshold_max = 10581;
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
+	profile.seqlenMinLimit3 = 128;
+	profile.seqlenMinLimit4 = 156;
 	return profile;
 }
 
@@ -149,6 +153,8 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_max = src->twobyte_threshold_max;
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
+	dst->seqlenMinLimit3 = src->seqlenMinLimit3;
+	dst->seqlenMinLimit4 = src->seqlenMinLimit4;
 	
 }
 

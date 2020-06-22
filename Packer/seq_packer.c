@@ -252,7 +252,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	}
 	fclose(file);
 	uint64_t filesize = get_file_size_from_wname(filename);
-	wprintf(L"\n   comparing %s meta file sizes ... %d %d", metaname, bestSize, filesize);
+	//wprintf(L"\n   comparing %s meta file sizes ... %d %d", metaname, bestSize, filesize);
 	if (bestSize != filesize) {
 		exit(1);
 	}
@@ -273,7 +273,7 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBi
 
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass)
+void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass, packProfile profile)
 {
 	unsigned int max_seqlen = 65791;
 
@@ -382,7 +382,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 			}
 		}
 		/* now we found the longest sequence in the window! */
-		unsigned char seqlen_min = getSeqlenMin(best_offset);
+		unsigned char seqlen_min = getSeqlenMin(best_offset, profile);
 
 		if (best_seqlen < seqlen_min)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
@@ -469,6 +469,8 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		if (slimCase) {
 			packType = setKthBit(packType, 0);
 		}
+		WRITE(utfil, profile.seqlenMinLimit4);
+		WRITE(utfil, profile.seqlenMinLimit3);
 		WRITE(utfil, packType);
 		fclose(utfil);
 	}
@@ -500,8 +502,8 @@ void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filen
 	long long source_size = get_file_size_from_wname(source_filename);
 	separate_files = sep;
 	initGlobalArrays();
-	pack_internal(source_filename, dest_filename, 1);
-	pack_internal(source_filename, dest_filename, 2);
+	pack_internal(source_filename, dest_filename, 1, profile);
+	pack_internal(source_filename, dest_filename, 2, profile);
 }
 
 void seq_pack(const char* src, const char* dst, packProfile profile)

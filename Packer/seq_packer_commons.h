@@ -2,6 +2,7 @@
 #define SEQ_PACKER_COMMONS_H
 #define SEQ_LEN_FOR_CODE 255
 
+#include "packer_commons.h"
 
 typedef struct pageCoding_t {
 	uint64_t pages;
@@ -12,7 +13,7 @@ typedef enum {
     SEQLEN, OFFSET, DISTANCE    
 } meta_kind_t;
 
-unsigned char getSeqlenMin(uint64_t best_offset);
+unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile);
 
 uint64_t getLastByte(uint64_t longRange);
 

@@ -185,6 +185,9 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	fclose(infil);
 
 	unsigned char packType = read_byte_from_file();
+
+	uint64_t seqlenMinLimit3 = read_byte_from_file();
+	uint64_t seqlenMinLimit4 = read_byte_from_file();
 	
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
@@ -231,6 +234,10 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 		}
 		printf("\n\n");
 	}
+	packProfile profile = getPackProfile(0, 0, 0);
+	profile.seqlenMinLimit3 = seqlenMinLimit3;
+	profile.seqlenMinLimit4 = seqlenMinLimit4;
+
 
 	uint64_t distance = 0;
 	while (packed_file_end > 0 || distance == lastDistance) {
@@ -243,7 +250,8 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 			uint64_t seqlen = get_seqlen(seqlenPageCoding);
 			uint64_t offset = get_offset(offsetPageCoding);
 
-				unsigned char seqlen_min = getSeqlenMin(offset);
+			    
+				unsigned char seqlen_min = getSeqlenMin(offset, profile);
 				seqlen += seqlen_min;
 
 				uint64_t match_index = buf_pos + offset + seqlen;

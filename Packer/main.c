@@ -77,6 +77,9 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 3, 13000);
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
+	
+	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
+	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 1, 255);
 }
 
 
@@ -113,27 +116,42 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 
 void testmeta() {
 
-	packProfile bestProfile, bestOffsetProfile;
+	packProfile bestProfile, bestOffsetProfile, bestDistanceProfile;
 
-	//meta testsuit 939269
-	packProfile seqlenProfile = getPackProfile(49, 150, 10);
-	seqlenProfile.rle_ratio = 30;
-	seqlenProfile.twobyte_ratio = 63;
-	seqlenProfile.recursive_limit = 305;
-	seqlenProfile.twobyte_threshold_max = 10877;
-	seqlenProfile.twobyte_threshold_divide = 3184;
-	seqlenProfile.twobyte_threshold_min = 10;
+	//meta testsuit 1170291
+	packProfile seqlenProfile = getPackProfile(0, 0, 0);
+	seqlenProfile.rle_ratio = 50;
+	seqlenProfile.twobyte_ratio = 87;
+	seqlenProfile.recursive_limit = 208;
+	seqlenProfile.twobyte_threshold_max = 10531;
+	seqlenProfile.twobyte_threshold_divide = 3066;
+	seqlenProfile.twobyte_threshold_min = 167;
+	seqlenProfile.seqlenMinLimit3 = 57;
+	seqlenProfile.seqlenMinLimit4 = 205;
 	
-	packProfile offsetProfile = getPackProfile(74, 140, 10);
-	offsetProfile.rle_ratio = 96;
-	offsetProfile.twobyte_ratio = 94;
-	offsetProfile.recursive_limit = 264;
-	offsetProfile.twobyte_threshold_max = 1339;
-	offsetProfile.twobyte_threshold_divide = 3010;
-	offsetProfile.twobyte_threshold_min = 336;
+	packProfile offsetProfile = getPackProfile(0, 0, 0);
+	offsetProfile.rle_ratio = 99;
+	offsetProfile.twobyte_ratio = 74;
+	offsetProfile.recursive_limit = 19;
+	offsetProfile.twobyte_threshold_max = 5807;
+	offsetProfile.twobyte_threshold_divide = 3053;
+	offsetProfile.twobyte_threshold_min = 397;
+	offsetProfile.seqlenMinLimit3 = 83;
+	offsetProfile.seqlenMinLimit4 = 183;
+
+	packProfile distanceProfile = getPackProfile(0, 0, 0);
+	distanceProfile.rle_ratio = 93;
+	distanceProfile.twobyte_ratio = 99;
+	distanceProfile.recursive_limit = 45;
+	distanceProfile.twobyte_threshold_max = 3092;
+	distanceProfile.twobyte_threshold_divide = 2749;
+	distanceProfile.twobyte_threshold_min = 37;
+	distanceProfile.seqlenMinLimit3 = 119;
+	distanceProfile.seqlenMinLimit4 = 183;
 	
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
+	copyProfile(&distanceProfile, &bestDistanceProfile);
 
 	unsigned long long best_size = 0;
 	while (true) {
@@ -160,7 +178,7 @@ void testmeta() {
 		{
 			const char src[100] = { 0 };
 
-			const char* metaDir = "D:/Dropbox/Personal/Programmering/Compression/test/meta3/";
+			const char* metaDir = "D:/Dropbox/Personal/Programmering/Compression/test/meta/";
 			concat(src, metaDir, "seqlens");
 			concat_int(src, src, kk + 101);			
 			const char* unpackedFilename = "C:/test/unp";
@@ -168,7 +186,7 @@ void testmeta() {
 			long long size_org = get_file_size_from_name(src);
 			printf("\n Packing %s      length:%d", src, size_org);
 			int cl = clock();
-			multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile);
+			multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
 				
 			long long size_packed = get_file_size_from_name(packed_name);
 			acc_size_packed += size_packed;
@@ -177,7 +195,6 @@ void testmeta() {
 				break;
 			}
 			acc_size_org += size_org;
-
 			multi_unpack(packed_name, unpackedFilename);
 			printf("\n\n Comparing files!");
 			if (files_equal(src, unpackedFilename)) {
@@ -193,7 +210,7 @@ void testmeta() {
 			size_org = get_file_size_from_name(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
-			multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile);
+			multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 			int pack_time = (clock() - cl);
 		
 			size_packed = get_file_size_from_name(packed_name);
@@ -203,12 +220,35 @@ void testmeta() {
 				break;
 			}
 			acc_size_org += size_org;
+			multi_unpack(packed_name, unpackedFilename);
+			printf("\n\n Comparing files!");
+			if (files_equal(src, unpackedFilename)) {
+				printf("\n ****** SUCCESS ****** (equal)\n");
+			}
+			else {
+				exit(1);
+			}
 
+			concat(src, metaDir, "distances");
+			concat_int(src, src, kk + 101);
+			size_org = get_file_size_from_name(src);
+			printf("\n Packing... %s with length:%d", src, size_org);
+
+			multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
+			pack_time = (clock() - cl);
+
+			size_packed = get_file_size_from_name(packed_name);
+			acc_size_packed += size_packed;
+			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
+			if (earlyBreak) {
+				break;
+			}
+			acc_size_org += size_org;
+
+			multi_unpack(packed_name, unpackedFilename);		
 
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
-		
-			multi_unpack(packed_name, unpackedFilename);			
 
 			int unpack_time = (clock() - cl);
 			//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -227,15 +267,20 @@ void testmeta() {
 		}//end for
 		unsigned long long old_best_size = best_size;
 		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, seqlenProfile, &bestProfile);
-		printf("\nOffset Profile:");		
+		
 		if (old_best_size != best_size) {
 			old_best_size = best_size;
-			copyProfile(&offsetProfile, &bestOffsetProfile);			
+			copyProfile(&offsetProfile, &bestOffsetProfile);	
+			copyProfile(&distanceProfile, &bestDistanceProfile);
 		}
+		printf("\nOffset Profile:");
 		printProfile(&bestOffsetProfile);
+		printf("\nDistance Profile:");
+		printProfile(&bestDistanceProfile);
 		printf("\n-------------------------------\n");
 		fuzzProfile(&seqlenProfile, bestProfile);
 		fuzzProfile(&offsetProfile, bestOffsetProfile);
+		fuzzProfile(&distanceProfile, bestDistanceProfile);
 	}
 }//end test_meta
 
@@ -273,6 +318,7 @@ void onefile() {
 	seqlenProfile.twobyte_threshold_max = 8373;
 	seqlenProfile.twobyte_threshold_divide = 3598;
 	seqlenProfile.twobyte_threshold_min = 24;
+	seqlenProfile.seqlenMinLimit4 = 156;
 
 	packProfile offsetProfile = getPackProfile(72, 56, 10);
 	offsetProfile.rle_ratio = 56;
@@ -281,6 +327,7 @@ void onefile() {
 	offsetProfile.twobyte_threshold_max = 11235;
 	offsetProfile.twobyte_threshold_divide = 1906;
 	offsetProfile.twobyte_threshold_min = 913;
+	offsetProfile.seqlenMinLimit4 = 156;
 
 	seqPackSeparate(src, L"c:/test/", profile);
 	//seqPack(src, packed_name, profile);

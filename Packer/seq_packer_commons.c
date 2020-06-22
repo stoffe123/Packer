@@ -3,13 +3,14 @@
 #include <limits.h>
 #include <stdint.h>
 #include "seq_packer_commons.h"
+#include "packer_commons.h"
 
 
-unsigned char getSeqlenMin(uint64_t best_offset) {
-	if (best_offset < 256) {
+unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile) {
+	if (best_offset < profile.seqlenMinLimit3 * 2) {
 		return 3;
 	}
-	return (best_offset >= 40000) ? 6 : 4;
+	return (best_offset >= (256 * profile.seqlenMinLimit4)) ? 6 : 4;
 }
 
 
