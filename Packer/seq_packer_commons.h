@@ -8,6 +8,9 @@ typedef struct pageCoding_t {
 	uint64_t useLongRange;
 } pageCoding_t;
 
+typedef enum {
+    SEQLEN, OFFSET, DISTANCE    
+} meta_kind_t;
 
 unsigned char getSeqlenMin(uint64_t best_offset);
 
