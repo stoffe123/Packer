@@ -260,6 +260,17 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	return bestPageCoding;
 }
 
+uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBit) {
+
+	if (longRange / 2 == 1) {
+		packType = setKthBit(packType, startBit);
+	}
+	if (longRange % 2 == 1) {
+		packType = setKthBit(packType, startBit + 1);
+	}
+	return packType;
+}
+
 //--------------------------------------------------------------------------------------------------------
 
 void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass)
@@ -452,24 +463,9 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 			WRITE(utfil, distancePages);
 		}
 		unsigned char packType = 0;
-		if (useOffsetLongRange / 2 == 1) {
-			packType = setKthBit(packType, 1);
-		}
-		if (useOffsetLongRange % 2 == 1) {
-			packType = setKthBit(packType, 2);
-		}
-		if (useDistanceLongRange / 2 == 1) {
-			packType = setKthBit(packType, 3);
-		}
-		if (useDistanceLongRange % 2 == 1) {
-			packType = setKthBit(packType, 4);
-		}
-		if (useSeqlenLongRange / 2 == 1) {
-			packType = setKthBit(packType, 5);
-		}
-		if (useSeqlenLongRange % 2 == 1) {
-			packType = setKthBit(packType, 6);
-		}
+		packType = storeLongRange(packType, useOffsetLongRange, 1);
+		packType = storeLongRange(packType, useDistanceLongRange, 3);
+		packType = storeLongRange(packType, useSeqlenLongRange, 5);
 		if (slimCase) {
 			packType = setKthBit(packType, 0);
 		}

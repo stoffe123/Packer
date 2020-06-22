@@ -231,13 +231,16 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		prof.twobyte_threshold_max = 100;
 		prof.twobyte_threshold_min = 20;
 
+		
 		char slim_multipacked[100];
 		uint8_t slimPackType = 0;
+		/*
 		if (profile.seqlen_pages + profile.offset_pages > 0 && source_size > 10) {	
 			getTempFile(slim_multipacked, "multi_multipacked");			
 			slimPackType = multiPackInternal(src, slim_multipacked, prof, prof, prof, storePackType);			
 			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
 		}
+		*/
 
 		if (source_size < 300) {
 			char head_pack[100] = { 0 };

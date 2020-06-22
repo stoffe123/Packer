@@ -137,6 +137,12 @@ uint64_t copyWrapAround(uint8_t seqlen_pages, uint8_t offset_pages, uint64_t use
 	return buf_size - size_wraparound - 1;
 }
 
+uint64_t getRange(uint64_t packType, uint64_t startBit) {
+	uint64_t range = isKthBitSet(packType, startBit + 1) ? 1 : 0;
+	range += isKthBitSet(packType, startBit) ? 2 : 0;
+	return range;
+}
+
 //------------------------------------------------------------------------------
 
 void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_filename,
@@ -180,15 +186,6 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 
 	unsigned char packType = read_byte_from_file();
 	
-	useSeqlenLongRange = isKthBitSet(packType, 6) ? 1 : 0;
-	useSeqlenLongRange += isKthBitSet(packType, 5) ? 2 : 0;
-
-	useDistanceLongRange = isKthBitSet(packType, 4) ? 1 : 0;
-	useDistanceLongRange += isKthBitSet(packType, 3) ? 2 : 0;
-
-	useOffsetLongRange = isKthBitSet(packType, 2) ? 1 : 0;
-	useOffsetLongRange += isKthBitSet(packType, 1) ? 2 : 0;
-
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
 		seqlen_pages = 0;
@@ -197,24 +194,23 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	else {
 		distance_pages = read_byte_from_file();
 		offset_pages = read_byte_from_file();
-		seqlen_pages = read_byte_from_file();
-		
+		seqlen_pages = read_byte_from_file();		
 	}
 	pageCoding_t distancePageCoding;
 	distancePageCoding.pages = distance_pages;
-	distancePageCoding.useLongRange = useDistanceLongRange;
+	distancePageCoding.useLongRange = getRange(packType, 3);
 
 	pageCoding_t offsetPageCoding;
 	offsetPageCoding.pages = offset_pages;
-	offsetPageCoding.useLongRange = useOffsetLongRange;
+	offsetPageCoding.useLongRange = getRange(packType, 1);
 
 	pageCoding_t seqlenPageCoding;
 	seqlenPageCoding.pages = seqlen_pages;
-	seqlenPageCoding.useLongRange = useSeqlenLongRange;
+	seqlenPageCoding.useLongRange = getRange(packType, 5);
 
 	uint64_t lastDistance = get_distance(distancePageCoding);
 
-	buf_pos = copyWrapAround(seqlen_pages, offset_pages, useOffsetLongRange);
+	buf_pos = copyWrapAround(seqlen_pages, offset_pages, offsetPageCoding.useLongRange);
 	
 	debug(" \n pages=(%d, %d, %d)", offset_pages, seqlen_pages, distance_pages);
 	
