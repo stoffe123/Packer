@@ -36,21 +36,22 @@ int fuzz(int i) {
 	return i;
 }
 
-int fuzzVal(int r, int v) {
+int fuzzVal(int r, int add) {
 	if (rand() % 2 == 0) {
-		r += (rand() % v + 1);
+		r += (rand() % add + 1);
 	}
 	else {
-		r -= (rand() % v + 1);
-		if (r < 0) {
-			r = (rand() % v + 1);
-		}
+		r -= (rand() % add + 1);
 	}
 	return r;
 }
 
 int doFuzz(int r, int best, int min, int max) {
-	r = fuzzVal(r, max / 10);
+	int add = (max - min) / 10;
+	if (add < 2) {
+		add = 2;
+	}
+	r = fuzzVal(r, add);
 	if (r < 0 || r > max || r < min || rand() % 6 == 0) {
 		r = best;
 	}
@@ -58,7 +59,11 @@ int doFuzz(int r, int best, int min, int max) {
 }
 
 void fuzzProfile(packProfile* profile, packProfile best) {
-	
+
+	if (rand() % 3 == 0) {
+		copyProfile(&best, profile);
+    }
+
 	profile->rle_ratio = doFuzz(profile->rle_ratio, best.rle_ratio, 10, 100);
 	profile->twobyte_ratio = doFuzz(profile->twobyte_ratio, best.twobyte_ratio, 10, 100);
 	profile->recursive_limit = doFuzz(profile->recursive_limit, best.recursive_limit, 10, 700);
@@ -66,16 +71,20 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_max = doFuzz(profile->twobyte_threshold_max, best.twobyte_threshold_max, 3, 13000);
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
-	
+
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
+	profile->winsize = doFuzz(profile->winsize, best.winsize, 60000, 130000);
+
+	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
+	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
+	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 1500);
 }
 
 
-unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned long long acc_size, unsigned long long acc_size_org,
+unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned long long acc_size, unsigned long long acc_size_org,
 	unsigned long long best_size, packProfile profile, packProfile* best) {
 	if (!earlyBreak) {
-		long total_time = clock() - before_suite;
 		double size_kb = (double)acc_size / (double)1024;
 		printf("\n\n **** ALL SUCCEEDED ****\n %.0f kb   (%llu)", size_kb, acc_size);
 		double time_sec = (double)total_time / 1000.0;
@@ -101,45 +110,71 @@ unsigned long long presentResult(bool earlyBreak, int before_suite, unsigned lon
 	return best_size;
 }
 
+bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t before_suite, uint64_t seconds) {
+	if ((best_size > 0 && acc_size_packed > best_size)) {
+		printf("\n early break because of too big size.. size had become: %d", acc_size_packed);
+		return true;
+	}
+	int time = clock() - before_suite;
+	if (time > (seconds * 1000)) {
+		printf("\n early break because of too big time, time was %d", time);
+		return true;
+	}
+	return false;
+}
+
 //------------------------------------------------------------------------------------------
 
 void testmeta() {
 
 	packProfile bestProfile, bestOffsetProfile, bestDistanceProfile;
 
-	//meta testsuit 1170005  / 57s
+	//meta testsuit 1170029  / 33s
 	packProfile seqlenProfile = getPackProfile();
-	seqlenProfile.rle_ratio = 49;
+	seqlenProfile.rle_ratio = 31;
 	seqlenProfile.twobyte_ratio = 97;
-	seqlenProfile.recursive_limit = 140;
-	seqlenProfile.twobyte_threshold_max = 9761;
-	seqlenProfile.twobyte_threshold_divide = 1967;
-	seqlenProfile.twobyte_threshold_min = 193;
-	seqlenProfile.seqlenMinLimit3 = 97;	
+	seqlenProfile.recursive_limit = 180;
+	seqlenProfile.twobyte_threshold_max = 5226;
+	seqlenProfile.twobyte_threshold_divide = 2233;
+	seqlenProfile.twobyte_threshold_min = 185;
+	seqlenProfile.seqlenMinLimit3 = 43;	
+	seqlenProfile.winsize = 78725;
+	seqlenProfile.sizeMaxForCanonicalHeaderPack = 175;
+	seqlenProfile.sizeMinForSeqPack = 2600;
+	seqlenProfile.sizeMinForCanonical = 30;
 	
 	packProfile offsetProfile = getPackProfile();
-	offsetProfile.rle_ratio = 100;
-	offsetProfile.twobyte_ratio = 80;
-	offsetProfile.recursive_limit = 100;
-	offsetProfile.twobyte_threshold_max = 7060;
-	offsetProfile.twobyte_threshold_divide = 3053;
-	offsetProfile.twobyte_threshold_min = 449;
-	offsetProfile.seqlenMinLimit3 = 87;	
+	offsetProfile.rle_ratio = 74;
+	offsetProfile.twobyte_ratio = 95;
+	offsetProfile.recursive_limit = 61;
+	offsetProfile.twobyte_threshold_max = 11404;
+	offsetProfile.twobyte_threshold_divide = 2520;
+	offsetProfile.twobyte_threshold_min = 384;
+	offsetProfile.seqlenMinLimit3 = 82;	
+	offsetProfile.winsize = 91812;
+	offsetProfile.sizeMaxForCanonicalHeaderPack = 530;
+	offsetProfile.sizeMinForSeqPack = 2600;
+	offsetProfile.sizeMinForCanonical = 261;
 
 	packProfile distanceProfile = getPackProfile();
-	distanceProfile.rle_ratio = 95;
+	distanceProfile.rle_ratio = 71;
 	distanceProfile.twobyte_ratio = 100;
-	distanceProfile.recursive_limit = 90;
-	distanceProfile.twobyte_threshold_max = 2365;
-	distanceProfile.twobyte_threshold_divide = 2281;
-	distanceProfile.twobyte_threshold_min = 64;
-	distanceProfile.seqlenMinLimit3 = 20;	
+	distanceProfile.recursive_limit = 20;
+	distanceProfile.twobyte_threshold_max = 3641;
+	distanceProfile.twobyte_threshold_divide = 3972;
+	distanceProfile.twobyte_threshold_min = 37;
+	distanceProfile.seqlenMinLimit3 = 35;	
+	distanceProfile.winsize = 80403;
+	distanceProfile.sizeMaxForCanonicalHeaderPack = 256;
+	distanceProfile.sizeMinForSeqPack = 2600;
+	distanceProfile.sizeMinForCanonical = 300;
 	
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
 	copyProfile(&distanceProfile, &bestDistanceProfile);
 	bool unpack = true;
 	unsigned long long best_size = 0;
+	uint64_t timeLimit = 34;
 	while (true) {
 		/*
 		seqlenProfile.offset_pages = 0;
@@ -152,7 +187,7 @@ void testmeta() {
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
 
-		int before_suite = clock();
+		uint64_t before_suite = clock(), totalTime = 0;
 		int kk = 0;
 		bool earlyBreak = true;
 		printf("\n Now testing with seqlenprofile:");
@@ -177,8 +212,8 @@ void testmeta() {
 				
 			long long size_packed = get_file_size_from_name(packed_name);
 			acc_size_packed += size_packed;
-			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
-			if (earlyBreak) {
+			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
+				earlyBreak = true;
 				break;
 			}
 			acc_size_org += size_org;
@@ -186,7 +221,7 @@ void testmeta() {
 				multi_unpack(packed_name, unpackedFilename);
 				printf("\n\n Comparing files!");
 				if (files_equal(src, unpackedFilename)) {
-					printf("\n ****** SUCCESS ****** (equal)\n");
+					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
 					exit(1);
@@ -204,8 +239,8 @@ void testmeta() {
 		
 			size_packed = get_file_size_from_name(packed_name);
 			acc_size_packed += size_packed;
-			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
-			if (earlyBreak) {
+			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
+				earlyBreak = true;
 				break;
 			}
 			acc_size_org += size_org;
@@ -213,7 +248,7 @@ void testmeta() {
 				multi_unpack(packed_name, unpackedFilename);
 				printf("\n\n Comparing files!");
 				if (files_equal(src, unpackedFilename)) {
-					printf("\n ****** SUCCESS ****** (equal)\n");
+					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
 					exit(1);
@@ -230,8 +265,9 @@ void testmeta() {
 
 			size_packed = get_file_size_from_name(packed_name);
 			acc_size_packed += size_packed;
-			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
-			if (earlyBreak) {
+			
+			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
+				earlyBreak = true;
 				break;
 			}
 			acc_size_org += size_org;
@@ -248,26 +284,27 @@ void testmeta() {
 			if (unpack) {
 				printf("\n\n Comparing files!");
 				if (files_equal(src, unpackedFilename)) {
-					printf("\n ****** SUCCESS ****** (equal)\n");
+					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
 					exit(1);
 				}
 			}
 		
-			earlyBreak = false;
+			totalTime = clock() - before_suite;
+			earlyBreak = isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit);
 		}//end for
 		unsigned long long old_best_size = best_size;
-		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, seqlenProfile, &bestProfile);
+		best_size = presentResult(earlyBreak, totalTime, acc_size_packed, acc_size_org, best_size, seqlenProfile, &bestProfile);
 		
 		if (old_best_size != best_size) {
 			old_best_size = best_size;
 			copyProfile(&offsetProfile, &bestOffsetProfile);	
 			copyProfile(&distanceProfile, &bestDistanceProfile);
 		}
-		printf("\nOffset Profile:");
+		printf("\n>>Offset Profile");
 		printProfile(&bestOffsetProfile);
-		printf("\nDistance Profile:");
+		printf("\n\n>>Distance Profile");
 		printProfile(&bestDistanceProfile);
 		printf("\n-------------------------------\n");
 		fuzzProfile(&seqlenProfile, bestProfile);
@@ -393,16 +430,20 @@ void test16() {
 	packProfile profile = getPackProfile();
 	profile.rle_ratio = 93;
 	profile.twobyte_ratio = 89;
-	profile.recursive_limit = 242;
+	profile.recursive_limit = 220;
 	profile.twobyte_threshold_max = 11951;
 	profile.twobyte_threshold_divide = 260;
 	profile.twobyte_threshold_min = 3150;
 	profile.seqlenMinLimit3 = 80;
 	profile.blockSizeMinus = 139;
+	profile.winsize = 104000;
+	profile.sizeMaxForCanonicalHeaderPack = 350;
+	profile.sizeMinForSeqPack = 250;
+	profile.sizeMinForCanonical = 250;
 	
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
-	
+	uint64_t timeLimit = 480;
 	bool unpack = true;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
@@ -412,7 +453,7 @@ void test16() {
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
 
-		int before_suite = clock();
+		uint64_t before_suite = clock(), totalTime = 0;
 		int kk = 0;
 		bool earlyBreak = true;
 		for (; kk < 16; kk++)
@@ -440,8 +481,8 @@ void test16() {
 			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 			acc_size_packed += size_packed;
-			earlyBreak = (best_size > 0 && acc_size_packed > best_size);
-			if (earlyBreak) {
+			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
+				earlyBreak = true;
 				break;
 			}
 			acc_size_org += size_org;
@@ -466,9 +507,10 @@ void test16() {
 				}
 			}
 	
-			earlyBreak = false;
+			totalTime = clock() - before_suite;
+			earlyBreak = isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit);
 		}//end for
-		best_size = presentResult(earlyBreak, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		best_size = presentResult(earlyBreak, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		fuzzProfile(&profile, bestProfile);
 	}//end while true
 }//end test suit 16

@@ -294,12 +294,8 @@ bool files_equalw( wchar_t* name1,  wchar_t* name2) {
 
 	size_t bytes = 0;
 	int count = 0;
-	while (!feof(f1) && !feof(f2)) {
-		fread(&tmp1, 1, 1, f1);
-		fread(&tmp2, 1, 1, f2);
-
+	while (fread(&tmp1, 1, 1, f1) && fread(&tmp2, 1, 1, f2)) {			
 		if (tmp1 != tmp2) {
-
 			printf("\n Contents differ at position  %d ", count);
 			printf("\n File1:");
 			printf("%c", tmp1);

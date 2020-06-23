@@ -283,11 +283,11 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	}
 
 	uint64_t	offset,
-		winsize = 95536,  // change this later!
+		winsize = profile.winsize,
 		best_offset = 0,
 		min_seq_len = 3;
 
-	long long  best_seqlen, seq_len;
+	int64_t  best_seqlen, seq_len;
 	uint64_t distance = 1; // point one byte past the beginning!
 	uint32_t buffer_pos = 0;
 	debug("\n Seq_packer pass: %d", pass);
@@ -321,6 +321,11 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 
 		best_seqlen = 0;
 		unsigned char ch = buffer[buffer_pos];
+		uint64_t buffer_pos_plus1 = 1 + buffer_pos;
+		uint64_t buffer_pos_plus2 = 2 + buffer_pos;
+		unsigned char ch1 = buffer[buffer_pos_plus1];
+		unsigned char ch2 = buffer[buffer_pos_plus2];
+		
 
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_pos) >= min_seq_len) {
@@ -343,17 +348,16 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 						break;
 					}
 					nextChar_pos += nextCh;
-					if ((offset < 3) ||
-						(buffer[buffer_pos + 1] != buffer[buffer_pos + offset + 1]) ||
-						(buffer[buffer_pos + 2] != buffer[buffer_pos + offset + 2])) {
+					if (
+						(ch1 != buffer[buffer_pos_plus1 + offset]) ||
+						(ch2 != buffer[buffer_pos_plus2 + offset]) || offset < 3) {
 						continue;
 					}
 					seq_len = 3;
 
 					while (buffer[buffer_pos + seq_len] == buffer[buffer_pos + offset + seq_len] &&
 						seq_len < offset &&
-						buffer_pos + offset + seq_len < absolute_end - 1 &&
-						seq_len < max_seqlen)
+						buffer_pos + offset + seq_len < absolute_end - 1)
 					{
 						seq_len++;
 					}

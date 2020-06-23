@@ -6,11 +6,10 @@
 //3 bytes can handle block sizes up to 16777216‬
 
 #define BLOCK_SIZE 3500000
-static int CANONICAL_HEADER_PACK_SIZE_LIMIT = 260;
 
 //  16777215  is largest number for 24 bits in multipacker.tar
-
 static bool DOUBLE_CHECK_PACK = false;
+
 
 typedef struct val_freq_t {
 	uint64_t value;
@@ -31,10 +30,12 @@ typedef struct packProfile {
 	int twobyte_threshold_max;
 	int twobyte_threshold_divide;
 	int twobyte_threshold_min;
-	int canonical_size_limit; // not used	 	
 	int seqlenMinLimit3;
-	int blockSizeMinus;
-	uint64_t winsize;
+	int64_t blockSizeMinus;
+	int64_t winsize;
+	int64_t sizeMaxForCanonicalHeaderPack;
+	int64_t sizeMinForSeqPack;
+	int64_t sizeMinForCanonical;
 } packProfile;
 
 void printProfile(packProfile*);

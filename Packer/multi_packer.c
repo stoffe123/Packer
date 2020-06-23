@@ -202,8 +202,6 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile, bool storePackType) {
 	static int metacount = 101;
 
-	int canonicalRecursiveLimit = 20;
- 
 	packCandidate_t packCandidates[100];
 	int candidatesIndex = 0;
 
@@ -218,7 +216,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	twobyte100Profile.twobyte_threshold_max = 3;
 	twobyte100Profile.twobyte_threshold_min = 3;
 
-	bool do_store = source_size < 6;
+	bool do_store = source_size < 10;
 	if (!do_store) {
 		char before_seqpack[100] = { 0 };
 		getTempFile(before_seqpack, "multi_rlepacked");
@@ -231,7 +229,6 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		prof.twobyte_threshold_max = 100;
 		prof.twobyte_threshold_min = 20;
 
-		
 		char slim_multipacked[100];
 		uint8_t slimPackType = 0;
 		/*
@@ -242,7 +239,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 		*/
 
-		if (source_size < CANONICAL_HEADER_PACK_SIZE_LIMIT) {
+		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
 			char head_pack[100] = { 0 };
 			getTempFile(head_pack, "multi_head_pack");
 			canonical_header_pack(src, head_pack);
@@ -256,124 +253,135 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			pack_type = setKthBit(pack_type, 5);
 		}
 	
-		char just_two_byte[100] = { 0 };
-		getTempFile(just_two_byte, "multi_just_two_byte");		
-		two_byte_pack(src, just_two_byte, twobyte100Profile);
-		packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
+		if (source_size > 20) {
+			char just_two_byte[100] = { 0 };
+			getTempFile(just_two_byte, "multi_just_two_byte");
+			two_byte_pack(src, just_two_byte, twobyte100Profile);
+			packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
+		}
 
-		if (source_size > canonicalRecursiveLimit) {
+		if (source_size > profile.sizeMinForCanonical) {
 			char just_canonical[100] = { 0 };
 			getTempFile(just_canonical, "multi_just_canonical");
 			CanonicalEncode(src, just_canonical);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		}
-		
 		char base_dir[100] = { 0 };
 		get_clock_dir(base_dir);
-		got_smaller = TwoBytePackAndTest(before_seqpack, profile);
-		if (got_smaller) {
-			pack_type = setKthBit(pack_type, 6);
+
+		if (source_size > profile.sizeMinForSeqPack) {		
+			got_smaller = TwoBytePackAndTest(before_seqpack, profile);
+			if (got_smaller) {
+				pack_type = setKthBit(pack_type, 6);
+			}
 		}
 		packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, pack_type);
 		uint64_t before_seqpack_size = get_file_size_from_name(before_seqpack);	
 		
-		if (source_size > canonicalRecursiveLimit) {
+		if (source_size > profile.sizeMinForCanonical) {
 			char canonical_instead_of_seqpack[100] = { 0 };
 			getTempFile(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
 			CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
 			packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));
 		}		
-		seq_pack_separate(before_seqpack, base_dir, profile);
+		const char main_name[100] = { 0 };
+		concat(main_name, base_dir, "main");
 
 		const char seqlens_name[100] = { 0 };
 		const char offsets_name[100] = { 0 };
 		const char distances_name[100] = { 0 };
-		const char main_name[100] = { 0 };
 		concat(seqlens_name, base_dir, "seqlens");
 		concat(offsets_name, base_dir, "offsets");
 		concat(distances_name, base_dir, "distances");
-		concat(main_name, base_dir, "main");
 
-		if (DOUBLE_CHECK_PACK) {
-			printf("\n double checking the seqpack of: %s", before_seqpack);
-			const char tmp2[100] = { 0 };
-			getTempFile(tmp2, "multi_maksureseqpack");
-			seq_unpack_separate(main_name, tmp2, base_dir);
-			doDoubleCheck(tmp2, before_seqpack, "seq");
-		}
+		uint64_t size_after_seq = UINT64_MAX;
+		if (source_size > profile.sizeMinForSeqPack) {
+			seq_pack_separate(before_seqpack, base_dir, profile);
 
-		//try to pack meta files!
-		
-		if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
-
-			// ---------- Pack the meta files (seqlens/offsets) recursively
-			got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
-			if (got_smaller) {
-				pack_type = setKthBit(pack_type, 1);
+			if (DOUBLE_CHECK_PACK) {
+				printf("\n double checking the seqpack of: %s", before_seqpack);
+				const char tmp2[100] = { 0 };
+				getTempFile(tmp2, "multi_maksureseqpack");
+				seq_unpack_separate(main_name, tmp2, base_dir);
+				doDoubleCheck(tmp2, before_seqpack, "seq");
 			}
-		}
-		if (get_file_size_from_name(offsets_name) > profile.recursive_limit) {
 
-			got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
-			if (got_smaller) {
-				pack_type = setKthBit(pack_type, 2);
-			}
-		}
-		if (get_file_size_from_name(distances_name) > profile.recursive_limit) {
+			//try to pack meta files!
 
-			got_smaller = MultiPackAndTest(distances_name, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
-			if (got_smaller) {
-				pack_type = setKthBit(pack_type, 3);
-			}
-		}
-		/*
-		
-		char tmp7[100] = { 0 };
-		concat_int(tmp7, "c:/test/meta/offsets", metacount);
-		copy_file(offsets_name, tmp7);
-		concat_int(tmp7, "c:/test/meta/seqlens", metacount);
-		copy_file(seqlens_name, tmp7);
-		concat_int(tmp7, "c:/test/meta/distances", metacount);
-		copy_file(distances_name, tmp7);
-		metacount++;
-		*/
+			if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
 
-
-		uint64_t offsets_size = get_file_size_from_name(offsets_name);
-		uint64_t seqlens_size = get_file_size_from_name(seqlens_name);
-		uint64_t distances_size = get_file_size_from_name(distances_name);
-		uint64_t meta_size = offsets_size +
-			seqlens_size + distances_size + 9;
-		uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
-
-		bool metaTooLarge = false; //  offsets_size > META_SIZE_MAX || seqlens_size > META_SIZE_MAX;
-		if (metaTooLarge) {
-			printf("\n meta size too large for file %s .. size was %d and %d", src, offsets_size, seqlens_size);
-		}
-
-		if (size_after_seq < before_seqpack_size && !metaTooLarge) {
-			//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
-			pack_type = setKthBit(pack_type, 7);
-			remove(before_seqpack);
-			if (get_file_size_from_name(main_name) > canonicalRecursiveLimit) {
-				char canonicalled[100];
-				getTempFile(canonicalled, "multi_canonicalled");
-				uint64_t size_before_canonical = get_file_size_from_name(main_name);
-				CanonicalEncode(main_name, canonicalled);
-				uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
-				if (size_after_canonical < size_before_canonical) {
-					pack_type = setKthBit(pack_type, 0);
-					my_rename(canonicalled, main_name);
+				// ---------- Pack the meta files (seqlens/offsets) recursively
+				got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				if (got_smaller) {
+					pack_type = setKthBit(pack_type, 1);
 				}
-				remove(canonicalled);
 			}
-			packCandidates[candidatesIndex++] = getPackCandidate2(main_name, pack_type, get_file_size_from_name(main_name) + meta_size);
+			if (get_file_size_from_name(offsets_name) > profile.recursive_limit) {
+
+				got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				if (got_smaller) {
+					pack_type = setKthBit(pack_type, 2);
+				}
+			}
+			if (get_file_size_from_name(distances_name) > profile.recursive_limit) {
+
+				got_smaller = MultiPackAndTest(distances_name, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				if (got_smaller) {
+					pack_type = setKthBit(pack_type, 3);
+				}
+			}
+			/*
+
+			char tmp7[100] = { 0 };
+			concat_int(tmp7, "c:/test/meta/offsets", metacount);
+			copy_file(offsets_name, tmp7);
+			concat_int(tmp7, "c:/test/meta/seqlens", metacount);
+			copy_file(seqlens_name, tmp7);
+			concat_int(tmp7, "c:/test/meta/distances", metacount);
+			copy_file(distances_name, tmp7);
+			metacount++;
+			*/
+
+
+			uint64_t offsets_size = get_file_size_from_name(offsets_name);
+			uint64_t seqlens_size = get_file_size_from_name(seqlens_name);
+			uint64_t distances_size = get_file_size_from_name(distances_name);
+			uint64_t meta_size = offsets_size +
+				seqlens_size + distances_size + 9;
+			uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
+
+			if (size_after_seq < before_seqpack_size) {
+				//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
+				pack_type = setKthBit(pack_type, 7);
+				remove(before_seqpack);
+				if (get_file_size_from_name(main_name) > profile.sizeMinForCanonical) {
+					char canonicalled[100];
+					getTempFile(canonicalled, "multi_canonicalled");
+					uint64_t size_before_canonical = get_file_size_from_name(main_name);
+					CanonicalEncode(main_name, canonicalled);
+					uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
+					if (size_after_canonical < size_before_canonical) {
+						pack_type = setKthBit(pack_type, 0);
+						my_rename(canonicalled, main_name);
+					}
+					remove(canonicalled);
+				}
+				packCandidates[candidatesIndex++] = getPackCandidate2(main_name, pack_type, get_file_size_from_name(main_name) + meta_size);
+			}
+			else {
+				//seqpack not used so clear metafile pack bits
+				pack_type = clearKthBit(pack_type, 1);
+				pack_type = clearKthBit(pack_type, 2);
+			}
+
 		}
 		else {
-			//seqpack not used so clear metafile pack bits
-			pack_type = clearKthBit(pack_type, 1);
-			pack_type = clearKthBit(pack_type, 2);
+			//to small for seqpack
+			copy_file(before_seqpack, main_name);
 		}
+
+		
+		
 		packCandidate_t bestCandidate = packCandidates[0];
 		for (int i = 1; i < candidatesIndex; i++) {
 			if (packCandidates[i].size < bestCandidate.size) {
