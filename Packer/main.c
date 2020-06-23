@@ -436,7 +436,7 @@ void test16() {
 	profile.twobyte_threshold_min = 3150;
 	profile.seqlenMinLimit3 = 80;
 	profile.blockSizeMinus = 139;
-	profile.winsize = 104000;
+	profile.winsize = 104500;
 	profile.sizeMaxForCanonicalHeaderPack = 350;
 	profile.sizeMinForSeqPack = 250;
 	profile.sizeMinForCanonical = 250;
