@@ -53,36 +53,33 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		const char packedFilename[100] = { 0 };
 		getTempFile(packedFilename, "block_multipacked");
 
-		//meta testsuit 1170291
-		packProfile seqlenProfile = getPackProfile(0, 0, 0);
-		seqlenProfile.rle_ratio = 50;
-		seqlenProfile.twobyte_ratio = 87;
-		seqlenProfile.recursive_limit = 208;
-		seqlenProfile.twobyte_threshold_max = 10531;
-		seqlenProfile.twobyte_threshold_divide = 3066;
-		seqlenProfile.twobyte_threshold_min = 167;
-		seqlenProfile.seqlenMinLimit3 = 57;
-		seqlenProfile.seqlenMinLimit4 = 205;
+		//meta testsuit 1170005  / 57s
+		packProfile seqlenProfile = getPackProfile();
+		seqlenProfile.rle_ratio = 49;
+		seqlenProfile.twobyte_ratio = 97;
+		seqlenProfile.recursive_limit = 140;
+		seqlenProfile.twobyte_threshold_max = 9761;
+		seqlenProfile.twobyte_threshold_divide = 1967;
+		seqlenProfile.twobyte_threshold_min = 193;
+		seqlenProfile.seqlenMinLimit3 = 97;
 
-		packProfile offsetProfile = getPackProfile(0, 0, 0);
-		offsetProfile.rle_ratio = 99;
-		offsetProfile.twobyte_ratio = 74;
-		offsetProfile.recursive_limit = 19;
-		offsetProfile.twobyte_threshold_max = 5807;
+		packProfile offsetProfile = getPackProfile();
+		offsetProfile.rle_ratio = 100;
+		offsetProfile.twobyte_ratio = 80;
+		offsetProfile.recursive_limit = 100;
+		offsetProfile.twobyte_threshold_max = 7060;
 		offsetProfile.twobyte_threshold_divide = 3053;
-		offsetProfile.twobyte_threshold_min = 397;
-		offsetProfile.seqlenMinLimit3 = 83;
-		offsetProfile.seqlenMinLimit4 = 183;
+		offsetProfile.twobyte_threshold_min = 449;
+		offsetProfile.seqlenMinLimit3 = 87;
 
-		packProfile distanceProfile = getPackProfile(0, 0, 0);
-		distanceProfile.rle_ratio = 93;
-		distanceProfile.twobyte_ratio = 99;
-		distanceProfile.recursive_limit = 45;
-		distanceProfile.twobyte_threshold_max = 3092;
-		distanceProfile.twobyte_threshold_divide = 2749;
-		distanceProfile.twobyte_threshold_min = 37;
-		distanceProfile.seqlenMinLimit3 = 119;
-		distanceProfile.seqlenMinLimit4 = 183;
+		packProfile distanceProfile = getPackProfile();
+		distanceProfile.rle_ratio = 95;
+		distanceProfile.twobyte_ratio = 100;
+		distanceProfile.recursive_limit = 90;
+		distanceProfile.twobyte_threshold_max = 2365;
+		distanceProfile.twobyte_threshold_divide = 2281;
+		distanceProfile.twobyte_threshold_min = 64;
+		distanceProfile.seqlenMinLimit3 = 20;
 
 		uint8_t packType = multiPack(chunkFilename, packedFilename, profile, seqlenProfile, 
 			offsetProfile, distanceProfile);

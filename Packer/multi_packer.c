@@ -212,7 +212,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	unsigned long long source_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
 		
-	packProfile twobyte100Profile = getPackProfile(0, 0, 0);
+	packProfile twobyte100Profile = getPackProfile();
 	twobyte100Profile.twobyte_ratio = 100;
 	twobyte100Profile.twobyte_threshold_divide = 1;
 	twobyte100Profile.twobyte_threshold_max = 3;
@@ -223,7 +223,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		char before_seqpack[100] = { 0 };
 		getTempFile(before_seqpack, "multi_rlepacked");
 
-		packProfile prof = getPackProfile(0, 0, 0);
+		packProfile prof = getPackProfile();
 		prof.twobyte_ratio = 90;
 		prof.rle_ratio = 90;
 		prof.recursive_limit = 10;
@@ -242,7 +242,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 		*/
 
-		if (source_size < 300) {
+		if (source_size < CANONICAL_HEADER_PACK_SIZE_LIMIT) {
 			char head_pack[100] = { 0 };
 			getTempFile(head_pack, "multi_head_pack");
 			canonical_header_pack(src, head_pack);

@@ -120,10 +120,8 @@ void printProfile(packProfile* profile) {
 	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
 	printf("\nRecursive limit:   %d", profile->recursive_limit);
 	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
-	printf("\nSeqlenMin limit3:   %d", profile->seqlenMinLimit3);
-	printf("\nSeqlenMin limit4:   %d", profile->seqlenMinLimit4);
-	printf("\nBlock size minus:   %d", profile->blockSizeMinus);
-	
+	printf("\nSeqlenMin limit3 (*2): %d", profile->seqlenMinLimit3);	
+	printf("\nBlock size minus (10k): %d", profile->blockSizeMinus);
 }
 
 packProfile getPackProfile() {
@@ -135,7 +133,6 @@ packProfile getPackProfile() {
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
 	profile.seqlenMinLimit3 = 128;
-	profile.seqlenMinLimit4 = 156;
 	profile.blockSizeMinus = 139;
 	return profile;
 }
@@ -149,7 +146,6 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
 	dst->seqlenMinLimit3 = src->seqlenMinLimit3;
-	dst->seqlenMinLimit4 = src->seqlenMinLimit4;
 	dst->blockSizeMinus = src->blockSizeMinus;
 	
 }

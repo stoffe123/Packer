@@ -52,7 +52,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 	FILE* infil = NULL, * utfil = NULL;
 	unsigned long long max_runlength = 273;
 
-	printf("\n canonical_header_pack: %s", src);
+	//printf("\n canonical header pack %s", src);
 
 	infil = fopen(src, "rb");
 	if (!infil) {

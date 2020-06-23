@@ -206,7 +206,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	while (highestValue > 0 && freqs[highestValue] == 0) {
 		highestValue--;
 	}
-	wprintf(L"\n Highest %s was %d", metaname, highestValue);
+	//wprintf(L"\n Highest %s was %d", metaname, highestValue);
 	
 
 	uint32_t bestSize = UINT32_MAX;
@@ -252,11 +252,11 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	}
 	fclose(file);
 	uint64_t filesize = get_file_size_from_wname(filename);
-	//wprintf(L"\n   comparing %s meta file sizes ... %d %d", metaname, bestSize, filesize);
 	if (bestSize != filesize) {
+	    wprintf(L"\n   comparing %s meta file sizes ... %d %d", metaname, bestSize, filesize);
 		exit(1);
 	}
-	wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
+	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
 	return bestPageCoding;
 }
 
@@ -276,7 +276,11 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBi
 void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass, packProfile profile)
 {
 	unsigned int max_seqlen = 65791;
-
+	bool superslim = false;
+	if (get_file_size_from_wname(src) < SUPERSLIM_SIZELIMIT) {
+		superslim = true;
+		profile.seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
+	}
 
 	uint64_t	offset,
 		winsize = 95536,  // change this later!
@@ -372,9 +376,9 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 						}
 						*/
 						best_seqlen = seq_len;
-						best_offset = offset - seq_len;
+						best_offset = offset;
 						if (best_seqlen >= max_seqlen) {
-							best_seqlen = max_seqlen;
+							best_seqlen = max_seqlen;						
 							break;
 						}
 					}
@@ -382,6 +386,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 			}
 		}
 		/* now we found the longest sequence in the window! */
+		best_offset -= best_seqlen;
 		unsigned char seqlen_min = getSeqlenMin(best_offset, profile);
 
 		if (best_seqlen < seqlen_min)
@@ -412,7 +417,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 				out_offset(best_offset);
 
 				out_seqlen(best_seqlen - seqlen_min);
-				//if (best_seqlen > 230) {
+				
 				if (VERBOSE) {
 					printf("\n(%d, %d, %d)  buffer_startpos %d   buffer_endpos %d  seq \"", best_seqlen, best_offset, distance, buffer_pos, buffer_endpos);
 					for (int i = 0; i < best_seqlen; i++) {
@@ -421,7 +426,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 					printf("\"");
 				}
 
-				//}
+				
 				/* note file is read backwards during unpack! */
 				out_distance(distance);
 				distance = 0;
@@ -469,8 +474,15 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		if (slimCase) {
 			packType = setKthBit(packType, 0);
 		}
-		WRITE(utfil, profile.seqlenMinLimit4);
-		WRITE(utfil, profile.seqlenMinLimit3);
+		if (superslim) {
+			packType = setKthBit(packType, 7);
+		}
+		if (!superslim) {
+			WRITE(utfil, profile.seqlenMinLimit3);
+		}
+		else {
+			printf("\n superslim used!");
+		}
 		WRITE(utfil, packType);
 		fclose(utfil);
 	}

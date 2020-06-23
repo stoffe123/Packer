@@ -4,7 +4,9 @@
 #include <stdbool.h>
 
 //3 bytes can handle block sizes up to 16777216‬
+
 #define BLOCK_SIZE 3500000
+static int CANONICAL_HEADER_PACK_SIZE_LIMIT = 260;
 
 //  16777215  is largest number for 24 bits in multipacker.tar
 
@@ -30,9 +32,9 @@ typedef struct packProfile {
 	int twobyte_threshold_divide;
 	int twobyte_threshold_min;
 	int canonical_size_limit; // not used	 	
-	int seqlenMinLimit4;
 	int seqlenMinLimit3;
 	int blockSizeMinus;
+	uint64_t winsize;
 } packProfile;
 
 void printProfile(packProfile*);

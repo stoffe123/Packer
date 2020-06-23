@@ -4,6 +4,12 @@
 
 #include "packer_commons.h"
 
+static uint64_t SUPERSLIM_SIZELIMIT = 16384;
+static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 110;
+static uint64_t SEQLEN_MIN_LIMIT4 = 47360;
+
+
+
 typedef struct pageCoding_t {
 	uint64_t pages;
 	uint64_t useLongRange;

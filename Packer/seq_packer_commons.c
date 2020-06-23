@@ -7,10 +7,10 @@
 
 
 unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile) {
-	if (best_offset < profile.seqlenMinLimit3 * 2) {
+	if (best_offset < (uint64_t)2 * profile.seqlenMinLimit3) {
 		return 3;
 	}
-	return (best_offset >= (256 * profile.seqlenMinLimit4)) ? 6 : 4;
+	return (best_offset >= SEQLEN_MIN_LIMIT4) ? 6 : 4;
 }
 
 
