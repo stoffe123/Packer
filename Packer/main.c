@@ -52,7 +52,16 @@ int doFuzz(int r, int best, int min, int max) {
 		add = 2;
 	}
 	r = fuzzVal(r, add);
-	if (r < 0 || r > max || r < min || rand() % 6 == 0) {
+	if (r < 0) {
+		r = 0;
+	}
+	if (r < min) {
+		r = min;
+	}
+	if (r > max) {
+		r = max;
+	}
+	if (rand() % 6 == 0) {
 		r = best;
 	}
 	return r;
@@ -78,7 +87,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 
 	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
 	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
-	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 1500);
+	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 93000);
 }
 
 
@@ -137,12 +146,12 @@ void testmeta() {
 	seqlenProfile.twobyte_threshold_max = 5226;
 	seqlenProfile.twobyte_threshold_divide = 2233;
 	seqlenProfile.twobyte_threshold_min = 185;
-	seqlenProfile.seqlenMinLimit3 = 43;	
+	seqlenProfile.seqlenMinLimit3 = 43;
 	seqlenProfile.winsize = 78725;
 	seqlenProfile.sizeMaxForCanonicalHeaderPack = 175;
 	seqlenProfile.sizeMinForSeqPack = 2600;
 	seqlenProfile.sizeMinForCanonical = 30;
-	
+
 	packProfile offsetProfile = getPackProfile();
 	offsetProfile.rle_ratio = 74;
 	offsetProfile.twobyte_ratio = 95;
@@ -150,7 +159,7 @@ void testmeta() {
 	offsetProfile.twobyte_threshold_max = 11404;
 	offsetProfile.twobyte_threshold_divide = 2520;
 	offsetProfile.twobyte_threshold_min = 384;
-	offsetProfile.seqlenMinLimit3 = 82;	
+	offsetProfile.seqlenMinLimit3 = 82;
 	offsetProfile.winsize = 91812;
 	offsetProfile.sizeMaxForCanonicalHeaderPack = 530;
 	offsetProfile.sizeMinForSeqPack = 2600;
@@ -163,7 +172,7 @@ void testmeta() {
 	distanceProfile.twobyte_threshold_max = 3641;
 	distanceProfile.twobyte_threshold_divide = 3972;
 	distanceProfile.twobyte_threshold_min = 37;
-	distanceProfile.seqlenMinLimit3 = 35;	
+	distanceProfile.seqlenMinLimit3 = 35;
 	distanceProfile.winsize = 80403;
 	distanceProfile.sizeMaxForCanonicalHeaderPack = 256;
 	distanceProfile.sizeMinForSeqPack = 2600;
@@ -319,7 +328,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/fail";
+	const wchar_t* src = L"c:/test/fail_compare";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -366,10 +375,10 @@ void onefile() {
 	distanceProfile.twobyte_threshold_min = 64;
 	distanceProfile.seqlenMinLimit3 = 20;
 
-	//seqPackSeparate(src, L"c:/test/", profile);
+	seqPackSeparate(src, L"c:/test/", profile);
 	//seqPack(src, packed_name, profile);
 	//two_byte_pack(src, packed_name, profile);
-	uint8_t packType = multiPack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
+	//uint8_t packType = multiPack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 	//RLE_simple_pack(src, packed_name);
 	//block_pack(src, packed_name, profile);
 
@@ -377,9 +386,9 @@ void onefile() {
 		
 	cl = clock();
 
-	//seqUnpackSeparate(L"c:/test/main", unpackedFilename, L"c:/test/");
+	seqUnpackSeparate(L"c:/test/main", unpackedFilename, L"c:/test/");
 	//two_byte_unpack(packed_name, unpackedFilename);
-	multiUnpack(packed_name, unpackedFilename, packType);
+	//multiUnpack(packed_name, unpackedFilename, packType);
 	//RLE_simple_unpack(packed_name, unpackedFilename);
 	//block_unpack(packed_name, unpackedFilename);
 	//seqUnpack(packed_name, unpackedFilename);
@@ -426,7 +435,7 @@ void test16() {
 	
 	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
 
-	//43965493 w winsize = 95536
+	
 	packProfile profile = getPackProfile();
 	profile.rle_ratio = 93;
 	profile.twobyte_ratio = 89;

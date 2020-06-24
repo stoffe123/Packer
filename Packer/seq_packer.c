@@ -17,6 +17,8 @@
 /* Global variables used in compressor */
 static  FILE* infil, * utfil;
 
+static const wchar_t* src_name;
+
 static buffer_size = BLOCK_SIZE * 3;
 static  unsigned char buffer[BLOCK_SIZE * 3];
 
@@ -134,8 +136,9 @@ void convertMeta(FILE* file, unsigned long distance, pageCoding_t pageCoding) {
 	}
 }
 
-uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax, uint64_t useLongRange, int32_t* freqTable, int32_t pos)
+uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqTable, int32_t pos)
 {
+	uint64_t lowestSpecial = getLowestSpecial(pageCoding);	
 	uint64_t size = 0;
 
 	//1 bytes
@@ -155,11 +158,11 @@ uint64_t calcMetaSize(uint64_t lowestSpecial, uint64_t pagesMax, uint64_t useLon
 	}
 	// long ranges
 	uint64_t longRangeFreq = pos - freqs;
-	if (useLongRange == 0 && longRangeFreq > 0) {
+	if (pageCoding.useLongRange == 0 && longRangeFreq > 0) {
 		printf("\n seqpacker.calcMetaSize: useLongRange == 0 && longRangeFreq > 0");
 		exit(1);
 	}
-	size += (longRangeFreq * (useLongRange + 1));
+	size += (longRangeFreq * (pageCoding.useLongRange + 1));
 	return size;
 }
 
@@ -222,18 +225,14 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 		pageCoding_t pageCoding;
 		pageCoding.pages = pages;
 		pageCoding.useLongRange = false;
-		uint64_t pageMax = calcPageMax(pageCoding);
-		uint64_t useLongRange = calcUseLongRange(pageMax, highestValue);
-
-		pageCoding.useLongRange = useLongRange;
+		uint64_t pageMax = calcPageMax(pageCoding);		
+		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
 
 		pageMax = calcPageMax(pageCoding);
 		//update now that pageMax has changed
-		useLongRange = calcUseLongRange(pageMax, highestValue);
-		uint64_t lastByte = getLastByte(useLongRange);
-		uint64_t lowestSpecial = getLowestSpecial(pageCoding);
-
-		uint32_t size = calcMetaSize(lowestSpecial, pageMax, useLongRange, freqs, pos);
+		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
+		
+		uint32_t size = calcMetaSize(pageCoding, pageMax, freqs, pos);
 		if (size < bestSize) {
 			bestSize = size;
 			bestPageCoding = pageCoding;			
@@ -253,7 +252,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	fclose(file);
 	uint64_t filesize = get_file_size_from_wname(filename);
 	if (bestSize != filesize) {
-	    wprintf(L"\n   comparing %s meta file sizes ... %d %d", metaname, bestSize, filesize);
+	    wprintf(L"\n   comparing %s meta file sizes ... %d %d when seqpacking file %s", metaname, bestSize, filesize, src_name);
 		exit(1);
 	}
 	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
@@ -275,6 +274,7 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBi
 
 void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass, packProfile profile)
 {
+	src_name = src;
 	unsigned int max_seqlen = 65791;
 	bool superslim = false;
 	if (get_file_size_from_wname(src) < SUPERSLIM_SIZELIMIT) {

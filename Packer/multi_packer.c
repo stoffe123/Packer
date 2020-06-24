@@ -456,7 +456,6 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	concat(offsets_name, base_dir, "offsets");
 	concat(distances_name, base_dir, "distances");
 	
-
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
 		CanonicalDecodeAndReplace(main_name);
 	}	
@@ -499,6 +498,7 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 
 	remove(seqlens_name);
 	remove(offsets_name);
+	remove(distances_name);
 	remove(main_name);
 }
 
