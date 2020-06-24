@@ -115,16 +115,17 @@ bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenPr
 }
 
 void printProfile(packProfile* profile) {
-	printf("\nRLE ratio:         %d", profile->rle_ratio);
-	printf("\nTwobyte ratio:     %d", profile->twobyte_ratio);
-	printf("\nRecursive limit:   %d", profile->recursive_limit);
+	printf("\nRLE ratio         %d", profile->rle_ratio);
+	printf("\nTwobyte ratio     %d", profile->twobyte_ratio);
+	printf("\nRecursive limit   %d", profile->recursive_limit);
 	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
-	printf("\nSeqlenMin limit3 (*2): %d", profile->seqlenMinLimit3);	
+	printf("\nSeqlenMin limit3 %d", profile->seqlenMinLimit3);	
+	printf("\nSeqlenMin limit4 %d", profile->seqlenMinLimit4);
 	printf("\nBlock size minus (10k): %d", profile->blockSizeMinus);
 	printf("\nWinsize: %d", profile->winsize);
-	printf("\nSize max for Canonical Header Pack: %d", profile->sizeMaxForCanonicalHeaderPack);
-	printf("\nSize min for seqpack: %d", profile->sizeMinForSeqPack);
-	printf("\nSize min for canonical: %d", profile->sizeMinForCanonical);
+	printf("\nSize max for Canonical Header Pack %d", profile->sizeMaxForCanonicalHeaderPack);
+	printf("\nSize min for seqpack %d", profile->sizeMinForSeqPack);
+	printf("\nSize min for canonical %d", profile->sizeMinForCanonical);
 }
 
 packProfile getPackProfile() {
@@ -136,6 +137,7 @@ packProfile getPackProfile() {
 	profile.twobyte_threshold_divide = 27;
 	profile.twobyte_threshold_min = 3150;
 	profile.seqlenMinLimit3 = 128;
+	profile.seqlenMinLimit4 = 57360;
 	profile.blockSizeMinus = 139;
 	profile.winsize = 95536;
 	profile.sizeMaxForCanonicalHeaderPack = 256;
@@ -153,6 +155,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
 	dst->seqlenMinLimit3 = src->seqlenMinLimit3;
+	dst->seqlenMinLimit4 = src->seqlenMinLimit4;
 	dst->blockSizeMinus = src->blockSizeMinus;
 	dst->winsize = src->winsize;
 	dst->sizeMaxForCanonicalHeaderPack = src->sizeMaxForCanonicalHeaderPack;

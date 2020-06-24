@@ -24,13 +24,14 @@ typedef struct value_freq_t {
 
 
 typedef struct packProfile {
-	int rle_ratio;
-	int twobyte_ratio;
-	int recursive_limit;
-	int twobyte_threshold_max;
-	int twobyte_threshold_divide;
-	int twobyte_threshold_min;
-	int seqlenMinLimit3;
+	int64_t rle_ratio;
+	int64_t twobyte_ratio;
+	int64_t recursive_limit;
+	int64_t twobyte_threshold_max;
+	int64_t twobyte_threshold_divide;
+	int64_t twobyte_threshold_min;
+	int64_t seqlenMinLimit3;
+	int64_t seqlenMinLimit4;
 	int64_t blockSizeMinus;
 	int64_t winsize;
 	int64_t sizeMaxForCanonicalHeaderPack;

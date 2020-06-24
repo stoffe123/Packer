@@ -53,7 +53,7 @@ int doFuzz(int r, int best, int min, int max) {
 	}
 	r = fuzzVal(r, add);
 	if (r < 0) {
-		r = 0;
+		r = min;
 	}
 	if (r < min) {
 		r = min;
@@ -61,7 +61,7 @@ int doFuzz(int r, int best, int min, int max) {
 	if (r > max) {
 		r = max;
 	}
-	if (rand() % 6 == 0) {
+	if (rand() % 4 == 0) {
 		r = best;
 	}
 	return r;
@@ -69,7 +69,7 @@ int doFuzz(int r, int best, int min, int max) {
 
 void fuzzProfile(packProfile* profile, packProfile best) {
 
-	if (rand() % 3 == 0) {
+	if (rand() % 3 != 1) {
 		copyProfile(&best, profile);
     }
 
@@ -81,7 +81,8 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
-	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
+	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 512);
+	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 20000, 90000);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
 	profile->winsize = doFuzz(profile->winsize, best.winsize, 60000, 130000);
 
@@ -328,7 +329,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/fail_compare";
+	const wchar_t* src = L"c:/test/newfail";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -614,7 +615,6 @@ int main()
 
 	time_t t;
 	srand((unsigned)time(&t));
-
 	//testmeta();
     test16();
 	//testarchive();

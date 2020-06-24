@@ -118,8 +118,8 @@ void convertMeta(FILE* file, unsigned long distance, pageCoding_t pageCoding) {
 	}
 	else {  // long range
 		if (!useLongRange) {
-			printf("\n seqpacker: long range was needed but not set!! distance %d pages %d pagemax %d",
-				distance, pages, pageMax);
+			wprintf(L"\n seqpacker: long range was needed but not set!! distance %d pages %d pagemax %d when packing %s",
+				distance, pages, pageMax, src_name);
 			exit(1);
 		}
 		distance -= (pageMax + 1);
@@ -159,7 +159,7 @@ uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqT
 	// long ranges
 	uint64_t longRangeFreq = pos - freqs;
 	if (pageCoding.useLongRange == 0 && longRangeFreq > 0) {
-		printf("\n seqpacker.calcMetaSize: useLongRange == 0 && longRangeFreq > 0");
+		wprintf(L"\n seqpacker.calcMetaSize: useLongRange == 0 && longRangeFreq > 0 when packing %s", src_name);
 		exit(1);
 	}
 	size += (longRangeFreq * (pageCoding.useLongRange + 1));
@@ -281,7 +281,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		superslim = true;
 		profile.seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}
-
+	
 	uint64_t	offset,
 		winsize = profile.winsize,
 		best_offset = 0,
@@ -321,8 +321,8 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 
 		best_seqlen = 0;
 		unsigned char ch = buffer[buffer_pos];
-		uint64_t buffer_pos_plus1 = 1 + buffer_pos;
-		uint64_t buffer_pos_plus2 = 2 + buffer_pos;
+		uint64_t buffer_pos_plus1 = (uint64_t)1 + buffer_pos;
+		uint64_t buffer_pos_plus2 = (uint64_t)2 + buffer_pos;
 		unsigned char ch1 = buffer[buffer_pos_plus1];
 		unsigned char ch2 = buffer[buffer_pos_plus2];
 		
@@ -421,7 +421,6 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 				out_offset(best_offset);
 
 				out_seqlen(best_seqlen - seqlen_min);
-				
 				if (VERBOSE) {
 					printf("\n(%d, %d, %d)  buffer_startpos %d   buffer_endpos %d  seq \"", best_seqlen, best_offset, distance, buffer_pos, buffer_endpos);
 					for (int i = 0; i < best_seqlen; i++) {

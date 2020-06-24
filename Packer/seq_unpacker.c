@@ -189,9 +189,9 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	uint64_t seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	uint64_t seqlenMinLimit4 = SEQLEN_MIN_LIMIT4;
 	if (!superslim) {
-		seqlenMinLimit3 = read_byte_from_file();		
+		seqlenMinLimit3 = read_byte_from_file();
 	}
-	
+
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
 		seqlen_pages = 0;
@@ -252,36 +252,36 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 			uint64_t seqlen = get_seqlen(seqlenPageCoding);
 			uint64_t offset = get_offset(offsetPageCoding);
 
-			    
-				unsigned char seqlen_min = getSeqlenMin(offset, profile);
-				seqlen += seqlen_min;
 
-				uint64_t match_index = buf_pos + offset + seqlen;
-				debug("unp: (%d, %d, %d)  packed_file_end %d match_index:%d buf_pos:%d buf_size:%d '", seqlen, offset, lastDistance, packed_file_end, match_index, buf_pos, buf_size);
-				assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
-				//write the sequence at the right place!
-				//if (seq_len > offset) {
-				for (uint64_t i = 0; i < seqlen; i++) {
-					put_buf(buf[match_index - i]);
-					debug("%d ", buf[(match_index - seqlen) + (i + 1)]);
-				}
-				debug("'\n");
-				/*	}
+			unsigned char seqlen_min = getSeqlenMin(offset, profile);
+			seqlen += seqlen_min;
 
-					else {  //offset < seq_len, repeating
-						i = 0;
-						long j = 0;
-						while (i < seq_len) {
-							put_buf(buf[match_index - j]);
-							i++;
-							j++;
-							if (j == offset) {
-								j = 0;
-							}
+			uint64_t match_index = buf_pos + offset + seqlen;
+			debug("unp: (%d, %d, %d)  packed_file_end %d match_index:%d buf_pos:%d buf_size:%d '", seqlen, offset, lastDistance, packed_file_end, match_index, buf_pos, buf_size);
+			assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
+			//write the sequence at the right place!
+			//if (seq_len > offset) {
+			for (uint64_t i = 0; i < seqlen; i++) {
+				put_buf(buf[match_index - i]);
+				debug("%d ", buf[(match_index - seqlen) + (i + 1)]);
+			}
+			debug("'\n");
+			/*	}
+
+				else {  //offset < seq_len, repeating
+					i = 0;
+					long j = 0;
+					while (i < seq_len) {
+						put_buf(buf[match_index - j]);
+						i++;
+						j++;
+						if (j == offset) {
+							j = 0;
 						}
 					}
-					*/
-			
+				}
+				*/
+
 		}
 		else {
 			put_buf(cc);
