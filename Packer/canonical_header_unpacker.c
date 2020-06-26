@@ -47,7 +47,7 @@ void canonical_header_unpack_internal(const char* source_filename, const char* d
 
 	FILE* infil, * utfil;
 
-	printf("\n canonical_header_unpack: %s", source_filename);
+	//printf("\n canonical_header_unpack: %s", source_filename);
 	unsigned long i;
 
 

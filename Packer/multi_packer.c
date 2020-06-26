@@ -259,7 +259,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			two_byte_pack(src, just_two_byte, twobyte100Profile);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
 		}
-
+	
 		if (source_size > profile.sizeMinForCanonical) {
 			char just_canonical[100] = { 0 };
 			getTempFile(just_canonical, "multi_just_canonical");
@@ -435,7 +435,7 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	if (readPackTypeFromFile) {
 		fread(&pack_type, 1, 1, in);
 	}
-	printf("\n Multiunpack of %s  =>  %s   with packtype %d", src, dst, pack_type);
+	printf("\n Multiunpack %s => %s  packtype %d", src, dst, pack_type);
 	pi.pack_type = pack_type;
 	if (pack_type == 0) {
 		printf("\n  UNSTORE!!  ");

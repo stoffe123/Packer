@@ -438,18 +438,19 @@ void test16() {
 
 	
 	packProfile profile = getPackProfile();
-	profile.rle_ratio = 93;
-	profile.twobyte_ratio = 89;
-	profile.recursive_limit = 220;
-	profile.twobyte_threshold_max = 11951;
-	profile.twobyte_threshold_divide = 260;
-	profile.twobyte_threshold_min = 3150;
-	profile.seqlenMinLimit3 = 80;
-	profile.blockSizeMinus = 139;
-	profile.winsize = 104500;
-	profile.sizeMaxForCanonicalHeaderPack = 350;
-	profile.sizeMinForSeqPack = 250;
-	profile.sizeMinForCanonical = 250;
+	profile.rle_ratio = 86;
+	profile.twobyte_ratio = 91;
+	profile.recursive_limit = 299;
+	profile.twobyte_threshold_max = 12231;
+	profile.twobyte_threshold_divide = 20;
+	profile.twobyte_threshold_min = 911;
+	profile.seqlenMinLimit3 = 111;
+    profile.seqlenMinLimit4 = 45626;
+	profile.blockSizeMinus = 121;
+	profile.winsize = 103098;
+	profile.sizeMaxForCanonicalHeaderPack = 268;
+	profile.sizeMinForSeqPack = 9290;
+	profile.sizeMinForCanonical = 284;
 	
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
