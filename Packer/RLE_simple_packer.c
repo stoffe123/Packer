@@ -14,8 +14,8 @@
 /* RLE simple packer */
 
 /* Global variables used in compressor */
-static const char* base_dir;
-static bool separate;
+__declspec(thread) static const char* base_dir;
+__declspec(thread) static bool separate;
 
 
 

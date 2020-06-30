@@ -15,27 +15,27 @@
 /* Sequence packer */
 
 /* Global variables used in compressor */
-static  FILE* infil, * utfil;
+__declspec(thread) static FILE* infil, * utfil;
 
-static const wchar_t* src_name;
+__declspec(thread) static const wchar_t* src_name;
 
-static buffer_size = BLOCK_SIZE * 3;
-static  unsigned char buffer[BLOCK_SIZE * 3];
+__declspec(thread) static  buffer_size = BLOCK_SIZE * 3;
+__declspec(thread) static  unsigned char buffer[BLOCK_SIZE * 3];
 
-size_t absolute_end, buffer_endpos;
+__declspec(thread) static size_t absolute_end, buffer_endpos;
 
-static const wchar_t* base_dir = L"c:/test/";
-static bool separate_files = false;
+__declspec(thread) static const wchar_t* base_dir = L"c:/test/";
+__declspec(thread) static bool separate_files = false;
 
-static uint32_t nextChar[BLOCK_SIZE * 2],
+__declspec(thread) static uint32_t nextChar[BLOCK_SIZE * 2],
 lastChar[256],
 distances[BLOCK_SIZE],
 distanceFreq[BLOCK_SIZE],
-distancesPos;
+distancesPos,
 
 offsets[BLOCK_SIZE],
 offsetFreq[BLOCK_SIZE],
-offsetsPos;
+offsetsPos,
 
 seqlens[BLOCK_SIZE],
 seqlenFreq[BLOCK_SIZE],

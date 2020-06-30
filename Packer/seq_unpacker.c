@@ -11,11 +11,11 @@
 // Unpacker stuff below !!
 
 //Global vars used in unpacker
-static size_t  seqlens_pos, offsets_pos, distances_pos, packed_file_end;
-static uint8_t buf[BLOCK_SIZE * 4], offsets[BLOCK_SIZE], seqlens[BLOCK_SIZE], distances[BLOCK_SIZE];
-static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wraparound;
+__declspec(thread) static size_t  seqlens_pos, offsets_pos, distances_pos, packed_file_end;
+__declspec(thread) static  uint8_t buf[BLOCK_SIZE * 4], offsets[BLOCK_SIZE], seqlens[BLOCK_SIZE], distances[BLOCK_SIZE];
+__declspec(thread) static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wraparound;
 
-static bool separate_files = true;
+__declspec(thread) static  bool separate_files = true;
 
 
 uint8_t read_byte_from_file() {

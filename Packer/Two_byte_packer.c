@@ -12,17 +12,17 @@
 /* Two-byte packer */
 
 //Global variables used in compressor
-static  FILE* infil, * utfil;
+__declspec(thread) static FILE* infil, * utfil;
 
-static   uint64_t buffer_endpos, buffer_startpos, buffer_min,
+__declspec(thread) static uint64_t buffer_endpos, buffer_startpos, buffer_min,
 buffer_size = 2048, source_size;
-static   unsigned char* buffer;
+__declspec(thread) static  unsigned char* buffer;
 
-static   const char* base_dir;
-static   unsigned long two_byte_freq_table[65536] = { 0 };
-static   uint8_t pair_table[2048] = { 0 }, master_code;
-static   unsigned long char_freq[256];
-static packProfile profile;
+__declspec(thread) static  const char* base_dir;
+__declspec(thread) static  unsigned long two_byte_freq_table[65536] = { 0 };
+__declspec(thread) static  uint8_t pair_table[2048] = { 0 }, master_code;
+__declspec(thread) static  unsigned long char_freq[256];
+__declspec(thread) static  packProfile profile;
 
 static void move_buffer(unsigned int steps) {
 	buffer_startpos += steps;

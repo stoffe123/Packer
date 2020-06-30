@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <windows.h>
 #include "huflocal.h"
 #include "huffman.h"
 #include "bitarray.h"

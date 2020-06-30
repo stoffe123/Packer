@@ -142,6 +142,7 @@
     <ClCompile Include="bitarray.c" />
     <ClCompile Include="bitfile.c" />
     <ClCompile Include="block_packer.c" />
+    <ClCompile Include="bounce.c" />
     <ClCompile Include="canonical.c" />
     <ClCompile Include="canonical_header_packer.c" />
     <ClCompile Include="canonical_header_unpacker.c" />

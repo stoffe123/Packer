@@ -7,12 +7,12 @@
 // RLE simple  - unpacker
 
 //Global vars
-static   unsigned char code;
+__declspec(thread) static   unsigned char code;
 
-static   long long read_packedfile_pos,
+__declspec(thread) static   long long read_packedfile_pos,
 	runlengths_file_pos;
-static   const char* base_dir;
-static   bool separate;
+__declspec(thread) static   const char* base_dir;
+__declspec(thread) static   bool separate;
 
 
 unsigned char read_runlength(FILE* infil, FILE* runlengths_file) {

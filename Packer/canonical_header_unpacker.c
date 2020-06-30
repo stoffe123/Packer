@@ -9,7 +9,7 @@
 
 //Global vars
 
-static   long long read_packedfile_pos;
+__declspec(thread) static  long long read_packedfile_pos;
 
 int readHalfbyte(FILE* infil, int cmd)
 {

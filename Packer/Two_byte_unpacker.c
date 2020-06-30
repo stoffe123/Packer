@@ -10,10 +10,10 @@
 /* Two-byte unpacker */
 
 //Global variables used in compressor
-static FILE* infil, * utfil;
+__declspec(thread) static FILE* infil, * utfil;
 
-static unsigned char two_byte_table[16384] = { 0 }, master_code;
-static int two_byte_table_pos;
+__declspec(thread) static unsigned char two_byte_table[16384] = { 0 }, master_code;
+__declspec(thread) static int two_byte_table_pos;
 
 int get_two_byte_for_code(unsigned char code) {
 	for (int i = START_CODES_SIZE; i < two_byte_table_pos; i += 3) {

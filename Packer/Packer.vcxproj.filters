@@ -87,6 +87,9 @@
     <ClCompile Include="canonical_header_unpacker.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bounce.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
