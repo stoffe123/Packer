@@ -18,18 +18,17 @@ int readHalfbyte(FILE* infil, int cmd)
 	{
 		/* initialize */
 		pos = 0;
-		return 0;   /* the return value here should is not used */
+		return 0;   /* the return value here is not used */
 	}
 	else
 	{
 		if (pos == 0)
 		{
-			int res = fread(&byte, 1, 1, infil);
-			if (res == 0) {
-				return -1; // EOF
-			}
-			pos = 1;
-			return(byte / 16);
+			if (fread(&byte, 1, 1, infil)) {
+				pos = 1;
+				return(byte / 16);
+			}			
+			return -1; // EOF						
 		}
 		else
 		{
@@ -38,7 +37,6 @@ int readHalfbyte(FILE* infil, int cmd)
 
 		}
 	}
-	return 1;
 }
 
 //------------------------------------------------------------------------------

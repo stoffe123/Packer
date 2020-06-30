@@ -252,9 +252,7 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 			uint64_t seqlen = get_seqlen(seqlenPageCoding);
 			uint64_t offset = get_offset(offsetPageCoding);
 
-
-			unsigned char seqlen_min = getSeqlenMin(offset, profile);
-			seqlen += seqlen_min;
+			seqlen += getSeqlenMin(offset, profile);
 
 			uint64_t match_index = buf_pos + offset + seqlen;
 			debug("unp: (%d, %d, %d)  packed_file_end %d match_index:%d buf_pos:%d buf_size:%d '", seqlen, offset, lastDistance, packed_file_end, match_index, buf_pos, buf_size);

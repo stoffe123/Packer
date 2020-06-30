@@ -454,7 +454,7 @@ void test16() {
 	
 	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
-	uint64_t timeLimit = 480;
+	uint64_t timeLimit = 472;
 	bool unpack = true;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
