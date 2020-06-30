@@ -420,7 +420,7 @@ void test16() {
 		L"tob.pdf",
 		L"rel.pdf",
 
-			L"book.txt",
+		L"book.txt",
 		
 		L"did.csh",	
 		

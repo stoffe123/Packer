@@ -127,16 +127,12 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		char* packedFilename = (char*)malloc(100 * sizeof(char));
 		getTempFile(packedFilename, "block_multipacked");
 
+		blockChunks[chunkNumber].chunkFilename = chunkFilename;
+		blockChunks[chunkNumber].packedFilename = packedFilename;
+		blockChunks[chunkNumber].profile = profile;		
 
-		if (chunkNumber < MAX_THREADS)
-		{
-			blockChunks[chunkNumber].chunkFilename = chunkFilename;
-			blockChunks[chunkNumber].packedFilename = packedFilename;		
-			blockChunks[chunkNumber].profile = profile;		
-			blockChunks[chunkNumber].size = UINT64_MAX;			
-			printf("\n STARTING THREAD %d ", chunkNumber);
-			blockChunks[chunkNumber].handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
-		}		
+		printf("\n STARTING THREAD %d ", chunkNumber);
+		blockChunks[chunkNumber].handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
 
@@ -145,11 +141,9 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	numberOfChunks = chunkNumber;
 	
-	for (int i = 0; i < numberOfChunks; i++) {
-		WaitForSingleObject(blockChunks[i].handle, INFINITE);
-	}
 	FILE* utfil = openWrite(dst);
 	for (int i = 0; i < numberOfChunks; i++) {
+		WaitForSingleObject(blockChunks[i].handle, INFINITE);
 		blockChunk_t blockChunk = blockChunks[i];
 		append_to_tar(utfil, blockChunk.packedFilename, blockChunk.size, blockChunk.packType);
 		remove(blockChunk.packedFilename);
@@ -160,8 +154,6 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	fclose(infil);
 	fclose(utfil);	
 }
-
-
 
 
 // ----------------------------------------------------------------
