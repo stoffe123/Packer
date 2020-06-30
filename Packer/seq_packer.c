@@ -238,7 +238,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 			bestPageCoding = pageCoding;			
 		}
 		//printf("\n pages %d gave size %d useOffsetLongRange %d", pages, size, useLongRange);
-		if (highestValue < 256) {
+		if (highestValue < pageMax) {
 			break;
 		}
 	}
