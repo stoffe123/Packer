@@ -29,10 +29,11 @@ static packProfile seqlenProfile, offsetProfile, distanceProfile;
 
 static uint64_t read_size;
 
-static int64_t numberOfChunks = -1;
-
 // tar contents of src => utfil
-append_to_tar(FILE* utfil, char* src, uint32_t size, uint8_t packType) {
+append_to_tar(FILE* utfil, blockChunk_t blockChunk) {
+	
+	uint32_t size = blockChunk.size;
+	uint8_t packType = blockChunk.packType;
 
 	if (size == 0) {
 		packType = setKthBit(packType, 4);
@@ -41,9 +42,8 @@ append_to_tar(FILE* utfil, char* src, uint32_t size, uint8_t packType) {
 	if (size > 0) {
 		fwrite(&size, 3, 1, utfil);
 	}
-
 	//write contents
-	append_to_file(utfil, src);
+	append_to_file(utfil, blockChunk.packedFilename);
 }
 
 void threadMultiPack(void* pMyID)
@@ -135,23 +135,19 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		blockChunks[chunkNumber].handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
+	fclose(infil);
 
-	printf("\nwait for all %d processes to finish!", chunkNumber);
-
-
-	numberOfChunks = chunkNumber;
+	printf("\n%d processes started!", chunkNumber);
 	
 	FILE* utfil = openWrite(dst);
-	for (int i = 0; i < numberOfChunks; i++) {
+	for (int i = 0; i < chunkNumber; i++) {
 		WaitForSingleObject(blockChunks[i].handle, INFINITE);
 		blockChunk_t blockChunk = blockChunks[i];
-		append_to_tar(utfil, blockChunk.packedFilename, blockChunk.size, blockChunk.packType);
+		append_to_tar(utfil, blockChunk);
 		remove(blockChunk.packedFilename);
 		free(blockChunk.chunkFilename);
 		free(blockChunk.packedFilename);
 	}
-
-	fclose(infil);
 	fclose(utfil);	
 }
 
