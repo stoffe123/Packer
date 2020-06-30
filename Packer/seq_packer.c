@@ -183,21 +183,21 @@ uint64_t calcUseLongRange(uint64_t pageMax, uint64_t highestDistance) {
 
 pageCoding_t createMetaFile(const wchar_t* metaname) {
 
-	int32_t* freqs, * values, pos;
+	int32_t* freqs, * values, metaValuesCount;
 	if (equalsw(metaname, L"offsets")) {
 		freqs = offsetFreq;
 		values = offsets;
-		pos = offsetsPos;
+		metaValuesCount = offsetsPos;
 	}
 	else if (equalsw(metaname, L"distances")) {
 		freqs = distanceFreq;
 		values = distances;
-		pos = distancesPos;
+		metaValuesCount = distancesPos;
 	}
 	else if (equalsw(metaname, L"seqlens")) {
 		freqs = seqlenFreq;
 		values = seqlens;
-		pos = seqlensPos;
+		metaValuesCount = seqlensPos;
 	}
 	else {
 		printf("\n wrong metaname in seq_packer.createMetaFile");
@@ -217,13 +217,11 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	uint64_t bestPage = 0;
 	uint64_t highestPageTry = 253;
 	pageCoding_t bestPageCoding;
-
+	pageCoding_t pageCoding;
 	//test all pages!
-	for (uint64_t pages = 0; pages < highestPageTry; pages++) {
+	for (pageCoding.pages = 0; pageCoding.pages < highestPageTry; pageCoding.pages++) {
 
-		//calc pageMax without using longRange to see if longRange could be skipped
-		pageCoding_t pageCoding;
-		pageCoding.pages = pages;
+		//calc pageMax without using longRange to see if longRange could be skipped	
 		pageCoding.useLongRange = false;
 		uint64_t pageMax = calcPageMax(pageCoding);		
 		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
@@ -232,7 +230,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 		//update now that pageMax has changed
 		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
 		
-		uint32_t size = calcMetaSize(pageCoding, pageMax, freqs, pos);
+		uint32_t size = calcMetaSize(pageCoding, pageMax, freqs, metaValuesCount);
 		if (size < bestSize) {
 			bestSize = size;
 			bestPageCoding = pageCoding;			
@@ -246,7 +244,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	concatw(filename, base_dir, metaname);
 	FILE* file = openWrite(filename);
 	
-	for (int i = 0; i < pos; i++) {		
+	for (int i = 0; i < metaValuesCount; i++) {		
 		convertMeta(file, values[i], bestPageCoding);		
 	}
 	fclose(file);
