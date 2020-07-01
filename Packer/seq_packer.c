@@ -275,7 +275,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	src_name = src;
 	unsigned int max_seqlen = 65791;
 	bool superslim = false;
-	if (get_file_size_from_wname(src) < SUPERSLIM_SIZELIMIT) {
+	if (get_file_size_from_wname(src) < profile.sizeMaxForSuperslim) {
 		superslim = true;
 		profile.seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}

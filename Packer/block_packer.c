@@ -23,14 +23,53 @@ typedef struct blockChunk_t {
 
 static blockChunk_t blockChunks[1000];
 
-static packProfile seqlenProfile, offsetProfile, distanceProfile;
-
 static uint64_t read_size;
 
-HANDLE  tempfileMutex;            
-HANDLE clockdirMutex;
+//meta testsuit 1170029  / 33s
+static packProfile seqlenProfile = {
+.rle_ratio = 31,
+.twobyte_ratio = 97,
+.recursive_limit = 180,
+.twobyte_threshold_max = 5226,
+.twobyte_threshold_divide = 2233,
+.twobyte_threshold_min = 185,
+.seqlenMinLimit3 = 43,
+.winsize = 78725,
+.sizeMaxForCanonicalHeaderPack = 175,
+.sizeMinForSeqPack = 2600,
+.sizeMinForCanonical = 30,
+.sizeMaxForSuperslim = 16384
+},
+offsetProfile = {	
+	.rle_ratio = 74,
+	.twobyte_ratio = 95,
+	.recursive_limit = 61,
+	.twobyte_threshold_max = 11404,
+	.twobyte_threshold_divide = 2520,
+	.twobyte_threshold_min = 384,
+	.seqlenMinLimit3 = 82,
+	.winsize = 91812,
+	.sizeMaxForCanonicalHeaderPack = 530,
+	.sizeMinForSeqPack = 2600,
+	.sizeMinForCanonical = 261,
+    .sizeMaxForSuperslim = 16384
+},
+distanceProfile = {
+	.rle_ratio = 71,
+	.twobyte_ratio = 100,
+	.recursive_limit = 20,
+	.twobyte_threshold_max = 3641,
+	.twobyte_threshold_divide = 3972,
+	.twobyte_threshold_min = 37,
+	.seqlenMinLimit3 = 35,
+	.winsize = 80403,
+	.sizeMaxForCanonicalHeaderPack = 256,
+	.sizeMinForSeqPack = 2600,
+	.sizeMinForCanonical = 300,
+    .sizeMaxForSuperslim = 16384
+};
 
-HANDLE blockchunkMutex;
+HANDLE tempfileMutex, clockdirMutex, blockchunkMutex;
 
 HANDLE lockTempfileMutex() {
 	WaitForSingleObject(tempfileMutex, INFINITE);
@@ -58,8 +97,6 @@ HANDLE releaseBlockchunkMutex() {
 
 // tar contents of src => utfil
 append_to_tar(FILE* utfil, const char* packedFilename, uint32_t size, uint8_t packType) {
-	
-	
 
 	if (size == 0) {
 		packType = setKthBit(packType, 4);
@@ -117,46 +154,6 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	tempfileMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
 	clockdirMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
 	blockchunkMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
-
-	//meta testsuit 1170029  / 33s
-	seqlenProfile = getPackProfile();
-	seqlenProfile.rle_ratio = 31;
-	seqlenProfile.twobyte_ratio = 97;
-	seqlenProfile.recursive_limit = 180;
-	seqlenProfile.twobyte_threshold_max = 5226;
-	seqlenProfile.twobyte_threshold_divide = 2233;
-	seqlenProfile.twobyte_threshold_min = 185;
-	seqlenProfile.seqlenMinLimit3 = 43;
-	seqlenProfile.winsize = 78725;
-	seqlenProfile.sizeMaxForCanonicalHeaderPack = 175;
-	seqlenProfile.sizeMinForSeqPack = 2600;
-	seqlenProfile.sizeMinForCanonical = 30;
-
-	offsetProfile = getPackProfile();
-	offsetProfile.rle_ratio = 74;
-	offsetProfile.twobyte_ratio = 95;
-	offsetProfile.recursive_limit = 61;
-	offsetProfile.twobyte_threshold_max = 11404;
-	offsetProfile.twobyte_threshold_divide = 2520;
-	offsetProfile.twobyte_threshold_min = 384;
-	offsetProfile.seqlenMinLimit3 = 82;
-	offsetProfile.winsize = 91812;
-	offsetProfile.sizeMaxForCanonicalHeaderPack = 530;
-	offsetProfile.sizeMinForSeqPack = 2600;
-	offsetProfile.sizeMinForCanonical = 261;
-
-	distanceProfile = getPackProfile();
-	distanceProfile.rle_ratio = 71;
-	distanceProfile.twobyte_ratio = 100;
-	distanceProfile.recursive_limit = 20;
-	distanceProfile.twobyte_threshold_max = 3641;
-	distanceProfile.twobyte_threshold_divide = 3972;
-	distanceProfile.twobyte_threshold_min = 37;
-	distanceProfile.seqlenMinLimit3 = 35;
-	distanceProfile.winsize = 80403;
-	distanceProfile.sizeMaxForCanonicalHeaderPack = 256;
-	distanceProfile.sizeMinForSeqPack = 2600;
-	distanceProfile.sizeMinForCanonical = 300;
 
 	FILE* infil = openRead(src);
 	int chunkNumber = 0;

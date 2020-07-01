@@ -37,6 +37,7 @@ typedef struct packProfile {
 	int64_t sizeMaxForCanonicalHeaderPack;
 	int64_t sizeMinForSeqPack;
 	int64_t sizeMinForCanonical;
+	int64_t sizeMaxForSuperslim;
 } packProfile;
 
 void printProfile(packProfile*);

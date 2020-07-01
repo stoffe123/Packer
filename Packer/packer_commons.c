@@ -126,23 +126,26 @@ void printProfile(packProfile* profile) {
 	printf("\nSize max for Canonical Header Pack %d", profile->sizeMaxForCanonicalHeaderPack);
 	printf("\nSize min for seqpack %d", profile->sizeMinForSeqPack);
 	printf("\nSize min for canonical %d", profile->sizeMinForCanonical);
+	printf("\nSize max for superslim %d", profile->sizeMaxForSuperslim);
 }
 
 packProfile getPackProfile() {
-	packProfile profile;
-	profile.rle_ratio = 84;
-	profile.twobyte_ratio = 89;
-	profile.recursive_limit = 15;
-	profile.twobyte_threshold_max = 10581;
-	profile.twobyte_threshold_divide = 27;
-	profile.twobyte_threshold_min = 3150;
-	profile.seqlenMinLimit3 = 128;
-	profile.seqlenMinLimit4 = 57360;
-	profile.blockSizeMinus = 139;
-	profile.winsize = 95536;
-	profile.sizeMaxForCanonicalHeaderPack = 256;
-	profile.sizeMinForSeqPack = 300;
-	profile.sizeMinForCanonical = 40;
+	packProfile profile = {
+	.rle_ratio = 84,
+	.twobyte_ratio = 89,
+	.recursive_limit = 15,
+	.twobyte_threshold_max = 10581,
+	.twobyte_threshold_divide = 27,
+	.twobyte_threshold_min = 3150,
+	.seqlenMinLimit3 = 128,
+	.seqlenMinLimit4 = 57360,
+	.blockSizeMinus = 139,
+	.winsize = 95536,
+	.sizeMaxForCanonicalHeaderPack = 256,
+	.sizeMinForSeqPack = 300,
+	.sizeMinForCanonical = 40,
+	.sizeMaxForSuperslim = 16384
+	};
 	return profile;
 }
 
@@ -161,6 +164,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->sizeMaxForCanonicalHeaderPack = src->sizeMaxForCanonicalHeaderPack;
 	dst->sizeMinForSeqPack = src->sizeMinForSeqPack;
 	dst->sizeMinForCanonical = src->sizeMinForCanonical;
+	dst->sizeMaxForSuperslim = src->sizeMaxForSuperslim;
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {

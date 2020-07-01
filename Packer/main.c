@@ -89,6 +89,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
 	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
 	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 93000);
+	profile->sizeMaxForSuperslim = doFuzz(profile->sizeMaxForSuperslim, best.sizeMaxForSuperslim, 10, 100000);
 }
 
 
@@ -137,47 +138,55 @@ bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t before_
 
 void testmeta() {
 
+	
 	packProfile bestProfile, bestOffsetProfile, bestDistanceProfile;
 
-	//meta testsuit 1170029  / 33s
-	packProfile seqlenProfile = getPackProfile();
-	seqlenProfile.rle_ratio = 31;
-	seqlenProfile.twobyte_ratio = 97;
-	seqlenProfile.recursive_limit = 180;
-	seqlenProfile.twobyte_threshold_max = 5226;
-	seqlenProfile.twobyte_threshold_divide = 2233;
-	seqlenProfile.twobyte_threshold_min = 185;
-	seqlenProfile.seqlenMinLimit3 = 43;
-	seqlenProfile.winsize = 78725;
-	seqlenProfile.sizeMaxForCanonicalHeaderPack = 175;
-	seqlenProfile.sizeMinForSeqPack = 2600;
-	seqlenProfile.sizeMinForCanonical = 30;
-
-	packProfile offsetProfile = getPackProfile();
-	offsetProfile.rle_ratio = 74;
-	offsetProfile.twobyte_ratio = 95;
-	offsetProfile.recursive_limit = 61;
-	offsetProfile.twobyte_threshold_max = 11404;
-	offsetProfile.twobyte_threshold_divide = 2520;
-	offsetProfile.twobyte_threshold_min = 384;
-	offsetProfile.seqlenMinLimit3 = 82;
-	offsetProfile.winsize = 91812;
-	offsetProfile.sizeMaxForCanonicalHeaderPack = 530;
-	offsetProfile.sizeMinForSeqPack = 2600;
-	offsetProfile.sizeMinForCanonical = 261;
-
-	packProfile distanceProfile = getPackProfile();
-	distanceProfile.rle_ratio = 71;
-	distanceProfile.twobyte_ratio = 100;
-	distanceProfile.recursive_limit = 20;
-	distanceProfile.twobyte_threshold_max = 3641;
-	distanceProfile.twobyte_threshold_divide = 3972;
-	distanceProfile.twobyte_threshold_min = 37;
-	distanceProfile.seqlenMinLimit3 = 35;
-	distanceProfile.winsize = 80403;
-	distanceProfile.sizeMaxForCanonicalHeaderPack = 256;
-	distanceProfile.sizeMinForSeqPack = 2600;
-	distanceProfile.sizeMinForCanonical = 300;
+	//meta testsuit 1170047  / 33s
+	static packProfile seqlenProfile = {
+		.rle_ratio = 31,
+		.twobyte_ratio = 97,
+		.recursive_limit = 118,
+		.twobyte_threshold_max = 5866,
+		.twobyte_threshold_divide = 1979,
+		.twobyte_threshold_min = 160,
+		.seqlenMinLimit3 = 58,
+		.seqlenMinLimit4 = 20000,
+		.winsize = 77525,
+		.sizeMaxForCanonicalHeaderPack = 175,
+		.sizeMinForSeqPack = 5690,
+		.sizeMinForCanonical = 30,
+		.sizeMaxForSuperslim = 16384
+	},
+    offsetProfile = {
+			.rle_ratio = 78,
+			.twobyte_ratio = 93,
+			.recursive_limit = 58,
+			.twobyte_threshold_max = 10970,
+			.twobyte_threshold_divide = 2520,
+			.twobyte_threshold_min = 411,
+			.seqlenMinLimit3 = 82,
+			.seqlenMinLimit4 = 20000,
+			.winsize = 92198,
+			.sizeMaxForCanonicalHeaderPack = 563,
+			.sizeMinForSeqPack = 4753,
+			.sizeMinForCanonical = 302,
+			.sizeMaxForSuperslim = 16384
+	},
+	distanceProfile = {
+			.rle_ratio = 72,
+			.twobyte_ratio = 100,
+			.recursive_limit = 40,
+			.twobyte_threshold_max = 3641,
+			.twobyte_threshold_divide = 3609,
+			.twobyte_threshold_min = 37,
+			.seqlenMinLimit3 = 35,
+			.seqlenMinLimit4 = 20000,
+			.winsize = 83179,
+			.sizeMaxForCanonicalHeaderPack = 214,
+			.sizeMinForSeqPack = 10,
+			.sizeMinForCanonical = 363,
+			.sizeMaxForSuperslim = 16384
+	};
 	
 	copyProfile(&seqlenProfile, &bestProfile);
 	copyProfile(&offsetProfile, &bestOffsetProfile);
@@ -432,32 +441,30 @@ void test16() {
 		L"nex.doc",		
 		L"aft.htm",
 		L"book_med.txt",
-	
 		L"oneseq.txt",
 		L"empty.txt",
 		L"onechar.txt",
 		L"repeatchar.txt",		
 	};
 	
-	//wchar_t test_filenames[3][100] = { L"ragg.wav", L"voc_short.wav", L"voc.wav" };
+	packProfile bestProfile, 
+		profile = {
+			.rle_ratio = 94,
+			.twobyte_ratio = 91,
+			.recursive_limit = 320,
+			.twobyte_threshold_max = 11750,
+			.twobyte_threshold_divide = 20,
+			.twobyte_threshold_min = 848,
+			.seqlenMinLimit3 = 151,
+			.seqlenMinLimit4 = 52447,
+			.blockSizeMinus = 121,
+			.winsize = 104172,
+			.sizeMaxForCanonicalHeaderPack = 268,
+			.sizeMinForSeqPack = 8470,
+			.sizeMinForCanonical = 278,
+			.sizeMaxForSuperslim = 16384
+	};
 
-	
-	packProfile profile = getPackProfile();
-	profile.rle_ratio = 86;
-	profile.twobyte_ratio = 91;
-	profile.recursive_limit = 299;
-	profile.twobyte_threshold_max = 12231;
-	profile.twobyte_threshold_divide = 20;
-	profile.twobyte_threshold_min = 911;
-	profile.seqlenMinLimit3 = 111;
-    profile.seqlenMinLimit4 = 45626;
-	profile.blockSizeMinus = 121;
-	profile.winsize = 103098;
-	profile.sizeMaxForCanonicalHeaderPack = 268;
-	profile.sizeMinForSeqPack = 9290;
-	profile.sizeMinForCanonical = 284;
-	
-	packProfile bestProfile;
 	copyProfile(&profile, &bestProfile);
 	uint64_t timeLimit = 160;
 	bool unpack = true;
