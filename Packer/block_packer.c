@@ -27,14 +27,33 @@ static packProfile seqlenProfile, offsetProfile, distanceProfile;
 
 static uint64_t read_size;
 
-HANDLE  hScreenMutex;                // "Screen update" mutex
+HANDLE  tempfileMutex;            
+HANDLE clockdirMutex;
+
+HANDLE blockchunkMutex;
 
 HANDLE lockTempfileMutex() {
-	WaitForSingleObject(hScreenMutex, INFINITE);
+	WaitForSingleObject(tempfileMutex, INFINITE);
 }
 
 HANDLE releaseTempfileMutex() {
-	ReleaseMutex(hScreenMutex);
+	ReleaseMutex(tempfileMutex);
+}
+
+HANDLE lockClockdirMutex() {
+	WaitForSingleObject(clockdirMutex, INFINITE);
+}
+
+HANDLE releaseClockdirMutex() {
+	ReleaseMutex(clockdirMutex);
+}
+
+HANDLE lockBlockchunkMutex() {
+	WaitForSingleObject(blockchunkMutex, INFINITE);
+}
+
+HANDLE releaseBlockchunkMutex() {
+	ReleaseMutex(blockchunkMutex);
 }
 
 // tar contents of src => utfil
@@ -56,25 +75,39 @@ append_to_tar(FILE* utfil, blockChunk_t blockChunk) {
 
 void threadMultiPack(void* pMyID)
 {
+	lockBlockchunkMutex();
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
+	const char* src = bc->unpackedFilename;
+	const char* dst = bc->packedFilename;
+	packProfile prof = bc->profile;
+	releaseBlockchunkMutex();
 
-	bc->packType = multiPack(bc->unpackedFilename, bc->packedFilename, bc->profile, seqlenProfile,
+	uint8_t packType = multiPack(src, dst, prof, seqlenProfile,
 		offsetProfile, distanceProfile);
+
+	lockBlockchunkMutex();
+	bc->packType = packType;
 	remove(bc->unpackedFilename);
 	bc->size = get_file_size_from_name(bc->packedFilename);
 	if (bc->chunkSize < read_size) {
 		bc->size = 0;
 	}
 	printf("\n THREAD MULTIPACK FOR %s FINISHED!", bc->unpackedFilename);
+	releaseBlockchunkMutex();
 }
 
 
 void threadMultiUnpack(void* pMyID)
 {
+	lockBlockchunkMutex();
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
+	const char* src = bc->packedFilename;
+	const char* dst = bc->unpackedFilename;
+	int packType = bc->packType;
+	releaseBlockchunkMutex();
 
-	multiUnpack(bc->packedFilename, bc->unpackedFilename, bc->packType);
-	remove(bc->packedFilename);
+	multiUnpack(src, dst, packType);
+	remove(src);
 	printf("\n THREAD MULTIUNPACK FOR %s FINISHED!", bc->unpackedFilename);
 }
 
@@ -84,7 +117,9 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	uint64_t src_size = get_file_size_from_wname(src);
 
-	hScreenMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
+	tempfileMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
+	clockdirMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
+	blockchunkMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
 
 	//meta testsuit 1170029  / 33s
 	seqlenProfile = getPackProfile();

@@ -30,7 +30,7 @@ void WriteTitle(int ThreadNum);    // Display title bar information
 
 HANDLE  hConsoleOut;                 // Handle to the console
 HANDLE  hRunMutex;                   // "Keep Running" mutex
-HANDLE  hScreenMutex;                // "Screen update" mutex
+HANDLE  tempfileMutex;                // "Screen update" mutex
 int     ThreadNr;                    // Number of threads started
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo; // Console information
 COORD   consoleSize;
@@ -47,7 +47,7 @@ int mainx() // Thread One
     WriteTitle(0);
 
     // Create the mutexes and reset thread count.
-    hScreenMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
+    tempfileMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
     hRunMutex = CreateMutexW(NULL, TRUE, NULL);      // Set
     ThreadNr = 0;
     bTrails = FALSE;
@@ -56,7 +56,7 @@ int mainx() // Thread One
     KbdFunc();
 
     // All threads done. Clean up handles.
-    if (hScreenMutex) CloseHandle(hScreenMutex);
+    if (tempfileMutex) CloseHandle(tempfileMutex);
     if (hRunMutex) CloseHandle(hRunMutex);
     if (hConsoleOut) CloseHandle(hConsoleOut);
 }
@@ -71,7 +71,7 @@ void ShutDown(void) // Shut down threads
     }
 
     // Clean up display when done
-    WaitForSingleObject(hScreenMutex, INFINITE);
+    WaitForSingleObject(tempfileMutex, INFINITE);
     ClearScreen();
 }
 
@@ -128,7 +128,7 @@ void BounceProc(void* pMyID)
     do
     {
         // Wait for display to be available, then lock it.
-        WaitForSingleObject(hScreenMutex, INFINITE);
+        WaitForSingleObject(tempfileMutex, INFINITE);
 
         if (!bTrails)
         {
@@ -147,7 +147,7 @@ void BounceProc(void* pMyID)
             Coords, &Dummy);
         WriteConsoleOutputAttribute(hConsoleOut, &MyAttrib, 1,
             Coords, &Dummy);
-        ReleaseMutex(hScreenMutex);
+        ReleaseMutex(tempfileMutex);
 
         // Increment the coordinates for next placement of the block.
         Old.X = Coords.X;

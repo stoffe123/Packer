@@ -208,11 +208,11 @@ void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
 }
 
 void get_clock_dir(const char* dir) {
-	lockTempfileMutex();
+	lockClockdirMutex();
 	const char number[30] = { 0 };
 	get_rand(number);
 	concat(dir, TEMP_DIR, number);
-	releaseTempfileMutex();
+	releaseClockdirMutex();
 }
 
 void concat(const char* dst, const char* s1, const char* s2) {

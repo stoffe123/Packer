@@ -55,7 +55,7 @@ static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 }
 
 static void display_progress(uint32_t buffer_pos, uint8_t pass) {
-	if (buffer_pos % 24000 == 0 && pass == 2 && !VERBOSE) {
+	if (buffer_pos % 48000 == 0 && pass == 2 && !VERBOSE) {
 		printf("*");
 	}
 }

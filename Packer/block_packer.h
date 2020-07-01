@@ -20,4 +20,8 @@ HANDLE lockTempfileMutex();
 
 HANDLE releaseTempfileMutex();
 
+HANDLE lockClockdirMutex();
+
+HANDLE releaseClockdirMutex();
+
 #endif
