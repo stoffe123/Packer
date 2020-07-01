@@ -535,22 +535,22 @@ void test16() {
 
 void testarchive() {
 	wchar_t* test_filenames[16] = {
-	L"rel.pdf",
 	L"bad.cdg",		
 	L"nex.doc",					
+    L"did.csh",				 
+    L"amb.dll",
+    L"bad.mp3",
+    L"voc.wav",
+    L"tob.pdf",
+    L"pazera.exe",
+	L"rel.pdf",
+	L"aft.htm",
 	L"book_med.txt",
 	L"book.txt",
 	L"empty.txt",
 	L"onechar.txt",
 	L"oneseq.txt",
-	L"repeatchar.txt",	
-    L"did.csh",				
-    L"aft.htm",
-    L"amb.dll",
-    L"bad.mp3",
-    L"voc.wav",
-    L"tob.pdf",
-    L"pazera.exe"
+	L"repeatchar.txt"
 	};
 
 	packProfile profile;

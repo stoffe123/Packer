@@ -123,7 +123,6 @@ void copy_the_rest(FILE* in, const char* dest_filename) {
 		fwrite(&ch, 1, 1, out);
 	}
 	fclose(out);
-	fclose(in);
 }
 
 void copy_file(const char* src, const char* dst) {

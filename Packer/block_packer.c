@@ -57,10 +57,9 @@ HANDLE releaseBlockchunkMutex() {
 }
 
 // tar contents of src => utfil
-append_to_tar(FILE* utfil, blockChunk_t blockChunk) {
+append_to_tar(FILE* utfil, const char* packedFilename, uint32_t size, uint8_t packType) {
 	
-	uint32_t size = blockChunk.size;
-	uint8_t packType = blockChunk.packType;
+	
 
 	if (size == 0) {
 		packType = setKthBit(packType, 4);
@@ -70,7 +69,7 @@ append_to_tar(FILE* utfil, blockChunk_t blockChunk) {
 		fwrite(&size, 3, 1, utfil);
 	}
 	//write contents
-	append_to_file(utfil, blockChunk.packedFilename);
+	append_to_file(utfil, packedFilename);
 }
 
 void threadMultiPack(void* pMyID)
@@ -87,7 +86,6 @@ void threadMultiPack(void* pMyID)
 
 	lockBlockchunkMutex();
 	bc->packType = packType;
-	remove(bc->unpackedFilename);
 	bc->size = get_file_size_from_name(bc->packedFilename);
 	if (bc->chunkSize < read_size) {
 		bc->size = 0;
@@ -107,7 +105,6 @@ void threadMultiUnpack(void* pMyID)
 	releaseBlockchunkMutex();
 
 	multiUnpack(src, dst, packType);
-	remove(src);
 	printf("\n THREAD MULTIUNPACK FOR %s FINISHED!", bc->unpackedFilename);
 }
 
@@ -177,17 +174,23 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		}
 		printf("\n Real blocksize used %d", read_size);
 		copy_chunk(infil, unpackedFilename, read_size);
-		blockChunks[chunkNumber].chunkSize = get_file_size_from_name(unpackedFilename);
 
 		char* packedFilename = (char*)malloc(100 * sizeof(char));
 		getTempFile(packedFilename, "block_multipacked");
 
+		lockBlockchunkMutex();
+		blockChunks[chunkNumber].chunkSize = get_file_size_from_name(unpackedFilename);
 		blockChunks[chunkNumber].unpackedFilename = unpackedFilename;
 		blockChunks[chunkNumber].packedFilename = packedFilename;
-		blockChunks[chunkNumber].profile = profile;		
+		blockChunks[chunkNumber].profile = profile;	
+		releaseBlockchunkMutex();
 
 		printf("\n STARTING THREAD FOR MULTIPACK %d ", chunkNumber);
-		blockChunks[chunkNumber].handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
+		HANDLE handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
+
+		lockBlockchunkMutex();
+		blockChunks[chunkNumber].handle = handle;
+		releaseBlockchunkMutex();
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
 	fclose(infil);
@@ -197,11 +200,21 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	FILE* utfil = openWrite(dst);
 	for (int i = 0; i < chunkNumber; i++) {
 		WaitForSingleObject(blockChunks[i].handle, INFINITE);
+		lockBlockchunkMutex();
 		blockChunk_t blockChunk = blockChunks[i];
-		append_to_tar(utfil, blockChunk);
+		const char* packedFilename = blockChunk.packedFilename;
+		uint32_t size = blockChunk.size;
+		uint8_t packType = blockChunk.packType;
+		releaseBlockchunkMutex();
+
+		append_to_tar(utfil, packedFilename, size, packType);
+
+		lockBlockchunkMutex();
+		remove(blockChunk.unpackedFilename);
 		remove(blockChunk.packedFilename);
 		free(blockChunk.unpackedFilename);
 		free(blockChunk.packedFilename);
+		releaseBlockchunkMutex();
 	}
 	fclose(utfil);	
 }
@@ -241,11 +254,20 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 		}
 		char* unpackedFilename = (char*)malloc(100 * sizeof(char));
 		getTempFile(unpackedFilename, "block_multiunpacked");
+		
+		lockBlockchunkMutex();
 		blockChunks[chunkNumber].packType = packType;
 		blockChunks[chunkNumber].unpackedFilename = unpackedFilename;
 		blockChunks[chunkNumber].packedFilename = packedFilename;
 		printf("\n STARTING THREAD FOR MULTIUNPACK %d ", chunkNumber);
-		blockChunks[chunkNumber].handle = _beginthread(threadMultiUnpack, 0, &blockChunks[chunkNumber]);		
+		releaseBlockchunkMutex();
+
+		HANDLE handle = _beginthread(threadMultiUnpack, 0, &blockChunks[chunkNumber]);		
+
+		lockBlockchunkMutex();
+		blockChunks[chunkNumber].handle = handle;
+		releaseBlockchunkMutex();
+
 		chunkNumber++;
 	}
 	fclose(infil);
@@ -253,10 +275,18 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	FILE* utfil = openWrite(dst);
 	for (int i = 0; i < chunkNumber; i++) {
 		WaitForSingleObject(blockChunks[i].handle, INFINITE);
-		blockChunk_t blockChunk = blockChunks[i];
-		append_to_file(utfil, blockChunk.unpackedFilename);
-		free(blockChunk.unpackedFilename);
-		free(blockChunk.packedFilename);
+
+		lockBlockchunkMutex();
+		const char* unpackedFilename = blockChunks[i].unpackedFilename;
+		releaseBlockchunkMutex();
+
+		append_to_file(utfil, unpackedFilename);
+		remove(unpackedFilename);
+
+		lockBlockchunkMutex();
+		free(blockChunks[i].unpackedFilename);
+		free(blockChunks[i].packedFilename);
+		releaseBlockchunkMutex();
 	}
 	fclose(utfil);
 }

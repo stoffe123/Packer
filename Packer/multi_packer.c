@@ -44,6 +44,7 @@ void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
 	concat(metaName, pi.dir, name);
 	copy_chunk(in, metaName, size);
 }
+
 void untar(FILE* in, pack_info_t pi) {
 
 	if (isKthBitSet(pi.pack_type, 7)) {
