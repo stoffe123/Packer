@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "common_tools.h"
+#include "block_packer.h"
 
 
 
@@ -189,21 +190,29 @@ void get_randw(const wchar_t* s) {
 }
 
 void getTempFile(const char* dst, const char* s) {
+
+	lockTempfileMutex();
 	char number[40] = { 0 };
 	get_rand(number);
 	concat3(dst, TEMP_DIR, s, number);
+	releaseTempfileMutex();
+	
 }
 
 void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
+	lockTempfileMutex();
 	wchar_t number[40] = { 0 };
 	get_randw(number);
 	concat3w(dst, TEMP_DIRW, s, number);
+	releaseTempfileMutex();
 }
 
 void get_clock_dir(const char* dir) {
+	lockTempfileMutex();
 	const char number[30] = { 0 };
 	get_rand(number);
 	concat(dir, TEMP_DIR, number);
+	releaseTempfileMutex();
 }
 
 void concat(const char* dst, const char* s1, const char* s2) {

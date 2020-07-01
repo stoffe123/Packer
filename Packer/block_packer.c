@@ -11,11 +11,9 @@
 #include "multi_packer.h"
 #include "canonical.h"
 
-#define MAX_THREADS  128
-
 typedef struct blockChunk_t {
 	const char* packedFilename;
-	const char* chunkFilename;
+	const char* unpackedFilename;
 	packProfile profile;
 	uint64_t size;
 	uint16_t packType;
@@ -28,6 +26,16 @@ static blockChunk_t blockChunks[1000];
 static packProfile seqlenProfile, offsetProfile, distanceProfile;
 
 static uint64_t read_size;
+
+HANDLE  hScreenMutex;                // "Screen update" mutex
+
+HANDLE lockTempfileMutex() {
+	WaitForSingleObject(hScreenMutex, INFINITE);
+}
+
+HANDLE releaseTempfileMutex() {
+	ReleaseMutex(hScreenMutex);
+}
 
 // tar contents of src => utfil
 append_to_tar(FILE* utfil, blockChunk_t blockChunk) {
@@ -50,14 +58,24 @@ void threadMultiPack(void* pMyID)
 {
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
 
-	bc->packType = multiPack(bc->chunkFilename, bc->packedFilename, bc->profile, seqlenProfile,
+	bc->packType = multiPack(bc->unpackedFilename, bc->packedFilename, bc->profile, seqlenProfile,
 		offsetProfile, distanceProfile);
-	remove(bc->chunkFilename);
+	remove(bc->unpackedFilename);
 	bc->size = get_file_size_from_name(bc->packedFilename);
 	if (bc->chunkSize < read_size) {
 		bc->size = 0;
 	}
-	printf("\n THREAD FOR %s FINISHED!", bc->chunkFilename);
+	printf("\n THREAD MULTIPACK FOR %s FINISHED!", bc->unpackedFilename);
+}
+
+
+void threadMultiUnpack(void* pMyID)
+{
+	blockChunk_t* bc = (blockChunk_t*)pMyID;
+
+	multiUnpack(bc->packedFilename, bc->unpackedFilename, bc->packType);
+	remove(bc->packedFilename);
+	printf("\n THREAD MULTIUNPACK FOR %s FINISHED!", bc->unpackedFilename);
 }
 
 //----------------------------------------------------------------------------------------
@@ -65,6 +83,8 @@ void threadMultiPack(void* pMyID)
 void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	uint64_t src_size = get_file_size_from_wname(src);
+
+	hScreenMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
 
 	//meta testsuit 1170029  / 33s
 	seqlenProfile = getPackProfile();
@@ -109,8 +129,8 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	FILE* infil = openRead(src);
 	int chunkNumber = 0;
 	do {
-		char* chunkFilename = (char*)malloc(100 * sizeof(char));		
-		getTempFile(chunkFilename, "block_chunk");
+		char* unpackedFilename = (char*)malloc(100 * sizeof(char));		
+		getTempFile(unpackedFilename, "block_chunk");
 		read_size = BLOCK_SIZE - profile.blockSizeMinus * (uint64_t)10000;
 
 		assert(read_size < 16777215, "too large blocksize must be < 16777215");
@@ -121,17 +141,17 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		 	read_size--;
 		}
 		printf("\n Real blocksize used %d", read_size);
-		copy_chunk(infil, chunkFilename, read_size);
-		blockChunks[chunkNumber].chunkSize = get_file_size_from_name(chunkFilename);
+		copy_chunk(infil, unpackedFilename, read_size);
+		blockChunks[chunkNumber].chunkSize = get_file_size_from_name(unpackedFilename);
 
 		char* packedFilename = (char*)malloc(100 * sizeof(char));
 		getTempFile(packedFilename, "block_multipacked");
 
-		blockChunks[chunkNumber].chunkFilename = chunkFilename;
+		blockChunks[chunkNumber].unpackedFilename = unpackedFilename;
 		blockChunks[chunkNumber].packedFilename = packedFilename;
 		blockChunks[chunkNumber].profile = profile;		
 
-		printf("\n STARTING THREAD %d ", chunkNumber);
+		printf("\n STARTING THREAD FOR MULTIPACK %d ", chunkNumber);
 		blockChunks[chunkNumber].handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
@@ -145,7 +165,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		blockChunk_t blockChunk = blockChunks[i];
 		append_to_tar(utfil, blockChunk);
 		remove(blockChunk.packedFilename);
-		free(blockChunk.chunkFilename);
+		free(blockChunk.unpackedFilename);
 		free(blockChunk.packedFilename);
 	}
 	fclose(utfil);	
@@ -155,40 +175,54 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 // ----------------------------------------------------------------
 
 void block_unpack(const wchar_t* src, const wchar_t* dst) {
-	FILE* utfil = openWrite(dst);
+	
+
+	
 	FILE* infil = openRead(src);
 
 	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
+	int chunkNumber = 0;
 	while (true) {
 
 		uint8_t packType;
-		const char tmp[100] = { 0 };
-		getTempFile(tmp, "block_tobeunpacked");
+		
+		char* packedFilename = (char*)malloc(100 * sizeof(char));
+		getTempFile(packedFilename, "block_tobeunpacked");
+		
+
 		if (fread(&packType, 1, 1, infil) == 0) {
 			break;
 		}
 		if (isKthBitSet(packType, 4)) {
-			copy_the_rest(infil, tmp);
+			copy_the_rest(infil, packedFilename);
 		}
 		else {
 			uint32_t size = 0;
 			//3 bytes can handle block sizes up to 16777216‬
 			//note that these are the sizes of the compressed chunks!
-			fread(&size, 3, 1, infil);			
-			copy_chunk(infil, tmp, size);
+			fread(&size, 3, 1, infil);
+			copy_chunk(infil, packedFilename, size);
 		}
-		const char tmp2[100] = { 0 };
-		getTempFile(tmp2, "block_multiunpacked");
-		multiUnpack(tmp, tmp2, packType);
-
-		remove(tmp);
-
-		append_to_file(utfil, tmp2);
-
-		remove(tmp2);
+		char* unpackedFilename = (char*)malloc(100 * sizeof(char));
+		getTempFile(unpackedFilename, "block_multiunpacked");
+		blockChunks[chunkNumber].packType = packType;
+		blockChunks[chunkNumber].unpackedFilename = unpackedFilename;
+		blockChunks[chunkNumber].packedFilename = packedFilename;
+		printf("\n STARTING THREAD FOR MULTIUNPACK %d ", chunkNumber);
+		blockChunks[chunkNumber].handle = _beginthread(threadMultiUnpack, 0, &blockChunks[chunkNumber]);		
+		chunkNumber++;
 	}
 	fclose(infil);
+
+	FILE* utfil = openWrite(dst);
+	for (int i = 0; i < chunkNumber; i++) {
+		WaitForSingleObject(blockChunks[i].handle, INFINITE);
+		blockChunk_t blockChunk = blockChunks[i];
+		append_to_file(utfil, blockChunk.unpackedFilename);
+		free(blockChunk.unpackedFilename);
+		free(blockChunk.packedFilename);
+	}
 	fclose(utfil);
 }
 

@@ -162,13 +162,15 @@ void test(FILE* f){
 
 }
 
+__declspec(thread) static int calls = 0;
+__declspec(thread) static int acc;
+__declspec(thread) static int first = 1;
+
 //This function reads in a character from the input text.
 //Then it returns 1 bit of that character (0 or 1) each time it is called.
 //When all the bits in the char have been read, it reads in another character.
 int read_bit(FILE* f){
-	static int calls=0;
-	static int acc;
-	static int first = 1;
+	
 	if(first==1){
 		acc=fgetc(f);
 		first=0;

@@ -11,29 +11,30 @@
 
 __declspec(thread) static  long long read_packedfile_pos;
 
+__declspec(thread) static int globalByte, globalPos;
+
 int readHalfbyte(FILE* infil, int cmd)
 {
-	static int byte, pos;
 	if (cmd == -1)
 	{
 		/* initialize */
-		pos = 0;
+		globalPos = 0;
 		return 0;   /* the return value here is not used */
 	}
 	else
 	{
-		if (pos == 0)
+		if (globalPos == 0)
 		{
-			if (fread(&byte, 1, 1, infil)) {
-				pos = 1;
-				return(byte / 16);
+			if (fread(&globalByte, 1, 1, infil)) {
+				globalPos = 1;
+				return(globalByte / 16);
 			}			
 			return -1; // EOF						
 		}
 		else
 		{
-			pos = 0;
-			return(byte % 16);
+			globalPos = 0;
+			return(globalByte % 16);
 
 		}
 	}

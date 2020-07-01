@@ -152,7 +152,7 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	uint8_t offset_pages, seqlen_pages, distance_pages;	
 	uint64_t useDistanceLongRange, useOffsetLongRange, useSeqlenLongRange;
 
-	static FILE* infil, * utfil, * seqlens_file, * offsets_file, * distances_file;
+	FILE* infil, * utfil, * seqlens_file, * offsets_file, * distances_file;
 
 	if (separate_files) {
 		const wchar_t seqlens_name[100] = { 0 };

@@ -14,30 +14,32 @@
 
 /* Canonical header packer */
 
+__declspec(thread) static int globalByte, globalPos;
+
 void writeHalfbyte(FILE* file, int halfbyte)
 {
-	static int byte, pos;
+	
 	switch (halfbyte)
 	{
 	case -1:  /* initialize */
-		pos = 0;
+		globalPos = 0;
 		break;
 	case -2:  /* flush */
 		//tricky part here if we get a trailing value
 		//we want that trailing value to be a code
 		//so we can ignore it in the unpacker
-		if (pos == 1) WRITE(file, (uint64_t)15 + byte);
+		if (globalPos == 1) WRITE(file, (uint64_t)15 + globalByte);
 		break;
 	default:
-		if (pos == 0)
+		if (globalPos == 0)
 		{
-			byte = halfbyte * 16;
-			pos = 1;
+			globalByte = halfbyte * 16;
+			globalPos = 1;
 		}
 		else
 		{
-			WRITE(file, (uint64_t)halfbyte + byte);
-			pos = 0;
+			WRITE(file, (uint64_t)halfbyte + globalByte);
+			globalPos = 0;
 		}
 	}
 }

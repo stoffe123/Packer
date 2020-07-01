@@ -417,8 +417,8 @@ void test16() {
 	
 	wchar_t test_filenames[16][100] = { 
 		
-		L"tob.pdf",
 		L"rel.pdf",
+		L"tob.pdf",
 
 		L"book.txt",
 		
