@@ -13,6 +13,13 @@
 
 #define META_SIZE_MAX 1048575
 
+static 	packProfile twobyte100Profile = {
+.twobyte_ratio = 100,
+.twobyte_threshold_divide = 1,
+.twobyte_threshold_max = 3,
+.twobyte_threshold_min = 3
+};
+
 typedef struct packCandidate_t {
 	const char* filename;
 	unsigned char packType;
@@ -210,12 +217,6 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	//printProfile(&profile);
 	unsigned long long source_size = get_file_size_from_name(src);
 	unsigned char pack_type = 0;
-		
-	packProfile twobyte100Profile = getPackProfile();
-	twobyte100Profile.twobyte_ratio = 100;
-	twobyte100Profile.twobyte_threshold_divide = 1;
-	twobyte100Profile.twobyte_threshold_max = 3;
-	twobyte100Profile.twobyte_threshold_min = 3;
 
 	bool do_store = source_size < 10;
 	if (!do_store) {
