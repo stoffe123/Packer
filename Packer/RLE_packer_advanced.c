@@ -112,10 +112,13 @@ void optimize_freelen(int free_lens[], int no_of_freelen)
 }
 
 
-void sort(int f[], int g[], int n)
+static void sort(int f[], int g[], int n)
 {
-    int i, j, imin, temp;
-    for (i = 0; i < n; i++) {
+    if (n == 1) {
+        return;
+    }
+    uint64_t i, j, imin, temp;
+    for (i = 0; i < n - (uint64_t)1; i++) {
         /* sök index för det minsta bland elementen nr i, i+1, … */
         imin = i;
         for (j = i + 1; j < n; j++)

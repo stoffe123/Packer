@@ -186,3 +186,88 @@ value_freq_t find_best_code(unsigned long* char_freq) {
 	return res;
 }
 
+static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
+
+	int res;
+	char ext1[500] = { 0 };
+	char ext2[500] = { 0 };
+
+	substringAfter(ext1, s1, L".");
+	substringAfter(ext2, s2, L".");
+
+	if (equalsw(ext1, L"txt")) {
+		strcpy(ext1, "zzz");
+	}
+	if (equalsw(ext2, L"txt")) {
+		strcpy(ext2, "zzz");
+	}
+	if (equalsw(ext1, L"htm")) {
+		strcpy(ext1, "zzy");
+	}
+	if (equalsw(ext2, L"htm")) {
+		strcpy(ext2, "zzy");
+	}
+	if (equalsw(ext1, L"html")) {
+		strcpy(ext1, "zzx");
+	}
+	if (equalsw(ext2, L"html")) {
+		strcpy(ext2, "zzx");
+	}
+
+	if (equalsw(ext1, L"wav")) {
+		strcpy(ext1, "aab");
+	}
+	if (equalsw(ext2, L"wav")) {
+		strcpy(ext2, "aab");
+	}
+
+	if (equalsw(ext1, L"exe")) {
+		strcpy(ext1, "aaa");
+	}
+	if (equalsw(ext2, L"exe")) {
+		strcpy(ext2, "aaa");
+	}
+
+
+
+	if (wcslen(ext1) + wcslen(ext2) > 0) {
+
+		res = wcscmp(ext1, ext2);
+		if (res) {
+			return -res;
+		}
+	}
+	uint64_t size1 = get_file_size_from_wname(s1);
+	uint64_t size2 = get_file_size_from_wname(s2);
+	if (size1 < size2) {
+		return 1;
+	}
+	if (size1 > size2) {
+		return -1;
+	}
+	return 0;
+}
+
+
+
+void bubbleSort(file_t* f, uint64_t size)
+{
+	int i, j, imin;
+	file_t temp;
+	for (i = 0; i < size; i++) {
+		/* sök index för det minsta bland elementen nr i, i+1, … */
+		imin = i;
+		for (j = i + 1; j < size; j++) {
+			if (compareEndings(f[j].name, f[imin].name) < 0) {
+				imin = j;
+			}
+		}
+		/* byt element så det minsta hamnar i pos i */
+		if (imin != i) {
+			temp = f[i]; f[i] = f[imin]; f[imin] = temp;
+			//temp = g[i]; g[i] = g[imin]; g[imin] = temp;
+		}
+	} /* end for i */
+}
+
+

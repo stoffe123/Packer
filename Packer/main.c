@@ -543,25 +543,7 @@ void test16() {
 //-----------------------------------------------------------------------------------------
 
 void testarchive() {
-	wchar_t* test_filenames[16] = {
-	L"bad.cdg",		
-	L"nex.doc",					
-    L"did.csh",				 
-    L"amb.dll",
-    L"bad.mp3",
-	L"rel.pdf",
-	L"aft.htm",
-	L"book_med.txt",
-	L"book.txt",
-	L"empty.txt",
-	L"onechar.txt",
-	L"oneseq.txt",
-	L"repeatchar.txt",
-	L"voc.wav",
-    L"tob.pdf",
-   L"pazera.exe"
-	};
-
+	
 	packProfile bestProfile,
 		profile = {
 			.rle_ratio = 86,
@@ -580,29 +562,26 @@ void testarchive() {
 			.sizeMaxForSuperslim = 27528
 	};
 	copyProfile(&profile, &bestProfile);
-	wchar_t* destDir = L"c:/test/archiveunp/";
+	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
 
+		deleteAllFilesInDir(destDir);
 		uint64_t acc_size_org = 0;
 
-	uint64_t before_suite = clock();
-	int no_of_files = 13;
-	wchar_t* source_dir[200] = { 0 }; 
-	concat_intw(source_dir, L"D:/Dropbox/Personal/Programmering/Compression/test/test", no_of_files);
-		
-		wchar_t filenames2[16][200], filenames3[16][200];
-		for (int i = 0; i < no_of_files; i++) {
-			concat3w(filenames2[i], source_dir, L"\\", test_filenames[i]);
-			concat3w(filenames3[i], destDir, L"\\", test_filenames[i]);			
-		}
+		uint64_t before_suite = clock();
+		int no_of_files = 16;
+		wchar_t* source_dir = L"c:/test/ws_todo";
+        // wchar_t*  source_dir[200] = { 0 };
+		//concat_intw(source_dir, L"D:/Dropbox/Personal/Programmering/Compression/test/test_big", no_of_files);
+
 
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
 		int pack_time = (clock() - cl);
 		uint64_t acc_size_packed = get_file_size_from_wname(packed_name);
-		
+
 		printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
 		cl = clock();
@@ -611,15 +590,13 @@ void testarchive() {
 
 		int unpack_time = (clock() - cl);
 
-		printf("\n Comparing files!");
-		for (int i = 0; i < no_of_files; i++) {
-
-			if (files_equalw(filenames2[i], filenames3[i])) {
-				printf("\n ****** SUCCESS ****** (equal)\n");
-			}
-			else {
-				exit(1);
-			}		
+		printf("\n Comparing dirs!");
+		if (dirs_equalw(source_dir, destDir)) {
+			printf("\n ****** SUCCESS ****** (equal)\n");
+		}
+		else {
+			printf("\n => dirs not equal, exiting!");
+			exit(1);
 		}
 		uint64_t totalTime = clock() - before_suite;
 		best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);

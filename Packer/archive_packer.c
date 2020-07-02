@@ -7,19 +7,15 @@
 #include <stdio.h>
 #include <tchar.h> 
 #include <strsafe.h>
-#pragma comment(lib, "User32.lib")
-
 #include "seq_packer.h"  
 #include "common_tools.h"
 #include "multi_packer.h"
 #include "packer_commons.h"
+
+#pragma comment(lib, "User32.lib")
+
+
 #include "block_packer.h"
-
-typedef struct file_t {
-	uint64_t size;
-	wchar_t name[2000];
-} file_t;
-
 
 void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n) 
 {
@@ -32,87 +28,6 @@ void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 
 
 
-static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
-
-	int res;
-	char ext1[500] = { 0 };
-	char ext2[500] = { 0 };
-
-	substringAfter(ext1, s1, L".");
-	substringAfter(ext2, s2, L".");
-
-	if (equalsw(ext1, L"txt")) {
-		strcpy(ext1, "zzz");
-	}
-	if (equalsw(ext2, L"txt")) {
-		strcpy(ext2, "zzz");
-	}
-	if (equalsw(ext1, L"htm")) {
-		strcpy(ext1, "zzy");
-	}
-	if (equalsw(ext2, L"htm")) {
-		strcpy(ext2, "zzy");
-	}
-	if (equalsw(ext1, L"html")) {
-		strcpy(ext1, "zzx");
-	}
-	if (equalsw(ext2, L"html")) {
-		strcpy(ext2, "zzx");
-	}
-
-	if (equalsw(ext1, L"wav")) {
-		strcpy(ext1, "aab");
-	}
-	if (equalsw(ext2, L"wav")) {
-		strcpy(ext2, "aab");
-	}
-
-	if (equalsw(ext1, L"exe")) {
-		strcpy(ext1, "aaa");
-	}
-	if (equalsw(ext2, L"exe")) {
-		strcpy(ext2, "aaa");
-	}
-
-
-
-	if (wcslen(ext1) + wcslen(ext2) > 0) {
-
-		res = wcscmp(ext1, ext2);
-		if (res) {
-			return -res;
-		}
-	}
-	uint64_t size1 = get_file_size_from_wname(s1);
-	uint64_t size2 = get_file_size_from_wname(s2);
-	if (size1 < size2) {
-		return 1;
-	}
-	if (size1 > size2) {
-		return -1;
-	}
-	return 0;	
-}
-
-static void sort(file_t f[], int size)
-{
-	int i, j, imin;
-	file_t temp;
-	for (i = 0; i < size; i++) {
-		/* sök index för det minsta bland elementen nr i, i+1, … */
-		imin = i;
-		for (j = i + 1; j < size; j++) {
-			if (compareEndings(f[j].name, f[imin].name) < 0) {
-				imin = j;
-			}
-		}
-		/* byt element så det minsta hamnar i pos i */
-		if (imin != i) {
-			temp = f[i]; f[i] = f[imin]; f[imin] = temp;
-			//temp = g[i]; g[i] = g[imin]; g[imin] = temp;
-		}
-	} /* end for i */
-}
 
 
 uint64_t storeDirectoryFilenames(file_t* fileList, const wchar_t* sDir, uint64_t j)
@@ -141,7 +56,12 @@ uint64_t storeDirectoryFilenames(file_t* fileList, const wchar_t* sDir, uint64_t
 		{
 			//Build up our file path using the passed in 
 			//  [sDir] and the file/foldername we just found: 
-			wsprintf(sPath, L"%s\\%s", sDir, fdFile.cFileName);
+			/* if (sDir[wcslen(sDir) - 1] == '/') {
+				wsprintf(sPath, L"%s%s", sDir, fdFile.cFileName);
+			}
+			else {*/
+				wsprintf(sPath, L"%s\\%s", sDir, fdFile.cFileName);
+			//}
 
 			//Is the entity a File or Folder? 
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -213,7 +133,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 	printf("\n mallocing for count %d", count);
 	file_t* fileList = malloc(count * sizeof(file_t));
 	storeDirectoryFilenames(fileList, dir, 0);
-	sort(fileList, count);
+	bubbleSort(fileList, count);
 
 	FILE* out = openWrite(dest);	
 	fwrite(&count, sizeof(uint32_t), 1, out);
@@ -222,7 +142,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 	for (int i = 0; i < count; i++) {
 		uint64_t size = fileList[i].size;
 		fwrite(&size, sizeof(uint64_t), 1, out);
-		printf("\n writing size for %d as %d", i, size);
+		//printf("\n writing size for %d as %d", i, size);
 	}
 
 	//write names separated by /n
@@ -261,10 +181,16 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 
 void createDirs(wchar_t* wstr, wchar_t* dir) {
 	wchar_t* str = wstr + wcslen(dir);
-	int ind = indexOfChar(str, '\\') + 1;
+	if (str[0] == '\\' || str[0] == '/') {
+		str++;
+	}
+	int ind = indexOfChar(str, '\\');
+	if (ind == -1) {
+		ind = indexOfChar(str, '/');
+	}
 	if (ind > 0) {
 		const wchar_t dirName[500] = { 0 };
-		substring(dirName, str, 0, ind);
+		substring(dirName, str, 0, ind + 1);
 		const wchar_t wholeDir[500] = { 0 };
 		concatw(wholeDir, dir, dirName);
 
@@ -291,7 +217,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 	printf("\n");
 	for (int i = 0; i < count; i++) {
 		fread(&sizes[i], sizeof(uint64_t), 1, in);
-		printf("\n size nr %d: %d", i, sizes[i]);
+		//printf("\n size nr %d: %d", i, sizes[i]);
 	}
 
 	// Read names

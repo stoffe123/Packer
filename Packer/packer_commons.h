@@ -1,6 +1,7 @@
 ﻿#ifndef PACKER_COMMONS_H
 #define PACKER_COMMONS_H
 
+#include "common_tools.h"
 #include <stdbool.h>
 
 //3 bytes can handle block sizes up to 16777216‬
@@ -39,6 +40,8 @@ typedef struct packProfile {
 	int64_t sizeMinForCanonical;
 	int64_t sizeMaxForSuperslim;
 } packProfile;
+
+void bubbleSort(file_t* f, uint64_t size);
 
 void printProfile(packProfile*);
 

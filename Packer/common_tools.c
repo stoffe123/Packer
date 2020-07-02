@@ -301,10 +301,104 @@ void toUni(const wchar_t* dst, const char* str) {
 	MultiByteToWideChar(CP_ACP, 0, str, -1, dst, 500);	
 }
 
-bool dirs_equal(const char* dir1, const char* dir2) {
+void deleteAllFilesInDir(const wchar_t* sDir) {
+	WIN32_FIND_DATA fdFile;
+	HANDLE hFind = NULL;
 
+	wchar_t sPath[2048];
 
+	//Specify a file mask. *.* = We want everything! 
+	wsprintf(sPath, L"%s\\*.*", sDir);
 
+	if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
+	{
+		wprintf(L"Path not found: [%s]\n", sDir);
+		exit(0);
+	}
+
+	do
+	{
+		//Find first file will always return "."
+		//    and ".." as the first two directories. 
+		if (wcscmp(fdFile.cFileName, L".") != 0
+			&& wcscmp(fdFile.cFileName, L"..") != 0)
+		{
+			//Build up our file path using the passed in 
+			//  [sDir] and the file/foldername we just found: 
+			/* if (sDir[wcslen(sDir) - 1] == '/') {
+				wsprintf(sPath, L"%s%s", sDir, fdFile.cFileName);
+			}
+			else {*/
+			wsprintf(sPath, L"%s\\%s", sDir, fdFile.cFileName);
+			//}
+
+			//Is the entity a File or Folder? 
+			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			{
+				wprintf(L"removing Directory: %s\n", sPath);
+				deleteAllFilesInDir(sPath); //Recursion, I love it! 
+				RemoveDirectory(sPath);
+			}
+			else {
+
+				wprintf(L"\trying to remove: %s", sPath);
+			    _wremove(sPath);								
+			}
+		}
+	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
+
+	FindClose(hFind); //Always, Always, clean things up! 	
+}
+
+bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
+	uint32_t count = countDirectoryFiles(dir1, 0);
+	uint32_t count2 = countDirectoryFiles(dir2, 0);
+
+	if (count != count2) {
+		printf("\n dirs_equal: number of files differed... %d %d", count, count2);
+		return false;
+	}
+	file_t* fileList1 = malloc(count * sizeof(file_t));
+	storeDirectoryFilenames(fileList1, dir1, 0);
+	bubbleSort(fileList1, count);
+
+	file_t* fileList2 = malloc(count * sizeof(file_t));
+	storeDirectoryFilenames(fileList2, dir2, 0);
+	bubbleSort(fileList2, count);
+	bool result = true;
+	for (int i = 0; i < count; i++) {
+		wchar_t* n1 = fileList1[i].name;
+		wchar_t* n2 = fileList2[i].name;
+		n1 += wcslen(dir1);
+		n2 += wcslen(dir2);
+		if (n1[0] == '/') {
+			n1++;
+		}
+		if (n2[0] == '/') {
+			n2++;
+		}
+		if (!equalsw(n1 , n2)) {
+			wprintf(L"\n file nr %d differed by name %s <=> %s", i, n1, n2);
+			result = false;
+			break;
+		}
+		if (fileList1[i].size != fileList2[i].size) {
+			wprintf(L"\n file nr %d differed by size %d <=> %d", i, fileList1[i].size, fileList2[i].size);
+			result = false;
+			break;
+		}
+	}
+	if (result) {
+		for (int i = 0; i < count; i++) {
+			if (!files_equalw(fileList1[i].name, fileList2[i].name)) {
+				result = false;
+				break;
+			}
+		}
+	}
+	free(fileList1);
+	free(fileList2);
+	return result;
 }
 
 bool files_equal(const char* f1, const char* f2) {

@@ -12,6 +12,16 @@
 #define TEMP_DIR "c:/test/temp_files/"
 #define TEMP_DIRW L"c:/test/temp_files/"
 
+
+typedef struct file_t {
+	uint64_t size;
+	wchar_t name[2000];
+} file_t;
+
+void deleteAllFilesInDir(const wchar_t* dir);
+
+bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2);
+
 bool contains(const wchar_t* s, const wchar_t* find);
 
 uint64_t indexOfChar(const wchar_t* s, const wchar_t find);
