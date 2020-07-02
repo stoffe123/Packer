@@ -23,9 +23,38 @@ typedef struct file_t {
 //for tar
 static file_t fileList[10000];
 
-// for untar
-static char filenames[10000][500];
-static uint64_t* sizes[10000];
+static int reverseCompare(const wchar_t* s1, const wchar_t* s2) {
+	const char* c1 = _wcsdup(s1);
+	const char* c2 = _wcsdup(s2);
+	
+	const char* d1 = _wcsrev(c1);
+	const char* d2 = _wcsrev(c2);
+	int res = wcscmp(d1, d2);
+	free(c1);
+	free(c2);
+	return res;
+}
+
+static void sort(file_t f[], int size)
+{
+	int i, j, imin;
+	file_t temp;
+	for (i = 0; i < size; i++) {
+		/* sök index för det minsta bland elementen nr i, i+1, … */
+		imin = i;
+		for (j = i + 1; j < size; j++) {
+			if (reverseCompare(f[j].name, f[imin].name) < 0) {
+				imin = j;
+			}
+		}
+		/* byt element så det minsta hamnar i pos i */
+		if (imin != i) {
+			temp = f[i]; f[i] = f[imin]; f[imin] = temp;
+			//temp = g[i]; g[i] = g[imin]; g[imin] = temp;
+		}
+	} /* end for i */
+}
+
 
 void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 {
@@ -72,6 +101,7 @@ void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
 
 	FindClose(hFind); //Always, Always, clean things up! 
+	sort(fileList, count);
 }
 
 
@@ -133,7 +163,8 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 	}
 
 	//write names separated by /n
-	int lengthOfDirName = wcslen(dir);
+	int lengthOfDirName = wcslen(dir);	
+
 	printf("\n ********* storing names!!! **********\n");
 	for (int i = 0; i < count; i++) {
 		//wprintf(L"%s  ,  %d\n", fileList[i].name, fileList[i].size);
@@ -167,12 +198,19 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 
 void archiveUntar(const wchar_t* src, wchar_t* dir) {
 
-	FILE* in = openRead(src);	
+	FILE* in = openRead(src);
 	uint32_t count;
 
 	fread(&count, sizeof(count), 1, in);
 
+	const char** filenames = malloc(count * sizeof(uint64_t));
+	for (int i = 0; i < count; i++) {
+		filenames[i] = malloc(500 * sizeof(char));
+	}
+	uint64_t* sizes = malloc(count * sizeof(uint64_t));
+
 	// Read sizes
+	printf("\n");
 	for (int i = 0; i < count; i++) {
 		fread(&sizes[i], sizeof(sizes[i]), 1, in);
 		printf("\n size nr %d: %d", i, sizes[i]);
@@ -200,6 +238,8 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 		copy_chunkw(in, filenames[i], sizes[i]);
 	}
 	fclose(in);
+	free(filenames);
+	free(sizes);
 }
 
 

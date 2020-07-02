@@ -100,8 +100,10 @@ unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned 
 		printf("\n\n **** ALL SUCCEEDED ****\n %.0f kb   (%llu)", size_kb, acc_size);
 		double time_sec = (double)total_time / 1000.0;
 		printf("\n\Time %.0fs  (%d)", time_sec, total_time);
-		double pack_ratio = (double)acc_size / (double)acc_size_org;
-		printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
+		if (acc_size_org > 0) {
+			double pack_ratio = (double)acc_size / (double)acc_size_org;
+			printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
+		}
 
 		double eff = size_kb / time_sec;
 		printf("\nEfficiency %.2f kb/s\n\n", eff);
@@ -562,20 +564,20 @@ void testarchive() {
 
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 85,
-			.twobyte_ratio = 91,
-			.recursive_limit = 269,
-			.twobyte_threshold_max = 11750,
-			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 857,
-			.seqlenMinLimit3 = 149,
-			.seqlenMinLimit4 = 52447,
-			.blockSizeMinus = 121,
-			.winsize = 99254,
-			.sizeMaxForCanonicalHeaderPack = 218,
-			.sizeMinForSeqPack = 11773,
-			.sizeMinForCanonical = 290,
-			.sizeMaxForSuperslim = 16384
+			.rle_ratio = 89,
+			.twobyte_ratio = 92,
+			.recursive_limit = 148,
+			.twobyte_threshold_max = 11370,
+			.twobyte_threshold_divide = 307,
+			.twobyte_threshold_min = 880,
+			.seqlenMinLimit3 = 167,
+			.seqlenMinLimit4 = 55975,
+			.blockSizeMinus = 143,
+			.winsize = 115628,
+			.sizeMaxForCanonicalHeaderPack = 313,
+			.sizeMinForSeqPack = 19250,
+			.sizeMinForCanonical = 264,
+			.sizeMaxForSuperslim = 13943
 	};
 	copyProfile(&profile, &bestProfile);
 	wchar_t* destDir = L"c:/test/archiveunp/";
@@ -586,10 +588,12 @@ void testarchive() {
 		uint64_t acc_size_org = 0;
 
 	uint64_t before_suite = clock();
-		wchar_t* source_dir = L"c:\\test\\test13";
+	int no_of_files = 16;
+	wchar_t* source_dir[200] = { 0 }; 
+	concat_intw(source_dir, L"c:\\test\\test", no_of_files);
 		
 		wchar_t filenames2[16][200], filenames3[16][200];
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < no_of_files; i++) {
 			concat3w(filenames2[i], source_dir, L"\\", test_filenames[i]);
 			concat3w(filenames3[i], destDir, L"\\", test_filenames[i]);			
 		}
@@ -608,7 +612,7 @@ void testarchive() {
 		int unpack_time = (clock() - cl);
 
 		printf("\n Comparing files!");
-		for (int i = 0; i < 13; i++) {
+		for (int i = 0; i < no_of_files; i++) {
 
 			if (files_equalw(filenames2[i], filenames3[i])) {
 				printf("\n ****** SUCCESS ****** (equal)\n");

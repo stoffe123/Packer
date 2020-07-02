@@ -127,7 +127,6 @@ void sort(int f[], int g[], int n)
             temp = g[i]; g[i] = g[imin]; g[imin] = temp;
         }
     } /* end for i */
-
 }
 
 void sort2(int f[][RL_MAX + 1], int g[][RL_MAX + 1])
