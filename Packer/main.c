@@ -547,9 +547,6 @@ void testarchive() {
     L"did.csh",				 
     L"amb.dll",
     L"bad.mp3",
-    L"voc.wav",
-    L"tob.pdf",
-    L"pazera.exe",
 	L"rel.pdf",
 	L"aft.htm",
 	L"book_med.txt",
@@ -557,30 +554,38 @@ void testarchive() {
 	L"empty.txt",
 	L"onechar.txt",
 	L"oneseq.txt",
-	L"repeatchar.txt"
+	L"repeatchar.txt",
+	L"voc.wav",
+    L"tob.pdf",
+   L"pazera.exe"
 	};
 
-	packProfile profile;
-	profile.rle_ratio = 85;
-	profile.twobyte_ratio = 73;
-	profile.recursive_limit = 79;
-	profile.twobyte_threshold_max = 1180;
-	profile.twobyte_threshold_divide = 529;
-	profile.twobyte_threshold_min = 81;
-	profile.seqlenMinLimit3 = 80;
-	profile.blockSizeMinus = 139;
-
-	packProfile bestProfile;
+	packProfile bestProfile,
+		profile = {
+			.rle_ratio = 94,
+			.twobyte_ratio = 91,
+			.recursive_limit = 320,
+			.twobyte_threshold_max = 11750,
+			.twobyte_threshold_divide = 20,
+			.twobyte_threshold_min = 848,
+			.seqlenMinLimit3 = 151,
+			.seqlenMinLimit4 = 52447,
+			.blockSizeMinus = 121,
+			.winsize = 104172,
+			.sizeMaxForCanonicalHeaderPack = 268,
+			.sizeMinForSeqPack = 8470,
+			.sizeMinForCanonical = 278,
+			.sizeMaxForSuperslim = 16384
+	};
 	copyProfile(&profile, &bestProfile);
 	wchar_t* destDir = L"c:/test/archiveunp/";
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
 
-		unsigned long long acc_size_packed = 0,
-			acc_size_org = 0;
+		uint64_t acc_size_org = 0;
 
-		int before_suite = clock();
+	uint64_t before_suite = clock();
 		wchar_t* source_dir = L"c:\\test\\test13";
 		
 		wchar_t filenames2[16][200], filenames3[16][200];
@@ -592,8 +597,7 @@ void testarchive() {
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
 		int pack_time = (clock() - cl);
-		uint64_t size_packed = get_file_size_from_wname(packed_name);
-		acc_size_packed += size_packed;
+		uint64_t acc_size_packed = get_file_size_from_wname(packed_name);
 		
 		printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
@@ -602,11 +606,8 @@ void testarchive() {
 		archive_unpack(packed_name, destDir);
 
 		int unpack_time = (clock() - cl);
-		//printf("\n Unpacking finished time it took: %d", unpack_time);
-		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-	
-		printf("\n\n Comparing files!");
+		printf("\n Comparing files!");
 		for (int i = 0; i < 13; i++) {
 
 			if (files_equalw(filenames2[i], filenames3[i])) {
@@ -616,7 +617,8 @@ void testarchive() {
 				exit(1);
 			}		
 		}
-		best_size = presentResult(false, before_suite, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		uint64_t totalTime = clock() - before_suite;
+		best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		fuzzProfile(&profile, bestProfile);
 	}//end while true
 }
@@ -629,7 +631,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    test16();
-	//testarchive();
+    //test16();
+	testarchive();
     //onefile();
 }

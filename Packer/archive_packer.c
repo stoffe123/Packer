@@ -72,7 +72,6 @@ void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
 
 	FindClose(hFind); //Always, Always, clean things up! 
-
 }
 
 
