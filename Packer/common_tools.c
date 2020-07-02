@@ -79,6 +79,20 @@ void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_c
 	fclose(out);
 }
 
+bool contains(const wchar_t* s, const wchar_t* find) {
+	wchar_t* b = wcsstr(s, find);
+	return (b != NULL);
+}
+
+uint64_t indexOfChar(const wchar_t* s, const wchar_t find) {
+	for (int i = 0; i < wcslen(s); i++) {
+		if (s[i] == find) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 void substringAfter(const wchar_t* dst, const wchar_t* s, const wchar_t* find) {
 	wchar_t* b = wcsstr(s, find);
 	wcscpy(dst, L"");
@@ -285,6 +299,12 @@ bool equalsw(const wchar_t* s1, const wchar_t* s2) {
 
 void toUni(const wchar_t* dst, const char* str) {	
 	MultiByteToWideChar(CP_ACP, 0, str, -1, dst, 500);	
+}
+
+bool dirs_equal(const char* dir1, const char* dir2) {
+
+
+
 }
 
 bool files_equal(const char* f1, const char* f2) {

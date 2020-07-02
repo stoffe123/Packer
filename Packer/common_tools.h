@@ -12,6 +12,9 @@
 #define TEMP_DIR "c:/test/temp_files/"
 #define TEMP_DIRW L"c:/test/temp_files/"
 
+bool contains(const wchar_t* s, const wchar_t* find);
+
+uint64_t indexOfChar(const wchar_t* s, const wchar_t find);
 
 uint64_t get_file_size(const FILE* f);
 

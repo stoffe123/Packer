@@ -20,8 +20,16 @@ typedef struct file_t {
 	wchar_t name[2000];
 } file_t;
 
-//for tar
-static file_t fileList[10000];
+
+void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n) 
+{
+	// get length of the destination string
+	uint64_t len = n - m;
+
+	// start with m'th char and copy 'len' chars into destination
+	wcsncpy(dst, (src + m), len);
+}
+
 
 
 static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
@@ -107,7 +115,7 @@ static void sort(file_t f[], int size)
 }
 
 
-void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
+uint64_t storeDirectoryFilenames(file_t* fileList, const wchar_t* sDir, uint64_t j)
 {
 
 	WIN32_FIND_DATA fdFile;
@@ -123,7 +131,7 @@ void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 		wprintf(L"Path not found: [%s]\n", sDir);
 		exit(0);
 	}
-	int j = 0;
+	
 	do
 	{
 		//Find first file will always return "."
@@ -139,7 +147,7 @@ void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
 				wprintf(L"Directory: %s\n", sPath);
-				//ListDirectoryContents(sPath); //Recursion, I love it! 
+				j = storeDirectoryFilenames(fileList, sPath, j); //Recursion, I love it! 
 			}
 			else {
 
@@ -151,12 +159,11 @@ void storeDirectoryFilenames(const wchar_t* sDir, uint64_t count)
 		}
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
 
-	FindClose(hFind); //Always, Always, clean things up! 
-	sort(fileList, count);
+	FindClose(hFind); //Always, Always, clean things up! 	
+	return j;
 }
 
-
-uint64_t countDirectoryFiles(const wchar_t* sDir)
+uint64_t countDirectoryFiles(const wchar_t* sDir, uint64_t j)
 {
 	WIN32_FIND_DATA fdFile;
 	HANDLE hFind = NULL;
@@ -171,7 +178,6 @@ uint64_t countDirectoryFiles(const wchar_t* sDir)
 		wprintf(L"Path not found: [%s]\n", sDir);
 		exit(1);
 	}
-	uint64_t count = 0;
 	do
 	{
 		//Find first file will always return "."
@@ -187,30 +193,36 @@ uint64_t countDirectoryFiles(const wchar_t* sDir)
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
 				wprintf(L"Directory: %s\n", sPath);
-				//ListDirectoryContents(sPath); //Recursion, I love it! 
+				j = countDirectoryFiles(sPath, j); //Recursion, I love it! 
 			}
 			else {
-				count++;
+				j++;
 			}
 		}
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
 
 	FindClose(hFind); //Always, Always, clean things up! 
 
-	return count;
+	return j;
 }
+
+
 void archiveTar(wchar_t* dir, const wchar_t* dest) {
 
-	uint32_t count = countDirectoryFiles(dir);
-	storeDirectoryFilenames(dir, count);
+	uint32_t count = countDirectoryFiles(dir, 0);
+	printf("\n mallocing for count %d", count);
+	file_t* fileList = malloc(count * sizeof(file_t));
+	storeDirectoryFilenames(fileList, dir, 0);
+	sort(fileList, count);
 
 	FILE* out = openWrite(dest);	
-	fwrite(&count, sizeof(count), 1, out);
+	fwrite(&count, sizeof(uint32_t), 1, out);
 
 	//write sizes
 	for (int i = 0; i < count; i++) {
 		uint64_t size = fileList[i].size;
-		fwrite(&size, sizeof(size), 1, out);
+		fwrite(&size, sizeof(uint64_t), 1, out);
+		printf("\n writing size for %d as %d", i, size);
 	}
 
 	//write names separated by /n
@@ -244,6 +256,21 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 		append_to_filew(out, fileList[i].name);
 	}
 	fclose(out);
+	free(fileList);
+}
+
+void createDirs(wchar_t* wstr, wchar_t* dir) {
+	wchar_t* str = wstr + wcslen(dir);
+	int ind = indexOfChar(str, '\\') + 1;
+	if (ind > 0) {
+		const wchar_t dirName[500] = { 0 };
+		substring(dirName, str, 0, ind);
+		const wchar_t wholeDir[500] = { 0 };
+		concatw(wholeDir, dir, dirName);
+
+		_wmkdir(wholeDir);
+		createDirs(wstr, wholeDir);
+	}
 }
 
 
@@ -252,18 +279,18 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 	FILE* in = openRead(src);
 	uint32_t count;
 
-	fread(&count, sizeof(count), 1, in);
+	fread(&count, sizeof(uint32_t), 1, in);
 
-	const char** filenames = malloc(count * sizeof(uint64_t));
+	const wchar_t** filenames = malloc(count * sizeof(uint64_t));
 	for (int i = 0; i < count; i++) {
-		filenames[i] = malloc(500 * sizeof(char));
+		filenames[i] = malloc(500 * sizeof(wchar_t));
 	}
 	uint64_t* sizes = malloc(count * sizeof(uint64_t));
 
 	// Read sizes
 	printf("\n");
 	for (int i = 0; i < count; i++) {
-		fread(&sizes[i], sizeof(sizes[i]), 1, in);
+		fread(&sizes[i], sizeof(uint64_t), 1, in);
 		printf("\n size nr %d: %d", i, sizes[i]);
 	}
 
@@ -286,6 +313,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 
 	// Read files
 	for (int i = 0; i < count; i++) {
+		createDirs(filenames[i], dir);
 		copy_chunkw(in, filenames[i], sizes[i]);
 	}
 	fclose(in);

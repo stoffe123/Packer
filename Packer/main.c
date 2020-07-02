@@ -572,8 +572,8 @@ void testarchive() {
 			.twobyte_threshold_min = 890,
 			.seqlenMinLimit3 = 128,
 			.seqlenMinLimit4 = 56202,
-			.blockSizeMinus = 136,
-			.winsize = 117182,
+			.blockSizeMinus = 250,
+			.winsize = 2000,
 			.sizeMaxForCanonicalHeaderPack = 259,
 			.sizeMinForSeqPack = 5636,
 			.sizeMinForCanonical = 205,
@@ -588,7 +588,7 @@ void testarchive() {
 		uint64_t acc_size_org = 0;
 
 	uint64_t before_suite = clock();
-	int no_of_files = 16;
+	int no_of_files = 13;
 	wchar_t* source_dir[200] = { 0 }; 
 	concat_intw(source_dir, L"D:/Dropbox/Personal/Programmering/Compression/test/test", no_of_files);
 		
