@@ -23,16 +23,67 @@ typedef struct file_t {
 //for tar
 static file_t fileList[10000];
 
-static int reverseCompare(const wchar_t* s1, const wchar_t* s2) {
-	const char* c1 = _wcsdup(s1);
-	const char* c2 = _wcsdup(s2);
-	
-	const char* d1 = _wcsrev(c1);
-	const char* d2 = _wcsrev(c2);
-	int res = wcscmp(d1, d2);
-	free(c1);
-	free(c2);
-	return res;
+
+static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
+
+	int res;
+	char ext1[500] = { 0 };
+	char ext2[500] = { 0 };
+
+	substringAfter(ext1, s1, L".");
+	substringAfter(ext2, s2, L".");
+
+	if (equalsw(ext1, L"txt")) {
+		strcpy(ext1, "zzz");
+	}
+	if (equalsw(ext2, L"txt")) {
+		strcpy(ext2, "zzz");
+	}
+	if (equalsw(ext1, L"htm")) {
+		strcpy(ext1, "zzy");
+	}
+	if (equalsw(ext2, L"htm")) {
+		strcpy(ext2, "zzy");
+	}
+	if (equalsw(ext1, L"html")) {
+		strcpy(ext1, "zzx");
+	}
+	if (equalsw(ext2, L"html")) {
+		strcpy(ext2, "zzx");
+	}
+
+	if (equalsw(ext1, L"wav")) {
+		strcpy(ext1, "aab");
+	}
+	if (equalsw(ext2, L"wav")) {
+		strcpy(ext2, "aab");
+	}
+
+	if (equalsw(ext1, L"exe")) {
+		strcpy(ext1, "aaa");
+	}
+	if (equalsw(ext2, L"exe")) {
+		strcpy(ext2, "aaa");
+	}
+
+
+
+	if (wcslen(ext1) + wcslen(ext2) > 0) {
+
+		res = wcscmp(ext1, ext2);
+		if (res) {
+			return -res;
+		}
+	}
+	uint64_t size1 = get_file_size_from_wname(s1);
+	uint64_t size2 = get_file_size_from_wname(s2);
+	if (size1 < size2) {
+		return 1;
+	}
+	if (size1 > size2) {
+		return -1;
+	}
+	return 0;	
 }
 
 static void sort(file_t f[], int size)
@@ -43,7 +94,7 @@ static void sort(file_t f[], int size)
 		/* sök index för det minsta bland elementen nr i, i+1, … */
 		imin = i;
 		for (j = i + 1; j < size; j++) {
-			if (reverseCompare(f[j].name, f[imin].name) < 0) {
+			if (compareEndings(f[j].name, f[imin].name) < 0) {
 				imin = j;
 			}
 		}

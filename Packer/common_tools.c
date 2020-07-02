@@ -79,6 +79,14 @@ void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_c
 	fclose(out);
 }
 
+void substringAfter(const wchar_t* dst, const wchar_t* s, const wchar_t* find) {
+	wchar_t* b = wcsstr(s, find);
+	wcscpy(dst, L"");
+	if (b != NULL) {
+		wcscpy(dst, b + 1);
+	}
+}
+
 FILE* openWrite(const wchar_t* filename) {
 	FILE* out;
 	errno_t err = _wfopen_s(&out, filename, L"wb");

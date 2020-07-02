@@ -564,20 +564,20 @@ void testarchive() {
 
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 89,
-			.twobyte_ratio = 92,
-			.recursive_limit = 148,
-			.twobyte_threshold_max = 11370,
-			.twobyte_threshold_divide = 307,
-			.twobyte_threshold_min = 880,
-			.seqlenMinLimit3 = 167,
-			.seqlenMinLimit4 = 55975,
-			.blockSizeMinus = 143,
-			.winsize = 115628,
-			.sizeMaxForCanonicalHeaderPack = 313,
-			.sizeMinForSeqPack = 19250,
-			.sizeMinForCanonical = 264,
-			.sizeMaxForSuperslim = 13943
+			.rle_ratio = 86,
+			.twobyte_ratio = 89,
+			.recursive_limit = 10,
+			.twobyte_threshold_max = 11362,
+			.twobyte_threshold_divide = 156,
+			.twobyte_threshold_min = 890,
+			.seqlenMinLimit3 = 128,
+			.seqlenMinLimit4 = 56202,
+			.blockSizeMinus = 136,
+			.winsize = 117182,
+			.sizeMaxForCanonicalHeaderPack = 259,
+			.sizeMinForSeqPack = 5636,
+			.sizeMinForCanonical = 205,
+			.sizeMaxForSuperslim = 27528
 	};
 	copyProfile(&profile, &bestProfile);
 	wchar_t* destDir = L"c:/test/archiveunp/";
@@ -590,7 +590,7 @@ void testarchive() {
 	uint64_t before_suite = clock();
 	int no_of_files = 16;
 	wchar_t* source_dir[200] = { 0 }; 
-	concat_intw(source_dir, L"c:\\test\\test", no_of_files);
+	concat_intw(source_dir, L"D:/Dropbox/Personal/Programmering/Compression/test/test", no_of_files);
 		
 		wchar_t filenames2[16][200], filenames3[16][200];
 		for (int i = 0; i < no_of_files; i++) {
