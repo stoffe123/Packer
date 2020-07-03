@@ -84,7 +84,7 @@ bool contains(const wchar_t* s, const wchar_t* find) {
 	return (b != NULL);
 }
 
-uint64_t indexOfChar(const wchar_t* s, const wchar_t find) {
+int64_t indexOfChar(const wchar_t* s, const wchar_t find) {
 	for (int i = 0; i < wcslen(s); i++) {
 		if (s[i] == find) {
 			return i;

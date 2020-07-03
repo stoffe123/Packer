@@ -126,18 +126,7 @@ uint64_t countDirectoryFiles(const wchar_t* sDir, uint64_t j)
 	return j;
 }
 
-
-void archiveTar(wchar_t* dir, const wchar_t* dest) {
-
-	uint32_t count = countDirectoryFiles(dir, 0);
-	printf("\n mallocing for count %d", count);
-	file_t* fileList = malloc(count * sizeof(file_t));
-	storeDirectoryFilenames(fileList, dir, 0);
-	bubbleSort(fileList, count);
-
-	printf("\n archiveTar count=%d", count);
-
-	FILE* out = openWrite(dest);	
+void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
 	fwrite(&count, sizeof(uint32_t), 1, out);
 
 	//write sizes
@@ -148,7 +137,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 	}
 
 	//write names separated by /n
-	int lengthOfDirName = wcslen(dir);	
+	int lengthOfDirName = wcslen(dir);
 
 	printf("\n ********* storing names!!! **********\n");
 	for (int i = 0; i < count; i++) {
@@ -172,6 +161,20 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 		//wprintf(L"\n");
 		fputwc(0, out);
 	}
+}
+
+void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid) {
+
+	uint32_t count = countDirectoryFiles(dir, 0);
+	printf("\n mallocing for count %d", count);
+	file_t* fileList = malloc(count * sizeof(file_t));
+	storeDirectoryFilenames(fileList, dir, 0);
+	bubbleSort(fileList, count);
+
+	printf("\n archiveTar count=%d", count);
+
+	FILE* out = openWrite(dest);	
+	createHeader(out, dir, fileList, count);
 
 	//write contents of files	
 	for (int i = 0; i < count; i++) {
@@ -181,23 +184,28 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 	free(fileList);
 }
 
-void createDirs(wchar_t* wstr, wchar_t* dir) {
-	wchar_t* str = wstr + wcslen(dir);
-	if (str[0] == '\\' || str[0] == '/') {
-		str++;
+/*
+creates the dirs in fullPath
+that are not in existingDir(which should be a prefix of fullPath)
+
+*/
+void createDirs(wchar_t* fullPath, wchar_t* existingDir) {
+	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
+	if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
+		partAfterExistingDir++;
 	}
-	int ind = indexOfChar(str, '\\');
+	int64_t ind = indexOfChar(partAfterExistingDir, '\\');
 	if (ind == -1) {
-		ind = indexOfChar(str, '/');
+		ind = indexOfChar(partAfterExistingDir, '/');
 	}
 	if (ind > 0) {
-		const wchar_t dirName[500] = { 0 };
-		substring(dirName, str, 0, ind + 1);
-		const wchar_t wholeDir[500] = { 0 };
-		concatw(wholeDir, dir, dirName);
+		const wchar_t dirToCreate[500] = { 0 };
+		substring(dirToCreate, partAfterExistingDir, 0, ind + 1);
+		const wchar_t dirToCreateFullPath[500] = { 0 };
+		concatw(dirToCreateFullPath, existingDir, dirToCreate);
 
-		_wmkdir(wholeDir);
-		createDirs(wstr, wholeDir);
+		_wmkdir(dirToCreateFullPath);
+		createDirs(fullPath, dirToCreateFullPath);
 	}
 }
 
@@ -252,9 +260,16 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"archivedest");
-	archiveTar(dir, tmp);
-	block_pack(tmp, dest, profile);
-	_wremove(tmp);
+	bool solid = true;
+	if (solid) {
+		archiveTar(dir, tmp, true);
+		block_pack(tmp, dest, profile);
+		_wremove(tmp);
+	}
+	else {
+		//separate packing
+		archiveTar(dir, dest, false);
+	}
 }
 
 void archive_unpack(const wchar_t* src, wchar_t* dir) {
