@@ -66,12 +66,12 @@ uint64_t storeDirectoryFilenames(file_t* fileList, const wchar_t* sDir, uint64_t
 			//Is the entity a File or Folder? 
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				wprintf(L"Directory: %s\n", sPath);
+				//wprintf(L"Directory: %s\n", sPath);
 				j = storeDirectoryFilenames(fileList, sPath, j); //Recursion, I love it! 
 			}
 			else {
 
-				wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
+				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(fileList[j].name, sPath);
 				fileList[j].size = get_file_size_from_wname(sPath);
 				j++;
@@ -112,7 +112,7 @@ uint64_t countDirectoryFiles(const wchar_t* sDir, uint64_t j)
 			//Is the entity a File or Folder? 
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				wprintf(L"Directory: %s\n", sPath);
+				//wprintf(L"Directory: %s\n", sPath);
 				j = countDirectoryFiles(sPath, j); //Recursion, I love it! 
 			}
 			else {
@@ -134,6 +134,8 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 	file_t* fileList = malloc(count * sizeof(file_t));
 	storeDirectoryFilenames(fileList, dir, 0);
 	bubbleSort(fileList, count);
+
+	printf("\n archiveTar count=%d", count);
 
 	FILE* out = openWrite(dest);	
 	fwrite(&count, sizeof(uint32_t), 1, out);
@@ -162,12 +164,12 @@ void archiveTar(wchar_t* dir, const wchar_t* dest) {
 				skip--;
 			}
 			else {
-				wprintf(L"%c", ch);
+				//wprintf(L"%c", ch);
 				fputwc(ch, out);
 			}
 			j++;
 		}
-		wprintf(L"\n");
+		//wprintf(L"\n");
 		fputwc(0, out);
 	}
 
@@ -199,7 +201,6 @@ void createDirs(wchar_t* wstr, wchar_t* dir) {
 	}
 }
 
-
 void archiveUntar(const wchar_t* src, wchar_t* dir) {
 
 	FILE* in = openRead(src);
@@ -214,7 +215,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 	uint64_t* sizes = malloc(count * sizeof(uint64_t));
 
 	// Read sizes
-	printf("\n");
+	//printf("\n");
 	for (int i = 0; i < count; i++) {
 		fread(&sizes[i], sizeof(uint64_t), 1, in);
 		//printf("\n size nr %d: %d", i, sizes[i]);
@@ -227,7 +228,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 		wchar_t ch;
 		int i = 0;
 		while ((ch = fgetwc(in)) != 0) {
-			wprintf(L"%c", ch);
+			//wprintf(L"%c", ch);
 			filename[i++] = ch;
 		}
 		wprintf(L"\n");

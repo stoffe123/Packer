@@ -339,14 +339,11 @@ void deleteAllFilesInDir(const wchar_t* sDir) {
 				deleteAllFilesInDir(sPath); //Recursion, I love it! 
 				RemoveDirectory(sPath);
 			}
-			else {
-
-				wprintf(L"\trying to remove: %s", sPath);
+			else {				
 			    _wremove(sPath);								
 			}
 		}
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
-
 	FindClose(hFind); //Always, Always, clean things up! 	
 }
 

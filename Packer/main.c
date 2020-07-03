@@ -571,11 +571,8 @@ void testarchive() {
 		uint64_t acc_size_org = 0;
 
 		uint64_t before_suite = clock();
-		int no_of_files = 16;
-		wchar_t* source_dir = L"c:/test/ws_todo";
-        // wchar_t*  source_dir[200] = { 0 };
-		//concat_intw(source_dir, L"D:/Dropbox/Personal/Programmering/Compression/test/test_big", no_of_files);
-
+		//wchar_t* source_dir = L"c:/test/ws_todo";
+		wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
 
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
@@ -608,7 +605,7 @@ void testarchive() {
 
 int main()
 {
-
+	deleteAllFilesInDir(TEMP_DIRW);
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
