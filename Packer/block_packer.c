@@ -288,6 +288,16 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	fclose(utfil);
 }
 
+//-----------------------------------------
+
+void blockUnpackAndReplace(wchar_t* src) {
+		
+		const wchar_t tmp[100] = { 0 };		
+		get_temp_filew(tmp, L"blockpacker_unpackandreplace");
+		block_unpack(src, tmp);
+		my_renamew(tmp, src);
+	
+}
 
 
 

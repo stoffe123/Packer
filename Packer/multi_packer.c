@@ -108,12 +108,6 @@ uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storeP
 	return packType;
 }
 
-void my_rename(const char* f_old, const char* f_new) {
-	if (!equals(f_old, f_new)) {
-		remove(f_new);
-		rename(f_old, f_new);
-	}
-}
 
 bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
 	RLE_simple_pack(src, dst);
@@ -153,6 +147,15 @@ void TwoByteUnpackAndReplace(const char* src) {
 
 void MultiUnpackAndReplace(const char* src) {
 	unpackAndReplace("multi", src);
+}
+
+void MultiUnpackAndReplacew(const wchar_t* srcw) {
+
+	//todo refactor this when introducing wchar all over
+	const char src[500] = { 0 };
+	to_narrow(srcw, src);
+
+	MultiUnpackAndReplace(src);
 }
 
 void CanonicalDecodeAndReplace(const char* src) {
@@ -491,27 +494,6 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	remove(main_name);
 }
 
-size_t to_narrow(const wchar_t* src, char* dest) {
-	size_t i;
-	wchar_t code;
-
-	i = 0;
-
-	while (src[i] != '\0') {
-		code = src[i];
-		if (code < 128)
-			dest[i] = (char)code;
-		else {
-			dest[i] = '?';
-			if (code >= 0xD800 && code <= 0xD8FF)
-				// lead surrogate, skip the next code unit, which is the trail
-				i++;
-		}
-		i++;
-	}
-	dest[i] = '\0';
-	return i - 1;
-}
 
 uint8_t multiPack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {

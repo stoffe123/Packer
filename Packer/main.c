@@ -546,26 +546,26 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 86,
-			.twobyte_ratio = 89,
-			.recursive_limit = 10,
-			.twobyte_threshold_max = 11362,
-			.twobyte_threshold_divide = 156,
-			.twobyte_threshold_min = 890,
-			.seqlenMinLimit3 = 128,
-			.seqlenMinLimit4 = 56202,
-			.blockSizeMinus = 250,
-			.winsize = 2000,
-			.sizeMaxForCanonicalHeaderPack = 259,
-			.sizeMinForSeqPack = 5636,
-			.sizeMinForCanonical = 205,
-			.sizeMaxForSuperslim = 27528
+			.rle_ratio = 94,
+			.twobyte_ratio = 91,
+			.recursive_limit = 320,
+			.twobyte_threshold_max = 11750,
+			.twobyte_threshold_divide = 20,
+			.twobyte_threshold_min = 848,
+			.seqlenMinLimit3 = 151,
+			.seqlenMinLimit4 = 52447,
+			.blockSizeMinus = 121,
+			.winsize = 104172,
+			.sizeMaxForCanonicalHeaderPack = 268,
+			.sizeMinForSeqPack = 8470,
+			.sizeMinForCanonical = 278,
+			.sizeMaxForSuperslim = 16384
 	};
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	//wchar_t* source_dir = L"c:/test/ws_todo";
-	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
+	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
 
 
 	unsigned long long best_size = 0;

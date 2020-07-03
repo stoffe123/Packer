@@ -16,6 +16,8 @@ void block_pack(const wchar_t*, const wchar_t*, packProfile pp);
 
 void block_unpack(const wchar_t*, const wchar_t*);
 
+void blockUnpackAndReplace(wchar_t* src);
+
 HANDLE lockTempfileMutex();
 
 HANDLE releaseTempfileMutex();

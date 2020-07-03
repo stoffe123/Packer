@@ -27,4 +27,6 @@ void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
 void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile);
 
+void MultiUnpackAndReplacew(const wchar_t* srcw);
+
 #endif

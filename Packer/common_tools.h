@@ -18,6 +18,12 @@ typedef struct file_t {
 	wchar_t name[2000];
 } file_t;
 
+void my_rename(const char* f_old, const char* f_new);
+
+void my_renamew(const wchar_t* f_old, const wchar_t* f_new);
+
+size_t to_narrow(const wchar_t* src, char* dest);
+
 void deleteAllFilesInDir(const wchar_t* dir);
 
 bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2);

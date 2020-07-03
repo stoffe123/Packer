@@ -16,6 +16,45 @@
 //Global for all threads
 uint64_t filename_count = 1000000;
 
+
+void my_rename(const char* f_old, const char* f_new) {
+	if (!equals(f_old, f_new)) {
+		remove(f_new);
+		rename(f_old, f_new);
+	}
+}
+
+void my_renamew(const wchar_t* f_old, const wchar_t* f_new) {
+	if (!equalsw(f_old, f_new)) {
+		_wremove(f_new);
+		_wrename(f_old, f_new);
+	}
+}
+
+
+size_t to_narrow(const wchar_t* src, char* dest) {
+	size_t i;
+	wchar_t code;
+
+	i = 0;
+
+	while (src[i] != '\0') {
+		code = src[i];
+		if (code < 128)
+			dest[i] = (char)code;
+		else {
+			dest[i] = '?';
+			if (code >= 0xD800 && code <= 0xD8FF)
+				// lead surrogate, skip the next code unit, which is the trail
+				i++;
+		}
+		i++;
+	}
+	dest[i] = '\0';
+	return i - 1;
+}
+
+
 uint64_t get_file_size(const FILE* f) {
 	fseek(f, 0, SEEK_END);
 	long long res = ftell(f);
