@@ -22,4 +22,9 @@ void multi_pack(const char*, const char*, packProfile profile, packProfile seqle
 
 void multi_unpack(const char* src, const char* dst);
 
+void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
+
+void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfile seqlenProfile,
+	packProfile offsetProfile, packProfile distancesProfile);
+
 #endif

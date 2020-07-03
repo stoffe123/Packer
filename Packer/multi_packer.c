@@ -491,6 +491,28 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	remove(main_name);
 }
 
+size_t to_narrow(const wchar_t* src, char* dest) {
+	size_t i;
+	wchar_t code;
+
+	i = 0;
+
+	while (src[i] != '\0') {
+		code = src[i];
+		if (code < 128)
+			dest[i] = (char)code;
+		else {
+			dest[i] = '?';
+			if (code >= 0xD800 && code <= 0xD8FF)
+				// lead surrogate, skip the next code unit, which is the trail
+				i++;
+		}
+		i++;
+	}
+	dest[i] = '\0';
+	return i - 1;
+}
+
 uint8_t multiPack(const char* src, const char* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
 	return multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, false);
@@ -507,4 +529,26 @@ void multiUnpack(const char* src, const char* dst, uint8_t pack_type) {
 
 void multi_unpack(const char* src, const char* dst) {
 	multiUnpackInternal(src, dst, 0, true);
+}
+
+// this should be refactored when all code uses widechar
+void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw) {
+	const char src[500] = { 0 };
+	const char dst[500] = { 0 };
+
+	to_narrow(srcw, src);
+	to_narrow(dstw, dst);
+	multi_unpack(src, dst);
+}
+
+// this should be refactored when all code uses widechar
+void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, packProfile seqlenProfile,
+	packProfile offsetProfile, packProfile distancesProfile) {
+
+	const char src[500] = { 0 };
+	const char dst[500] = { 0 };
+
+	to_narrow(srcw, src);
+	to_narrow(dstw, dst);
+	multi_pack(src, dst, profile, seqlenProfile, offsetProfile, distancesProfile);
 }

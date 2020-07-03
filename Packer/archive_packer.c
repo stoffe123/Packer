@@ -127,8 +127,7 @@ uint64_t countDirectoryFiles(const wchar_t* sDir, uint64_t j)
 }
 
 void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
-	fwrite(&count, sizeof(uint32_t), 1, out);
-
+	
 	//write sizes
 	for (int i = 0; i < count; i++) {
 		uint64_t size = fileList[i].size;
@@ -163,7 +162,7 @@ void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
 	}
 }
 
-void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid) {
+void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profile) {
 
 	uint32_t count = countDirectoryFiles(dir, 0);
 	printf("\n mallocing for count %d", count);
@@ -173,12 +172,54 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid) {
 
 	printf("\n archiveTar count=%d", count);
 
-	FILE* out = openWrite(dest);	
+	wchar_t* outFilename = dest;
+	if (!solid) {
+
+		//pack all files and put them in TEMP_DIR
+		for (int i = 0; i < count; i++) {
+			const wchar_t tmpBlocked[500] = { 0 };
+			wchar_t* onlyName = fileList[i].name + wcslen(dir);
+			concatw(tmpBlocked, TEMP_DIRW, onlyName);
+			block_pack(fileList[i].name, tmpBlocked, profile);
+		}
+
+		const wchar_t tmp[100] = { 0 };
+		get_temp_filew(tmp, L"archivepacker_header");
+		outFilename = tmp;
+	}
+	FILE* out = openWrite(outFilename);
+	fwrite(&count, sizeof(uint32_t), 1, out);
 	createHeader(out, dir, fileList, count);
+
+	if (!solid) {
+		fclose(out);
+		const wchar_t headerPackedFilename[100] = { 0 };
+		get_temp_filew(headerPackedFilename, L"archivepacker_headerpacked");
+		packProfile headerProfile = getPackProfile();
+		multiPack(outFilename, headerPackedFilename, headerProfile, headerProfile, headerProfile, headerProfile);
+		out = openWrite(dest);
+		uint64_t size = get_file_size_from_wname(headerPackedFilename);
+		if (size > 65535) {
+			printf("\n archivepacker header too big %d", size);
+			exit(1);
+		}
+		fwrite(&size, 2, 1, out);
+		append_to_filew(out, headerPackedFilename);
+	}
 
 	//write contents of files	
 	for (int i = 0; i < count; i++) {
-		append_to_filew(out, fileList[i].name);
+		if (solid) {
+			append_to_filew(out, fileList[i].name);
+		}
+		else {
+			//todo DRY this...
+			const wchar_t tmpBlocked[500] = { 0 }; 
+			wchar_t* onlyName = fileList[i].name + wcslen(dir);
+			concatw(tmpBlocked, TEMP_DIRW, onlyName);
+			append_to_filew(out, tmpBlocked);
+			remove(tmpBlocked);
+		}		
 	}
 	fclose(out);
 	free(fileList);
@@ -209,23 +250,13 @@ void createDirs(wchar_t* fullPath, wchar_t* existingDir) {
 	}
 }
 
-void archiveUntar(const wchar_t* src, wchar_t* dir) {
-
-	FILE* in = openRead(src);
-	uint32_t count;
-
-	fread(&count, sizeof(uint32_t), 1, in);
-
-	const wchar_t** filenames = malloc(count * sizeof(uint64_t));
-	for (int i = 0; i < count; i++) {
-		filenames[i] = malloc(500 * sizeof(wchar_t));
-	}
-	uint64_t* sizes = malloc(count * sizeof(uint64_t));
-
+file_t* readHeader(FILE* in, char* dir, uint64_t count) {
+	file_t* filenames = malloc(count * sizeof(file_t));
+		
 	// Read sizes
 	//printf("\n");
 	for (int i = 0; i < count; i++) {
-		fread(&sizes[i], sizeof(uint64_t), 1, in);
+		fread(&filenames[i].size, sizeof(uint64_t), 1, in);
 		//printf("\n size nr %d: %d", i, sizes[i]);
 	}
 
@@ -241,43 +272,72 @@ void archiveUntar(const wchar_t* src, wchar_t* dir) {
 		}
 		wprintf(L"\n");
 		filename[i] = 0;
-		wcscpy(filenames[readNames], dir);
-		wcscat(filenames[readNames], filename);
+		wcscpy(filenames[readNames].name, dir);
+		wcscat(filenames[readNames].name, filename);
 		readNames++;
 	}
+	return filenames;
+}
+
+void archiveUntar(const wchar_t* src, wchar_t* dir, bool solid) {
+
+	FILE* in = openRead(src);
+	uint32_t count;
+
+	fread(&count, sizeof(uint32_t), 1, in);
+
+	if (!solid) {
+		uint16_t headerSize;
+		fread(&headerSize, 2, 1, in);
+		const char headerPacked[500] = { 0 };
+		get_temp_filew(headerPacked, L"archiveuntar_headerpacked");
+		const char headerUnpacked[500] = { 0 };
+		get_temp_filew(headerUnpacked, L"archiveuntar_headerunpacked");
+
+		copy_chunkw(in, headerPacked, headerSize);
+		multi_unpackw(headerPacked, headerUnpacked);
+	}
+
+	file_t* filenames = readHeader(in, dir, count);
 
 	// Read files
 	for (int i = 0; i < count; i++) {
-		createDirs(filenames[i], dir);
-		copy_chunkw(in, filenames[i], sizes[i]);
+		createDirs(filenames[i].name, dir);
+		copy_chunkw(in, filenames[i].name, filenames[i].size);
 	}
 	fclose(in);
-	free(filenames);
-	free(sizes);
+	free(filenames);	
 }
 
+bool use_solid = true;
 
 void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"archivedest");
-	bool solid = true;
-	if (solid) {
-		archiveTar(dir, tmp, true);
+	
+	if (use_solid) {
+		archiveTar(dir, tmp, true, profile);
 		block_pack(tmp, dest, profile);
 		_wremove(tmp);
 	}
 	else {
 		//separate packing
-		archiveTar(dir, dest, false);
+		archiveTar(dir, dest, false, profile);
 	}
 }
 
 void archive_unpack(const wchar_t* src, wchar_t* dir) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"archiveunp");
-	block_unpack(src, tmp);
-	archiveUntar(tmp, dir);
-	_wremove(tmp);
+
+	if (use_solid) {
+		block_unpack(src, tmp);
+		archiveUntar(tmp, dir, true);
+		_wremove(tmp);
+	}
+	else {
+		archiveUntar(src, dir, false);
+	}
 }
 
 

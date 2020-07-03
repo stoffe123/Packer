@@ -562,7 +562,12 @@ void testarchive() {
 			.sizeMaxForSuperslim = 27528
 	};
 	copyProfile(&profile, &bestProfile);
-	wchar_t* destDir = L"c:\\test\\archiveunp\\";
+	
+    wchar_t* destDir = L"c:\\test\\archiveunp\\";
+	//wchar_t* source_dir = L"c:/test/ws_todo";
+	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
+
+
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
@@ -571,8 +576,7 @@ void testarchive() {
 		uint64_t acc_size_org = 0;
 
 		uint64_t before_suite = clock();
-		//wchar_t* source_dir = L"c:/test/ws_todo";
-		wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
+		
 
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
