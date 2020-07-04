@@ -46,7 +46,7 @@ typedef struct packProfile {
 	int64_t sizeMaxForSuperslim;
 } packProfile;
 
-void bubbleSort(file_t* f, uint64_t size);
+void quickSortCompareEndings(file_t* f, uint64_t size);
 
 void printProfile(packProfile*);
 

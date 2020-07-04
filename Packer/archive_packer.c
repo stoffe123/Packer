@@ -20,6 +20,9 @@
 
 static uint64_t fileListInitialAllocSize = 8192;
 
+static bool useSolid = true;
+
+
 void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n) 
 {
 	// get length of the destination string
@@ -86,7 +89,9 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 				}
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
-				f.fileList[f.count].size = get_file_size_from_wname(sPath); // no need if use_solid=false
+				if (useSolid) {
+					f.fileList[f.count].size = get_file_size_from_wname(sPath); 
+				} // if not solid the size of the packed file is written later anyway...
 				f.count++;		
 				
 			}
@@ -178,7 +183,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 	fileListAndCount_t res = storeDirectoryFilenames(dir);
 	file_t* fileList = res.fileList;
 	uint64_t count = res.count;
-	bubbleSort(fileList, count);
+	quickSortCompareEndings(fileList, count);
 
 	printf("\n archiveTar count=%d", count);
 
@@ -306,13 +311,11 @@ void archiveUntar(const wchar_t* src, wchar_t* dir, bool solid) {
 	free(filenames);	
 }
 
-bool use_solid = true;
-
 void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"archivedest");
 	
-	if (use_solid) {
+	if (useSolid) {
 		archiveTar(dir, tmp, true, profile);
 		block_pack(tmp, dest, profile);
 		_wremove(tmp);
@@ -327,7 +330,7 @@ void archive_unpack(const wchar_t* src, wchar_t* dir) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"archiveunp");
 
-	if (use_solid) {
+	if (useSolid) {
 		block_unpack(src, tmp);
 		archiveUntar(tmp, dir, true);
 		_wremove(tmp);

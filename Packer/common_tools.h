@@ -18,6 +18,10 @@ typedef struct file_t {
 	wchar_t name[2000];
 } file_t;
 
+void quickSortCompareEndings(file_t* f, uint64_t size);
+
+void quickSort(file_t* f, uint64_t size);
+
 void my_rename(const char* f_old, const char* f_new);
 
 void my_renamew(const wchar_t* f_old, const wchar_t* f_new);

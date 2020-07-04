@@ -411,10 +411,10 @@ bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
 		printf("\n dirs_equal: number of files differed... %d %d", count, count2);
 		return false;
 	}
-	bubbleSort(fileList1, count);
-	bubbleSort(fileList2, count);
+	quickSort(fileList1, count);
+	quickSort(fileList2, count);
 
-	bool result = true;
+	bool dirsAreEqual = true;
 	for (int i = 0; i < count; i++) {
 		wchar_t* n1 = fileList1[i].name;
 		wchar_t* n2 = fileList2[i].name;
@@ -428,26 +428,26 @@ bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
 		}
 		if (!equalsw(n1 , n2)) {
 			wprintf(L"\n file nr %d differed by name %s <=> %s", i, n1, n2);
-			result = false;
+			dirsAreEqual = false;
 			break;
 		}
 		if (fileList1[i].size != fileList2[i].size) {
 			wprintf(L"\n file nr %d differed by size %d <=> %d", i, fileList1[i].size, fileList2[i].size);
-			result = false;
+			dirsAreEqual = false;
 			break;
 		}
 	}
-	if (result) {
+	if (dirsAreEqual) {
 		for (int i = 0; i < count; i++) {
 			if (!files_equalw(fileList1[i].name, fileList2[i].name)) {
-				result = false;
+				dirsAreEqual = false;
 				break;
 			}
 		}
 	}
 	free(fileList1);
 	free(fileList2);
-	return result;
+	return dirsAreEqual;
 }
 
 bool files_equal(const char* f1, const char* f2) {

@@ -248,9 +248,36 @@ static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 	return 0;
 }
 
-void quicksort(file_t* number, int32_t first, int32_t last) {
+void swap(file_t* number, uint32_t i, uint32_t j) {
+	file_t temp = number[i];
+	number[i] = number[j];
+	number[j] = temp;
+}
+
+void quicksort_compareendings_internal(file_t* A, int32_t lo, int32_t hi) {	
+	if (lo < hi) {
+		int32_t p = partition(A, lo, hi);
+		quicksort_compareendings_internal(A, lo, p - 1);
+		quicksort_compareendings_internal(A, p + 1, hi);
+	}
+}
+		
+int32_t partition(file_t* A, int32_t lo, int32_t hi) {
+	file_t pivot = A[hi];
+	int32_t p = lo;
+	for (int32_t j = lo; j <= hi; j++) {
+		if (compareEndings(A[j].name, pivot.name) < 0) {
+			swap(A, p, j);
+			p++;
+		}
+	}
+	swap(A, p, hi);
+	return p;
+}
+
+void quicksort_internal(file_t* number, int32_t first, int32_t last) {
 	int32_t i, j, pivot;
-	file_t temp;
+	
 
 	if (first < last) {
 		pivot = first;
@@ -258,29 +285,30 @@ void quicksort(file_t* number, int32_t first, int32_t last) {
 		j = last;
 
 		while (i < j) {
-			while (compareEndings(number[i].name, number[pivot].name) <= 0 && i < last)
+			while (wcscmp(number[i].name, number[pivot].name) <= 0 && i < last)
 				i++;
-			while (compareEndings(number[j].name, number[pivot].name) > 0)
+			while (wcscmp(number[j].name, number[pivot].name) > 0)
 				j--;
 			if (i < j) {
-				temp = number[i];
-				number[i] = number[j];
-				number[j] = temp;
+				swap(number, i, j);				
 			}
 		}
-
-		temp = number[pivot];
-		number[pivot] = number[j];
-		number[j] = temp;
-		quicksort(number, first, j - 1);
-		quicksort(number, j + 1, last);
-
+		swap(number, pivot, j);		
+		quicksort_internal(number, first, j - 1);
+		quicksort_internal(number, j + 1, last);
 	}
 }
 
-void bubbleSort(file_t* f, uint64_t size)
+
+
+void quickSortCompareEndings(file_t* f, uint64_t size)
 {
-	quicksort(f, 0, size - 1);
+	quicksort_compareendings_internal(f, 0, size - 1);
+}
+
+void quickSort(file_t* f, uint64_t size)
+{
+	quicksort_internal(f, 0, size - 1);
 }
 
 
