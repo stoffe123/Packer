@@ -69,7 +69,7 @@ distanceProfile = {
     .sizeMaxForSuperslim = 16384
 };
 
-HANDLE tempfileMutex, clockdirMutex, blockchunkMutex;
+HANDLE tempfileMutex, blockchunkMutex;
 
 HANDLE lockTempfileMutex() {
 	WaitForSingleObject(tempfileMutex, INFINITE);
@@ -79,13 +79,6 @@ HANDLE releaseTempfileMutex() {
 	ReleaseMutex(tempfileMutex);
 }
 
-HANDLE lockClockdirMutex() {
-	WaitForSingleObject(clockdirMutex, INFINITE);
-}
-
-HANDLE releaseClockdirMutex() {
-	ReleaseMutex(clockdirMutex);
-}
 
 HANDLE lockBlockchunkMutex() {
 	WaitForSingleObject(blockchunkMutex, INFINITE);
@@ -152,7 +145,6 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	uint64_t src_size = get_file_size_from_wname(src);
 
 	tempfileMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
-	clockdirMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
 	blockchunkMutex = CreateMutexW(NULL, FALSE, NULL);  // Cleared
 
 	FILE* infil = openRead(src);

@@ -18,6 +18,8 @@
 
 #include "block_packer.h"
 
+static uint64_t fileListInitialAllocSize = 8192;
+
 void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n) 
 {
 	// get length of the destination string
@@ -29,15 +31,18 @@ void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 
 
 
+/* 
+we can do store and count in one go
+first malloc 4096 for the dir
+if the count goes above... malloc 4096 more and move from the old to the new
+*/
 
-
-uint64_t storeDirectoryFilenames(file_t* fileList, const wchar_t* sDir, uint64_t j)
+fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileListAndCount_t f)
 {
-
 	WIN32_FIND_DATA fdFile;
 	HANDLE hFind = NULL;
 
-	wchar_t sPath[2048];
+	wchar_t sPath[4096];
 
 	//Specify a file mask. *.* = We want everything! 
 	wsprintf(sPath, L"%s\\*.*", sDir);
@@ -68,63 +73,37 @@ uint64_t storeDirectoryFilenames(file_t* fileList, const wchar_t* sDir, uint64_t
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
 				//wprintf(L"Directory: %s\n", sPath);
-				j = storeDirectoryFilenames(fileList, sPath, j); //Recursion, I love it! 
+				f = storeDirectoryFilenamesInternal(sPath, f); //Recursion, I love it! 				
 			}
 			else {
-
+				if (f.count >= f.allocSize) {
+					f.allocSize += fileListInitialAllocSize;
+					file_t* fileList2 = malloc(f.allocSize * sizeof(file_t));
+					memcpy(fileList2, f.fileList, fileListInitialAllocSize * sizeof(file_t));
+					file_t* temp = f.fileList;
+					f.fileList = fileList2;
+					free(temp);
+				}
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
-				wcscpy(fileList[j].name, sPath);
-				fileList[j].size = get_file_size_from_wname(sPath);
-				j++;
+				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
+				f.fileList[f.count].size = get_file_size_from_wname(sPath); // no need if use_solid=false
+				f.count++;		
+				
 			}
 		}
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
 
 	FindClose(hFind); //Always, Always, clean things up! 	
-	return j;
+	return f;
 }
 
-uint64_t countDirectoryFiles(const wchar_t* sDir, uint64_t j)
-{
-	WIN32_FIND_DATA fdFile;
-	HANDLE hFind = NULL;
-
-	wchar_t sPath[2048];
-
-	//Specify a file mask. *.* = We want everything! 
-	wsprintf(sPath, L"%s\\*.*", sDir);
-
-	if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
-	{
-		wprintf(L"Path not found: [%s]\n", sDir);
-		exit(1);
-	}
-	do
-	{
-		//Find first file will always return "."
-		//    and ".." as the first two directories. 
-		if (wcscmp(fdFile.cFileName, L".") != 0
-			&& wcscmp(fdFile.cFileName, L"..") != 0)
-		{
-			//Build up our file path using the passed in 
-			//  [sDir] and the file/foldername we just found: 
-			wsprintf(sPath, L"%s\\%s", sDir, fdFile.cFileName);
-
-			//Is the entity a File or Folder? 
-			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			{
-				//wprintf(L"Directory: %s\n", sPath);
-				j = countDirectoryFiles(sPath, j); //Recursion, I love it! 
-			}
-			else {
-				j++;
-			}
-		}
-	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
-
-	FindClose(hFind); //Always, Always, clean things up! 
-
-	return j;
+fileListAndCount_t storeDirectoryFilenames(const wchar_t* dir) {
+	
+	fileListAndCount_t f;
+	f.fileList = malloc(fileListInitialAllocSize * sizeof(file_t));
+	f.count = 0;
+	f.allocSize = fileListInitialAllocSize;
+	return storeDirectoryFilenamesInternal(dir, f);	
 }
 
 void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
@@ -163,17 +142,42 @@ void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
 	}
 }
 
+/*
+creates the dirs in fullPath
+that are not in existingDir(which should be a prefix of fullPath)
+
+*/
+void createDirs(wchar_t* fullPath, wchar_t* existingDir) {
+	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
+	if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
+		partAfterExistingDir++;
+	}
+	int64_t ind = indexOfChar(partAfterExistingDir, '\\');
+	if (ind == -1) {
+		ind = indexOfChar(partAfterExistingDir, '/');
+	}
+	if (ind > 0) {
+		const wchar_t dirToCreate[500] = { 0 };
+		substring(dirToCreate, partAfterExistingDir, 0, ind + 1);
+		const wchar_t dirToCreateFullPath[500] = { 0 };
+		concatw(dirToCreateFullPath, existingDir, dirToCreate);
+
+		_wmkdir(dirToCreateFullPath);
+		createDirs(fullPath, dirToCreateFullPath);
+	}
+}
+
 void tmpDirNameOf(const wchar_t* tmpBlocked, const wchar_t* name, const wchar_t* dir) {	
 	wchar_t* onlyName = name + wcslen(dir);
 	concatw(tmpBlocked, TEMP_DIRW, onlyName);
+	createDirs(tmpBlocked, TEMP_DIRW);
 }
 
 void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profile) {
 
-	uint32_t count = countDirectoryFiles(dir, 0);
-	printf("\n mallocing for count %d", count);
-	file_t* fileList = malloc(count * sizeof(file_t));
-	storeDirectoryFilenames(fileList, dir, 0);
+	fileListAndCount_t res = storeDirectoryFilenames(dir);
+	file_t* fileList = res.fileList;
+	uint64_t count = res.count;
 	bubbleSort(fileList, count);
 
 	printf("\n archiveTar count=%d", count);
@@ -217,12 +221,12 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 	}
 
 	//write contents of files	
+	const wchar_t tmpBlocked[500] = { 0 }; //put here for perfomance
 	for (int i = 0; i < count; i++) {
 		if (solid) {
 			append_to_filew(out, fileList[i].name);
 		}
 		else {
-			const wchar_t tmpBlocked[500] = { 0 }; 
 			tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
 			append_to_filew(out, tmpBlocked);
 			_wremove(tmpBlocked);
@@ -232,30 +236,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 	free(fileList);
 }
 
-/*
-creates the dirs in fullPath
-that are not in existingDir(which should be a prefix of fullPath)
 
-*/
-void createDirs(wchar_t* fullPath, wchar_t* existingDir) {
-	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
-	if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
-		partAfterExistingDir++;
-	}
-	int64_t ind = indexOfChar(partAfterExistingDir, '\\');
-	if (ind == -1) {
-		ind = indexOfChar(partAfterExistingDir, '/');
-	}
-	if (ind > 0) {
-		const wchar_t dirToCreate[500] = { 0 };
-		substring(dirToCreate, partAfterExistingDir, 0, ind + 1);
-		const wchar_t dirToCreateFullPath[500] = { 0 };
-		concatw(dirToCreateFullPath, existingDir, dirToCreate);
-
-		_wmkdir(dirToCreateFullPath);
-		createDirs(fullPath, dirToCreateFullPath);
-	}
-}
 
 file_t* readHeader(FILE* in, char* dir, uint64_t count) {
 	file_t* filenames = malloc(count * sizeof(file_t));
@@ -264,7 +245,7 @@ file_t* readHeader(FILE* in, char* dir, uint64_t count) {
 	//printf("\n");
 	for (int i = 0; i < count; i++) {
 		fread(&filenames[i].size, sizeof(uint64_t), 1, in);
-		printf("\n size nr %d: %d", i, filenames[i].size);
+		//printf("\n size nr %d: %d", i, filenames[i].size);
 	}
 
 	// Read names
@@ -325,7 +306,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir, bool solid) {
 	free(filenames);	
 }
 
-bool use_solid = false;
+bool use_solid = true;
 
 void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
 	const wchar_t tmp[100] = { 0 };

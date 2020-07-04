@@ -84,7 +84,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 512);
 	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 20000, 90000);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
-	profile->winsize = doFuzz(profile->winsize, best.winsize, 60000, 130000);
+	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 160000);
 
 	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
 	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
@@ -546,26 +546,26 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 94,
-			.twobyte_ratio = 91,
-			.recursive_limit = 320,
+			.rle_ratio = 92,
+			.twobyte_ratio = 98,
+			.recursive_limit = 3000,
 			.twobyte_threshold_max = 11750,
 			.twobyte_threshold_divide = 20,
 			.twobyte_threshold_min = 848,
 			.seqlenMinLimit3 = 151,
 			.seqlenMinLimit4 = 52447,
-			.blockSizeMinus = 121,
-			.winsize = 104172,
-			.sizeMaxForCanonicalHeaderPack = 268,
-			.sizeMinForSeqPack = 8470,
-			.sizeMinForCanonical = 278,
+			.blockSizeMinus = 120,
+			.winsize = 1000,
+			.sizeMaxForCanonicalHeaderPack = 228,
+			.sizeMinForSeqPack = 15470,
+			.sizeMinForCanonical = 600,
 			.sizeMaxForSuperslim = 16384
 	};
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
-	//wchar_t* source_dir = L"c:/test/ws_todo";
-	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
+	wchar_t* source_dir = L"c:/test/ws_todo";
+    //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
 
 
 	unsigned long long best_size = 0;
@@ -600,7 +600,12 @@ void testarchive() {
 			exit(1);
 		}
 		uint64_t totalTime = clock() - before_suite;
-		best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		if (totalTime < (300 * 1000)) {
+			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+		}
+		else {
+			printf("\n too long time %d", totalTime);
+		}
 		fuzzProfile(&profile, bestProfile);
 	}//end while true
 }

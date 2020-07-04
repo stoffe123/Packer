@@ -192,8 +192,8 @@ static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 	char ext1[500] = { 0 };
 	char ext2[500] = { 0 };
 
-	substringAfter(ext1, s1, L".");
-	substringAfter(ext2, s2, L".");
+	substringAfterLast(ext1, s1, L".");
+	substringAfterLast(ext2, s2, L".");
 
 	if (equalsw(ext1, L"txt")) {
 		strcpy(ext1, "zzz");
@@ -248,26 +248,39 @@ static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 	return 0;
 }
 
+void quicksort(file_t* number, int32_t first, int32_t last) {
+	int32_t i, j, pivot;
+	file_t temp;
 
+	if (first < last) {
+		pivot = first;
+		i = first;
+		j = last;
+
+		while (i < j) {
+			while (compareEndings(number[i].name, number[pivot].name) <= 0 && i < last)
+				i++;
+			while (compareEndings(number[j].name, number[pivot].name) > 0)
+				j--;
+			if (i < j) {
+				temp = number[i];
+				number[i] = number[j];
+				number[j] = temp;
+			}
+		}
+
+		temp = number[pivot];
+		number[pivot] = number[j];
+		number[j] = temp;
+		quicksort(number, first, j - 1);
+		quicksort(number, j + 1, last);
+
+	}
+}
 
 void bubbleSort(file_t* f, uint64_t size)
 {
-	int i, j, imin;
-	file_t temp;
-	for (i = 0; i < size; i++) {
-		/* sök index för det minsta bland elementen nr i, i+1, … */
-		imin = i;
-		for (j = i + 1; j < size; j++) {
-			if (compareEndings(f[j].name, f[imin].name) < 0) {
-				imin = j;
-			}
-		}
-		/* byt element så det minsta hamnar i pos i */
-		if (imin != i) {
-			temp = f[i]; f[i] = f[imin]; f[imin] = temp;
-			//temp = g[i]; g[i] = g[imin]; g[imin] = temp;
-		}
-	} /* end for i */
+	quicksort(f, 0, size - 1);
 }
 
 

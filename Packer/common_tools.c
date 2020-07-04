@@ -10,6 +10,7 @@
 
 #include "common_tools.h"
 #include "block_packer.h"
+#include "archive_packer.h"
 
 
 
@@ -132,12 +133,15 @@ int64_t indexOfChar(const wchar_t* s, const wchar_t find) {
 	return -1;
 }
 
-void substringAfter(const wchar_t* dst, const wchar_t* s, const wchar_t* find) {
-	wchar_t* b = wcsstr(s, find);
-	wcscpy(dst, L"");
-	if (b != NULL) {
-		wcscpy(dst, b + 1);
+void substringAfterLast(const wchar_t* dst, const wchar_t* s, const wchar_t* find) {
+	for (int64_t i = wcslen(s) - 1; i >= 0; i--) {
+		if (s[i] == find[0]) {
+			s += (i + 1);
+			wcscpy(dst, s);
+			return;
+		}
 	}
+	wcscpy(dst, L"");	
 }
 
 FILE* openWrite(const wchar_t* filename) {
@@ -268,11 +272,11 @@ void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
 }
 
 void get_clock_dir(const char* dir) {
-	lockClockdirMutex();
+	lockTempfileMutex();
 	const char number[30] = { 0 };
 	get_rand(number);
 	concat(dir, TEMP_DIR, number);
-	releaseClockdirMutex();
+	releaseTempfileMutex();
 }
 
 void concat(const char* dst, const char* s1, const char* s2) {
@@ -386,21 +390,30 @@ void deleteAllFilesInDir(const wchar_t* sDir) {
 	FindClose(hFind); //Always, Always, clean things up! 	
 }
 
+/*
+count and store should be done in one go
+
+sorting could be done more effecient
+or even sort when inserting instead of afterwards
+
+*/
+
 bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
-	uint32_t count = countDirectoryFiles(dir1, 0);
-	uint32_t count2 = countDirectoryFiles(dir2, 0);
+	fileListAndCount_t res = storeDirectoryFilenames(dir1);
+	file_t* fileList1 = res.fileList;
+	uint64_t count = res.count;
+
+	res = storeDirectoryFilenames(dir2);
+	file_t* fileList2 = res.fileList;
+	uint64_t count2 = res.count;
 
 	if (count != count2) {
 		printf("\n dirs_equal: number of files differed... %d %d", count, count2);
 		return false;
 	}
-	file_t* fileList1 = malloc(count * sizeof(file_t));
-	storeDirectoryFilenames(fileList1, dir1, 0);
 	bubbleSort(fileList1, count);
-
-	file_t* fileList2 = malloc(count * sizeof(file_t));
-	storeDirectoryFilenames(fileList2, dir2, 0);
 	bubbleSort(fileList2, count);
+
 	bool result = true;
 	for (int i = 0; i < count; i++) {
 		wchar_t* n1 = fileList1[i].name;
