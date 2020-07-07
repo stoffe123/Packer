@@ -546,26 +546,26 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 92,
-			.twobyte_ratio = 98,
-			.recursive_limit = 3000,
+			.rle_ratio = 94,
+			.twobyte_ratio = 91,
+			.recursive_limit = 320,
 			.twobyte_threshold_max = 11750,
 			.twobyte_threshold_divide = 20,
 			.twobyte_threshold_min = 848,
 			.seqlenMinLimit3 = 151,
 			.seqlenMinLimit4 = 52447,
-			.blockSizeMinus = 120,
-			.winsize = 1000,
-			.sizeMaxForCanonicalHeaderPack = 228,
-			.sizeMinForSeqPack = 15470,
-			.sizeMinForCanonical = 600,
+			.blockSizeMinus = 121,
+			.winsize = 104172,
+			.sizeMaxForCanonicalHeaderPack = 268,
+			.sizeMinForSeqPack = 8470,
+			.sizeMinForCanonical = 278,
 			.sizeMaxForSuperslim = 16384
 	};
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
-	wchar_t* source_dir = L"c:/test/ws_todo";
-    //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
+	//wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+    wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
 
 
 	unsigned long long best_size = 0;
@@ -600,7 +600,7 @@ void testarchive() {
 			exit(1);
 		}
 		uint64_t totalTime = clock() - before_suite;
-		if (totalTime < (300 * 1000)) {
+		if (totalTime < (2000 * 1000)) {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {

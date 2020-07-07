@@ -46,6 +46,20 @@
 #include "canonical_header_packer.h"
 #include "RLE_simple_packer.h"
 
+
+static packProfile profile = {
+.rle_ratio = 99,
+.twobyte_ratio = 99,
+.recursive_limit = 10,
+.twobyte_threshold_max = 100,
+.twobyte_threshold_divide = 2233,
+.twobyte_threshold_min = 20,
+.seqlenMinLimit3 = 43,
+.winsize = 1000,
+.sizeMaxForCanonicalHeaderPack = 260,
+.sizeMinForSeqPack = 10,
+.sizeMinForCanonical = 2000 };
+
 /***************************************************************************
 *                            TYPE DEFINITIONS
 ***************************************************************************/
@@ -619,39 +633,31 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     fclose(headerFile);
     char packedFilename[100] = { 0 };
     getTempFile(packedFilename, "canonical_header_packed");
-    canonical_header_pack(headerFilename, packedFilename);
-    int size = get_file_size_from_name(packedFilename);
+    multi_pack(headerFilename, packedFilename, profile, profile, profile, profile); 
+    uint64_t orgSize = get_file_size_from_name(headerFilename);
+    uint64_t packedSize = get_file_size_from_name(packedFilename);
     //printf("\n packed canonical header down to %d bytes", size);
    
     FILE* packedFile = fopen(packedFilename, "rb");
     int RLE_size = 0;
-    if (size < 3 || size >= 256) {
-        printf("\n wrong size of canonical header: %d  => reverting to just store", size);
-        size = 0; // flag for store
+    if (packedSize < 3 || packedSize >= 256) {
+        printf("\n wrong size of canonical header packed %d original %d => using store", packedSize, orgSize);
+        packedSize = 0; // flag for store
         fclose(packedFile);
         remove(packedFilename);
-        RLE_simple_pack(headerFilename, packedFilename);        
-        RLE_size = get_file_size_from_name(packedFilename);
-        printf("\n Trying RLE got size %d", RLE_size);
-        if (RLE_size >= 3 && RLE_size < 256) {
-            size = 1; // flag for RLE
-            packedFile = fopen(packedFilename, "rb");
-        }
-        else {            
-            headerFile = fopen(headerFilename, "rb");
-        }
+        headerFile = fopen(headerFilename, "rb");   
     }
-    BitFilePutChar(size, bfp);
-    if (size == 1) {
+    BitFilePutChar(packedSize, bfp);
+    if (packedSize == 1) {
         BitFilePutChar(RLE_size, bfp);
     }
 
     byte_t ch;
-    while (fread(&ch, 1, 1, (size == 0 ? headerFile : packedFile)) == 1) {            
+    while (fread(&ch, 1, 1, (packedSize == 0 ? headerFile : packedFile)) == 1) {            
          BitFilePutChar(ch, bfp);
     }
     fclose(packedFile);
-    if (size == 0) {
+    if (packedSize == 0) {
         fclose(headerFile);
     }
     remove(packedFilename);
@@ -695,7 +701,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     }
     fclose(file);
     if (size > 1) {
-        canonical_header_unpack(packedFilename, unpFilename);
+        multi_unpack(packedFilename, unpFilename);
     }
     else if (size == 1) {
         RLE_simple_unpack(packedFilename, unpFilename);

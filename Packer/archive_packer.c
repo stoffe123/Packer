@@ -20,7 +20,7 @@
 
 static uint64_t fileListInitialAllocSize = 8192;
 
-static bool useSolid = true;
+static bool useSolid = false;
 
 
 void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n) 

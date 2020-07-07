@@ -46,6 +46,11 @@ typedef struct packProfile {
 	int64_t sizeMaxForSuperslim;
 } packProfile;
 
+
+void lockTempfileMutex();
+
+void releaseTempfileMutex();
+
 void quickSortCompareEndings(file_t* f, uint64_t size);
 
 void printProfile(packProfile*);

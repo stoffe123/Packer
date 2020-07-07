@@ -18,12 +18,4 @@ void block_unpack(const wchar_t*, const wchar_t*);
 
 void blockUnpackAndReplace(wchar_t* src);
 
-HANDLE lockTempfileMutex();
-
-HANDLE releaseTempfileMutex();
-
-HANDLE lockClockdirMutex();
-
-HANDLE releaseClockdirMutex();
-
 #endif

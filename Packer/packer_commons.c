@@ -4,6 +4,15 @@
 #include "packer_commons.h"
 
 
+void lockTempfileMutex() {
+
+}
+
+void releaseTempfileMutex() {
+
+}
+
+
 bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
 	uint64_t size_org = get_file_size_from_name(src);
 	uint64_t size_packed = get_file_size_from_name(tmp);
