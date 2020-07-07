@@ -12,38 +12,15 @@
 /* Two-byte packer */
 
 //Global variables used in compressor
-__declspec(thread) static FILE* infil, * utfil;
 
-__declspec(thread) static uint64_t buffer_endpos, buffer_startpos, buffer_min,
-buffer_size = 2048, source_size;
-__declspec(thread) static  unsigned char* buffer;
 
-__declspec(thread) static  const char* base_dir;
+
+__declspec(thread) static  unsigned char buffer[BLOCK_SIZE];
+
 __declspec(thread) static  unsigned long two_byte_freq_table[65536] = { 0 };
 __declspec(thread) static  uint8_t pair_table[2048] = { 0 }, master_code;
 __declspec(thread) static  unsigned long char_freq[256];
 __declspec(thread) static  packProfile profile;
-
-static void move_buffer(unsigned int steps) {
-	buffer_startpos += steps;
-	if (buffer_endpos == buffer_size) {
-		uint64_t buffer_left = buffer_size - buffer_startpos;
-		if (buffer_left < buffer_min) {
-			//load new buffer!!			
-			//debug("Load new buffer of: %d", buffer_size);
-
-			unsigned char* new_buf = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
-			for (uint64_t i = 0; i < (buffer_size - buffer_startpos); i++) {
-				new_buf[i] = buffer[i + buffer_startpos];
-			}
-			uint64_t res = fread(&new_buf[buffer_size - buffer_startpos], 1, buffer_startpos, infil);
-			buffer_endpos = res + (buffer_size - buffer_startpos);
-			free(buffer);
-			buffer = new_buf;
-			buffer_startpos = 0;
-		}
-	}
-}
 
 val_freq_t find_best_two_byte() {
 	unsigned long best = 0;
@@ -63,7 +40,7 @@ val_freq_t find_best_two_byte() {
 	return res;
 }
 
-uint64_t getGainThreshold() {
+uint64_t getGainThreshold(uint64_t source_size) {
 
 	uint64_t res = source_size / profile.twobyte_threshold_divide;
 
@@ -76,12 +53,12 @@ uint64_t getGainThreshold() {
 	return res;
 }
 
-int create_two_byte_table() {
+int create_two_byte_table(uint64_t source_size) {
 	debug("\n creating two_byte_table \n");
 
 	value_freq_t master = find_best_code(char_freq);
 	master_code = master.value;
-	uint64_t threshold = getGainThreshold();
+	uint64_t threshold = getGainThreshold(source_size);
 	debug("\n Two byte packer gain threshhold %lld", threshold);
 	bool found_twobyte = false;
 	int pair_table_pos = START_CODES_SIZE;
@@ -137,18 +114,19 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 
 void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 
+	FILE* infil, * utfil = NULL;
+
 	debug("\nTwo-byte pack pass=%d", pass);
 
-	buffer_startpos = 0;
-	buffer_min = 20;
+	uint64_t buffer_startpos = 0, source_size;
 
-	infil = openRead(src);	
+	infil = openRead(src);
 	source_size = get_file_size(infil);
 
 	uint64_t total_size = get_file_size(infil);
 	int pair_table_pos;
-	if (pass >= 2) {		
-		pair_table_pos = create_two_byte_table();
+	if (pass >= 2) {
+		pair_table_pos = create_two_byte_table(source_size);
 
 		if (pass == 3) {
 			utfil = openWrite(dest);
@@ -170,17 +148,24 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 		}
 	}
 
-	buffer_endpos = fread(buffer, 1, buffer_size, infil);
-
-	unsigned int seq_len = 1;
+	uint64_t buffer_endpos = fread(buffer, 1, BLOCK_SIZE, infil);
+	if (buffer_endpos == BLOCK_SIZE) {
+		printf("\n too large file in two_byte packer!");
+		exit(1);
+	}
 
 	while (buffer_startpos < buffer_endpos) {
-
+		bool lastChar = false;
+		if (buffer_startpos == buffer_endpos - 1) {
+			lastChar = true;
+		}
 		unsigned char ch1 = buffer[buffer_startpos];
 		unsigned char ch2 = buffer[buffer_startpos + 1];
 		unsigned int val = ch1 + 256 * ch2;
 		if (pass >= 2) {
-			unsigned int code = find_code_for_pair(val, pair_table_pos);
+			unsigned int code = (lastChar ? 256 :
+				find_code_for_pair(val, pair_table_pos));
+
 
 			if (code == 256) {
 				// not found
@@ -191,11 +176,11 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 				}
 				else {
 					if (is_code(ch1, pair_table_pos)) {
-						WRITE(utfil, master_code);
+						fputc(master_code, utfil);
 					}
-					WRITE(utfil, ch1);
+					fputc(ch1, utfil);
 				}
-				move_buffer(1);
+				buffer_startpos++;
 
 			}
 			else { // write the code for the pair
@@ -205,9 +190,9 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 					}
 				}
 				else {
-					WRITE(utfil, (unsigned char)code);
+					fputc((unsigned char)code, utfil);
 				}
-				move_buffer(2);
+				buffer_startpos += 2;
 			}
 		}
 		else { // pass == 1
@@ -217,7 +202,7 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 			if (char_freq[ch1] < LONG_MAX) {
 				char_freq[ch1]++;
 			}
-			move_buffer(1);
+			buffer_startpos++;
 		}
 	}//end while
 
@@ -231,11 +216,9 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 void twoBytePack(const wchar_t* src, const wchar_t* dest, packProfile prof)
 {
 	profile = prof;
-	buffer = (unsigned char*)malloc(buffer_size * sizeof(unsigned char));
 	two_byte_pack_internal(src, dest, 1); //analyse and build metadata
 	two_byte_pack_internal(src, dest, 2); //simulate pack and adjust metadata
 	two_byte_pack_internal(src, dest, 3); //pack
-	free(buffer);
 }
 
 
