@@ -147,6 +147,7 @@
     <ClCompile Include="canonical_header_packer.c" />
     <ClCompile Include="canonical_header_unpacker.c" />
     <ClCompile Include="common_tools.c" />
+    <ClCompile Include="everyOtherEncoder.c" />
     <ClCompile Include="huffman2.c" />
     <ClCompile Include="huffman_decode.c" />
     <ClCompile Include="huffman_encode.c" />
@@ -172,6 +173,7 @@
     <ClInclude Include="canonical.h" />
     <ClInclude Include="canonical_header_packer.h" />
     <ClInclude Include="common_tools.h" />
+    <ClInclude Include="everyOtherEncoder.h" />
     <ClInclude Include="huffman.h" />
     <ClInclude Include="huffman2.h" />
     <ClInclude Include="huffman_decode.h" />

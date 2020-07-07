@@ -90,6 +90,9 @@
     <ClCompile Include="bounce.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="everyOtherEncoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -153,6 +156,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="canonical_header_packer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="everyOtherEncoder.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
