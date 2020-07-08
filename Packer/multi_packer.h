@@ -29,4 +29,8 @@ void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfil
 
 void MultiUnpackAndReplacew(const wchar_t* srcw);
 
+bool isCanonicalHeaderPacked(int packType);
+
+int packTypeForCanonicalHeaderPack();
+
 #endif

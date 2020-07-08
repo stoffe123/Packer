@@ -193,6 +193,10 @@ static packProfile prof = { .rle_ratio = 0,
 			.sizeMaxForSuperslim = 16384
 };
 
+int packTypeForCanonicalHeaderPack() {
+	int pt = setKthBit(0, 1);
+	return setKthBit(pt, 2);
+}
 
 
 /* ----------------------------------------------------------------------------------------
@@ -258,8 +262,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			char head_pack[100] = { 0 };
 			getTempFile(head_pack, "multi_head_pack");
 			canonical_header_pack(src, head_pack);
-			int pt = setKthBit(0, 1);
-			pt = setKthBit(pt, 2);
+			int pt = packTypeForCanonicalHeaderPack();
 			packCandidates[candidatesIndex++] = getPackCandidate(head_pack, pt);
 		}
 
