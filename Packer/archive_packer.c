@@ -21,7 +21,7 @@
 
 static uint64_t fileListInitialAllocSize = 8192;
 
-static bool useSolid = false;
+static bool useSolid = true;
 
 static packProfile headerPackProfile = {
 	.rle_ratio = 90,

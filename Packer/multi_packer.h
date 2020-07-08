@@ -17,6 +17,8 @@ uint8_t multiPack(const char* , const char* , packProfile profile, packProfile s
 
 void multiUnpack(const char* src, const char* dst, uint8_t pack_type);
 
+void multiUnpackAndReplace(const char* src, uint8_t pack_type);
+
 void multi_pack(const char*, const char*, packProfile profile, packProfile seqlenProfile, 
 	packProfile offsetProfile, packProfile distancesProfile);
 
@@ -32,5 +34,8 @@ void MultiUnpackAndReplacew(const wchar_t* srcw);
 bool isCanonicalHeaderPacked(int packType);
 
 int packTypeForCanonicalHeaderPack();
+
+int packTypeRlePlusTwobyte();
+
 
 #endif

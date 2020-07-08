@@ -13,6 +13,9 @@
 
 #define META_SIZE_MAX 1048575
 
+#define RLE_BIT 5
+#define TWOBYTE_BIT 6
+
 static 	packProfile twobyte100Profile = {
 .twobyte_ratio = 100,
 .twobyte_threshold_divide = 1,
@@ -198,6 +201,11 @@ int packTypeForCanonicalHeaderPack() {
 	return setKthBit(pt, 2);
 }
 
+int packTypeRlePlusTwobyte() {
+	int pt = setKthBit(0, RLE_BIT);
+	pt = setKthBit(pt, TWOBYTE_BIT);
+	return pt;
+}
 
 /* ----------------------------------------------------------------------------------------
 
@@ -268,7 +276,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
 		if (got_smaller) {
-			pack_type = setKthBit(pack_type, 5);
+			pack_type = setKthBit(pack_type, RLE_BIT);  // bit 5
 		}
 
 		if (source_size > 20 && profile.rle_ratio > 0) {
@@ -289,7 +297,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
 			got_smaller = TwoBytePackAndTest(before_seqpack, profile);
 			if (got_smaller) {
-				pack_type = setKthBit(pack_type, 6);
+				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
 			}
 		}
 		packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, pack_type);
@@ -486,14 +494,14 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 	else {
 		my_rename(main_name, seq_dst);
 	}
-	if (isKthBitSet(pack_type, 6)) {
+	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
 		TwoByteUnpackAndReplace(seq_dst);
 	}
 	if (isCanonicalHeaderPacked(pack_type)) {
 		canonical_header_unpack(seq_dst, dst);
 	}
 	else {
-		if (isKthBitSet(pack_type, 5)) {
+		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5
 			RLE_simple_unpack(seq_dst, dst);
 		}
 		else {
@@ -547,4 +555,11 @@ void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, 
 	to_narrow(srcw, src);
 	to_narrow(dstw, dst);
 	multi_pack(src, dst, profile, seqlenProfile, offsetProfile, distancesProfile);
+}
+
+void multiUnpackAndReplace(const char* src, uint8_t pack_type) {
+	const char dst[500] = { 0 };
+	getTempFile(dst, "multipacker_unpackandreplace");
+	multiUnpack(src, dst, pack_type);	
+	my_rename(dst, src);
 }

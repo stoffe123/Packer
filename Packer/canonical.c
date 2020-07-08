@@ -633,14 +633,14 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     fclose(headerFile);
     char packedFilename[100] = { 0 };
     getTempFile(packedFilename, "canonical_header_packed");
-    uint8_t packType = multiPack(headerFilename, packedFilename, profile, profile, profile, profile);
+    int packType = multiPack(headerFilename, packedFilename, profile, profile, profile, profile);
     uint64_t orgSize = get_file_size_from_name(headerFilename);
     uint64_t packedSize = get_file_size_from_name(packedFilename);
 
     //printf("\n packed canonical header down to %d bytes", size);
 
     const char* fileToRead;
-    if (packedSize <= 1 || packedSize >= 256) {
+    if (packedSize <= 2 || packedSize >= 256) {
         printf("\n wrong size of canonical header packed %d original %d => using store", packedSize, orgSize);
         packedSize = 0; // flag for store
         remove(packedFilename);
@@ -649,7 +649,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     else {
         fileToRead = packedFilename;
     }
-    FILE* packedFile = fopen(fileToRead, "rb");
+   
     if (packedSize == 0) {
         //store case
         printf("\n unpack can header: store case case size=%d", packedSize);
@@ -659,14 +659,20 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
         printf("\n unpack can header: can header pack case case packtype=%d", packType);
         BitFilePutChar(packedSize, bfp);
     }
+    else if (packType == packTypeRlePlusTwobyte()) {
+        printf("\n unpack can header: RLE+twobyte case case packtype=%d", packType);
+        BitFilePutChar(2, bfp); 
+        BitFilePutChar(packedSize, bfp);
+    }
     else { // multipack case
         printf("\n unpack can header: multipack case packtype=%d", packType);
         BitFilePutChar(1, bfp);
-        BitFilePutChar(packedSize + 1, bfp);
+        BitFilePutChar(packedSize, bfp);
         BitFilePutChar(packType, bfp);
     }
 
     byte_t ch;
+    FILE* packedFile = fopen(fileToRead, "rb");
     while (fread(&ch, 1, 1, packedFile) == 1) {
         BitFilePutChar(ch, bfp);
     }
@@ -691,39 +697,36 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
 
-    char packedFilename[100] = { 0 };
-    getTempFile(packedFilename, "canonical_packedheader");
-    FILE* file = fopen(packedFilename, "wb");
-
-    char unpFilename[100] = { 0 };
-    getTempFile(unpFilename, "canonical_headerunpacked");
-
+    char headerFilename[100] = { 0 };
+    getTempFile(headerFilename, "canonical_packedheader");
+   
     int size = BitFileGetChar(bfp);
     int bytesToCopy = NUM_CHARS;  // normally 257
+    uint8_t packType = 0;
     if (size == 1) { // multi case
         bytesToCopy = BitFileGetChar(bfp);
+        packType = BitFileGetChar(bfp);
     }
-    else if (size > 1) {
+    else if (size == 2) { // RLE case
+        bytesToCopy = BitFileGetChar(bfp);
+        packType = packTypeRlePlusTwobyte();
+    }
+    else if (size > 2) {
         // canonicalHeaderPack case
         bytesToCopy = size;
+        packType = packTypeForCanonicalHeaderPack();
     }
+    FILE* file = fopen(headerFilename, "wb");
     for (int i = 0; i < bytesToCopy; i++) {
         uint8_t ch = BitFileGetChar(bfp);
         fwrite(&ch, 1, 1, file);
     }
     fclose(file);
-
-    if (size > 1) {
-        canonical_header_unpack(packedFilename, unpFilename);
-    }
-    else if (size == 1) {
-        multi_unpack(packedFilename, unpFilename);
-
-    }
-    else { // store
-        my_rename(packedFilename, unpFilename);
-    }
-    FILE* unpFile = fopen(unpFilename, "rb");
+      
+    if (size > 0) {
+        multiUnpackAndReplace(headerFilename, packType);
+    }    
+    FILE* unpFile = fopen(headerFilename, "rb");
 
     /* read the code length */
     for (int i = 0; i < NUM_CHARS; i++)
@@ -743,8 +746,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
         }
     }
     fclose(unpFile);
-    remove(packedFilename);
-    remove(unpFilename);
+    remove(headerFilename);    
     return 0;
 }
 
