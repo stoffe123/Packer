@@ -6,16 +6,9 @@
 
 // RLE simple  - unpacker
 
-//Global vars
-__declspec(thread) static   unsigned char code;
-
-__declspec(thread) static   long long read_packedfile_pos,
-	runlengths_file_pos;
-__declspec(thread) static   const char* base_dir;
-__declspec(thread) static   bool separate;
 
 
-unsigned char read_runlength(FILE* infil, FILE* runlengths_file) {
+unsigned char read_runlength(FILE* infil, FILE* runlengths_file, bool separate) {
 	if (separate) {
 		return fgetc(runlengths_file);
 	}
@@ -27,16 +20,15 @@ unsigned char read_runlength(FILE* infil, FILE* runlengths_file) {
 }
 
 //------------------------------------------------------------------------------
-void RLE_simple_unpack_internal(const char* source_filename, const char* dest_filename)
+void RLE_simple_unpack_internal(const char* source_filename, const char* dest_filename, const char* base_dir, bool separate)
 {
 
-	FILE* infil, * utfil, *runlengths_file = NULL;
-	bool code_occurred = 1;
+	FILE* infil, * utfil, * runlengths_file = NULL;
 
 	if (separate) {
 		const char name[100] = { 0 };
 		concat(name, base_dir, "runlengths");
-		runlengths_file = fopen(name, "rb");	
+		runlengths_file = fopen(name, "rb");
 	}
 
 	//printf("\n\n Unpacking %s", source_filename);
@@ -56,17 +48,18 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 		exit(1);
 	}
 
-	code_occurred = read_runlength(infil, runlengths_file);
+	//code_occurred = read_runlength(infil, runlengths_file);
+	unsigned char code;
 	fread(&code, 1, 1, infil);
 
 	unsigned char cc;
-	while (fread(&cc, 1,1, infil) == 1) {
-		
+	while (fread(&cc, 1, 1, infil) == 1) {
+
 		if (cc == code) {
-			
-			unsigned int runlength = read_runlength(infil, runlengths_file);
-			
-			if (runlength == 255 && code_occurred) {
+
+			unsigned int runlength = read_runlength(infil, runlengths_file, separate);
+
+			if (runlength == 255) {
 				//occurrence of code in original
 				putc(code, utfil);
 			}
@@ -90,12 +83,9 @@ void RLE_simple_unpack_internal(const char* source_filename, const char* dest_fi
 }
 
 void RLE_simple_unpack(const char* src, const char* dest) {
-	separate = false;
-	RLE_simple_unpack_internal(src, dest);
+	RLE_simple_unpack_internal(src, dest, "", false);
 }
 
-void RLE_simple_unpack_separate(const char* src, const char* dest, const char* bd) {
-	base_dir = bd;
-	separate = true;
-	RLE_simple_unpack_internal(src, dest);
+void RLE_simple_unpack_separate(const char* src, const char* dest, const char* base_dir) {
+	RLE_simple_unpack_internal(src, dest, base_dir, true);
 }

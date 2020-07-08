@@ -13,30 +13,25 @@
 
 /* RLE simple packer */
 
-/* Global variables used in compressor */
-__declspec(thread) static const char* base_dir;
-__declspec(thread) static bool separate;
 
-
-
-void write_runlength(unsigned char c, FILE* utfil, FILE* runlengths_file) {
+void write_runlength(unsigned char c, FILE* utfil, FILE* runlengths_file, bool separate) {
 	if (separate) {
 		fwrite(&c, 1, 1, runlengths_file);
 	}
 	else {
-		WRITE(utfil, c);
+		fputc(c, utfil);
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------
 
-value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, value_freq_t code_struct, const char* base_dir) {
+value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, value_freq_t code_struct, const char* base_dir, bool separate) {
 
 	unsigned char code = 0;
-	bool code_occurred = true;
+
 	if (pass == 2) {
 		code = code_struct.value;
-		code_occurred = code_struct.freq > 0;
+		//code_occurred = code_struct.freq > 0;
 	}
 
 	FILE* infil = NULL, * utfil = NULL, * runlengths_file = NULL;
@@ -47,7 +42,7 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 		concat(name, base_dir, "runlengths");
 		runlengths_file = fopen(name, "wb");
 	}
-	unsigned long long max_runlength = (code_occurred ? 254 + MIN_RUNLENGTH : 255 + MIN_RUNLENGTH);
+	unsigned long long max_runlength = 254 + MIN_RUNLENGTH;
 
 	infil = fopen(src, "rb");
 	if (!infil) {
@@ -62,11 +57,11 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 			printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
 		}
 		// start compression!
-		write_runlength(code_occurred ? 1 : 0, utfil, runlengths_file);
-		WRITE(utfil, code);
+		//write_runlength(code_occurred ? 1 : 0, utfil, runlengths_file);
+		fputc(code, utfil);
 	}
 	else { // pass = 1
-		code_occurred = false;
+		//code_occurred = false;
 	}
 
 	/* start compression */
@@ -99,21 +94,21 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 			else { // pass = 2
 				for (int i = 0; i < runlength; i++) {
 					if (first_char == code) {
-						WRITE(utfil, code);
-						WRITE(utfil, 255);
-						assert(code_occurred, "code_occured in RLE_simple_packer.RLE_pack_internal");
+						fputc(code, utfil);
+						fputc(255, utfil);
+						//assert(code_occurred, "code_occured in RLE_simple_packer.RLE_pack_internal");
 					}
 					else {
-						WRITE(utfil, first_char);
+						fputc(first_char, utfil);
 					}
 				}
 			}
 		}
 		else { // Runlength fond!
 			if (pass == 2) {
-				WRITE(utfil, code);
-				write_runlength(runlength - MIN_RUNLENGTH, utfil, runlengths_file);
-				WRITE(utfil, first_char);
+				fputc(code, utfil);
+				write_runlength(runlength - MIN_RUNLENGTH, utfil, runlengths_file, separate);
+				fputc(first_char, utfil);
 			}
 			else {
 				//since the code appeared in a runlength no penalty needed!
@@ -138,53 +133,20 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 
 }
 
-void RLE_simple_pack_internal(const char* src, const char* dest, const char* base_dir)
+void RLE_simple_pack_internal(const char* src, const char* dest, const char* base_dir, bool separate)
 {
 	value_freq_t dummy;
 	dummy.freq = 0;
 	dummy.value = 0;
-	value_freq_t res = RLE_pack_internal(src, dest, 1, dummy, base_dir); //find code
-	RLE_pack_internal(src, dest, 2, res, base_dir); //pack
+	value_freq_t res = RLE_pack_internal(src, dest, 1, dummy, base_dir, separate); //find code
+	RLE_pack_internal(src, dest, 2, res, base_dir, separate); //pack
 }
 
 void RLE_simple_pack(const char* src, const char* dest) {
-	separate = false;
-	RLE_simple_pack_internal(src, dest, "");
+	RLE_simple_pack_internal(src, dest, "", false);
 }
 
 
-void RLE_simple_pack_separate(const char* src, const char* dest, const char* base_dir) {	
-	separate = true;
-	RLE_simple_pack_internal(src, dest, base_dir);
+void RLE_simple_pack_separate(const char* src, const char* dest, const char* base_dir) {
+	RLE_simple_pack_internal(src, dest, base_dir, true);
 }
-
-
-/*
-DWORD WINAPI thread_RLE_simple_pack(LPVOID lpParam)
-{
-	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
-			 "amb.dll",
-			 "rel.pdf",
-			 "nex.doc",
-			"did.csh",
-			 "aft.htm",
-			 "tob.pdf",
-		 "pazera.exe",
-		"voc.wav",
-		 "bad.mp3"
-
-
-
-	};
-	uint32_t i = *(DWORD*)lpParam;
-
-	printf("OOOOOOOOOOOOOOOOO The parameter: %d.\n", i);
-
-	printf("filename=%s", test_filenames[i]);
-
-	const char* src = concat("c:/test/testsuite/", test_filenames[i]);
-
-	RLE_simple_pack(src, concat(src, "_packed"));
-
-}
-*/

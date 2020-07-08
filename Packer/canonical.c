@@ -640,7 +640,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
    
     FILE* packedFile = fopen(packedFilename, "rb");
     int RLE_size = 0;
-    if (packedSize < 3 || packedSize >= 256) {
+    if (packedSize < 2 || packedSize >= 256) {
         printf("\n wrong size of canonical header packed %d original %d => using store", packedSize, orgSize);
         packedSize = 0; // flag for store
         fclose(packedFile);

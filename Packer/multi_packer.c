@@ -177,6 +177,22 @@ packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
 	return getPackCandidate2(filename, packType, 0);
 }
 
+static packProfile prof = { .rle_ratio = 0,
+			.twobyte_ratio = 0,
+			.recursive_limit = 10,
+			.twobyte_threshold_max = 11750,
+			.twobyte_threshold_divide = 20,
+			.twobyte_threshold_min = 848,
+			.seqlenMinLimit3 = 151,
+			.seqlenMinLimit4 = 52447,
+			.blockSizeMinus = 121,
+			.winsize = 2000,
+			.sizeMaxForCanonicalHeaderPack = 1,
+			.sizeMinForSeqPack = 10,
+			.sizeMinForCanonical = 100000,
+			.sizeMaxForSuperslim = 16384
+};
+
 
 
 /* ----------------------------------------------------------------------------------------
@@ -220,29 +236,24 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 
 
 	packCandidates[candidatesIndex++] = getPackCandidate(src, 0);
-	if (source_size >= 10) {
+	uint8_t slimPackType = 0;
+	char slim_multipacked[100] = { 0 };
+
+	if (source_size >= 9) {
 
 		char before_seqpack[100] = { 0 };
 		getTempFile(before_seqpack, "multi_rlepacked");
 
-		packProfile prof = getPackProfile();
-		prof.twobyte_ratio = 90;
-		prof.rle_ratio = 90;
-		prof.recursive_limit = 10;
-		prof.twobyte_threshold_divide = 100;
-		prof.twobyte_threshold_max = 100;
-		prof.twobyte_threshold_min = 20;
-
-		char slim_multipacked[100];
-		uint8_t slimPackType = 0;
-		/*
-		if (profile.seqlen_pages + profile.offset_pages > 0 && source_size > 10) {
+		
+	
+		//slimseq is turned off now.. no improvement on test suit 16 .. just 60s extra
+		if (profile.rle_ratio > 0 && source_size > 10 && source_size < 10) {
 			getTempFile(slim_multipacked, "multi_multipacked");
-			slimPackType = multiPackInternal(src, slim_multipacked, prof, prof, prof, storePackType);
+			slimPackType = multiPackInternal(src, slim_multipacked, prof, prof, prof, prof, storePackType);
 			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
 		}
-		*/
-
+	
+	
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
 			char head_pack[100] = { 0 };
 			getTempFile(head_pack, "multi_head_pack");
@@ -257,14 +268,14 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			pack_type = setKthBit(pack_type, 5);
 		}
 
-		if (source_size > 20) {
+		if (source_size > 20 && profile.rle_ratio > 0) {
 			char just_two_byte[100] = { 0 };
 			getTempFile(just_two_byte, "multi_just_two_byte");
 			two_byte_pack(src, just_two_byte, twobyte100Profile);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
 		}
 
-		if (source_size > profile.sizeMinForCanonical) {
+		if (source_size > profile.sizeMinForCanonical && profile.rle_ratio > 0) {
 			char just_canonical[100] = { 0 };
 			getTempFile(just_canonical, "multi_just_canonical");
 			CanonicalEncode(src, just_canonical);
@@ -272,7 +283,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 
 
-		if (source_size > profile.sizeMinForSeqPack) {
+		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
 			got_smaller = TwoBytePackAndTest(before_seqpack, profile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, 6);
@@ -384,13 +395,13 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 
 	printf("\nWinner is %s  packed %d > %d", bestCandidate.filename, source_size, bestCandidate.size);
 	pack_type = bestCandidate.packType;
-	/*
+	
 	if (equals(bestCandidate.filename, slim_multipacked)) {
 		printf("\n Using only slimseq");
 		my_rename(slim_multipacked, dst);
-		pack_type = slimPackType;
+		return slimPackType;
 	}
-	else {*/
+	else
 
 	if (equals(bestCandidate.filename, src)) {
 		copy_file(src, main_name);
