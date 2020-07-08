@@ -176,6 +176,17 @@ packCandidate_t getPackCandidate2(const char* filename, unsigned char packType, 
 	return cand;
 }
 
+packCandidate_t getPackCandidate3(const char* filename, unsigned char packType, bool canonicalHeaderCase) {
+	packCandidate_t res = getPackCandidate2(filename, packType, 0);
+	if (canonicalHeaderCase) {
+		if (packType == packTypeForCanonicalHeaderPack || packType == packTypeRlePlusTwobyte) {
+			// those two cases are separately treated in canonical.c and no packtype has to be written then
+			res.size--;
+		}
+	}
+	return res;
+}
+
 packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
 	return getPackCandidate2(filename, packType, 0);
 }
@@ -246,6 +257,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	concat(offsets_name, base_dir, "offsets");
 	concat(distances_name, base_dir, "distances");
 
+	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
 
 	packCandidates[candidatesIndex++] = getPackCandidate(src, 0);
 	uint8_t slimPackType = 0;
@@ -271,7 +283,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			getTempFile(head_pack, "multi_head_pack");
 			canonical_header_pack(src, head_pack);
 			int pt = packTypeForCanonicalHeaderPack();
-			packCandidates[candidatesIndex++] = getPackCandidate(head_pack, pt);
+			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
 		}
 
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
@@ -300,7 +312,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
 			}
 		}
-		packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, pack_type);
+		packCandidates[candidatesIndex++] = getPackCandidate3(before_seqpack, pack_type, canonicalHeaderCase);
 		uint64_t before_seqpack_size = get_file_size_from_name(before_seqpack);
 
 		if (source_size > profile.sizeMinForCanonical) {

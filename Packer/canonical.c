@@ -58,7 +58,7 @@ static packProfile profile = {
 .winsize = 1000,
 .sizeMaxForCanonicalHeaderPack = 260,
 .sizeMinForSeqPack = 9,
-.sizeMinForCanonical = 9000 };
+.sizeMinForCanonical = INT64_MAX };
 
 /***************************************************************************
 *                            TYPE DEFINITIONS

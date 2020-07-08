@@ -555,7 +555,7 @@ void testarchive() {
 			.seqlenMinLimit3 = 151,
 			.seqlenMinLimit4 = 52447,
 			.blockSizeMinus = 121,
-			.winsize = 2000, //104172,
+			.winsize = 104172, //2000, 
 			.sizeMaxForCanonicalHeaderPack = 268,
 			.sizeMinForSeqPack = 8470,
 			.sizeMinForCanonical = 278,
@@ -564,8 +564,8 @@ void testarchive() {
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
-	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-    //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
+	//wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+    wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
 
 
 	unsigned long long best_size = 0;
