@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <limits.h>
+#include <stdlib.h>
 #include "common_tools.h"
 #include "packer_commons.h"
 
@@ -58,21 +59,21 @@ uint64_t CanonicalEncodeAndTest(const char* src) {
 	return size_packed;
 }
 
-void unpackByKind(const char* kind, const char* tmp, const char* tmp2) {
+void unpackByKind(const char* kind, const char* packedFilename, const char* unpackedFilename) {
 	if (equals(kind, "multi")) {
-		multi_unpack(tmp, tmp2);
+		multi_unpack(packedFilename, unpackedFilename);
 	}
 	else if (equals(kind, "rle simple")) {
-		RLE_simple_unpack(tmp, tmp2);
+		RLE_simple_unpack(packedFilename, unpackedFilename);
 	}
 	else if (equals(kind, "twobyte")) {
-		two_byte_unpack(tmp, tmp2);
+		two_byte_unpack(packedFilename, unpackedFilename);
 	}
 	else if (equals(kind, "rle advanced")) {
-		RLE_advanced_unpack(tmp, tmp2);
+		RLE_advanced_unpack(packedFilename, unpackedFilename);
 	}
 	else if (equals(kind, "canonical")) {
-		CanonicalDecode(tmp, tmp2);
+		CanonicalDecode(packedFilename, unpackedFilename);
 	}
 	else {
 		printf("\n kind=%s not found in packer_commons.unpackByKind", kind);

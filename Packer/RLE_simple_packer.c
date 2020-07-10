@@ -8,57 +8,27 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "RLE_simple_packer_commons.h"
+#include "memfile.h"
 
 #define VERBOSE false
 
 /* RLE simple packer */
 
-
-void write_runlength(unsigned char c, FILE* utfil, FILE* runlengths_file, bool separate) {
-	if (separate) {
-		fwrite(&c, 1, 1, runlengths_file);
-	}
-	else {
-		fputc(c, utfil);
-	}
-}
-
 //--------------------------------------------------------------------------------------------------------
 
-value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, value_freq_t code_struct, const char* base_dir, bool separate) {
+memfile* RLE_pack_internal(memfile* infil, int pass, int code) {
 
-	unsigned char code = 0;
-
-	if (pass == 2) {
-		code = code_struct.value;
-		//code_occurred = code_struct.freq > 0;
-	}
-
-	FILE* infil = NULL, * utfil = NULL, * runlengths_file = NULL;
+	memfile* utfil = getMemfile();
 	unsigned long char_freq[256] = { 0 };
 	debug("\nRLE_simple_pack pass=%d", pass);
-	if (separate) {
-		const char name[100] = { 0 };
-		concat(name, base_dir, "runlengths");
-		runlengths_file = fopen(name, "wb");
-	}
+	
 	unsigned long long max_runlength = 254 + MIN_RUNLENGTH;
 
-	infil = fopen(src, "rb");
-	if (!infil) {
-		printf("Hittade inte infil: %s", src);
-		getchar();
-		exit(1);
-	}
-
 	if (pass == 2) {
-		fopen_s(&utfil, dest, "wb");
-		if (!utfil) {
-			printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
-		}
+		
 		// start compression!
 		//write_runlength(code_occurred ? 1 : 0, utfil, runlengths_file);
-		fputc(code, utfil);
+		fputcc(code, utfil);
 	}
 	else { // pass = 1
 		//code_occurred = false;
@@ -68,7 +38,7 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 
 	unsigned int runlength = 1;
 
-	int read_char = fgetc(infil);
+	int read_char = fgetcc(infil);
 	while (read_char != EOF) {
 
 		if (pass == 1) {
@@ -76,9 +46,9 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 				char_freq[read_char]++;
 			}
 		}
-		unsigned char first_char = read_char;
+		int first_char = read_char;
 		runlength = 1;
-		while ((read_char = fgetc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
+		while ((read_char = fgetcc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
 			runlength++;
 		}
 
@@ -94,21 +64,21 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 			else { // pass = 2
 				for (int i = 0; i < runlength; i++) {
 					if (first_char == code) {
-						fputc(code, utfil);
-						fputc(255, utfil);
+						fputcc(code, utfil);
+						fputcc(255, utfil);
 						//assert(code_occurred, "code_occured in RLE_simple_packer.RLE_pack_internal");
 					}
 					else {
-						fputc(first_char, utfil);
+						fputcc(first_char, utfil);
 					}
 				}
 			}
 		}
 		else { // Runlength fond!
 			if (pass == 2) {
-				fputc(code, utfil);
-				write_runlength(runlength - MIN_RUNLENGTH, utfil, runlengths_file, separate);
-				fputc(first_char, utfil);
+				fputcc(code, utfil);
+				fputcc(runlength - MIN_RUNLENGTH, utfil);
+				fputcc(first_char, utfil);
 			}
 			else {
 				//since the code appeared in a runlength no penalty needed!
@@ -118,35 +88,38 @@ value_freq_t  RLE_pack_internal(const char* src, const char* dest, int pass, val
 			}
 		}
 	}//end while
-
-	fclose(infil);
-
 	if (pass == 1) {
-		return find_best_code(char_freq);
+		setPos(utfil, find_best_code(char_freq).value); // ugly but temporary!	
 	}
-	else {
-		fclose(utfil);
-		if (separate) {
-			fclose(runlengths_file);
-		}
-	}
-
+	return utfil;
 }
 
-void RLE_simple_pack_internal(const char* src, const char* dest, const char* base_dir, bool separate)
+memfile* RLE_simple_pack_internal(memfile* src)
 {
-	value_freq_t dummy;
-	dummy.freq = 0;
-	dummy.value = 0;
-	value_freq_t res = RLE_pack_internal(src, dest, 1, dummy, base_dir, separate); //find code
-	RLE_pack_internal(src, dest, 2, res, base_dir, separate); //pack
+	memfile* res = RLE_pack_internal(src, 1, 0); //find code
+	int code = getPos(res);
+	fre(res);
+	rewindMem(src);
+	return RLE_pack_internal(src, 2, code); //pack
 }
 
-void RLE_simple_pack(const char* src, const char* dest) {
-	RLE_simple_pack_internal(src, dest, "", false);
+memfile* RleSimplePack(memfile* src) {
+	RLE_simple_pack_internal(src);
 }
 
-
-void RLE_simple_pack_separate(const char* src, const char* dest, const char* base_dir) {
-	RLE_simple_pack_internal(src, dest, base_dir, true);
+void RLE_simple_pack(const char* src, const char* dst) {	
+	memfile* s = get_memfile_from_file(src);
+	memfile* packed = RLE_simple_pack_internal(s);
+	memfile_to_file(packed, dst);
+	fre(s);
+	fre(packed);
 }
+
+void RLE_simple_packw(const wchar_t* srcw, const wchar_t* dstw) {
+	memfile* s = getMemfileFromFile(srcw);
+	memfile* packed = RLE_simple_pack_internal(s);
+	memfileToFile(packed, dstw);
+	fre(s);
+	fre(packed);
+}
+

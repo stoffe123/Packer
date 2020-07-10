@@ -93,6 +93,9 @@
     <ClCompile Include="everyOtherEncoder.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="memfile.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -159,6 +162,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="everyOtherEncoder.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memfile.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

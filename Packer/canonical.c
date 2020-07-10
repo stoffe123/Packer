@@ -652,20 +652,20 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
    
     if (packedSize == 0) {
         //store case
-        printf("\n unpack can header: store case case size=%d", packedSize);
+        //printf("\n unpack can header: store case case size=%d", packedSize);
         BitFilePutChar(0, bfp);
     }
     else if (isCanonicalHeaderPacked(packType)) {
-        printf("\n unpack can header: can header pack case case packtype=%d", packType);
+        //printf("\n unpack can header: can header pack case case packtype=%d", packType);
         BitFilePutChar(packedSize, bfp);
     }
     else if (packType == packTypeRlePlusTwobyte()) {
-        printf("\n unpack can header: RLE+twobyte case case packtype=%d", packType);
+        //printf("\n unpack can header: RLE+twobyte case case packtype=%d", packType);
         BitFilePutChar(2, bfp); 
         BitFilePutChar(packedSize, bfp);
     }
     else { // multipack case
-        printf("\n unpack can header: multipack case packtype=%d", packType);
+        //printf("\n unpack can header: multipack case packtype=%d", packType);
         BitFilePutChar(1, bfp);
         BitFilePutChar(packedSize, bfp);
         BitFilePutChar(packType, bfp);
