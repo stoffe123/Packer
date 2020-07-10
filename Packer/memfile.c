@@ -39,7 +39,10 @@ memfile* getMemfile() {
 }
 
 void fre(memfile* mf) {
-	free(mf->block);
+	if (mf != NULL) {
+		free(mf->block);
+		free(mf);
+	}
 }
 
 

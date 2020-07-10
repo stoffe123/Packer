@@ -109,16 +109,16 @@ memfile* RleSimplePack(memfile* src) {
 void RLE_simple_pack(const char* src, const char* dst) {	
 	memfile* s = get_memfile_from_file(src);
 	memfile* packed = RLE_simple_pack_internal(s);
-	memfile_to_file(packed, dst);
 	fre(s);
+	memfile_to_file(packed, dst);
 	fre(packed);
 }
 
 void RLE_simple_packw(const wchar_t* srcw, const wchar_t* dstw) {
 	memfile* s = getMemfileFromFile(srcw);
 	memfile* packed = RLE_simple_pack_internal(s);
-	memfileToFile(packed, dstw);
 	fre(s);
+	memfileToFile(packed, dstw);
 	fre(packed);
 }
 

@@ -195,20 +195,18 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 		}
 	}//end while
 
-	if (pass == 3) {
-		//fclose(utfil);
+	if (pass < 3) {
+		fre(utfil);
+		return NULL;
 	}
 	return utfil;
 }
 
 memfile* twoBytePack(memfile* m, packProfile prof) {
 	profile = prof;
-	memfile* tmp = two_byte_pack_internal(m, 1); //analyse and build metadata
-	free(tmp);
-	tmp = two_byte_pack_internal(m, 2); //simulate pack and adjust metadata
-	free(tmp);
-	memfile* res = two_byte_pack_internal(m, 3); //pack
-	return res;
+	two_byte_pack_internal(m, 1); //analyse and build metadata
+	two_byte_pack_internal(m, 2); //simulate pack and adjust metadata
+	return two_byte_pack_internal(m, 3); //pack	
 }
 
 
@@ -217,9 +215,9 @@ void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 	profile = prof;
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = twoBytePack(srcm, prof);
+	fre(srcm);
 	memfileToFile(dstm, dest);
-	free(srcm);
-	free(dstm);
+	fre(dstm);
 }
 
 void two_byte_pack(const char* src, const char* dest, packProfile prof) {

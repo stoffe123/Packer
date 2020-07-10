@@ -65,9 +65,9 @@ void two_byte_unpackw(const wchar_t* src, const wchar_t* dest)
 {
 	memfile* m = getMemfileFromFile(src);
 	memfile* d = two_byte_unpack_internal(m);
+	fre(m);
 	memfileToFile(d, dest);
-	free(m);
-	free(d);
+	fre(d);
 }
 
 void two_byte_unpack(const char* src, const char* dest) {

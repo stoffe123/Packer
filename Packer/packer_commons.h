@@ -9,7 +9,7 @@
 #define BLOCK_SIZE 3500000
 
 //  16777215  is largest number for 24 bits in multipacker.tar
-static bool DOUBLE_CHECK_PACK = true;
+static bool DOUBLE_CHECK_PACK = false;
 
 
 
