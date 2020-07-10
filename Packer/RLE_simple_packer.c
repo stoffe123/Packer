@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------------------------------------
 
 memfile* RLE_pack_internal(memfile* infil, int pass, int code) {
-
+	rewindMem(infil);
 	memfile* utfil = getMemfile();
 	unsigned long char_freq[256] = { 0 };
 	debug("\nRLE_simple_pack pass=%d", pass);
@@ -99,7 +99,6 @@ memfile* RLE_simple_pack_internal(memfile* src)
 	memfile* res = RLE_pack_internal(src, 1, 0); //find code
 	int code = getPos(res);
 	fre(res);
-	rewindMem(src);
 	return RLE_pack_internal(src, 2, code); //pack
 }
 

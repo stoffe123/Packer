@@ -97,6 +97,20 @@ int fgetcc(memfile* mf) {
 	}
 }
 
+int nextcc(memfile* mf) {
+	if (getPos(mf) >= getSize(mf)) {
+		return EOF;
+	}
+	else {
+		int res = mf->block[getPos(mf)];
+		return res;
+	}
+}
+
+bool eofcc(memfile* mf) {
+	return getPos(mf) >= getSize(mf);
+}
+
 void fputcc(int c, memfile* mf) {	
 	uint32_t pos = getPos(mf);
 	mf->block[pos] = c;

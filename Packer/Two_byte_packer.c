@@ -82,7 +82,7 @@ int create_two_byte_table(uint64_t source_size) {
 	return pair_table_pos;
 }
 
-unsigned int find_code_for_pair(unsigned int val, int pair_table_pos) {
+int find_code_for_pair(int val, int pair_table_pos) {
 	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
 		unsigned int table_val = pair_table[i + 1] +
 			256 * pair_table[i + 2];
@@ -111,14 +111,13 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 
 memfile* two_byte_pack_internal(memfile* infil, int pass) {
 
-	uint8_t* buffer = infil->block;
+	rewindMem(infil);
 
 	memfile* utfil = NULL;
 
 	debug("\nTwo-byte pack pass=%d", pass);
-
-	uint64_t buffer_startpos = 0, 
-		source_size = getSize(infil);
+	
+	uint64_t source_size = getSize(infil);
 
 	int pair_table_pos;
 	if (pass >= 2) {
@@ -144,18 +143,15 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 		}
 	}
 
-	while (buffer_startpos < source_size) {
-		bool lastChar = false;
-		if (buffer_startpos == source_size - 1) {
-			lastChar = true;
-		}
-		unsigned char ch1 = buffer[buffer_startpos];
-		unsigned char ch2 = buffer[buffer_startpos + 1];
-		unsigned int val = ch1 + 256 * ch2;
+	while (!eofcc(infil)) {
+				
+		int ch1 = fgetcc(infil);
+		int ch2 = nextcc(infil);
+		bool lastChar = (ch2 == EOF);
+		int val = lastChar ? 0 : ch1 + 256 * ch2;
 		if (pass >= 2) {
-			unsigned int code = (lastChar ? 256 :
+			int code = (lastChar ? 256 :
 				find_code_for_pair(val, pair_table_pos));
-
 
 			if (code == 256) {
 				// not found
@@ -170,7 +166,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 					}
 					fputcc(ch1, utfil);
 				}
-				buffer_startpos++;
+				//buffer_startpos++;
 
 			}
 			else { // write the code for the pair
@@ -182,17 +178,20 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 				else {
 					fputcc((unsigned char)code, utfil);
 				}
-				buffer_startpos += 2;
+				fgetcc(infil);
+				//buffer_startpos += 2;
 			}
 		}
 		else { // pass == 1
-			if (two_byte_freq_table[val] < LONG_MAX) {
-				two_byte_freq_table[val]++;
+			if (!lastChar) {
+				if (two_byte_freq_table[val] < LONG_MAX) {
+					two_byte_freq_table[val]++;
+				}
 			}
 			if (char_freq[ch1] < LONG_MAX) {
 				char_freq[ch1]++;
 			}
-			buffer_startpos++;
+			//buffer_startpos++;
 		}
 	}//end while
 
