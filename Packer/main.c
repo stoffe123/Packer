@@ -340,7 +340,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/book_med.txt";
+	const wchar_t* src = L"c:/test/short.txt";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -355,9 +355,9 @@ void onefile() {
 	profile.rle_ratio = 85;
 	profile.twobyte_ratio = 90;
 	profile.recursive_limit = 242;
-	profile.twobyte_threshold_max = 11788;
-	profile.twobyte_threshold_divide = 159;
-	profile.twobyte_threshold_min = 3150;
+	profile.twobyte_threshold_max = 200;
+	profile.twobyte_threshold_divide = 1111;
+	profile.twobyte_threshold_min = 50;
 
 	//meta testsuit 838297
 	packProfile seqlenProfile = getPackProfile();
@@ -389,9 +389,9 @@ void onefile() {
 
 	//seqPackSeparate(src, L"c:/test/", profile);
 	//seqPack(src, packed_name, profile);
-	//two_byte_pack(src, packed_name, profile);
+	two_byte_packw(src, packed_name, profile);
 	//uint8_t packType = multiPack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
-	RLE_simple_packw(src, packed_name);
+	//RLE_simple_packw(src, packed_name);
 	//block_pack(src, packed_name, profile);
 
 	int pack_time = (clock() - cl);
@@ -399,9 +399,9 @@ void onefile() {
 	cl = clock();
 
 	//seqUnpackSeparate(L"c:/test/main", unpackedFilename, L"c:/test/");
-	//two_byte_unpack(packed_name, unpackedFilename);
+	two_byte_unpackw(packed_name, unpackedFilename);
 	//multiUnpack(packed_name, unpackedFilename, packType);
-	RLE_simple_unpackw(packed_name, unpackedFilename);
+	//RLE_simple_unpackw(packed_name, unpackedFilename);
 	//block_unpack(packed_name, unpackedFilename);
 	//seqUnpack(packed_name, unpackedFilename);
 

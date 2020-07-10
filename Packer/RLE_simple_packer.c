@@ -104,7 +104,7 @@ memfile* RLE_simple_pack_internal(memfile* src)
 }
 
 memfile* RleSimplePack(memfile* src) {
-	RLE_simple_pack_internal(src);
+	return RLE_simple_pack_internal(src);
 }
 
 void RLE_simple_pack(const char* src, const char* dst) {	

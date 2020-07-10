@@ -40,4 +40,6 @@ uint32_t setSize(memfile* m, uint32_t s);
 
 uint8_t* getBlock(memfile* m);
 
+memRead(uint8_t* arr, uint32_t size, memfile* m);
+
 #endif

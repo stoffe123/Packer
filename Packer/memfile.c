@@ -104,3 +104,9 @@ void fputcc(int c, memfile* mf) {
 	mf->size = mf->pos;
 }
 
+memRead(uint8_t* arr, uint32_t size, memfile* m) {
+	for (int i = 0; i < size; i++) {
+		arr[i] = m->block[m->pos + i];		
+	}
+	m->pos = m->pos + size;
+}

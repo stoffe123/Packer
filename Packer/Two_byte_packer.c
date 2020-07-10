@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "common_tools.h"
 #include "packer_commons.h"
+#include "memfile.h"
 
 #define VERBOSE false
 #define START_CODES_SIZE 2
@@ -12,10 +13,6 @@
 /* Two-byte packer */
 
 //Global variables used in compressor
-
-
-
-__declspec(thread) static  unsigned char buffer[BLOCK_SIZE];
 
 __declspec(thread) static  unsigned long two_byte_freq_table[65536] = { 0 };
 __declspec(thread) static  uint8_t pair_table[2048] = { 0 }, master_code;
@@ -112,29 +109,28 @@ bool is_code(unsigned char ch, int pair_table_pos) {
 //--------------------------------------------------------------------------------------------------------
 
 
-void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
+memfile* two_byte_pack_internal(memfile* infil, int pass) {
 
-	FILE* infil, * utfil = NULL;
+	uint8_t* buffer = infil->block;
+
+	memfile* utfil = NULL;
 
 	debug("\nTwo-byte pack pass=%d", pass);
 
-	uint64_t buffer_startpos = 0, source_size;
+	uint64_t buffer_startpos = 0, 
+		source_size = getSize(infil);
 
-	infil = openRead(src);
-	source_size = get_file_size(infil);
-
-	uint64_t total_size = get_file_size(infil);
 	int pair_table_pos;
 	if (pass >= 2) {
 		pair_table_pos = create_two_byte_table(source_size);
 
 		if (pass == 3) {
-			utfil = openWrite(dest);
+			utfil = getMemfile();
 
 			//write the metadata table
 			for (int i = 0; i < pair_table_pos; i++) {
 
-				putc(pair_table[i], utfil);
+				fputcc(pair_table[i], utfil);
 				debug(" %d", pair_table[i]);
 			}
 		}
@@ -148,15 +144,9 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 		}
 	}
 
-	uint64_t buffer_endpos = fread(buffer, 1, BLOCK_SIZE, infil);
-	if (buffer_endpos == BLOCK_SIZE) {
-		printf("\n too large file in two_byte packer!");
-		exit(1);
-	}
-
-	while (buffer_startpos < buffer_endpos) {
+	while (buffer_startpos < source_size) {
 		bool lastChar = false;
-		if (buffer_startpos == buffer_endpos - 1) {
+		if (buffer_startpos == source_size - 1) {
 			lastChar = true;
 		}
 		unsigned char ch1 = buffer[buffer_startpos];
@@ -176,9 +166,9 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 				}
 				else {
 					if (is_code(ch1, pair_table_pos)) {
-						fputc(master_code, utfil);
+						fputcc(master_code, utfil);
 					}
-					fputc(ch1, utfil);
+					fputcc(ch1, utfil);
 				}
 				buffer_startpos++;
 
@@ -190,7 +180,7 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 					}
 				}
 				else {
-					fputc((unsigned char)code, utfil);
+					fputcc((unsigned char)code, utfil);
 				}
 				buffer_startpos += 2;
 			}
@@ -207,27 +197,39 @@ void two_byte_pack_internal(const wchar_t* src, const wchar_t* dest, int pass) {
 	}//end while
 
 	if (pass == 3) {
-		fclose(utfil);
+		//fclose(utfil);
 	}
-	fclose(infil);
+	return utfil;
+}
+
+memfile* twoBytePack(memfile* m, packProfile prof) {
+	profile = prof;
+	memfile* tmp = two_byte_pack_internal(m, 1); //analyse and build metadata
+	free(tmp);
+	tmp = two_byte_pack_internal(m, 2); //simulate pack and adjust metadata
+	free(tmp);
+	memfile* res = two_byte_pack_internal(m, 3); //pack
+	return res;
 }
 
 
-void twoBytePack(const wchar_t* src, const wchar_t* dest, packProfile prof)
+void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 {
 	profile = prof;
-	two_byte_pack_internal(src, dest, 1); //analyse and build metadata
-	two_byte_pack_internal(src, dest, 2); //simulate pack and adjust metadata
-	two_byte_pack_internal(src, dest, 3); //pack
+	memfile* srcm = getMemfileFromFile(src);
+	memfile* dstm = twoBytePack(srcm, prof);
+	memfileToFile(dstm, dest);
+	free(srcm);
+	free(dstm);
 }
-
 
 void two_byte_pack(const char* src, const char* dest, packProfile prof) {
 	wchar_t d[500], s[500];
 	toUni(d, dest);
 	toUni(s, src);
-	twoBytePack(s, d, prof);
+	two_byte_packw(s, d, prof);
 }
+
 
 
 
