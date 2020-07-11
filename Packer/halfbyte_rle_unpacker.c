@@ -92,7 +92,7 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 				}
 				if (cc == code3) {
 					//escape sequence
-					unsigned int escapedByte = readHalfbyte(infil, 0) + 16 * readHalfbyte(infil, 0);
+					int escapedByte = byte + 16 * readHalfbyte(infil, 0);
 					fputcc(escapedByte, utfil);
 				}
 				else {

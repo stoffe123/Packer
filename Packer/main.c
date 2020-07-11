@@ -427,25 +427,11 @@ void onefile() {
 void test16() {
 	
 	wchar_t test_filenames[16][100] = { L"voc.wav",
-			L"book.txt",
-			L"rel.pdf",
-		
-		
-	
-		
-		
-		
-		
-		
-	
+		L"book.txt",
+		L"rel.pdf",
 		L"tob.pdf",
-
-		
-		
-		L"did.csh",	
-		
+ 		L"did.csh",	
 		L"pazera.exe",
-	
 		L"amb.dll",
         L"bad.cdg",
 		L"bad.mp3",
@@ -477,7 +463,7 @@ void test16() {
 	};
 
 	copyProfile(&profile, &bestProfile);
-	uint64_t timeLimit = 400;
+	uint64_t timeLimit = 650;
 	bool unpack = true;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 

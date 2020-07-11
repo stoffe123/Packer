@@ -324,13 +324,13 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			pt = packTypeForHalfbyteRlePack(1);
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack1, pt, canonicalHeaderCase);
 
-			/*
+			
 			char head_pack2[100] = { 0 };
 			getTempFile(head_pack2, "multi_halfbyterle_two");
 			halfbyte_rle_pack(src, head_pack2, 2);
 			pt = packTypeForHalfbyteRlePack(2);
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack2, pt, canonicalHeaderCase);
-			*/
+			
 		}
 
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
