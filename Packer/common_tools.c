@@ -106,10 +106,10 @@ unsigned char clearKthBit(unsigned char value, unsigned char bit)
 
 unsigned char setKthBitToVal(unsigned char value, unsigned char bit, unsigned char bitValue) {
 	if (bitValue == 0) {
-		clearKthBit(value, bit);
+		return clearKthBit(value, bit);
 	}
 	else {
-		setKthBit(value, bit);
+		return setKthBit(value, bit);
 	}
 }
 

@@ -246,7 +246,6 @@ bool isCanonicalHeaderPacked(int packType) {
 }
 
 
-
 int packTypeRlePlusTwobyte() {
 	int pt = setKthBit(0, RLE_BIT);
 	pt = setKthBit(pt, TWOBYTE_BIT);

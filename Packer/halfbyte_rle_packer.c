@@ -64,9 +64,9 @@ kind = 1
 	only one code1 and only handle runlength < 18
 
 
-
-
 kind = 2
+
+   code3 extra for escaping chars
 
 */
 
@@ -74,6 +74,7 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 
 	unsigned char code1 = 15;
 	unsigned char code2 = 14;
+	unsigned char code3 = 13;
 
 	int max_runlength = 0, lowest_code = 0;
 
@@ -84,6 +85,13 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 	else if (kind == 1) {
 		max_runlength = 17;
 		lowest_code = 15;
+	}
+	else if (kind == 2) {
+		max_runlength = 273;
+		lowest_code = 13;
+	}
+	else {
+		printf("\n wrong kind in halfbyte_rle_pack"); exit(1);
 	}
 	//printf("\n canonical header pack %s", src);
 
@@ -101,43 +109,88 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 		unsigned char first_char = read_char;
 		runlength = 1;
 
-		if (read_char < 16 && read_char != code1) {
+		if (kind < 2) {
 
-			while ((read_char = fgetcc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
-				runlength++;
+			if (read_char < 16 && read_char != code1) {
+
+				while ((read_char = fgetcc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
+					runlength++;
+				}
+			}
+			else {
+				read_char = fgetcc(infil);
+			}
+			if (runlength < MIN_RUNLENGTH) {
+
+				for (int i = 0; i < runlength; i++) {
+					if (first_char >= lowest_code) {
+						//has to escape this char!
+						writeHalfbyte(utfil, code1);
+						writeHalfbyte(utfil, code1); //code here is signal for escape!
+						writeHalfbyte(utfil, first_char % 16);
+						writeHalfbyte(utfil, first_char / 16);
+					}
+					else {
+						writeHalfbyte(utfil, first_char);
+					}
+				}
+			}
+			else { // Runlength found!		
+				if (runlength < 18) {
+					writeHalfbyte(utfil, code1);
+					writeHalfbyte(utfil, first_char);
+					writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
+				}
+				else {
+					writeHalfbyte(utfil, code2);
+					writeHalfbyte(utfil, first_char);
+					runlength -= 18;
+					writeHalfbyte(utfil, runlength % 16);
+					writeHalfbyte(utfil, runlength / 16);
+				}
 			}
 		}
 		else {
-			read_char = fgetcc(infil);
-		}
-		if (runlength < MIN_RUNLENGTH) {
+			// kind == 2
 
-			for (int i = 0; i < runlength; i++) {
-				if (first_char >= lowest_code) {
-					//has to escape this char!
-					writeHalfbyte(utfil, code1);
-					writeHalfbyte(utfil, code1); //code here is signal for escape!
-					writeHalfbyte(utfil, first_char % 16);
-					writeHalfbyte(utfil, first_char / 16);
+			if (read_char < 16) {
+
+				while ((read_char = fgetcc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
+					runlength++;
 				}
-				else {
-					writeHalfbyte(utfil, first_char);
-				}
-			}
-		}
-		else { // Runlength found!		
-			if (runlength < 18) {
-				writeHalfbyte(utfil, code1);
-				writeHalfbyte(utfil, first_char);
-				writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
 			}
 			else {
-				writeHalfbyte(utfil, code2);
-				writeHalfbyte(utfil, first_char);
-				runlength -= 18;
-				writeHalfbyte(utfil, runlength % 16);
-				writeHalfbyte(utfil, runlength / 16);
+				read_char = fgetcc(infil);
 			}
+			if (runlength < MIN_RUNLENGTH) {
+
+				for (int i = 0; i < runlength; i++) {
+					if (first_char >= lowest_code) {
+						//has to escape this char!						
+						writeHalfbyte(utfil, code3);
+						writeHalfbyte(utfil, first_char % 16);
+						writeHalfbyte(utfil, first_char / 16);						
+					}
+					else {
+						writeHalfbyte(utfil, first_char);
+					}
+				}
+			}
+			else { // Runlength found!		
+				if (runlength < 18) {
+					writeHalfbyte(utfil, code1);
+					writeHalfbyte(utfil, first_char);
+					writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
+				}
+				else {
+					writeHalfbyte(utfil, code2);
+					writeHalfbyte(utfil, first_char);
+					runlength -= 18;
+					writeHalfbyte(utfil, runlength % 16);
+					writeHalfbyte(utfil, runlength / 16);
+				}
+			}
+
 		}
 	}//end while
 	writeHalfbyte(utfil, -2); // flush
