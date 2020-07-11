@@ -432,7 +432,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	else {
 		my_rename(bestCandidate.filename, main_name);
 	}
-	printf("\nTar writing destination file: %s basedir:%s\nPack_type = %d", dst, base_dir, pack_type);
+	printf("\nTar writing %s packtype %d", dst, base_dir, pack_type);
 	pack_type = tar(dst, base_dir, pack_type, storePackType);
 
 	for (int i = 0; i < candidatesIndex; i++) {

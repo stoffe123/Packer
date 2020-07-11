@@ -93,12 +93,14 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 			}
 			else {
 				if (f.count >= f.allocSize) {
-					f.allocSize += fileListInitialAllocSize;
-					file_t* fileList2 = malloc(f.allocSize * sizeof(file_t));
-					memcpy(fileList2, f.fileList, fileListInitialAllocSize * sizeof(file_t));
-					file_t* temp = f.fileList;
-					f.fileList = fileList2;
-					free(temp);
+					f.allocSize += fileListInitialAllocSize;					
+					file_t* newMem = realloc(f.fileList, f.allocSize * sizeof(file_t));					
+					if (newMem != NULL) {
+						f.fileList = newMem;
+					}
+					else {
+						printf("\n out of memory in archive_packer!");
+					}
 				}
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
