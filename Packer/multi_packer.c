@@ -10,6 +10,7 @@
 #include "RLE_packer_advanced.h"
 #include "RLE_simple_packer.h"
 #include "canonical.h"
+#include "halfbyte_rle_packer.h"
 
 #define META_SIZE_MAX 1048575
 
@@ -322,7 +323,15 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			getTempFile(head_pack1, "multi_halfbyterle_one");
 			halfbyte_rle_pack(src, head_pack1, 1);
 			pt = packTypeForHalfbyteRlePack(1);
-			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
+			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack1, pt, canonicalHeaderCase);
+
+			/*
+			char head_pack2[100] = { 0 };
+			getTempFile(head_pack2, "multi_halfbyterle_two");
+			halfbyte_rle_pack(src, head_pack2, 2);
+			pt = packTypeForHalfbyteRlePack(2);
+			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack2, pt, canonicalHeaderCase);
+			*/
 		}
 
 		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);

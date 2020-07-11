@@ -426,13 +426,16 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { 
+	wchar_t test_filenames[16][100] = { L"voc.wav",
+			L"book.txt",
+			L"rel.pdf",
+		
 		
 	
-			L"book.txt",
 		
-		L"rel.pdf",
-		L"voc.wav",
+		
+		
+		
 		
 	
 		L"tob.pdf",
@@ -573,7 +576,6 @@ void testarchive() {
 	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
     //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
 
-
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
@@ -630,7 +632,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    //test16();
-	testarchive();
+    test16();
+	//testarchive();
     //onefile();
 }
