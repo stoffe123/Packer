@@ -570,8 +570,8 @@ void testarchive() {
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
-	//wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-    wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
+	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+    //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
 
 
 	unsigned long long best_size = 0;
@@ -630,7 +630,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    test16();
-	//testarchive();
+    //test16();
+	testarchive();
     //onefile();
 }

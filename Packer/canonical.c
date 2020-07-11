@@ -655,7 +655,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
         //printf("\n unpack can header: store case case size=%d", packedSize);
         BitFilePutChar(0, bfp);
     }
-    else if (isCanonicalHeaderPacked(packType)) {
+    else if (packType == packTypeForHalfbyteRlePack(0)) {
         //printf("\n unpack can header: can header pack case case packtype=%d", packType);
         BitFilePutChar(packedSize, bfp);
     }
@@ -714,7 +714,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     else if (size > 2) {
         // canonicalHeaderPack case
         bytesToCopy = size;
-        packType = packTypeForCanonicalHeaderPack();
+        packType = packTypeForHalfbyteRlePack(0);
     }
     FILE* file = fopen(headerFilename, "wb");
     for (int i = 0; i < bytesToCopy; i++) {

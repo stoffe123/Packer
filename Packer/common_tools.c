@@ -104,6 +104,15 @@ unsigned char clearKthBit(unsigned char value, unsigned char bit)
 	return (value & (~(1 << bit)));
 }
 
+unsigned char setKthBitToVal(unsigned char value, unsigned char bit, unsigned char bitValue) {
+	if (bitValue == 0) {
+		clearKthBit(value, bit);
+	}
+	else {
+		setKthBit(value, bit);
+	}
+}
+
 
 void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_copy) {
 	FILE* out = fopen(dest_filename, "wb");

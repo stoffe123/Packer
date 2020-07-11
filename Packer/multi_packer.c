@@ -39,10 +39,6 @@ bool isSeqPacked(int packType) {
 	return isKthBitSet(packType, 7);
 }
 
-bool isCanonicalHeaderPacked(int packType) {
-	return (isKthBitSet(packType, 1) && isKthBitSet(packType, 2) && !isKthBitSet(packType, 7));
-}
-
 void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
 	const char metaName[100] = { 0 };
 	concat(metaName, pi.dir, name);
@@ -165,6 +161,7 @@ void CanonicalDecodeAndReplace(const char* src) {
 	unpackAndReplace("canonical", src);
 }
 
+
 packCandidate_t getPackCandidate2(const char* filename, unsigned char packType, uint64_t filesize) {
 	packCandidate_t cand;
 	cand.filename = filename;
@@ -179,7 +176,7 @@ packCandidate_t getPackCandidate2(const char* filename, unsigned char packType, 
 packCandidate_t getPackCandidate3(const char* filename, unsigned char packType, bool canonicalHeaderCase) {
 	packCandidate_t res = getPackCandidate2(filename, packType, 0);
 	if (canonicalHeaderCase) {
-		if (packType == packTypeForCanonicalHeaderPack || packType == packTypeRlePlusTwobyte) {
+		if (packType == packTypeForHalfbyteRlePack(0) || packType == packTypeRlePlusTwobyte()) {
 			// those two cases are separately treated in canonical.c and no packtype has to be written then
 			res.size--;
 		}
@@ -207,10 +204,47 @@ static packProfile prof = { .rle_ratio = 0,
 			.sizeMaxForSuperslim = 16384
 };
 
-int packTypeForCanonicalHeaderPack() {
-	int pt = setKthBit(0, 1);
-	return setKthBit(pt, 2);
+/*
+Half byte RLE pack = > bit 7 = 0   
+kind 0 = > bit 1 = 1   bit 2 = 1
+kind 1 = > bit 1 = 0   bit 2 = 1
+kind 2 = > bit 1 = 1   bit 2 = 0 
+*/
+int packTypeForHalfbyteRlePack(int kind) {	
+	if (kind == 0) {
+		return getKindBits(1, 1);		
+	} 
+	if (kind == 1) {
+		return getKindBits(0, 1);
+	}
+	if (kind == 2) {
+		return getKindBits(1, 0);
+	}
+	printf("\n wrong kind in multi_packer.c %d", kind); exit(1);
 }
+
+int getKindBits(int bit1, int bit2) {
+	int pt = setKthBitToVal(0, 1, bit1);
+	return setKthBitToVal(pt, 2, bit2);
+}
+
+int getKindFromPackType(int packType) {
+	if (isKthBitSet(packType, 1)) {
+		return isKthBitSet(packType, 2) ? 0 : 2;
+	}
+	return 1;
+}
+
+
+bool isCanonicalHeaderPacked(int packType) {
+	if (isKthBitSet(packType, 7) ||
+		((!isKthBitSet(packType, 1) && !isKthBitSet(packType, 2)))) {
+		return false;
+	}
+	return true;
+}
+
+
 
 int packTypeRlePlusTwobyte() {
 	int pt = setKthBit(0, RLE_BIT);
@@ -230,9 +264,9 @@ int packTypeRlePlusTwobyte() {
  6 - Two byte
  7 - Sequence pack
 
- Canonical header pack =>  bit 7 = 0   1 code =>  bit 1 = 1   bit 2 = 1
-                                       2 code =>  bit 1 = 0   bit 2 = 1
-									   3 code =>  bit 1 = 1   bit 2 = 0
+ Half byte RLE pack =>  bit 7 = 0   kind 0 =>  bit 1 = 1   bit 2 = 1
+                                       kind 1 =>  bit 1 = 0   bit 2 = 1
+									   kind 2 =>  bit 1 = 1   bit 2 = 0
  */
 
 uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
@@ -270,8 +304,6 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		char before_seqpack[100] = { 0 };
 		getTempFile(before_seqpack, "multi_rlepacked");
 
-		
-	
 		//slimseq is turned off now.. no improvement on test suit 16 .. just 60s extra
 		if (profile.rle_ratio > 0 && source_size > 10 && source_size < 10) {
 			getTempFile(slim_multipacked, "multi_multipacked");
@@ -279,12 +311,17 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
 		}
 	
-	
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
 			char head_pack[100] = { 0 };
-			getTempFile(head_pack, "multi_head_pack");
+			getTempFile(head_pack, "multi_halfbyterle_zero");
 			halfbyte_rle_pack(src, head_pack, 0);
-			int pt = packTypeForCanonicalHeaderPack();
+			int pt = packTypeForHalfbyteRlePack(0);
+			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
+
+			char head_pack1[100] = { 0 };
+			getTempFile(head_pack1, "multi_halfbyterle_one");
+			halfbyte_rle_pack(src, head_pack1, 1);
+			pt = packTypeForHalfbyteRlePack(1);
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
 		}
 
@@ -512,7 +549,7 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 		TwoByteUnpackAndReplace(seq_dst);
 	}
 	if (isCanonicalHeaderPacked(pack_type)) {
-		halfbyte_rle_unpack(seq_dst, dst, 0);
+		halfbyte_rle_unpack(seq_dst, dst, getKindFromPackType(pack_type));
 	}
 	else {
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5

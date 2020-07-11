@@ -33,7 +33,7 @@ void MultiUnpackAndReplacew(const wchar_t* srcw);
 
 bool isCanonicalHeaderPacked(int packType);
 
-int packTypeForCanonicalHeaderPack();
+int packTypeForHalfbyteRlePack();
 
 int packTypeRlePlusTwobyte();
 
