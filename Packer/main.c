@@ -630,7 +630,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    //test16();
-	testarchive();
+    test16();
+	//testarchive();
     //onefile();
 }

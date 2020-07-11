@@ -19,7 +19,7 @@ __declspec(thread) static int globalByte, globalPos;
 
 void writeHalfbyte(memfile* file, int halfbyte)
 {
-	
+
 	switch (halfbyte)
 	{
 	case -1:  /* initialize */
@@ -51,11 +51,22 @@ code1 = 15 used for short runlengths and escape
 
 code2 = 14 used for long runlengths
 
-escape chars >=14   code1, code1,  low, high   (2 bytes)
+kind = 0
 
-runlength < 18 code1, char, length    (1.5 bytes)
+	escape chars >=14   code1, code1,  low, high   (2 bytes)
 
-runlength >= 18  code2, char, low, high  (2 bytes) 
+	runlength < 18 code1, char, length    (1.5 bytes)
+
+	runlength >= 18  code2, char, low, high  (2 bytes)
+
+kind = 1
+
+	only one code1 and only handle runlength < 18
+
+
+
+
+kind = 2
 
 */
 
@@ -64,8 +75,16 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 	unsigned char code1 = 15;
 	unsigned char code2 = 14;
 
-	unsigned long long max_runlength = 273;
+	int max_runlength = 0, lowest_code = 0;
 
+	if (kind == 0) {
+		max_runlength = 273;
+		lowest_code = 14;
+	}
+	else if (kind == 1) {
+		max_runlength = 17;
+		lowest_code = 15;
+	}
 	//printf("\n canonical header pack %s", src);
 
 	memfile* utfil = getMemfile();
@@ -92,33 +111,33 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 			read_char = fgetcc(infil);
 		}
 		if (runlength < MIN_RUNLENGTH) {
-			
-				for (int i = 0; i < runlength; i++) {
-					if (first_char >= 14) {
-						//has to escape this char!
-						writeHalfbyte(utfil, code1);
-						writeHalfbyte(utfil, code1); //code here is signal for escape!
-						writeHalfbyte(utfil, first_char % 16); 
-						writeHalfbyte(utfil, first_char / 16);
-					}
-					else {
-						writeHalfbyte(utfil, first_char);
-					}
-				}
-		}
-		else { // Runlength found!					
-				if (runlength < 18) {
+
+			for (int i = 0; i < runlength; i++) {
+				if (first_char >= lowest_code) {
+					//has to escape this char!
 					writeHalfbyte(utfil, code1);
-					writeHalfbyte(utfil, first_char);
-					writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
+					writeHalfbyte(utfil, code1); //code here is signal for escape!
+					writeHalfbyte(utfil, first_char % 16);
+					writeHalfbyte(utfil, first_char / 16);
 				}
 				else {
-					writeHalfbyte(utfil, code2);
 					writeHalfbyte(utfil, first_char);
-					runlength -= 18;
-					writeHalfbyte(utfil, runlength % 16);
-					writeHalfbyte(utfil, runlength / 16);
 				}
+			}
+		}
+		else { // Runlength found!		
+			if (runlength < 18) {
+				writeHalfbyte(utfil, code1);
+				writeHalfbyte(utfil, first_char);
+				writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
+			}
+			else {
+				writeHalfbyte(utfil, code2);
+				writeHalfbyte(utfil, first_char);
+				runlength -= 18;
+				writeHalfbyte(utfil, runlength % 16);
+				writeHalfbyte(utfil, runlength / 16);
+			}
 		}
 	}//end while
 	writeHalfbyte(utfil, -2); // flush
@@ -131,7 +150,7 @@ void halfbyte_rle_pack(const char* src, const char* dest, int kind)
 	memfile* packed = canonical_header_pack_internal(s, kind);
 	fre(s);
 	memfile_to_file(packed, dest);
-	fre(packed);	
+	fre(packed);
 }
 
 memfile* halfbyteRlePack(memfile* mem, int kind) {

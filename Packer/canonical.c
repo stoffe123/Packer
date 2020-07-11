@@ -678,7 +678,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     }
     fclose(packedFile);
     remove(packedFilename);
-    remove(headerFilename);
+    //remove(headerFilename);
 }
 
 /****************************************************************************
