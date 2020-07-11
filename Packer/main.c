@@ -597,7 +597,7 @@ void testarchive() {
 
 		int unpack_time = (clock() - cl);
 		uint64_t totalTime = clock() - before_suite;
-		if (totalTime < (84 * 1000)) {
+		if (totalTime < (83 * 1000)) {
 			printf("\n Comparing dirs!");
 			if (dirs_equalw(source_dir, destDir)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -611,7 +611,7 @@ void testarchive() {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {
-			printf("\n Too long time %d    STATUS:", totalTime);
+			printf("\n Too long time %d", totalTime);
 			printf("\n size was %d", acc_size_packed);
 			printProfile(&profile);
 			printf("\n Current best profile");
