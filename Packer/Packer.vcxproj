@@ -144,8 +144,8 @@
     <ClCompile Include="block_packer.c" />
     <ClCompile Include="bounce.c" />
     <ClCompile Include="canonical.c" />
-    <ClCompile Include="canonical_header_packer.c" />
-    <ClCompile Include="canonical_header_unpacker.c" />
+    <ClCompile Include="halfbyte_rle_packer.c" />
+    <ClCompile Include="halfbyte_rle_unpacker.c" />
     <ClCompile Include="common_tools.c" />
     <ClCompile Include="everyOtherEncoder.c" />
     <ClCompile Include="huffman2.c" />
@@ -172,7 +172,7 @@
     <ClInclude Include="bitfile.h" />
     <ClInclude Include="block_packer.h" />
     <ClInclude Include="canonical.h" />
-    <ClInclude Include="canonical_header_packer.h" />
+    <ClInclude Include="halfbyte_rle_packer.h" />
     <ClInclude Include="common_tools.h" />
     <ClInclude Include="everyOtherEncoder.h" />
     <ClInclude Include="huffman.h" />

@@ -43,7 +43,7 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "multi_packer.h"
-#include "canonical_header_packer.h"
+#include "halfbyte_rle_packer.h"
 #include "RLE_simple_packer.h"
 
 

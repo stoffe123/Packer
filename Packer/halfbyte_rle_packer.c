@@ -7,6 +7,7 @@
 
 #include "common_tools.h"
 #include "packer_commons.h"
+#include "memfile.h"
 
 #define VERBOSE false
 
@@ -16,7 +17,7 @@
 
 __declspec(thread) static int globalByte, globalPos;
 
-void writeHalfbyte(FILE* file, int halfbyte)
+void writeHalfbyte(memfile* file, int halfbyte)
 {
 	
 	switch (halfbyte)
@@ -28,7 +29,7 @@ void writeHalfbyte(FILE* file, int halfbyte)
 		//tricky part here if we get a trailing value
 		//we want that trailing value to be a code
 		//so we can ignore it in the unpacker
-		if (globalPos == 1) WRITE(file, (uint64_t)15 + globalByte);
+		if (globalPos == 1) fputcc((uint64_t)15 + globalByte, file);
 		break;
 	default:
 		if (globalPos == 0)
@@ -38,34 +39,36 @@ void writeHalfbyte(FILE* file, int halfbyte)
 		}
 		else
 		{
-			WRITE(file, (uint64_t)halfbyte + globalByte);
+			fputcc((uint64_t)halfbyte + globalByte, file);
 			globalPos = 0;
 		}
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------
+/*
+code1 = 15 used for short runlengths and escape
 
-value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
+code2 = 14 used for long runlengths
 
-	unsigned char code = 15;
+escape chars >=14   code1, code1,  low, high   (2 bytes)
+
+runlength < 18 code1, char, length    (1.5 bytes)
+
+runlength >= 18  code2, char, low, high  (2 bytes) 
+
+*/
+
+memfile* canonical_header_pack_internal(memfile* infil, int kind) {
+
+	unsigned char code1 = 15;
 	unsigned char code2 = 14;
 
-	FILE* infil = NULL, * utfil = NULL;
 	unsigned long long max_runlength = 273;
 
 	//printf("\n canonical header pack %s", src);
 
-	infil = fopen(src, "rb");
-	if (!infil) {
-		printf("Hittade inte infil: %s", src);
-		getchar();
-		exit(1);
-	}
-	fopen_s(&utfil, dest, "wb");
-	if (!utfil) {
-		printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
-	}
+	memfile* utfil = getMemfile();
 	// start compression!
 	writeHalfbyte(utfil, -1); // init
 
@@ -73,28 +76,28 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 
 	int runlength = 1;
 
-	int read_char = fgetc(infil);
+	int read_char = fgetcc(infil);
 	while (read_char != EOF) {
 
 		unsigned char first_char = read_char;
 		runlength = 1;
 
-		if (read_char < 16 && read_char != code) {
+		if (read_char < 16 && read_char != code1) {
 
-			while ((read_char = fgetc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
+			while ((read_char = fgetcc(infil)) != EOF && runlength < max_runlength && read_char == first_char) {
 				runlength++;
 			}
 		}
 		else {
-			read_char = fgetc(infil);
+			read_char = fgetcc(infil);
 		}
 		if (runlength < MIN_RUNLENGTH) {
 			
 				for (int i = 0; i < runlength; i++) {
 					if (first_char >= 14) {
 						//has to escape this char!
-						writeHalfbyte(utfil, code);
-						writeHalfbyte(utfil, code); //code here is signal for escape!
+						writeHalfbyte(utfil, code1);
+						writeHalfbyte(utfil, code1); //code here is signal for escape!
 						writeHalfbyte(utfil, first_char % 16); 
 						writeHalfbyte(utfil, first_char / 16);
 					}
@@ -105,7 +108,7 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 		}
 		else { // Runlength found!					
 				if (runlength < 18) {
-					writeHalfbyte(utfil, code);
+					writeHalfbyte(utfil, code1);
 					writeHalfbyte(utfil, first_char);
 					writeHalfbyte(utfil, runlength - MIN_RUNLENGTH);
 				}
@@ -119,44 +122,19 @@ value_freq_t canonical_header_pack_internal(const char* src, const char* dest) {
 		}
 	}//end while
 	writeHalfbyte(utfil, -2); // flush
-	fclose(infil);
-	fclose(utfil);
+	return utfil;
 }
 
-int canonical_header_pack(const char* src, const char* dest)
+void halfbyte_rle_pack(const char* src, const char* dest, int kind)
 {
-	canonical_header_pack_internal(src, dest); 
-	return 0;
+	memfile* s = get_memfile_from_file(src);
+	memfile* packed = canonical_header_pack_internal(s, kind);
+	fre(s);
+	memfile_to_file(packed, dest);
+	fre(packed);	
 }
 
-
-
-/*
-DWORD WINAPI thread_RLE_simple_pack(LPVOID lpParam)
-{
-	char test_filenames[16][100] = { "bad.cdg","repeatchar.txt", "onechar.txt", "empty.txt",  "oneseq.txt", "book_med.txt","book.txt",
-			 "amb.dll",
-			 "rel.pdf",
-			 "nex.doc",
-			"did.csh",
-			 "aft.htm",
-			 "tob.pdf",
-		 "pazera.exe",
-		"voc.wav",
-		 "bad.mp3"
-
-
-
-	};
-	uint32_t i = *(DWORD*)lpParam;
-
-	printf("OOOOOOOOOOOOOOOOO The parameter: %d.\n", i);
-
-	printf("filename=%s", test_filenames[i]);
-
-	const char* src = concat("c:/test/testsuite/", test_filenames[i]);
-
-	RLE_simple_pack(src, concat(src, "_packed"));
-
+memfile* halfbyteRlePack(memfile* mem, int kind) {
+	return canonical_header_pack_internal(mem, kind);
 }
-*/
+

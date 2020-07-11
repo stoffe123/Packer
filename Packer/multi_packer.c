@@ -230,7 +230,9 @@ int packTypeRlePlusTwobyte() {
  6 - Two byte
  7 - Sequence pack
 
- Canonical header pack =>  bit 7 = 0   bit 1 = 1   bit 2 = 1
+ Canonical header pack =>  bit 7 = 0   1 code =>  bit 1 = 1   bit 2 = 1
+                                       2 code =>  bit 1 = 0   bit 2 = 1
+									   3 code =>  bit 1 = 1   bit 2 = 0
  */
 
 uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
@@ -281,7 +283,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
 			char head_pack[100] = { 0 };
 			getTempFile(head_pack, "multi_head_pack");
-			canonical_header_pack(src, head_pack);
+			halfbyte_rle_pack(src, head_pack, 0);
 			int pt = packTypeForCanonicalHeaderPack();
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
 		}
@@ -432,7 +434,7 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 	else {
 		my_rename(bestCandidate.filename, main_name);
 	}
-	printf("\nTar writing %s packtype %d", dst, base_dir, pack_type);
+	printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, base_dir, pack_type, storePackType);
 
 	for (int i = 0; i < candidatesIndex; i++) {
@@ -510,7 +512,7 @@ void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bo
 		TwoByteUnpackAndReplace(seq_dst);
 	}
 	if (isCanonicalHeaderPacked(pack_type)) {
-		canonical_header_unpack(seq_dst, dst);
+		halfbyte_rle_unpack(seq_dst, dst, 0);
 	}
 	else {
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5

@@ -10,7 +10,7 @@
 #include "Two_byte_packer.h"
 #include "RLE_packer_advanced.h"
 #include "archive_packer.h"
-#include "canonical_header_packer.h"
+#include "halfbyte_rle_packer.h"
 
 //#include "huffman2.h"
 //#include "canonical.h"
@@ -552,26 +552,26 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 82,
-			.twobyte_ratio = 88,
-			.recursive_limit = 404,
-			.twobyte_threshold_max = 11939,
+			.rle_ratio = 91,
+			.twobyte_ratio = 94,
+			.recursive_limit = 10,
+			.twobyte_threshold_max = 11854,
 			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 726,
-			.seqlenMinLimit3 = 98,
-			.seqlenMinLimit4 = 64427,
-			.blockSizeMinus = 137,
-			.winsize = 14049, //104172
-			.sizeMaxForCanonicalHeaderPack = 258,
-			.sizeMinForSeqPack = 555,
-			.sizeMinForCanonical = 145,
-			.sizeMaxForSuperslim = 6213
+			.twobyte_threshold_min = 906,
+			.seqlenMinLimit3 = 161,
+			.seqlenMinLimit4 = 51458,
+			.blockSizeMinus = 109,
+			.winsize = 18468, //104172
+			.sizeMaxForCanonicalHeaderPack = 284,
+			.sizeMinForSeqPack = 10877,
+			.sizeMinForCanonical = 171,
+			.sizeMaxForSuperslim = 10
 	};
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	//wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-    wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test16";
+    wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
 
 
 	unsigned long long best_size = 0;
@@ -597,7 +597,7 @@ void testarchive() {
 
 		int unpack_time = (clock() - cl);
 		uint64_t totalTime = clock() - before_suite;
-		if (totalTime < (350 * 1000)) {
+		if (totalTime < (84 * 1000)) {
 			printf("\n Comparing dirs!");
 			if (dirs_equalw(source_dir, destDir)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -611,7 +611,11 @@ void testarchive() {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {
-			printf("\n too long time %d", totalTime);
+			printf("\n Too long time %d    STATUS:", totalTime);
+			printf("\n size was %d", acc_size_packed);
+			printProfile(&profile);
+			printf("\n Current best profile");
+			printf("\n --------------------");
 			printProfile(&bestProfile);
 		}
 		fuzzProfile(&profile, bestProfile);
@@ -626,7 +630,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    test16();
-	//testarchive();
+    //test16();
+	testarchive();
     //onefile();
 }
