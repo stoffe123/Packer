@@ -14,7 +14,7 @@ memfile* RLE_simple_unpack_internal(memfile* infil)
 {
 	unsigned long i;
 
-	memfile* utfil = getMemfile();
+	memfile* utfil = getMemfile((uint64_t)2 * infil->size);
 
 	//code_occurred = read_runlength(infil, runlengths_file);
 	unsigned char code = fgetcc(infil);
@@ -54,15 +54,15 @@ memfile* RleSimpleUnpack(memfile* m) {
 void RLE_simple_unpack(const char* src, const char* dst) {
 	memfile* s = get_memfile_from_file(src);
 	memfile* res = RleSimpleUnpack(s);
-	memfile_to_file(res, dst);
 	fre(s);
+	memfile_to_file(res, dst);
 	fre(res);
 }
 
 void RLE_simple_unpackw(const wchar_t* src, const wchar_t* dst) {
 	memfile* s = getMemfileFromFile(src);
 	memfile* res = RleSimpleUnpack(s);
-	memfileToFile(res, dst);
 	fre(s);
+	memfileToFile(res, dst);
 	fre(res);
 }

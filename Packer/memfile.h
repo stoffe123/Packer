@@ -7,10 +7,11 @@
 typedef struct {
 	uint32_t pos;
 	uint32_t size;
+	uint64_t allocSize;
 	uint8_t* block;
 } memfile;
 
-memfile* getMemfile();
+memfile* getMemfile(uint64_t allocSize);
 
 memfile* get_memfile_from_file(const char* src);
 

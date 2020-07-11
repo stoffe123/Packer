@@ -44,12 +44,13 @@ int readHalfbyte(memfile* infil, int cmd)
 //------------------------------------------------------------------------------
 memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 {
+	rewindMem(infil);
 	//printf("\n canonical_header_unpack: %s", source_filename);
 	unsigned long i;
 
 	unsigned char code1 = 15, code2 = 14, code3 = 13;
 
-	memfile* utfil = getMemfile();
+	memfile* utfil = getMemfile((uint64_t)2 * infil->size + 200);
 	readHalfbyte(infil, -1); // init
 
 	int cc;

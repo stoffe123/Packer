@@ -10,6 +10,19 @@ uint32_t getPos(memfile* m) {
 	return m->pos;
 }
 
+void checkAlloc(memfile* mf, int pos) {
+	if (pos >= mf->allocSize - 1) {
+		mf->allocSize = mf->allocSize + 8192;
+		uint8_t* pt = realloc(mf->block, mf->allocSize);
+		if (pt != NULL) {
+			mf->block = pt;
+		}
+		else {
+			printf("\n out of memory in memfile.c checkAlloc");
+		}
+	}
+}
+
 uint32_t setPos(memfile* m, uint32_t p) {
 	m->pos = p;
 }
@@ -30,17 +43,18 @@ uint8_t* getBlock(memfile* m) {
 	return m->block;
 }
 
-memfile* getMemfile() {
+memfile* getMemfile(uint64_t allocSize) {
 	memfile* m = malloc(sizeof(memfile));
 	m->size = 0;
 	m->pos = 0;
-	m->block = malloc(BLOCK_SIZE);
+	m->block = malloc(allocSize);
+	m->allocSize = allocSize;
 	return m;
 }
 
 void fre(memfile* mf) {
 	if (mf != NULL) {
-		free(mf->block);
+		free(mf->block);		
 		free(mf);
 	}
 }
@@ -66,11 +80,12 @@ void rewindMem(memfile* m) {
 }
 
 memfile* get_memfile_from_file(const char* src) {
-	memfile* m = getMemfile();
+	uint64_t fileSize = get_file_size_from_name(src);
+	memfile* m = getMemfile(fileSize + 1);
 	FILE* infil = fopen(src, "rb");
-	uint32_t size = fread(getBlock(m), 1, BLOCK_SIZE, infil);
+	uint32_t size = fread(getBlock(m), 1, fileSize, infil);
 	fclose(infil);
-	if (size == BLOCK_SIZE) {
+	if (size > BLOCK_SIZE) {
 		printf("\n error too large file %s in packer_commons.get_memfile_from_file", src);
 	}
 	m->size = size;
@@ -78,11 +93,12 @@ memfile* get_memfile_from_file(const char* src) {
 }
 
 memfile* getMemfileFromFile(const wchar_t* src) {
-	memfile* m = getMemfile();
+	uint64_t fileSize = get_file_size_from_wname(src);
+	memfile* m = getMemfile(fileSize + 1);
 	FILE* infil = openRead(src);
-	uint32_t size = fread(getBlock(m), 1, BLOCK_SIZE, infil);
+	uint32_t size = fread(getBlock(m), 1, fileSize, infil);
 	fclose(infil);
-	if (size == BLOCK_SIZE) {
+	if (size > BLOCK_SIZE) {
 		printf("\n error too large file %s in packer_commons.get_memfile_from_file", src);
 	}
 	m->size = size;
@@ -95,7 +111,7 @@ int fgetcc(memfile* mf) {
 	}
 	else {
 		int res = mf->block[getPos(mf)];
-		incPos(mf);
+		incPos(mf);		
 		return res;
 	}
 }
@@ -114,14 +130,15 @@ bool eofcc(memfile* mf) {
 	return getPos(mf) >= getSize(mf);
 }
 
-void fputcc(int c, memfile* mf) {	
-	uint32_t pos = getPos(mf);
-	mf->block[pos] = c;
+void fputcc(int c, memfile* mf) {		
+	checkAlloc(mf, mf->pos);
+	mf->block[mf->pos] = c;
 	incPos(mf);
 	mf->size = mf->pos;
 }
 
 memRead(uint8_t* arr, uint32_t size, memfile* m) {
+	checkAlloc(m, m->pos + size);
 	for (int i = 0; i < size; i++) {
 		arr[i] = m->block[m->pos + i];		
 	}

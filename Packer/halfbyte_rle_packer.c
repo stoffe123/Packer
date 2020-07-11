@@ -70,8 +70,9 @@ kind = 2
 
 */
 
-memfile* canonical_header_pack_internal(memfile* infil, int kind) {
+memfile* halfbyte_rle_pack_internal(memfile* infil, int kind) {
 
+	rewindMem(infil);
 	unsigned char code1 = 15;
 	unsigned char code2 = 14;
 	unsigned char code3 = 13;
@@ -95,7 +96,7 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 	}
 	//printf("\n canonical header pack %s", src);
 
-	memfile* utfil = getMemfile();
+	memfile* utfil = getMemfile((uint64_t)200 + infil->size);
 	// start compression!
 	writeHalfbyte(utfil, -1); // init
 
@@ -200,13 +201,13 @@ memfile* canonical_header_pack_internal(memfile* infil, int kind) {
 void halfbyte_rle_pack(const char* src, const char* dest, int kind)
 {
 	memfile* s = get_memfile_from_file(src);
-	memfile* packed = canonical_header_pack_internal(s, kind);
+	memfile* packed = halfbyte_rle_pack_internal(s, kind);
 	fre(s);
 	memfile_to_file(packed, dest);
 	fre(packed);
 }
 
 memfile* halfbyteRlePack(memfile* mem, int kind) {
-	return canonical_header_pack_internal(mem, kind);
+	return halfbyte_rle_pack_internal(mem, kind);
 }
 

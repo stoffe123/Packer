@@ -124,7 +124,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 		pair_table_pos = create_two_byte_table(source_size);
 
 		if (pass == 3) {
-			utfil = getMemfile();
+			utfil = getMemfile(infil->size + 200);
 
 			//write the metadata table
 			for (int i = 0; i < pair_table_pos; i++) {

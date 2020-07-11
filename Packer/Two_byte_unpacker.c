@@ -26,7 +26,7 @@ int get_two_byte_for_code(unsigned char code, uint8_t* two_byte_table, int two_b
 
 memfile* two_byte_unpack_internal(memfile* infil) {
 
-	memfile* utfil = getMemfile();
+	memfile* utfil = getMemfile(infil->size * 2);
 	uint8_t* two_byte_table = malloc(16384 * sizeof(uint8_t));
 	uint8_t master_code;
 	int two_byte_table_size;
