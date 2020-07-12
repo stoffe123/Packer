@@ -47,6 +47,10 @@ int nextcc(memfile* mf);
 
 memRead(uint8_t* arr, uint32_t size, memfile* m);
 
+memWrite(uint8_t* arr, uint32_t size, memfile* m);
+
 void reallocMem(memfile* mf, uint64_t size);
+
+uint8_t getCCAtPos(memfile* m, uint64_t pos);
 
 #endif

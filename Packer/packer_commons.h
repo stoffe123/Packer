@@ -11,8 +11,6 @@
 //  16777215  is largest number for 24 bits in multipacker.tar
 static bool DOUBLE_CHECK_PACK = false;
 
-
-
 typedef struct {
 	uint64_t value;
 	uint64_t freq;

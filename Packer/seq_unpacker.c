@@ -5,6 +5,7 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "seq_packer_commons.h"
+#include "memfile.h"
 
 #define VERBOSE false
 
@@ -12,7 +13,9 @@
 
 //Global vars used in unpacker
 __declspec(thread) static size_t  seqlens_pos, offsets_pos, distances_pos, packed_file_end;
-__declspec(thread) static  uint8_t buf[BLOCK_SIZE * 4], offsets[BLOCK_SIZE], seqlens[BLOCK_SIZE], distances[BLOCK_SIZE];
+
+__declspec(thread) static uint8_t* buf;
+__declspec(thread)                  static memfile* offsets, * seqlens, * distances;
 __declspec(thread) static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wraparound;
 
 __declspec(thread) static  bool separate_files = true;
@@ -31,9 +34,9 @@ void put_buf(uint8_t c) {
 uint8_t readMeta(meta_kind_t kind) {
 	if (separate_files) {
 		switch (kind) {
-		case SEQLEN: return seqlens[--seqlens_pos];
-		case OFFSET: return offsets[--offsets_pos];
-		case DISTANCE: return distances[--distances_pos];
+		case SEQLEN: return getCCAtPos(seqlens, --seqlens_pos);
+		case OFFSET: return getCCAtPos(offsets, --offsets_pos);
+		case DISTANCE: return getCCAtPos(distances, --distances_pos);
 		default: printf("\n wrong kind %d in seq_unpacker.readMeta", kind); exit(1);
 		}
 	}
@@ -145,44 +148,38 @@ uint64_t getRange(uint64_t packType, uint64_t startBit) {
 
 //------------------------------------------------------------------------------
 
-void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_filename,
-	const wchar_t* base_dir, bool sep)
+memfile* seq_unpack_internal(memfile** mf_arr, bool sep)
 {
 	separate_files = sep;
 	uint8_t offset_pages, seqlen_pages, distance_pages;	
 	uint64_t useDistanceLongRange, useOffsetLongRange, useSeqlenLongRange;
 
-	FILE* infil, * utfil, * seqlens_file, * offsets_file, * distances_file;
+	memfile* infil, * utfil;
 
 	if (separate_files) {
-		const wchar_t seqlens_name[100] = { 0 };
-		const wchar_t offsets_name[100] = { 0 };
-		const wchar_t distances_name[100] = { 0 };
-		concatw(seqlens_name, base_dir, L"seqlens");
-		concatw(offsets_name, base_dir, L"offsets");
-		concatw(distances_name, base_dir, L"distances");
 
-		seqlens_file = openRead(seqlens_name);
-		seqlens_pos = fread(&seqlens, 1, BLOCK_SIZE, seqlens_file);
-		fclose(seqlens_file);
+		seqlens = mf_arr[1];
+		rewindMem(seqlens);
+		seqlens_pos = getSize(seqlens);
 
-		offsets_file = openRead(offsets_name);
-		offsets_pos = fread(&offsets, 1, BLOCK_SIZE, offsets_file);
-		fclose(offsets_file);
-
-		distances_file = openRead(distances_name);
-		distances_pos = fread(&distances, 1, BLOCK_SIZE, distances_file);
-		fclose(distances_file);
+		offsets = mf_arr[2];
+		rewindMem(offsets);
+		offsets_pos = getSize(offsets);
+		
+		distances  = mf_arr[3];
+		rewindMem(distances);
+		distances_pos = getSize(distances);
 	}
 
 	debug("\n\n Seq unpack !!");
     uint8_t cc;
-
-	infil = openRead(source_filename);
-	utfil = openWrite(dest_filename);
-	packed_file_end = fread(&buf, 1, BLOCK_SIZE * 2, infil);
-	debug("\n packed_file_end %d", packed_file_end);
-	fclose(infil);
+	
+	infil = mf_arr[0];
+	packed_file_end = getSize(infil);
+	utfil = getMemfile(BLOCK_SIZE);
+	reallocMem(infil, BLOCK_SIZE * 4);
+	buf = infil->block;
+	debug("\n packed_file_end %d", packed_file_end);	
 
 	unsigned char packType = read_byte_from_file();
 	bool superslim = isKthBitSet(packType, 7);
@@ -287,30 +284,61 @@ void seq_unpack_internal(const wchar_t* source_filename, const wchar_t* dest_fil
 	}
 	uint64_t size_out = buf_size - ((uint64_t)buf_pos + 1) - size_wraparound;
 	debug("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
-	fwrite(&buf[buf_pos + 1], size_out, 1, utfil);
-	fclose(utfil);
+	memWrite(&buf[buf_pos + 1], size_out, utfil);
+	return utfil;
+}
+
+memfile* seqUnpack(memfile* m) {
+	return seq_unpack_internal(m, false);
 }
 
 void seq_unpack(const char* src, const char* dst) {
+	printf("\n seq_unpack not supported");
+	exit(1);
+	/*
 	wchar_t srcw[500], dstw[500];
 	toUni(srcw, src);
 	toUni(dstw, dst);
 	seq_unpack_internal(srcw, dstw, L"", false);
-}
-
-void seqUnpackSeparate(const wchar_t* src, const wchar_t* dst, const wchar_t* base_dir) {
-	seq_unpack_internal(src, dst, base_dir, true);
+	*/
 }
 
 void seq_unpack_separate(const char* src, const char* dst, const char* base_dir)
 {
-	wchar_t srcw[500], dstw[500], basew[500];
-	toUni(srcw, src);
-	toUni(dstw, dst);
-	toUni(basew, base_dir);
-	seq_unpack_internal(srcw, dstw, basew, true);
+	const char mainFilename[100] = { 0 };
+	concat(mainFilename, base_dir, "main");
+
+	const char seqlensFilename[100] = { 0 };
+	concat(seqlensFilename, base_dir, "seqlens");
+
+	const char offsetsFilename[100] = { 0 };
+	concat(offsetsFilename, base_dir, "offsets");
+
+	const char distancesFilename[100] = { 0 };
+	concat(distancesFilename, base_dir, "distances");
+
+	memfile* mf_arr[4];
+	mf_arr[0] = get_memfile_from_file(mainFilename);
+	mf_arr[1] = get_memfile_from_file(seqlensFilename);
+	mf_arr[2] = get_memfile_from_file(offsetsFilename);
+	mf_arr[3] = get_memfile_from_file(distancesFilename);	
+	memfile* unp = seq_unpack_internal(mf_arr, true);
+	for (int i = 0; i < 4; i++) {
+		fre(mf_arr[i]);
+	}
+	memfile_to_file(unp, dst);
+	fre(unp);
 }
 
-void seqUnpack(const wchar_t* src, const wchar_t* dst) {
-	seq_unpack_internal(src, dst, L"", false);
+void seqUnpackFiles(const wchar_t* srcw, const wchar_t* dstw) {
+
+	printf("\n seqUnpackFiles not supported");
+	exit(1);
+
+	memfile* s = getMemfileFromFile(srcw);
+	memfile* packed = seqUnpack(s);
+	fre(s);
+	memfileToFile(packed, dstw);
+	fre(packed);
 }
+

@@ -65,6 +65,14 @@ void fre(memfile* mf) {
 	}
 }
 
+uint8_t getCCAtPos(memfile* m, uint64_t pos) {
+	if (pos >= m->size) {
+		printf("\n getCCAtPos out of range! %d", pos);
+		exit(1);
+	}
+	return m->block[pos];
+}
+
 void memfileToFile(memfile* mf, const wchar_t* dst) {
 	FILE* out = openWrite(dst);
 	uint32_t size = getSize(mf);	
@@ -147,4 +155,15 @@ memRead(uint8_t* arr, uint32_t size, memfile* m) {
 		arr[i] = m->block[m->pos + i];		
 	}
 	m->pos = m->pos + size;
+}
+
+memWrite(uint8_t* arr, uint32_t size, memfile* m) {
+	checkAlloc(m, m->pos + size);
+	for (int i = 0; i < size; i++) {
+		m->block[m->pos + i] = arr[i];
+	}
+	setPos(m, m->pos + size);
+	if (m->pos > m->size) {
+		setSize(m, m->pos);
+	}
 }
