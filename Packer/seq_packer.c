@@ -9,22 +9,18 @@
 #include "seq_packer_commons.h"
 #include "common_tools.h"
 #include "seq_packer.h"
+#include "memfile.h"
 
 #define VERBOSE false
 
 /* Sequence packer */
 
 /* Global variables used in compressor */
-__declspec(thread) static FILE* infil, * utfil;
 
 __declspec(thread) static const wchar_t* src_name;
 
-__declspec(thread) static  buffer_size = BLOCK_SIZE * 3;
-__declspec(thread) static  unsigned char buffer[BLOCK_SIZE * 3];
-
 __declspec(thread) static size_t absolute_end, buffer_endpos;
 
-__declspec(thread) static const wchar_t* base_dir = L"c:/test/";
 __declspec(thread) static bool separate_files = false;
 
 __declspec(thread) static uint32_t nextChar[BLOCK_SIZE * 2],
@@ -60,13 +56,18 @@ static void display_progress(uint32_t buffer_pos, uint8_t pass) {
 	}
 }
 
-void writeMeta(FILE* file, uint64_t c) {
+void writeMeta(memfile* file, uint64_t c) {
 	if (c > 255) {
 		printf("\n write_distance called with value > 255 was %d", c);
 		exit(1);
 	}
 	//debug("\nwrite_offset:%d", c);
-	fwrite(&c, 1, 1, (separate_files ? file : utfil));
+	if (separate_files) {
+		fputcc(c, file);
+	}
+	else {
+		//TODO  fix nonseparate
+	}
 }
 
 void out_distance(uint64_t distance) {
@@ -90,7 +91,7 @@ void out_seqlen(uint64_t seqlen) {
 	}
 }
 
-void convertMeta(FILE* file, unsigned long distance, pageCoding_t pageCoding) {
+void convertMeta(memfile* file, unsigned long distance, pageCoding_t pageCoding) {
 
 	unsigned char pages = pageCoding.pages;
 	uint64_t pageMax = calcPageMax(pageCoding);
@@ -181,23 +182,23 @@ uint64_t calcUseLongRange(uint64_t pageMax, uint64_t highestDistance) {
 	return 3;
 }
 
-pageCoding_t createMetaFile(const wchar_t* metaname) {
+pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 
 	int32_t* freqs, * values, metaValuesCount;
 	if (equalsw(metaname, L"offsets")) {
 		freqs = offsetFreq;
 		values = offsets;
-		metaValuesCount = offsetsPos;
+		metaValuesCount = offsetsPos;		
 	}
 	else if (equalsw(metaname, L"distances")) {
 		freqs = distanceFreq;
 		values = distances;
-		metaValuesCount = distancesPos;
+		metaValuesCount = distancesPos;		
 	}
 	else if (equalsw(metaname, L"seqlens")) {
 		freqs = seqlenFreq;
 		values = seqlens;
-		metaValuesCount = seqlensPos;
+		metaValuesCount = seqlensPos;		
 	}
 	else {
 		printf("\n wrong metaname in seq_packer.createMetaFile");
@@ -217,6 +218,8 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 	uint64_t bestPage = 0;
 	uint64_t highestPageTry = 253;
 	pageCoding_t bestPageCoding;
+	bestPageCoding.pages = 0;
+	bestPageCoding.useLongRange = false;
 	pageCoding_t pageCoding;
 	//test all pages!
 	for (pageCoding.pages = 0; pageCoding.pages < highestPageTry; pageCoding.pages++) {
@@ -240,15 +243,10 @@ pageCoding_t createMetaFile(const wchar_t* metaname) {
 			break;
 		}
 	}
-	const wchar_t filename[100] = { 0 };
-	concatw(filename, base_dir, metaname);
-	FILE* file = openWrite(filename);
-	
 	for (int i = 0; i < metaValuesCount; i++) {		
 		convertMeta(file, values[i], bestPageCoding);		
 	}
-	fclose(file);
-	uint64_t filesize = get_file_size_from_wname(filename);
+	uint64_t filesize = getSize(file);
 	if (bestSize != filesize) {
 	    wprintf(L"\n   comparing %s meta file sizes ... %d %d when seqpacking file %s", metaname, bestSize, filesize, src_name);
 		exit(1);
@@ -270,16 +268,19 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBi
 
 //--------------------------------------------------------------------------------------------------------
 
-void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned char pass, packProfile profile)
+memfile** pack_internal(memfile* infil, unsigned char pass, packProfile profile)
 {
-	src_name = src;
+	rewindMem(infil);
+	
 	unsigned int max_seqlen = 65791;
 	bool superslim = false;
-	if (get_file_size_from_wname(src) < profile.sizeMaxForSuperslim) {
+	uint64_t size_org = getSize(infil);
+	reallocMem(infil, size_org * 3);
+	if (size_org < profile.sizeMaxForSuperslim) {
 		superslim = true;
 		profile.seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}
-	
+
 	uint64_t	offset,
 		winsize = profile.winsize,
 		best_offset = 0,
@@ -290,26 +291,23 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	uint32_t buffer_pos = 0;
 	debug("\n Seq_packer pass: %d", pass);
 
-	infil = openRead(src);
-
+	
+	memfile* utfil[4];
 	if (pass == 2) {
 
 		debug("\nWinsize: %d", winsize);
 		debug("\nmax_seqlen: %d", max_seqlen);
 
-		utfil = openWrite(dest_filename);
+		utfil[0] = getMemfile(size_org * 3 + 1000);
+		for (int i = 1; i < 4; i++) {
+			utfil[i] = getMemfile(size_org); // this should be refined!
+		}
 	}
 
 	printf("\n");
 	/* start compression */
-	long long size_org = get_file_size(infil);
-
-
-	buffer_endpos = fread(&buffer, 1, buffer_size, infil);
-
-	assertEqual(buffer_endpos, size_org, "buffer_endpos == size_org in seqpacker");
-
-	assert(buffer_size > size_org * 2, "buffer_size > size_org * 2  in seqpacker");
+	
+	buffer_endpos = size_org;
 
 	absolute_end = buffer_endpos;
 
@@ -318,12 +316,13 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
+		uint8_t* buffer = infil->block;
 		unsigned char ch = buffer[buffer_pos];
 		uint64_t buffer_pos_plus1 = (uint64_t)1 + buffer_pos;
 		uint64_t buffer_pos_plus2 = (uint64_t)2 + buffer_pos;
 		unsigned char ch1 = buffer[buffer_pos_plus1];
 		unsigned char ch2 = buffer[buffer_pos_plus2];
-		
+
 
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_pos) >= min_seq_len) {
@@ -397,8 +396,8 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 				updateNextCharTable(ch, buffer_pos);
 			}
 			else {
-				WRITE(utfil, ch);
-				assert(absolute_end < buffer_size, "absolute_end < buffer_size in seqpacker");
+				fputcc(ch, utfil[0]);
+				//assert(absolute_end < BLOCK_SIZE, "absolute_end < BLOCK_SIZE in seqpacker");
 				updateNextCharTable(ch, absolute_end);
 				buffer[absolute_end++] = ch; // write start to end to wrap-around find sequences					
 				distance++;
@@ -440,7 +439,7 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 	if (VERBOSE && false) {
 		printf("\nwrap around:\n");
 		for (int i = buffer_endpos; i < absolute_end; i++) {
-			printf("%c", buffer[i]);
+			//printf("%c", buffer[i]);
 		}
 		printf("\n\n");
 	}
@@ -450,23 +449,23 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 		out_distance(distance);
 		debug("\n distance to first code: %d", distance);
 
-		pageCoding_t pageCoding = createMetaFile(L"offsets");
+		pageCoding_t pageCoding = createMetaFile(L"offsets", utfil[2]);
 		uint8_t offsetPages = pageCoding.pages;
 		uint64_t useOffsetLongRange = pageCoding.useLongRange;
 
-		pageCoding = createMetaFile(L"distances");
+		pageCoding = createMetaFile(L"distances", utfil[3]);
 		uint8_t distancePages = pageCoding.pages;
 		uint64_t useDistanceLongRange = pageCoding.useLongRange;
 
-		pageCoding = createMetaFile(L"seqlens");
+		pageCoding = createMetaFile(L"seqlens", utfil[1]);
 		uint8_t seqlenPages = pageCoding.pages;
 		uint64_t useSeqlenLongRange = pageCoding.useLongRange;
 
 		bool slimCase = (seqlenPages + offsetPages + distancePages == 0);
 		if (!slimCase) {
-			WRITE(utfil, seqlenPages);
-			WRITE(utfil, offsetPages);
-			WRITE(utfil, distancePages);
+			fputcc(seqlenPages, utfil[0]);
+			fputcc(offsetPages, utfil[0]);
+			fputcc(distancePages, utfil[0]);
 		}
 		unsigned char packType = 0;
 		packType = storeLongRange(packType, useOffsetLongRange, 1);
@@ -479,15 +478,15 @@ void pack_internal(const wchar_t* src, const wchar_t* dest_filename, unsigned ch
 			packType = setKthBit(packType, 7);
 		}
 		if (!superslim) {
-			WRITE(utfil, profile.seqlenMinLimit3);
+			fputcc(profile.seqlenMinLimit3, utfil[0]);
 		}
 		else {
 			printf("\n superslim used!");
 		}
-		WRITE(utfil, packType);
-		fclose(utfil);
+		fputcc(packType, utfil[0]);
+		return utfil;
 	}
-	fclose(infil);
+	return NULL;
 }
 
 void initGlobalArrays() {
@@ -511,14 +510,14 @@ void initGlobalArrays() {
 	seqlensPos = 0;
 }
 
-void seq_pack_internal(const wchar_t* source_filename, const wchar_t* dest_filename, packProfile profile, bool sep) {
-	long long source_size = get_file_size_from_wname(source_filename);
+memfile** seq_pack_internal(memfile* m, packProfile profile, bool sep) {	
 	separate_files = sep;
 	initGlobalArrays();
-	pack_internal(source_filename, dest_filename, 1, profile);
-	pack_internal(source_filename, dest_filename, 2, profile);
+	pack_internal(m, 1, profile);
+	return pack_internal(m, 2, profile);
 }
 
+/*
 void seq_pack(const char* src, const char* dst, packProfile profile)
 {
 	wchar_t u1[500], u2[500];
@@ -530,6 +529,7 @@ void seq_pack(const char* src, const char* dst, packProfile profile)
 void seqPack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	seq_pack_internal(src, dst, profile, false);
 }
+*/
 
 void seq_pack_separate(const char* src, const char* dir, packProfile profile) {
 	wchar_t srcw[500], dirw[500];
@@ -539,9 +539,36 @@ void seq_pack_separate(const char* src, const char* dir, packProfile profile) {
 }
 
 void seqPackSeparate(const wchar_t* src, const wchar_t* dir, packProfile profile) {
-	const wchar_t dest_filename[100] = { 0 };
-	concatw(dest_filename, dir, L"main");
-	base_dir = dir;
-	seq_pack_internal(src, dest_filename, profile, true);
+	const wchar_t mainFilename[100] = { 0 };
+	concatw(mainFilename, dir, L"main");
+
+	const wchar_t seqlensFilename[100] = { 0 };
+	concatw(seqlensFilename, dir, L"seqlens");
+
+	const wchar_t offsetsFilename[100] = { 0 };
+	concatw(offsetsFilename, dir, L"offsets");
+
+	const wchar_t distancesFilename[100] = { 0 };
+	concatw(distancesFilename, dir, L"distances");
+
+	memfile* s = getMemfileFromFile(src);
+	memfile** packed = seqPackSep(s, profile);
+	fre(s);
+	memfile* main = packed[0];
+	memfile* seqlens = packed[1]; // you shouldn't have to do this but it will be set to null otherwise
+	memfile* offsets = packed[2];
+	memfile* distances = packed[3];
+	memfileToFile(main, mainFilename);
+	memfileToFile(seqlens, seqlensFilename);
+	memfileToFile(offsets, offsetsFilename);
+	memfileToFile(distances, distancesFilename);
+	fre(main);
+	fre(seqlens);
+	fre(offsets);
+	fre(distances);
+}
+
+memfile** seqPackSep(memfile* mem, packProfile profile) {
+	return seq_pack_internal(mem, profile, true);
 }
 

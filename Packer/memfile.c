@@ -10,16 +10,22 @@ uint32_t getPos(memfile* m) {
 	return m->pos;
 }
 
+void reallocMem(memfile* mf, uint64_t size) {
+	assert(size > mf->size, "wrong argument in memfile.c reallocmem");	
+	mf->allocSize = size;
+	uint8_t* pt = realloc(mf->block, mf->allocSize);
+	if (pt != NULL) {
+		mf->block = pt;
+	}
+	else {
+		printf("\n out of memory in memfile.c checkAlloc");
+		exit(1);
+	}
+}
+
 void checkAlloc(memfile* mf, int pos) {
 	if (pos >= mf->allocSize - 1) {
-		mf->allocSize = mf->allocSize + 8192;
-		uint8_t* pt = realloc(mf->block, mf->allocSize);
-		if (pt != NULL) {
-			mf->block = pt;
-		}
-		else {
-			printf("\n out of memory in memfile.c checkAlloc");
-		}
+		reallocMem(mf, mf->allocSize + 8192);
 	}
 }
 
@@ -58,8 +64,6 @@ void fre(memfile* mf) {
 		free(mf);
 	}
 }
-
-
 
 void memfileToFile(memfile* mf, const wchar_t* dst) {
 	FILE* out = openWrite(dst);

@@ -50,7 +50,7 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 
 	unsigned char code1 = 15, code2 = 14, code3 = 13;
 
-	memfile* utfil = getMemfile((uint64_t)2 * infil->size + 200);
+	memfile* utfil = getMemfile((uint64_t)2 * infil->size + 300);
 	readHalfbyte(infil, -1); // init
 
 	int cc;
