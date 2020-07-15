@@ -120,24 +120,6 @@ uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool store
 	return packType;
 }
 
-
-bool RLE_pack_and_test(memfile* src, memfile* dst, int ratio) {
-	wprintf(L"\n RLE_pack_and_test of %s src.size=%d dst.size=%d", getMemName(src), getMemSize(src), getMemSize(dst));
-	memfile* res = RleSimplePack(src);
-	bool compression_success = testPack(src, res, L"RLE simple", ratio);
-	if (!compression_success) {		
-		deepCopyMem(src, dst);//src has to remain!
-		freMem(res);
-	}
-	else {
-		deepCopyMem(res, dst);
-		free(res);
-	}
-	printf("\n >> RLE_pack_and_test fin src.size=%d dst.size=%d", getMemSize(src), getMemSize(dst));
-	return compression_success;
-}
-
-
 bool TwoBytePackAndTest(memfile* src, packProfile profile) {
 	return packAndTest(L"twobyte", src, profile, profile, profile, profile);
 }
@@ -317,19 +299,19 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			memfile* just_canonical = CanonicalEncodeMem(src);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		}
-
-		memfile* before_seqpack = getMemfile(source_size, L"multipack_beforeseqpack");
-		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
-		if (got_smaller) {
+		memfile* before_seqpack = RleSimplePack(src);
+		bool compression_success = testPack(src, before_seqpack, L"RLE simple", profile.rle_ratio);
+		if (compression_success) {
 			pack_type = setKthBit(pack_type, RLE_BIT);  // bit 5
-		}
-		if (getMemSize(before_seqpack) == 0) {
-			printf("\n size of before seqpack in multipacker was 0"); exit(1);
+		} else {
+			freMem(before_seqpack);
+			before_seqpack = getEmptyMem(L"multipacker_beforeseq");
+			deepCopyMem(src, before_seqpack);//src has to remain!
 		}
 
 		assert(getMemSize(before_seqpack) > 0, "before_seqpack size was 0 in multi_packer.c");
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
-			got_smaller = TwoBytePackAndTest(before_seqpack, profile);
+			bool got_smaller = TwoBytePackAndTest(before_seqpack, profile);
 			if (got_smaller) {
 				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
 			}
@@ -363,7 +345,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			if (seqlens_size > profile.recursive_limit) {
 
 				// ---------- Pack the meta files (seqlens/offsets) recursively
-				got_smaller = MultiPackAndTest(mb.seqlens, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				bool got_smaller = MultiPackAndTest(mb.seqlens, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
 				if (got_smaller) {
 					pack_type = setKthBit(pack_type, 1);
 					seqlens_size = getMemSize(mb.seqlens);
@@ -371,7 +353,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			}
 			if (offsets_size > profile.recursive_limit) {
 
-				got_smaller = MultiPackAndTest(mb.offsets, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				bool got_smaller = MultiPackAndTest(mb.offsets, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
 				if (got_smaller) {
 					pack_type = setKthBit(pack_type, 2);
 					offsets_size = getMemSize(mb.offsets);
@@ -379,7 +361,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			}
 			if (distances_size > profile.recursive_limit) {
 
-				got_smaller = MultiPackAndTest(mb.distances, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				bool got_smaller = MultiPackAndTest(mb.distances, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
 				if (got_smaller) {
 					pack_type = setKthBit(pack_type, 3);
 					distances_size = getMemSize(mb.distances);
