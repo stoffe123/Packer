@@ -273,7 +273,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, 0);
 	uint8_t slimPackType = 0;
 	seqPackBundle mb;
-	mb.main = getEmptyMem(L"mf_a_main");
+	mb.main = NULL;
 	mb.seqlens = NULL;
 	mb.distances = NULL;
 	mb.offsets = NULL;
@@ -391,13 +391,12 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			else {
 				//seqpack not used so clear metafile pack bits
 				pack_type = clearKthBit(pack_type, 1);
-				pack_type = clearKthBit(pack_type, 2);
+				pack_type = clearKthBit(pack_type, 2);	
 			}
 
 		}
 		else {
 			//to small for seqpack			
-			freMem(mb.main);
 			mb.main = before_seqpack;
 		}
 	}
@@ -418,13 +417,13 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 
 	for (int i = 0; i < candidatesIndex; i++) {
 		memfile* s = packCandidates[i].filename;
-		if (s != src && s != mb.main) {
+		if (s != src) {
 			//freMem(s);
 		}
 	}
 	freBundle(mb);
-	
-	
+
+
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
 }
