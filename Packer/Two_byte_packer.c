@@ -116,7 +116,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 	memfile* utfil = NULL;
 
 	debug("\nTwo-byte pack pass=%d", pass);
-	
+
 	uint64_t source_size = getMemSize(infil);
 
 	int pair_table_pos;
@@ -124,7 +124,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 		pair_table_pos = create_two_byte_table(source_size);
 
 		if (pass == 3) {
-			utfil = getMemfile(infil->size + 200, L"twobytepack_utfil");
+			utfil = getMemfile((uint64_t)200 + infil->size, L"twobytepack_utfil");
 
 			//write the metadata table
 			for (int i = 0; i < pair_table_pos; i++) {
@@ -144,7 +144,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 	}
 
 	while (!eofcc(infil)) {
-				
+
 		int ch1 = fgetcc(infil);
 		int ch2 = nextcc(infil);
 		bool lastChar = (ch2 == EOF);
@@ -162,12 +162,14 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 				}
 				else {
 					if (is_code(ch1, pair_table_pos)) {
-						fputcc(master_code, utfil);
+						if (pass == 3) {
+							fputcc(master_code, utfil);
+						}
 					}
-					fputcc(ch1, utfil);
+					if (pass == 3) {
+						fputcc(ch1, utfil);
+					}
 				}
-				//buffer_startpos++;
-
 			}
 			else { // write the code for the pair
 				if (pass == 2) {
@@ -175,11 +177,10 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 						two_byte_freq_table[val]++;
 					}
 				}
-				else {
+				else if (pass == 3) {
 					fputcc((unsigned char)code, utfil);
 				}
 				fgetcc(infil);
-				//buffer_startpos += 2;
 			}
 		}
 		else { // pass == 1
@@ -191,15 +192,12 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 			if (char_freq[ch1] < LONG_MAX) {
 				char_freq[ch1]++;
 			}
-			//buffer_startpos++;
 		}
 	}//end while
 
-	if (pass < 3) {
-		fre(utfil);
-		return NULL;
+	if (pass == 3) {
+		return utfil;
 	}
-	return utfil;
 }
 
 memfile* twoBytePack(memfile* m, packProfile prof) {
@@ -215,9 +213,9 @@ void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 	profile = prof;
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = twoBytePack(srcm, prof);
-	fre(srcm);
+	freMem(srcm);
 	memfileToFile(dstm, dest);
-	fre(dstm);
+	freMem(dstm);
 }
 
 

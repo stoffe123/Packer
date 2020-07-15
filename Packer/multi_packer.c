@@ -442,7 +442,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	for (int i = 0; i < candidatesIndex; i++) {
 		memfile* s = packCandidates[i].filename;
 		if (s != src) {
-			fre(s);
+			//freMem(s);
 		}
 	}
 	
