@@ -406,9 +406,9 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 					uint64_t size_after_canonical = getMemSize(canonicalled);
 					if (size_after_canonical < size_before_canonical) {
 						pack_type = setKthBit(pack_type, 0);
-						deepCopyMem(canonicalled, mb.main);
-					}
-					freMem(canonicalled);
+						freMem(mb.main);
+						mb.main = canonicalled;
+					}					
 				}
 				packCandidates[candidatesIndex++] = getPackCandidate2(mb.main, pack_type, getMemSize(mb.main) + meta_size);
 			}
