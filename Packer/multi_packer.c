@@ -124,10 +124,14 @@ uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool store
 bool RLE_pack_and_test(memfile* src, memfile* dst, int ratio) {
 	wprintf(L"\n RLE_pack_and_test of %s src.size=%d dst.size=%d", getMemName(src), getMemSize(src), getMemSize(dst));
 	memfile* res = RleSimplePack(src);
-	deepCopyMem(res, dst);
-	bool compression_success = testPack(src, dst, L"RLE simple", ratio);
+	bool compression_success = testPack(src, res, L"RLE simple", ratio);
 	if (!compression_success) {		
 		deepCopyMem(src, dst);//src has to remain!
+		freMem(res);
+	}
+	else {
+		deepCopyMem(res, dst);
+		free(res);
 	}
 	printf("\n >> RLE_pack_and_test fin src.size=%d dst.size=%d", getMemSize(src), getMemSize(dst));
 	return compression_success;
@@ -141,6 +145,7 @@ bool TwoBytePackAndTest(memfile* src, packProfile profile) {
 void unpackAndReplace(const wchar_t* kind, memfile* src) {	
 	memfile* tmp = unpackByKind(kind, src);
 	deepCopyMem(tmp, src);	
+	free(tmp);
 }
 
 void TwoByteUnpackAndReplace(memfile* src) {
@@ -451,8 +456,6 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
 }
-
-
 
 // ------------------------------------------------------------------
 
