@@ -662,7 +662,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
         BitFilePutChar(packedSize, bfp);
     }
     else { // multipack case
-        printf("\n Canonical.writeheader: multipack case packtype %d packedsize %d", packType, packedSize);
+        //printf("\n Canonical.writeheader: multipack case packtype %d packedsize %d", packType, packedSize);
         BitFilePutChar(1, bfp);
         BitFilePutChar(packedSize, bfp);
         BitFilePutChar(packType, bfp);
@@ -693,13 +693,13 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
     int size = BitFileGetChar(bfp);
-    printf("\n Canonical.ReadHeader size %d", size);
+    //printf("\n Canonical.ReadHeader size %d", size);
     int bytesToCopy = NUM_CHARS;  // normally 257
     uint8_t packType = 0;
     if (size == 1) { // multi case
         bytesToCopy = BitFileGetChar(bfp);
         packType = BitFileGetChar(bfp);
-        printf("\n   multicase packType %d", packType);
+        //printf("\n   multicase packType %d", packType);
     }
     else if (size == 2) { // RLE case
         bytesToCopy = BitFileGetChar(bfp);

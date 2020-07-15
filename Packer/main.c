@@ -458,18 +458,18 @@ void test16() {
 		profile = {
 			.rle_ratio = 76,
 			.twobyte_ratio = 82,
-			.recursive_limit = 376,
-			.twobyte_threshold_max = 11984,
+			.recursive_limit = 437,
+			.twobyte_threshold_max = 11371,
 			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 696,
+			.twobyte_threshold_min = 718,
 			.seqlenMinLimit3 = 111,
-			.seqlenMinLimit4 = 69118,
-			.blockSizeMinus = 137,
+			.seqlenMinLimit4 = 72867,
+			.blockSizeMinus = 112,
 			.winsize = 18233,
 			.sizeMaxForCanonicalHeaderPack = 332,
-			.sizeMinForSeqPack = 10,
+			.sizeMinForSeqPack = 6934,
 			.sizeMinForCanonical = 124,
-			.sizeMaxForSuperslim = 7639
+			.sizeMaxForSuperslim = 16921
 	};
 
 	copyProfile(&profile, &bestProfile);

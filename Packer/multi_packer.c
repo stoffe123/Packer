@@ -146,31 +146,28 @@ void CanonicalDecodeAndReplace(memfile* src) {
 	unpackAndReplace(L"canonical", src);
 }
 
-packCandidate_t getPackCandidate2(memfile* filename, uint8_t packType, uint64_t filesize) {
-	packCandidate_t cand;
-	cand.filename = filename;
-	wprintf(L"\n adding pack candidate %s", getMemName(filename));
-	cand.packType = packType;
-	if (filesize == 0) {
-		filesize = getMemSize(filename);
+int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t filesize) {
+	if (filesize < bestCandidate->size) {
+		bestCandidate->filename = m;
+		bestCandidate->size = filesize;
+		bestCandidate->packType = packType;
 	}
-	cand.size = filesize;
-	return cand;
+	
 }
 
-packCandidate_t getPackCandidate3(memfile* filename, uint8_t packType, bool canonicalHeaderCase) {
-	packCandidate_t res = getPackCandidate2(filename, packType, 0);
+void getPackCandidate3(packCandidate_t* bestCandidate, memfile* m, int packType, bool canonicalHeaderCase) {
+	uint64_t size = getMemSize(m);
 	if (canonicalHeaderCase) {
 		if (packType == packTypeForHalfbyteRlePack(0) || packType == packTypeRlePlusTwobyte()) {
 			// those two cases are separately treated in canonical.c and no packtype has to be written then
-			res.size--;
+		    size--;
 		}
 	}
-	return res;
+	getPackCandidate2(bestCandidate, m, packType, size);
 }
 
-packCandidate_t getPackCandidate(memfile* filename, unsigned char packType) {
-	return getPackCandidate2(filename, packType, 0);
+void getPackCandidate(packCandidate_t* bestCandidate, memfile* m, int packType) {
+	return getPackCandidate2(bestCandidate, m, packType, getMemSize(m));
 }
 
 static packProfile prof = { .rle_ratio = 0,
@@ -258,10 +255,12 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	static int metacount = 101;
 	rewindMem(src);
 	rewindMem(dst);
-
-	packCandidate_t packCandidates[100];
-	int candidatesIndex = 0;
-
+	
+	packCandidate_t bestCandidate;
+	bestCandidate.filename = NULL;
+	bestCandidate.packType = 0;
+	bestCandidate.size = UINT64_MAX;
+	
 	//printProfile(&profile);
 	uint64_t source_size = getMemSize(src);
 	printf("\n --------- Multi pack started of file sized %d -------------", source_size);
@@ -270,7 +269,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
 	memfile* before_seqpack = getMemfile(source_size, L"multipacker.before_seqpack");
 	deepCopyMem(src, before_seqpack);
-	packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, 0);
+	getPackCandidate(&bestCandidate, before_seqpack, 0);
 	uint8_t slimPackType = 0;
 	seqPackBundle mb;
 	mb.main = NULL;
@@ -283,25 +282,25 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
 			memfile* head_pack = halfbyteRlePack(src, 0);
 			int pt = packTypeForHalfbyteRlePack(0);
-			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
+			getPackCandidate3(&bestCandidate, head_pack, pt, canonicalHeaderCase);
 			
 			memfile* head_pack1 = halfbyteRlePack(src, 1);
 			pt = packTypeForHalfbyteRlePack(1);
-			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack1, pt, canonicalHeaderCase);
+			getPackCandidate3(&bestCandidate, head_pack1, pt, canonicalHeaderCase);
 						
 			memfile* head_pack2 = halfbyteRlePack(src, 2);
 			pt = packTypeForHalfbyteRlePack(2);
-			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack2, pt, canonicalHeaderCase);			
+			getPackCandidate3(&bestCandidate, head_pack2, pt, canonicalHeaderCase);
 		}
 
 		if (source_size > 20 && profile.rle_ratio > 0) {
 			memfile* just_two_byte = twoBytePack(src, twobyte100Profile);
-			packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
+			getPackCandidate(&bestCandidate, just_two_byte, 0b1000000);
 		}
 
 		if (source_size > profile.sizeMinForCanonical && profile.rle_ratio > 0) {
 			memfile* just_canonical = CanonicalEncodeMem(src);
-			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
+			getPackCandidate(&bestCandidate, just_canonical, 1);
 		}
 		pack_type = packAndTest2(L"rle simple", before_seqpack, profile, pack_type, RLE_BIT);
 		
@@ -309,13 +308,13 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
 			pack_type = packAndTest2(L"twobyte", before_seqpack, profile, pack_type, TWOBYTE_BIT);			
 		}
-		packCandidates[candidatesIndex++] = getPackCandidate3(before_seqpack, pack_type, canonicalHeaderCase);
+		getPackCandidate3(&bestCandidate, before_seqpack, pack_type, canonicalHeaderCase);
 		uint64_t before_seqpack_size = getMemSize(before_seqpack);
 
 		if (source_size > profile.sizeMinForCanonical) {
 			memfile* canonical_instead_of_seqpack = 	
 				CanonicalEncodeMem(before_seqpack);
-			packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));
+			getPackCandidate(&bestCandidate, canonical_instead_of_seqpack, setKthBit(pack_type, 0));
 		}
 	
 		uint64_t size_after_seq = UINT64_MAX;
@@ -386,7 +385,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 						mb.main = canonicalled;
 					}					
 				}
-				packCandidates[candidatesIndex++] = getPackCandidate2(mb.main, pack_type, getMemSize(mb.main) + meta_size);
+				getPackCandidate2(&bestCandidate, mb.main, pack_type, getMemSize(mb.main) + meta_size);
 			}
 			else {
 				//seqpack not used so clear metafile pack bits
@@ -400,13 +399,6 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			mb.main = before_seqpack;
 		}
 	}
-	packCandidate_t bestCandidate = packCandidates[0];
-	for (int i = 1; i < candidatesIndex; i++) {
-		if (packCandidates[i].size < bestCandidate.size) {
-			bestCandidate = packCandidates[i];
-		}
-	}
-
 	wprintf(L"\nWinner is %s packtype %d  packed %d > %d", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
 	pack_type = bestCandidate.packType;	
 	if (bestCandidate.filename != mb.main) {
@@ -415,14 +407,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, mb, pack_type, storePackType);
 
-	for (int i = 0; i < candidatesIndex; i++) {
-		memfile* s = packCandidates[i].filename;
-		if (s != src) {
-			//freMem(s);
-		}
-	}
 	freBundle(mb);
-
 
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
