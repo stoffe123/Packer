@@ -500,17 +500,19 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	if (isCanonicalHeaderPacked(pack_type)) {
 		memfile* tmp = halfbyteRleUnpack(seq_dst, getKindFromPackType(pack_type));
 		deepCopyMem(tmp, dst);
+		free(tmp);
 	}
 	else {
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5
 			memfile* tmp = RleSimpleUnpack(seq_dst);
 			deepCopyMem(tmp, dst);
+			free(tmp);
 		}
 		else {
 			deepCopyMem(seq_dst, dst);
 		}
 	}
-	fre(seq_dst);	
+	freMem(seq_dst);	
 	freBundle(mb);
 	return dst;
 }
