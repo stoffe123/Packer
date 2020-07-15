@@ -486,12 +486,12 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 			MultiUnpackAndReplace(mb.distances);
 		}
 	}
-	memfile* seq_dst = getEmptyMem(L"multipack.seq_dst");	
+	memfile* seq_dst; 
 	if (seqPacked) {		
-		memfile* tmp = seqUnpack(mb);		
-		deepCopyMem(tmp, seq_dst);
+		seq_dst = seqUnpack(mb);				
 	}
 	else {
+		seq_dst = getEmptyMem(L"multipack.seq_dst");
 		deepCopyMem(mb.main, seq_dst);
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
