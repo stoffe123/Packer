@@ -1,3 +1,5 @@
+
+
 /***************************************************************************
 *                Common Huffman Encoding and Decoding Header
 *
@@ -37,6 +39,7 @@
 #include <stdlib.h>
 #include "huflocal.h"
 #include "huffman.h"
+#include "memfile.h"
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -70,7 +73,7 @@
 *   Effects    : Huffman tree is built for file.
 *   Returned   : Pointer to resulting tree.  NULL on failure.
 ****************************************************************************/
-huffman_node_t* GenerateTreeFromFile(FILE* inFile)
+huffman_node_t* GenerateTreeFromFile(memfile* inFile)
 {
     huffman_node_t* huffmanArray[NUM_CHARS];    /* array of all leaves */
     huffman_node_t* huffmanTree;                /* root of huffman tree */
@@ -95,7 +98,7 @@ huffman_node_t* GenerateTreeFromFile(FILE* inFile)
     huffmanArray[EOF_CHAR]->ignore = 0;
 
     /* count occurrence of each character */
-    while ((c = fgetc(inFile)) != EOF)
+    while ((c = fgetcc(inFile)) != EOF)
     {
         if (huffmanArray[c]->count < COUNT_T_MAX)
         {

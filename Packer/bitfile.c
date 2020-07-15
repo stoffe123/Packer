@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "bitfile.h"
+#include "memfile.h"
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -54,7 +55,7 @@ typedef int (*num_func_t)(bit_file_t*, void*, const unsigned int, const size_t);
 
 struct bit_file_t
 {
-    FILE* fp;                   /* file pointer used by stdio functions */
+    memfile* fp;                /* file pointer used by stdio functions */
     unsigned char bitBuffer;    /* bits waiting to be read/written */
     unsigned char bitCount;     /* number of bits in bitBuffer */
     num_func_t PutBitsNumFunc;  /* endian specific BitFilePutBitsNum */
@@ -97,80 +98,6 @@ static int BitFileNotSupported(bit_file_t* stream, void* bits,
 *                                FUNCTIONS
 ***************************************************************************/
 
-/***************************************************************************
-*   Function   : BitFileOpen
-*   Description: This function opens a bit file for reading, writing,
-*                or appending.  If successful, a bit_file_t data
-*                structure will be allocated and a pointer to the
-*                structure will be returned.
-*   Parameters : fileName - NULL terminated string containing the name of
-*                           the file to be opened.
-*                mode - The mode of the file to be opened
-*   Effects    : The specified file will be opened and file structure will
-*                be allocated.
-*   Returned   : Pointer to the bit_file_t structure for the bit file
-*                opened, or NULL on failure.  errno will be set for all
-*                failure cases.
-***************************************************************************/
-bit_file_t* BitFileOpen(const char* fileName, const BF_MODES mode)
-{
-    const char modes[3][3] = { "rb", "wb", "ab" };    /* binary modes for fopen */
-    bit_file_t* bf;
-
-    bf = (bit_file_t*)malloc(sizeof(bit_file_t));
-
-    if (bf == NULL)
-    {
-        /* malloc failed */
-        errno = ENOMEM;
-    }
-    else
-    {
-        bf->fp = fopen(fileName, modes[mode]);
-
-        if (bf->fp == NULL)
-        {
-            /* fopen failed */
-            free(bf);
-            bf = NULL;
-        }
-        else
-        {
-            /* fopen succeeded fill in remaining bf data */
-            bf->bitBuffer = 0;
-            bf->bitCount = 0;
-            bf->mode = mode;
-
-            switch (DetermineEndianess())
-            {
-            case BF_LITTLE_ENDIAN:
-                bf->PutBitsNumFunc = &BitFilePutBitsLE;
-                bf->GetBitsNumFunc = &BitFileGetBitsLE;
-                break;
-
-            case BF_BIG_ENDIAN:
-                bf->PutBitsNumFunc = &BitFilePutBitsBE;
-                bf->GetBitsNumFunc = &BitFileGetBitsBE;
-                break;
-
-            case BF_UNKNOWN_ENDIAN:
-            default:
-                bf->PutBitsNumFunc = BitFileNotSupported;
-                bf->GetBitsNumFunc = BitFileNotSupported;
-                break;
-            }
-
-            /***************************************************************
-            * TO DO: Consider using the last byte in a file to indicate
-            * the number of bits in the previous byte that actually have
-            * data.  If I do that, I'll need special handling of files
-            * opened with a mode of BF_APPEND.
-            ***************************************************************/
-        }
-    }
-
-    return (bf);
-}
 
 /***************************************************************************
 *   Function   : MakeBitFile
@@ -186,7 +113,7 @@ bit_file_t* BitFileOpen(const char* fileName, const BF_MODES mode)
 *                or NULL on failure.  errno will be set for all failure
 *                cases.
 ***************************************************************************/
-bit_file_t* MakeBitFile(FILE* stream, const BF_MODES mode)
+bit_file_t* MakeBitFile(memfile* stream, const BF_MODES mode)
 {
     bit_file_t* bf;
 
@@ -297,7 +224,7 @@ int BitFileClose(bit_file_t* stream)
         if (stream->bitCount != 0)
         {
             (stream->bitBuffer) <<= 8 - (stream->bitCount);
-            fputc(stream->bitBuffer, stream->fp);   /* handle error? */
+            fputcc(stream->bitBuffer, stream->fp);   /* handle error? */
         }
     }
 
@@ -339,7 +266,7 @@ FILE* BitFileToFILE(bit_file_t* stream)
         if (stream->bitCount != 0)
         {
             (stream->bitBuffer) <<= 8 - (stream->bitCount);
-            fputc(stream->bitBuffer, stream->fp);   /* handle error? */
+            fputcc(stream->bitBuffer, stream->fp);   /* handle error? */
         }
     }
 
@@ -386,7 +313,7 @@ int BitFileByteAlign(bit_file_t* stream)
         if (stream->bitCount != 0)
         {
             (stream->bitBuffer) <<= 8 - (stream->bitCount);
-            fputc(stream->bitBuffer, stream->fp);   /* handle error? */
+            fputcc(stream->bitBuffer, stream->fp);   /* handle error? */
         }
     }
 
@@ -429,7 +356,7 @@ int BitFileFlushOutput(bit_file_t* stream, const unsigned char onesFill)
             stream->bitBuffer |= (0xFF >> stream->bitCount);
         }
 
-        returnValue = fputc(stream->bitBuffer, stream->fp);
+        returnValue = fputcc(stream->bitBuffer, stream->fp);
     }
 
     stream->bitBuffer = 0;
@@ -457,7 +384,7 @@ int BitFileGetChar(bit_file_t* stream)
         return(EOF);
     }
 
-    returnValue = fgetc(stream->fp);
+    returnValue = fgetcc(stream->fp);
 
     if (stream->bitCount == 0)
     {
@@ -502,14 +429,14 @@ int BitFilePutChar(const int c, bit_file_t* stream)
     if (stream->bitCount == 0)
     {
         /* we can just put byte from file */
-        return fputc(c, stream->fp);
+        return fputcc(c, stream->fp);
     }
 
     /* figure out what to write */
     tmp = ((unsigned char)c) >> (stream->bitCount);
     tmp = tmp | ((stream->bitBuffer) << (8 - stream->bitCount));
 
-    if (fputc(tmp, stream->fp) != EOF)
+    if (fputcc(tmp, stream->fp) != EOF)
     {
         /* put remaining in buffer. count shouldn't change. */
         stream->bitBuffer = c;
@@ -544,7 +471,7 @@ int BitFileGetBit(bit_file_t* stream)
     if (stream->bitCount == 0)
     {
         /* buffer is empty, read another character */
-        if ((returnValue = fgetc(stream->fp)) == EOF)
+        if ((returnValue = fgetcc(stream->fp)) == EOF)
         {
             return EOF;
         }
@@ -592,7 +519,7 @@ int BitFilePutBit(const int c, bit_file_t* stream)
     /* write bit buffer if we have 8 bits */
     if (stream->bitCount == 8)
     {
-        if (fputc(stream->bitBuffer, stream->fp) == EOF)
+        if (fputcc(stream->bitBuffer, stream->fp) == EOF)
         {
             returnValue = EOF;
         }

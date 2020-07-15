@@ -328,7 +328,7 @@ void BitArrayClearBit(bit_array_t* ba, unsigned int bit)
 ***************************************************************************/
 void* BitArrayGetBits(bit_array_t* ba)
 {
-    return ((void*)(ba->array));
+     return ((void*)(ba->array));
 }
 
 

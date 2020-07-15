@@ -308,7 +308,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 
 		if (source_size > profile.sizeMinForCanonical && profile.rle_ratio > 0) {
-			memfile* just_canonical = CanonicalEncodeMem(src);
+			memfile* just_canonical = getEmptyMem(L"multipacker_justcanonical");
+			CanonicalEncodeFile(src, just_canonical);
 			getPackCandidateAndFree(&bestCandidate, just_canonical, 1);
 		}
 
@@ -332,8 +333,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		uint64_t before_seqpack_size = getMemSize(before_seqpack);
 
 		if (source_size > profile.sizeMinForCanonical) {
-			memfile* canonical_instead_of_seqpack = 	
-				CanonicalEncodeMem(before_seqpack);
+			memfile* canonical_instead_of_seqpack = getEmptyMem(L"multipacker_canonical_inst_of_seq");
+				CanonicalEncodeFile(before_seqpack, canonical_instead_of_seqpack);
 			getPackCandidateAndFree(&bestCandidate, canonical_instead_of_seqpack, setKthBit(pack_type, 0));
 		}
 	
@@ -397,7 +398,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 				before_seqpack = NULL;
 				if (getMemSize(mb.main) > profile.sizeMinForCanonical) {
 					uint64_t size_before_canonical = getMemSize(mb.main);
-					memfile* canonicalled = CanonicalEncodeMem(mb.main);
+					memfile* canonicalled = getEmptyMem(L"multipacker_canonicalled");
+						CanonicalEncodeFile(mb.main, canonicalled);
 					uint64_t size_after_canonical = getMemSize(canonicalled);
 					if (size_after_canonical < size_before_canonical) {
 						pack_type = setKthBit(pack_type, 0);

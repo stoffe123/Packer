@@ -18,7 +18,7 @@ memfile* getMemfileFromFile(const wchar_t* src);
 
 int fgetcc(memfile* mf);
 
-void fputcc(int c, memfile* mf);
+int fputcc(int c, memfile* mf);
 
 void memfileToFile(memfile* m, const wchar_t* dst);
 

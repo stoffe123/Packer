@@ -36,6 +36,7 @@
 *                             INCLUDED FILES
 ***************************************************************************/
 #include <limits.h>
+#include "memfile.h"
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -90,7 +91,7 @@ typedef struct huffman_node_t
 ***************************************************************************/
 
 /* create/destroy tree */
-huffman_node_t* GenerateTreeFromFile(FILE* inFile);
+huffman_node_t* GenerateTreeFromFile(memfile* inFile);
 huffman_node_t* BuildHuffmanTree(huffman_node_t** ht, int elements);
 huffman_node_t* AllocHuffmanNode(int value);
 void FreeHuffmanTree(huffman_node_t* ht);

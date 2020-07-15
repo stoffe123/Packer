@@ -61,7 +61,9 @@ memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
 		return twoByteUnpack(packedFilename);
 	}	
 	else if (equalsw(kind, L"canonical")) {
-		return CanonicalDecodeMem(packedFilename);
+		memfile* res = getEmptyMem(L"packer_commons_canonicalunp");
+		CanonicalDecodeFile(packedFilename, res);
+		return res;
 	}
 	else {
 		wprintf(L"\n kind=%s not found in packer_commons.unpackByKind", kind);

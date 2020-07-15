@@ -1,3 +1,6 @@
+
+
+
 /***************************************************************************
 *                            Bit Stream File Header
 *
@@ -42,6 +45,7 @@
 *                             INCLUDED FILES
 ***************************************************************************/
 #include <stdio.h>
+#include "memfile.h"
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -63,8 +67,7 @@ typedef struct bit_file_t bit_file_t;
 ***************************************************************************/
 
 /* open/close file */
-bit_file_t* BitFileOpen(const char* fileName, const BF_MODES mode);
-bit_file_t* MakeBitFile(FILE* stream, const BF_MODES mode);
+bit_file_t* MakeBitFile(memfile* stream, const BF_MODES mode);
 int BitFileClose(bit_file_t* stream);
 FILE* BitFileToFILE(bit_file_t* stream);
 

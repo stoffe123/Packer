@@ -110,8 +110,9 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp);
 *                event of a failure.  Either way, inFile and outFile will
 *                be left open.
 ****************************************************************************/
-int CanonicalEncodeFile(FILE* inFile, FILE* outFile)
+int CanonicalEncodeFile(memfile* inFile, memfile* outFile)
 {
+    rewindMem(inFile);
     bit_file_t* bOutFile;
     huffman_node_t* huffmanTree;        /* root of huffman tree */
     int c;
@@ -154,9 +155,9 @@ int CanonicalEncodeFile(FILE* inFile, FILE* outFile)
     WriteHeader(canonicalList, bOutFile);
 
     /* read characters from file and write them to encoded file */
-    rewind(inFile);               /* start another pass on the input file */
+    rewindMem(inFile);               /* start another pass on the input file */
 
-    while ((c = fgetc(inFile)) != EOF)
+    while ((c = fgetcc(inFile)) != EOF)
     {
         /* write encoded symbols */
         BitFilePutBits(bOutFile,
@@ -186,8 +187,9 @@ int CanonicalEncodeFile(FILE* inFile, FILE* outFile)
 *                event of a failure.  Either way, inFile and outFile will
 *                be left open.
 ****************************************************************************/
-int CanonicalDecodeFile(FILE* inFile, FILE* outFile)
+int CanonicalDecodeFile(memfile* inFile, memfile* outFile)
 {
+    rewindMem(inFile);
     bit_file_t* bInFile;
     bit_array_t* code;
     byte_t length;
@@ -299,7 +301,7 @@ int CanonicalDecodeFile(FILE* inFile, FILE* outFile)
                     /* we just read a symbol output decoded value */
                     if (canonicalList[i].value != EOF_CHAR)
                     {
-                        fputc(canonicalList[i].value, outFile);
+                        fputcc(canonicalList[i].value, outFile);
                     }
                     else
                     {
@@ -333,7 +335,7 @@ int CanonicalDecodeFile(FILE* inFile, FILE* outFile)
 *                event of a failure.  Either way, inFile and outFile will
 *                be left open.
 ****************************************************************************/
-int CanonicalShowTree(FILE* inFile, FILE* outFile)
+int CanonicalShowTree(memfile* inFile, memfile* outFile)
 {
     huffman_node_t* huffmanTree;                /* root of huffman tree */
     int i, length;
@@ -387,15 +389,15 @@ int CanonicalShowTree(FILE* inFile, FILE* outFile)
             {
                 if (BitArrayTestBit(canonicalList[i].code, length))
                 {
-                    fputc('1', outFile);
+                    fputcc('1', outFile);
                 }
                 else
                 {
-                    fputc('0', outFile);
+                    fputcc('0', outFile);
                 }
             }
 
-            fputc('\n', outFile);
+            fputcc('\n', outFile);
         }
     }
 
@@ -743,66 +745,3 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     return 0;
 }
 
-
-int CanonicalEncode(const wchar_t* src, const wchar_t* dst) {
-    FILE* inFile = openRead(src);
-    FILE* outFile = openWrite(dst);
-    int res = CanonicalEncodeFile(inFile, outFile);
-    fclose(inFile);
-    fclose(outFile);
-    return res;
-}
-
-int CanonicalDecode(const wchar_t* src, const wchar_t* dst) {
-    FILE* inFile = openRead(src);
-    FILE* outFile = openWrite(dst);
-    int res = CanonicalDecodeFile(inFile, outFile);
-    fclose(inFile);
-    fclose(outFile);
-    return res;
-}
-
-memfile* CanonicalEncodeMem(memfile* m) {
-    wprintf(L"\n CanonicalEncodeMem of %s", getMemName(m));
-    wchar_t tmp[500] = { 0 };
-    get_temp_filew(tmp, L"canonical_unp");
-    wchar_t tmp2[500] = { 0 };
-    get_temp_filew(tmp2, L"canonical_pack");
-    memfileToFile(m, tmp);
-    CanonicalEncode(tmp, tmp2);
-    memfile* res = getMemfileFromFile(tmp2);
-   
-
-    if (DOUBLE_CHECK_PACK) {
-        wprintf(L"\n ?Double checking canonical pack of %s", getMemName(m));
-        wchar_t tmp3[500] = { 0 };
-        get_temp_filew(tmp3, L"canonical_unp3");
-        CanonicalDecode(tmp2, tmp3);
-        bool sc = filesEqual(tmp3, tmp);
-        _wremove(tmp3);
-        if (!sc) {
-            wprintf(L"\n\n\n ** Failed to canonical pack: %s", getMemName(m));
-            const wchar_t filename[100] = { 0 };
-            concatw(filename, L"c:/test/temp_files/", getMemName(m));
-            memfileToFile(m, filename);
-            exit(1);
-        }
-    }
-    _wremove(tmp);
-    _wremove(tmp2);
-    return res;
-}
-
-memfile* CanonicalDecodeMem(memfile* m) {
-    wprintf(L"\n CanonicalDecodeMem of %s", getMemName(m));
-    wchar_t tmp[500] = { 0 };
-    get_temp_filew(tmp, L"canonical_enc");
-    wchar_t tmp2[500] = { 0 };
-    get_temp_filew(tmp2, L"canonical_dec");
-    memfileToFile(m, tmp);
-    CanonicalDecode(tmp, tmp2);
-    memfile* res = getMemfileFromFile(tmp2);
-    _wremove(tmp);
-    _wremove(tmp2);
-    return res;
-}

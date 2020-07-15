@@ -145,11 +145,12 @@ bool eofcc(memfile* mf) {
 	return getMemPos(mf) >= getMemSize(mf);
 }
 
-void fputcc(int c, memfile* mf) {		
+int fputcc(int c, memfile* mf) {		
 	checkAlloc(mf, mf->pos + 1);
 	mf->block[mf->pos] = c;
 	incPos(mf);
 	mf->size = mf->pos;
+	return c;
 }
 
 memRead(uint8_t* arr, uint32_t size, memfile* m) {
