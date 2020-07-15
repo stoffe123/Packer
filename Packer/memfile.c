@@ -179,7 +179,9 @@ void deepCopyMem(memfile* src, memfile* dst) {
 	if (src == dst) {
 		return;
 	}
-	dst->allocSize = src->allocSize; //memory leak
+	if (dst->allocSize < src->size) {
+		dst->allocSize = src->size;
+	}	
 	dst->pos = src->pos;
 	dst->size = src->size;
 	wcscpy(dst->name, src->name);
