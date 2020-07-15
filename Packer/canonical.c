@@ -640,7 +640,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     if (packedSize <= 2 || packedSize >= 256) {
         printf("\n canonical header pack was too large %d original %d => using store", packedSize, orgSize);
         packedSize = 0; // flag for store
-        fre(packedFilename);
+        freMem(packedFilename);
         fileToRead = headerFile;
     }
     else {
@@ -673,8 +673,8 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     while ((ch = fgetcc(fileToRead)) != EOF) {
         BitFilePutChar(ch, bfp);
     }
-    fre(packedFilename);
-    fre(headerFile);
+    freMem(packedFilename);
+    freMem(headerFile);
 }
 
 /****************************************************************************
@@ -739,7 +739,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
             exit(1);
         }
     }    
-    fre(file);
+    freMem(file);
     return 0;
 }
 

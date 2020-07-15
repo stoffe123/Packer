@@ -88,6 +88,13 @@ void fre(memfile* mf) {
 	}
 }
 
+void freMem(memfile* mf) {
+	if (mf != NULL) {
+		free(mf->block);		
+		free(mf);
+	}
+}
+
 uint8_t getCCAtPos(memfile* m, uint64_t pos) {
 	if (pos >= m->size) {
 		printf("\n getCCAtPos out of range! %d memfile %s", pos, m->name);
@@ -190,6 +197,7 @@ void deepCopyMem(memfile* src, memfile* dst) {
 	dst->pos = src->pos;
 	dst->size = src->size;
 	wcscpy(dst->name, src->name);
+	free(dst->block);
 	dst->block = malloc(src->size);
 	for (int i = 0; i < src->size; i++) {
 		dst->block[i] = src->block[i];

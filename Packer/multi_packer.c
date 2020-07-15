@@ -126,8 +126,7 @@ bool RLE_pack_and_test(memfile* src, memfile* dst, int ratio) {
 	memfile* res = RleSimplePack(src);
 	deepCopyMem(res, dst);
 	bool compression_success = testPack(src, dst, L"RLE simple", ratio);
-	if (!compression_success) {
-		fre(dst);
+	if (!compression_success) {		
 		deepCopyMem(src, dst);//src has to remain!
 	}
 	printf("\n >> RLE_pack_and_test fin src.size=%d dst.size=%d", getMemSize(src), getMemSize(dst));
@@ -551,8 +550,8 @@ void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw) {
 	memfile* srcm = getMemfileFromFile(srcw);	
 	memfile* dstm = multiUnpackInternal(srcm, 0, true);
 	memfileToFile(dstm, dstw);
-	fre(srcm);
-	fre(dstm);
+	freMem(srcm);
+	freMem(dstm);
 }
 
 void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, packProfile seqlenProfile,
@@ -563,8 +562,8 @@ void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, 
 	
 	multiPackInternal(srcm, dstm, profile, seqlenProfile, offsetProfile, distancesProfile, true);
 	memfileToFile(dstm, dstw);
-	fre(srcm);
-	fre(dstm);
+	freMem(srcm);
+	freMem(dstm);
 }
 
 void multiUnpackAndReplace(memfile* src, uint8_t packType) {
