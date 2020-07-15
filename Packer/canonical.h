@@ -14,6 +14,8 @@ int CanonicalEncodeFile(memfile* inFile, memfile* outFile);
 
 int CanonicalDecodeFile(memfile* inFile, memfile* outFile);
 
+memfile* canonicalDecode(memfile* m);
 
+memfile* canonicalEncode(memfile* m);
 
 #endif

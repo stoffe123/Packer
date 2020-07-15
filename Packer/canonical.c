@@ -745,3 +745,14 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     return 0;
 }
 
+memfile* canonicalDecode(memfile* m) {
+    memfile* res = getMemfile((uint64_t)2 * getMemSize(m), L"canonical_dec");
+    CanonicalDecodeFile(m, res);
+    return res;
+}
+
+memfile* canonicalEncode(memfile* m) {
+    memfile* res = getMemfile((uint64_t)500 + getMemSize(m), L"canonical_dec");
+    CanonicalEncodeFile(m, res);
+    return res;
+}

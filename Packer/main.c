@@ -395,16 +395,14 @@ void onefile() {
 	//size_packed = getBundleSize(packed);
 	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
 	//memfile* packed = halfbyteRlePack(srcm, 0);
-	memfile* packed = getEmptyMem(L"main_onefile_packed");
-	CanonicalEncodeFile(srcm, packed);
+	memfile* packed = canonicalEncode(srcm);
 	size_packed = getMemSize(packed);
 	printf("\n size_packed %d", size_packed);
 	int pack_time = (clock() - cl);
 		
 	cl = clock();
 
-	memfile* unpacked = getEmptyMem(L"main_onefile_unpacked");
-	CanonicalDecodeFile(packed, unpacked);
+	memfile* unpacked = canonicalDecode(packed);
 	//memfile* unpacked = multiUnpack2(packed);
 	//memfile* unpacked = seqUnpack(packed);
 	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
