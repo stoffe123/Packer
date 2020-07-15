@@ -421,7 +421,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 		else {
 			//to small for seqpack			
-			deepCopyMem(before_seqpack, mb.main);
+			freMem(mb.main);
+			mb.main = before_seqpack;
 		}
 	}
 	packCandidate_t bestCandidate = packCandidates[0];
