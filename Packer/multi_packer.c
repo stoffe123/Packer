@@ -146,10 +146,10 @@ void CanonicalDecodeAndReplace(memfile* src) {
 	unpackAndReplace(L"canonical", src);
 }
 
-int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t filesize) {
-	if (filesize < bestCandidate->size) {
+int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t size) {
+	if (size < bestCandidate->size) {
 		bestCandidate->filename = m;
-		bestCandidate->size = filesize;
+		bestCandidate->size = size;
 		bestCandidate->packType = packType;
 	}
 	
@@ -295,17 +295,11 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 
 	
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
-			memfile* head_pack = halfbyteRlePack(src, 0);
-			int pt = packTypeForHalfbyteRlePack(0);
-			getPackCandidate3AndFree(&bestCandidate, head_pack, pt, canonicalHeaderCase);
-			
-			memfile* head_pack1 = halfbyteRlePack(src, 1);
-			pt = packTypeForHalfbyteRlePack(1);
-			getPackCandidate3AndFree(&bestCandidate, head_pack1, pt, canonicalHeaderCase);
-						
-			memfile* head_pack2 = halfbyteRlePack(src, 2);
-			pt = packTypeForHalfbyteRlePack(2);
-			getPackCandidate3AndFree(&bestCandidate, head_pack2, pt, canonicalHeaderCase);
+			for (int i = 0; i < 3; i++) {
+				memfile* head_pack = halfbyteRlePack(src, i);
+				int pt = packTypeForHalfbyteRlePack(i);
+				getPackCandidate3AndFree(&bestCandidate, head_pack, pt, canonicalHeaderCase);
+			}
 		}
 
 		if (source_size > 20 && profile.rle_ratio > 0) {

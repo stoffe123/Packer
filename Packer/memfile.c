@@ -81,13 +81,6 @@ const wchar_t* getMemName(memfile* m) {
 	//return NULL;
 }
 
-void fre(memfile* mf) {
-	if (mf != NULL) {
-		//free(mf->block);		
-		//free(mf);
-	}
-}
-
 void freMem(memfile* mf) {
 	if (mf != NULL) {
 		free(mf->block);		

@@ -22,8 +22,6 @@ void fputcc(int c, memfile* mf);
 
 void memfileToFile(memfile* m, const wchar_t* dst);
 
-void fre(memfile* mf);
-
 void freMem(memfile* mf);
 
 void rewindMem(memfile* m);
