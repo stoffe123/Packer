@@ -120,12 +120,12 @@ uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool store
 	return packType;
 }
 
-bool TwoBytePackAndTest(memfile* src, packProfile profile) {
-	return packAndTest(L"twobyte", src, profile, profile, profile, profile);
-}
-
-bool RlePackAndTest(memfile* src, packProfile profile) {
-	return packAndTest(L"rle simple", src, profile, profile, profile, profile);
+int packAndTest2(wchar_t* kind, memfile* src, packProfile profile, int pt, int bit) {
+	bool succ = packAndTest(kind, src, profile, profile, profile, profile);
+	if (succ) {
+		pt = setKthBit(pt, bit);
+	}
+	return pt;
 }
 
 void unpackAndReplace(const wchar_t* kind, memfile* src) {	
@@ -268,7 +268,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	unsigned char pack_type = 0;
 
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
-	memfile* before_seqpack = getMemfile(source_size, "multipacker.before_seqpack");
+	memfile* before_seqpack = getMemfile(source_size, L"multipacker.before_seqpack");
 	deepCopyMem(src, before_seqpack);
 	packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, 0);
 	uint8_t slimPackType = 0;
@@ -303,17 +303,11 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			memfile* just_canonical = CanonicalEncodeMem(src);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		}
-		bool got_smaller = RlePackAndTest(before_seqpack, profile);
-		if (got_smaller) {
-			pack_type = setKthBit(pack_type, RLE_BIT);
-		}
-
+		pack_type = packAndTest2(L"rle simple", before_seqpack, profile, pack_type, RLE_BIT);
+		
 		assert(getMemSize(before_seqpack) > 0, "before_seqpack size was 0 in multi_packer.c");
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
-			bool got_smaller = TwoBytePackAndTest(before_seqpack, profile);
-			if (got_smaller) {
-				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
-			}
+			pack_type = packAndTest2(L"twobyte", before_seqpack, profile, pack_type, TWOBYTE_BIT);			
 		}
 		packCandidates[candidatesIndex++] = getPackCandidate3(before_seqpack, pack_type, canonicalHeaderCase);
 		uint64_t before_seqpack_size = getMemSize(before_seqpack);
@@ -341,31 +335,26 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			uint64_t offsets_size = getMemSize(mb.offsets);
 			uint64_t distances_size = getMemSize(mb.distances);
 
+			// ---------- Pack the meta files (seqlens/offsets) recursively
 			if (seqlens_size > profile.recursive_limit) {
-
-				// ---------- Pack the meta files (seqlens/offsets) recursively
-				bool got_smaller = MultiPackAndTest(mb.seqlens, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
-				if (got_smaller) {
-					pack_type = setKthBit(pack_type, 1);
-					seqlens_size = getMemSize(mb.seqlens);
-				}
+			
+				pack_type = MultiPackAndTest(mb.seqlens, seqlensProfile, seqlensProfile, 
+					offsetsProfile, distancesProfile, pack_type, 1);
+				
 			}
 			if (offsets_size > profile.recursive_limit) {
 
-				bool got_smaller = MultiPackAndTest(mb.offsets, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
-				if (got_smaller) {
-					pack_type = setKthBit(pack_type, 2);
-					offsets_size = getMemSize(mb.offsets);
-				}
+				pack_type = MultiPackAndTest(mb.offsets, offsetsProfile, seqlensProfile, 
+					offsetsProfile, distancesProfile, pack_type, 2);				
 			}
 			if (distances_size > profile.recursive_limit) {
 
-				bool got_smaller = MultiPackAndTest(mb.distances, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
-				if (got_smaller) {
-					pack_type = setKthBit(pack_type, 3);
-					distances_size = getMemSize(mb.distances);
-				}
+				pack_type = MultiPackAndTest(mb.distances, distancesProfile, seqlensProfile, 
+					offsetsProfile, distancesProfile, pack_type, 3);				
 			}
+			seqlens_size = getMemSize(mb.seqlens);
+			offsets_size = getMemSize(mb.offsets);
+			distances_size = getMemSize(mb.distances);
 			/*
 
 			char tmp7[100] = { 0 };

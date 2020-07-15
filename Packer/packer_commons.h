@@ -59,9 +59,6 @@ bool testPack(memfile* src, memfile* tmp, const wchar_t* packerName, int limit);
 
 void copyProfile(packProfile* source, packProfile* dest);
 
-bool MultiPackAndTest(memfile* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
-
 value_freq_t find_best_code(unsigned long* char_freq);
 
 packProfile getPackProfile();

@@ -105,9 +105,14 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	return under_limit;
 }
 
-bool MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile, 
-	packProfile distancesProfile) {
-	return packAndTest(L"multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
+int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile, 
+	packProfile offsetProfile, 
+	packProfile distancesProfile, int packType, int bit) {
+	bool succ = packAndTest(L"multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
+	if (succ) {
+		return setKthBit(packType, bit);
+	}
+	return packType;
 }
 
 void printProfile(packProfile* profile) {
