@@ -167,7 +167,14 @@ void getPackCandidate3(packCandidate_t* bestCandidate, memfile* m, int packType,
 }
 
 void getPackCandidate(packCandidate_t* bestCandidate, memfile* m, int packType) {
-	return getPackCandidate2(bestCandidate, m, packType, getMemSize(m));
+	getPackCandidate2(bestCandidate, m, packType, getMemSize(m));
+}
+
+void getPackCandidateAndFree(packCandidate_t* bestCandidate, memfile* m, int packType) {
+	getPackCandidate2(bestCandidate, m, packType, getMemSize(m));
+	if (bestCandidate->filename != m) {
+		freMem(m);
+	}
 }
 
 static packProfile prof = { .rle_ratio = 0,
@@ -295,12 +302,12 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 
 		if (source_size > 20 && profile.rle_ratio > 0) {
 			memfile* just_two_byte = twoBytePack(src, twobyte100Profile);
-			getPackCandidate(&bestCandidate, just_two_byte, 0b1000000);
+			getPackCandidateAndFree(&bestCandidate, just_two_byte, 0b1000000);
 		}
 
 		if (source_size > profile.sizeMinForCanonical && profile.rle_ratio > 0) {
 			memfile* just_canonical = CanonicalEncodeMem(src);
-			getPackCandidate(&bestCandidate, just_canonical, 1);
+			getPackCandidateAndFree(&bestCandidate, just_canonical, 1);
 		}
 		pack_type = packAndTest2(L"rle simple", before_seqpack, profile, pack_type, RLE_BIT);
 		
