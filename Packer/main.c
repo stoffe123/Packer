@@ -140,6 +140,9 @@ bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t before_
 
 void testmeta() {
 
+	/// <summary>
+	/// TODO refactor to wchar!!!
+	/// </summary>
 	
 	packProfile bestProfile, bestOffsetProfile, bestDistanceProfile;
 
@@ -203,8 +206,7 @@ void testmeta() {
 		offsetProfile.offset_pages = 0;
 		offsetProfile.seqlen_pages = 0;
 		*/
-
-		//const char** test_filenames = get_test_filenames();
+		
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
 
@@ -219,19 +221,19 @@ void testmeta() {
 		printf("\n-------------------------------");
 		for (; kk < 38; kk++)
 		{
-			const char src[100] = { 0 };
+			const wchar_t src[100] = { 0 };
 
-			const char* metaDir = "D:/Dropbox/Personal/Programmering/Compression/test/meta/";
+			const wchar_t* metaDir = L"D:/Dropbox/Personal/Programmering/Compression/test/meta/";
 			concat(src, metaDir, "seqlens");
 			concat_int(src, src, kk + 101);			
-			const char* unpackedFilename = "C:/test/unp";
-			const char* packed_name = "c:/test/packed.bin";
-			long long size_org = get_file_size_from_name(src);
+			const wchar_t* unpackedFilename = L"C:/test/unp";
+			const wchar_t* packed_name = L"c:/test/packed.bin";
+			long long size_org = get_file_size_from_wname(src);
 			printf("\n Packing %s      length:%d", src, size_org);
 			int cl = clock();
-			multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
+			//multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
 				
-			long long size_packed = get_file_size_from_name(packed_name);
+			long long size_packed = get_file_size_from_wname(packed_name);
 			acc_size_packed += size_packed;
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
 				earlyBreak = true;
@@ -239,9 +241,9 @@ void testmeta() {
 			}
 			acc_size_org += size_org;
 			if (unpack) {
-				multi_unpack(packed_name, unpackedFilename);
+				//multi_unpack(packed_name, unpackedFilename);
 				printf("\n\n Comparing files!");
-				if (files_equal(src, unpackedFilename)) {
+				if (files_equalw(src, unpackedFilename)) {
 					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -252,13 +254,13 @@ void testmeta() {
 
 			concat(src, metaDir, "offsets");
 			concat_int(src, src, kk + 101);
-			size_org = get_file_size_from_name(src);
+			size_org = get_file_size_from_wname(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
-			multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
+			//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 			int pack_time = (clock() - cl);
 		
-			size_packed = get_file_size_from_name(packed_name);
+			size_packed = get_file_size_from_wname(packed_name);
 			acc_size_packed += size_packed;
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
 				earlyBreak = true;
@@ -266,9 +268,9 @@ void testmeta() {
 			}
 			acc_size_org += size_org;
 			if (unpack) {
-				multi_unpack(packed_name, unpackedFilename);
+				//multi_unpack(packed_name, unpackedFilename);
 				printf("\n\n Comparing files!");
-				if (files_equal(src, unpackedFilename)) {
+				if (files_equalw(src, unpackedFilename)) {
 					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -278,13 +280,13 @@ void testmeta() {
 
 			concat(src, metaDir, "distances");
 			concat_int(src, src, kk + 101);
-			size_org = get_file_size_from_name(src);
+			size_org = get_file_size_from_wname(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 
-			multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
+			//multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
 			pack_time = (clock() - cl);
 
-			size_packed = get_file_size_from_name(packed_name);
+			size_packed = get_file_size_from_wname(packed_name);
 			acc_size_packed += size_packed;
 			
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
@@ -293,7 +295,7 @@ void testmeta() {
 			}
 			acc_size_org += size_org;
 
-			if (unpack) multi_unpack(packed_name, unpackedFilename);
+			//if (unpack) multi_unpack(packed_name, unpackedFilename);
 
 			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
@@ -304,7 +306,7 @@ void testmeta() {
 
 			if (unpack) {
 				printf("\n\n Comparing files!");
-				if (files_equal(src, unpackedFilename)) {
+				if (files_equalw(src, unpackedFilename)) {
 					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -340,7 +342,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/short.txt";
+	const wchar_t* src = L"c:/test/canonical_unp";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -386,32 +388,33 @@ void onefile() {
 	distanceProfile.twobyte_threshold_divide = 2281;
 	distanceProfile.twobyte_threshold_min = 64;
 	distanceProfile.seqlenMinLimit3 = 20;
-
-	//seqPackSeparate(src, L"c:/test/", profile);
-	//seqPack(src, packed_name, profile);
-	two_byte_packw(src, packed_name, profile);
-	//uint8_t packType = multiPack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
-	//RLE_simple_packw(src, packed_name);
-	//block_pack(src, packed_name, profile);
-
+	uint64_t size_packed;
+	memfile* srcm = getMemfileFromFile(src);
+	
+	//seqPackBundle packed = seqPackSep(srcm, profile);
+	//size_packed = getBundleSize(packed);
+	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
+	//memfile* packed = halfbyteRlePack(srcm, 0);
+	memfile* packed = CanonicalEncodeMem(srcm);
+	size_packed = getMemSize(packed);
+	printf("\n size_packed %d", size_packed);
 	int pack_time = (clock() - cl);
 		
 	cl = clock();
 
-	//seqUnpackSeparate(L"c:/test/main", unpackedFilename, L"c:/test/");
-	two_byte_unpackw(packed_name, unpackedFilename);
-	//multiUnpack(packed_name, unpackedFilename, packType);
-	//RLE_simple_unpackw(packed_name, unpackedFilename);
-	//block_unpack(packed_name, unpackedFilename);
-	//seqUnpack(packed_name, unpackedFilename);
+	memfile* unpacked = CanonicalDecodeMem(packed);
+	//memfile* unpacked = multiUnpack2(packed);
+	//memfile* unpacked = seqUnpack(packed);
+	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
+	
 
 	int unpack_time = (clock() - cl);
 	//printf("\n Unpacking finished time it took: %d", unpack_time);
 	printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
-	uint64_t size_packed = get_file_size_from_wname(packed_name);
+	
 	wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
-
+	memfileToFile(unpacked, unpackedFilename);
 	printf("\n\n Comparing files!");
 
 	if (files_equalw(src, unpackedFilename)) {
@@ -426,24 +429,29 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = { L"voc.wav",
+	wchar_t test_filenames[16][100] = {
+		
+			L"rel.pdf",
 		L"book.txt",
+		L"repeatchar.txt",
+		L"oneseq.txt",
+		L"empty.txt",
+		L"onechar.txt",
 		
+		L"book_med.txt",
 		
-		L"rel.pdf",
+		L"did.csh",
+		L"voc.wav",
+	
 		L"tob.pdf",
- 		L"did.csh",	
 		L"pazera.exe",
 		L"amb.dll",
         L"bad.cdg",
 		L"bad.mp3",
 		L"nex.doc",		
-		L"aft.htm",
-		L"book_med.txt",
-		L"oneseq.txt",
-		L"empty.txt",
-		L"onechar.txt",
-		L"repeatchar.txt",		
+		L"aft.htm"
+		
+			
 	};
 	
 	packProfile bestProfile, 
@@ -470,8 +478,7 @@ void test16() {
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
 	{
-
-		//const char** test_filenames = get_test_filenames();
+		
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
 
@@ -499,7 +506,7 @@ void test16() {
 			int pack_time = (clock() - cl);
 			//printf("\n Packing finished time it took: %d", pack_time);
 			uint64_t size_packed = get_file_size_from_wname(packed_name);
-
+			printf("\n packed size %d", size_packed);
 			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 			acc_size_packed += size_packed;

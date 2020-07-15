@@ -11,6 +11,7 @@
 #include "RLE_simple_packer.h"
 #include "canonical.h"
 #include "halfbyte_rle_packer.h"
+#include "seq_packer_commons.h"
 
 #define META_SIZE_MAX 1048575
 
@@ -25,156 +26,149 @@ static 	packProfile twobyte100Profile = {
 };
 
 typedef struct packCandidate_t {
-	const char* filename;
+	memfile* filename;
 	unsigned char packType;
 	uint64_t size;
 } packCandidate_t;
-
-
-typedef struct pack_info_t {
-	unsigned char pack_type;
-	const char* dir;
-} pack_info_t;
 
 bool isSeqPacked(int packType) {
 	return isKthBitSet(packType, 7);
 }
 
-void copyMeta(FILE* in, pack_info_t pi, const char* name, long size) {
-	const char metaName[100] = { 0 };
-	concat(metaName, pi.dir, name);
-	copy_chunk(in, metaName, size);
+void copy_the_rest_mem(memfile* in, memfile* dest) {
+
+	int ch;
+	while ((ch = fgetcc(in)) != EOF) {
+		fputcc(ch, dest);
+	}
 }
 
-void untar(FILE* in, pack_info_t pi) {
+void copy_chunk_mem(memfile* source_file, memfile* dest_filename, uint64_t size_to_copy) {	
 
-	if (isKthBitSet(pi.pack_type, 7)) {
+	for (int i = 0; i < size_to_copy; i++) {
+		int ch = fgetcc(source_file);
+		if (ch == EOF) {
+			break;
+		}
+		fputcc(ch, dest_filename);
+	}	
+}
 
+
+seqPackBundle untar(memfile* in, uint8_t packType) {
+
+	seqPackBundle res;
+	res.seqlens = NULL;
+	res.offsets = NULL;
+	res.distances = NULL;
+	if (isKthBitSet(packType, 7)) {
+		
 		uint32_t seqlens_size = 0;
 		uint32_t offsets_size = 0;
 		uint32_t distances_size = 0;
 
-		fread(&seqlens_size, 3, 1, in);
-		fread(&offsets_size, 3, 1, in);
-		fread(&distances_size, 3, 1, in);
+		memRead(&seqlens_size, 3, in);
+		memRead(&offsets_size, 3, in);
+		memRead(&distances_size, 3, in);
 
-		copyMeta(in, pi, "seqlens", seqlens_size);
-		copyMeta(in, pi, "offsets", offsets_size);
-		copyMeta(in, pi, "distances", distances_size);
+		res.seqlens = getMemfile(seqlens_size, L"multipack_untar_seqlens");
+		res.offsets = getMemfile(offsets_size, L"multipack_untar_offsets");
+		res.distances = getMemfile(distances_size, L"multipack_untar_distances");
+
+		copy_chunk_mem(in, res.seqlens, seqlens_size);
+		copy_chunk_mem(in, res.offsets, offsets_size);
+		copy_chunk_mem(in, res.distances, distances_size);
 	}
-	const char main_name[100] = { 0 };
-	concat(main_name, pi.dir, "main");
-	copy_the_rest(in, main_name);
-	fclose(in);
+	res.main = getMemfile((uint64_t)1 + getMemSize(in) - getMemPos(in), L"multipack_untar_main");
+	copy_the_rest_mem(in, res.main);
+	return res;
 }
 
-uint8_t tar(const char* dst, const char* base_dir, uint8_t packType, bool storePackType) {
 
-	const char seqlens_name[100] = { 0 };
-	const char offsets_name[100] = { 0 };
-	const char distances_name[100] = { 0 };
-	concat(seqlens_name, base_dir, "seqlens");
-	concat(offsets_name, base_dir, "offsets");
-	concat(distances_name, base_dir, "distances");
+void append_to_mem(memfile* main_file, memfile* append_file) {	
+	rewindMem(append_file);
+	int ch;
+	while ((ch = fgetcc(append_file)) != EOF) {
+		fputcc(ch, main_file);
+	}
+}
+
+uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool storePackType) {
+	
+	rewindMem(outFile);
 	uint32_t size_seqlens = 0;
 	uint32_t size_offsets = 0;
 	uint32_t size_distances = 0;
-	FILE* outFile = fopen(dst, "wb");
 
-	if (isKthBitSet(packType, 7)) {
-		size_seqlens = get_file_size_from_name(seqlens_name);
-		size_offsets = get_file_size_from_name(offsets_name);
-		size_distances = get_file_size_from_name(distances_name);
-	}
 	if (storePackType) {
-		fwrite(&packType, 1, 1, outFile);
+		fputcc(packType, outFile);
 	}
-
 	if (isKthBitSet(packType, 7)) {
+		size_seqlens = getMemSize(mf_arr.seqlens);
+		size_offsets = getMemSize(mf_arr.offsets);
+		size_distances = getMemSize(mf_arr.distances);
 
-		fwrite(&size_seqlens, 3, 1, outFile);
-		fwrite(&size_offsets, 3, 1, outFile);
-		fwrite(&size_distances, 3, 1, outFile);
+		memWrite(&size_seqlens, 3, outFile);
+		memWrite(&size_offsets, 3, outFile);
+		memWrite(&size_distances, 3, outFile);
 
-		append_to_file(outFile, seqlens_name);
-		append_to_file(outFile, offsets_name);
-		append_to_file(outFile, distances_name);
+		append_to_mem(outFile, mf_arr.seqlens);
+		append_to_mem(outFile, mf_arr.offsets);
+		append_to_mem(outFile, mf_arr.distances);
 	}
-	const char main_name[100] = { 0 };
-	concat(main_name, base_dir, "main");
-	append_to_file(outFile, main_name);
-
-	fclose(outFile);
+	append_to_mem(outFile, mf_arr.main);
 	return packType;
 }
 
 
-bool RLE_pack_and_test(const char* src, const char* dst, int ratio) {
-	RLE_simple_pack(src, dst);
-	bool compression_success = testPack(src, dst, "RLE simple", ratio);
+bool RLE_pack_and_test(memfile* src, memfile* dst, int ratio) {
+	wprintf(L"\n RLE_pack_and_test of %s src.size=%d dst.size=%d", getMemName(src), getMemSize(src), getMemSize(dst));
+	memfile* res = RleSimplePack(src);
+	deepCopyMem(res, dst);
+	bool compression_success = testPack(src, dst, L"RLE simple", ratio);
 	if (!compression_success) {
-		remove(dst);
-		copy_file(src, dst);//src has to remain!
+		fre(dst);
+		deepCopyMem(src, dst);//src has to remain!
 	}
+	printf("\n >> RLE_pack_and_test fin src.size=%d dst.size=%d", getMemSize(src), getMemSize(dst));
 	return compression_success;
 }
 
 
-bool TwoBytePackAndTest(const char* src, packProfile profile) {
-	return packAndTest("twobyte", src, profile, profile, profile, profile);
+bool TwoBytePackAndTest(memfile* src, packProfile profile) {
+	return packAndTest(L"twobyte", src, profile, profile, profile, profile);
 }
 
-bool RLEAdvancedPackAndTest(const char* src, packProfile profile) {
-	return packAndTest("rle advanced", src, profile, profile, profile, profile);
+void unpackAndReplace(const wchar_t* kind, memfile* src) {	
+	memfile* tmp = unpackByKind(kind, src);
+	deepCopyMem(tmp, src);	
 }
 
-void unpackAndReplace(const char* kind, const char* src) {
-	const char tmp[100] = { 0 };
-	const char tmp2[100] = { 0 };
-	concat(tmp2, "multiunp_", kind);
-	getTempFile(tmp, tmp2);
-	unpackByKind(kind, src, tmp);
-	my_rename(tmp, src);
+void TwoByteUnpackAndReplace(memfile* src) {
+	unpackAndReplace(L"twobyte", src);
 }
 
-void RLEAdvancedUnpackAndReplace(const char* src) {
-	unpackAndReplace("rle advanced", src);
+void MultiUnpackAndReplace(memfile* src) {
+	unpackAndReplace(L"multi", src);
 }
 
-void TwoByteUnpackAndReplace(const char* src) {
-	unpackAndReplace("twobyte", src);
+void CanonicalDecodeAndReplace(memfile* src) {
+	unpackAndReplace(L"canonical", src);
 }
 
-void MultiUnpackAndReplace(const char* src) {
-	unpackAndReplace("multi", src);
-}
-
-void MultiUnpackAndReplacew(const wchar_t* srcw) {
-
-	//todo refactor this when introducing wchar all over
-	const char src[500] = { 0 };
-	to_narrow(srcw, src);
-
-	MultiUnpackAndReplace(src);
-}
-
-void CanonicalDecodeAndReplace(const char* src) {
-	unpackAndReplace("canonical", src);
-}
-
-
-packCandidate_t getPackCandidate2(const char* filename, unsigned char packType, uint64_t filesize) {
+packCandidate_t getPackCandidate2(memfile* filename, uint8_t packType, uint64_t filesize) {
 	packCandidate_t cand;
 	cand.filename = filename;
+	wprintf(L"\n adding pack candidate %s", getMemName(filename));
 	cand.packType = packType;
 	if (filesize == 0) {
-		filesize = get_file_size_from_name(filename);
+		filesize = getMemSize(filename);
 	}
 	cand.size = filesize;
 	return cand;
 }
 
-packCandidate_t getPackCandidate3(const char* filename, unsigned char packType, bool canonicalHeaderCase) {
+packCandidate_t getPackCandidate3(memfile* filename, uint8_t packType, bool canonicalHeaderCase) {
 	packCandidate_t res = getPackCandidate2(filename, packType, 0);
 	if (canonicalHeaderCase) {
 		if (packType == packTypeForHalfbyteRlePack(0) || packType == packTypeRlePlusTwobyte()) {
@@ -185,7 +179,7 @@ packCandidate_t getPackCandidate3(const char* filename, unsigned char packType, 
 	return res;
 }
 
-packCandidate_t getPackCandidate(const char* filename, unsigned char packType) {
+packCandidate_t getPackCandidate(memfile* filename, unsigned char packType) {
 	return getPackCandidate2(filename, packType, 0);
 }
 
@@ -269,90 +263,67 @@ int packTypeRlePlusTwobyte() {
 									   kind 2 =>  bit 1 = 1   bit 2 = 0
  */
 
-uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
+uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile, bool storePackType) {
 	static int metacount = 101;
+	rewindMem(src);
+	rewindMem(dst);
 
 	packCandidate_t packCandidates[100];
 	int candidatesIndex = 0;
 
-	printf("\n* Multi pack * %s => %s", src, dst);
 	//printProfile(&profile);
-	unsigned long long source_size = get_file_size_from_name(src);
+	uint64_t source_size = getMemSize(src);
+	printf("\n --------- Multi pack started of file sized %d -------------", source_size);
 	unsigned char pack_type = 0;
 
-	char base_dir[100] = { 0 };
-	get_clock_dir(base_dir);
-	const char main_name[100] = { 0 };
-	concat(main_name, base_dir, "main");
-
-	const char seqlens_name[100] = { 0 };
-	const char offsets_name[100] = { 0 };
-	const char distances_name[100] = { 0 };
-	concat(seqlens_name, base_dir, "seqlens");
-	concat(offsets_name, base_dir, "offsets");
-	concat(distances_name, base_dir, "distances");
-
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
-
 	packCandidates[candidatesIndex++] = getPackCandidate(src, 0);
 	uint8_t slimPackType = 0;
-	char slim_multipacked[100] = { 0 };
-
+	seqPackBundle mb;
+	mb.main = getEmptyMem(L"mf_a_main");
+	mb.seqlens = NULL;
+	mb.distances = NULL;
+	mb.offsets = NULL;
 	if (source_size >= 9) {
 
-		char before_seqpack[100] = { 0 };
-		getTempFile(before_seqpack, "multi_rlepacked");
-
-		//slimseq is turned off now.. no improvement on test suit 16 .. just 60s extra
-		if (profile.rle_ratio > 0 && source_size > 10 && source_size < 10) {
-			getTempFile(slim_multipacked, "multi_multipacked");
-			slimPackType = multiPackInternal(src, slim_multipacked, prof, prof, prof, prof, storePackType);
-			packCandidates[candidatesIndex++] = getPackCandidate(slim_multipacked, 0);
-		}
 	
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
-			char head_pack[100] = { 0 };
-			getTempFile(head_pack, "multi_halfbyterle_zero");
-			halfbyte_rle_pack(src, head_pack, 0);
+			memfile* head_pack = halfbyteRlePack(src, 0);
 			int pt = packTypeForHalfbyteRlePack(0);
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack, pt, canonicalHeaderCase);
-
-			char head_pack1[100] = { 0 };
-			getTempFile(head_pack1, "multi_halfbyterle_one");
-			halfbyte_rle_pack(src, head_pack1, 1);
+			
+			memfile* head_pack1 = halfbyteRlePack(src, 1);
 			pt = packTypeForHalfbyteRlePack(1);
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack1, pt, canonicalHeaderCase);
-
-			
-			char head_pack2[100] = { 0 };
-			getTempFile(head_pack2, "multi_halfbyterle_two");
-			halfbyte_rle_pack(src, head_pack2, 2);
+						
+			memfile* head_pack2 = halfbyteRlePack(src, 2);
 			pt = packTypeForHalfbyteRlePack(2);
-			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack2, pt, canonicalHeaderCase);
-			
+			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack2, pt, canonicalHeaderCase);			
 		}
 
-		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
-		if (got_smaller) {
-			pack_type = setKthBit(pack_type, RLE_BIT);  // bit 5
-		}
+		
 
 		if (source_size > 20 && profile.rle_ratio > 0) {
-			char just_two_byte[100] = { 0 };
-			getTempFile(just_two_byte, "multi_just_two_byte");
-			two_byte_pack(src, just_two_byte, twobyte100Profile);
+			memfile* just_two_byte = twoBytePack(src, twobyte100Profile);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
 		}
 
 		if (source_size > profile.sizeMinForCanonical && profile.rle_ratio > 0) {
-			char just_canonical[100] = { 0 };
-			getTempFile(just_canonical, "multi_just_canonical");
-			CanonicalEncode(src, just_canonical);
+			memfile* just_canonical = CanonicalEncodeMem(src);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		}
 
+		memfile* before_seqpack = getMemfile(source_size, L"multipack_beforeseqpack");
+		bool got_smaller = RLE_pack_and_test(src, before_seqpack, profile.rle_ratio);
+		if (got_smaller) {
+			pack_type = setKthBit(pack_type, RLE_BIT);  // bit 5
+		}
+		if (getMemSize(before_seqpack) == 0) {
+			printf("\n size of before seqpack in multipacker was 0"); exit(1);
+		}
 
+		assert(getMemSize(before_seqpack) > 0, "before_seqpack size was 0 in multi_packer.c");
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
 			got_smaller = TwoBytePackAndTest(before_seqpack, profile);
 			if (got_smaller) {
@@ -360,89 +331,87 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 			}
 		}
 		packCandidates[candidatesIndex++] = getPackCandidate3(before_seqpack, pack_type, canonicalHeaderCase);
-		uint64_t before_seqpack_size = get_file_size_from_name(before_seqpack);
+		uint64_t before_seqpack_size = getMemSize(before_seqpack);
 
 		if (source_size > profile.sizeMinForCanonical) {
-			char canonical_instead_of_seqpack[100] = { 0 };
-			getTempFile(canonical_instead_of_seqpack, "multi_canonical_instead_of_seqpack");
-			CanonicalEncode(before_seqpack, canonical_instead_of_seqpack);
+			memfile* canonical_instead_of_seqpack = 	
+				CanonicalEncodeMem(before_seqpack);
 			packCandidates[candidatesIndex++] = getPackCandidate(canonical_instead_of_seqpack, setKthBit(pack_type, 0));
 		}
-
-
+	
 		uint64_t size_after_seq = UINT64_MAX;
 		if (source_size > profile.sizeMinForSeqPack) {
-			seq_pack_separate(before_seqpack, base_dir, profile);
-
-			if (DOUBLE_CHECK_PACK) {
-				printf("\n double checking the seqpack of: %s", before_seqpack);
-				const char tmp2[100] = { 0 };
-				getTempFile(tmp2, "multi_maksureseqpack");
-				seq_unpack_separate(main_name, tmp2, base_dir);
-				doDoubleCheck(tmp2, before_seqpack, "seq");
+			printf("\n now trying seqPack of file w size %d", getMemSize(before_seqpack));
+			 free(mb.main);
+			 mb = seqPackSep(before_seqpack, profile);
+			
+			if (DOUBLE_CHECK_PACK) {				
+				wprintf(L"\n ?Double checking the seqpack of: %s", getMemName(before_seqpack));								
+				memfile* tmp = seqUnpack(mb);
+				doDoubleCheck(tmp, before_seqpack, L"seq");				
 			}
 
 			//try to pack meta files!
+			uint64_t seqlens_size = getMemSize(mb.seqlens);
+			uint64_t offsets_size = getMemSize(mb.offsets);
+			uint64_t distances_size = getMemSize(mb.distances);
 
-			if (get_file_size_from_name(seqlens_name) > profile.recursive_limit) {
+			if (seqlens_size > profile.recursive_limit) {
 
 				// ---------- Pack the meta files (seqlens/offsets) recursively
-				got_smaller = MultiPackAndTest(seqlens_name, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				got_smaller = MultiPackAndTest(mb.seqlens, seqlensProfile, seqlensProfile, offsetsProfile, distancesProfile);
 				if (got_smaller) {
 					pack_type = setKthBit(pack_type, 1);
+					seqlens_size = getMemSize(mb.seqlens);
 				}
 			}
-			if (get_file_size_from_name(offsets_name) > profile.recursive_limit) {
+			if (offsets_size > profile.recursive_limit) {
 
-				got_smaller = MultiPackAndTest(offsets_name, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				got_smaller = MultiPackAndTest(mb.offsets, offsetsProfile, seqlensProfile, offsetsProfile, distancesProfile);
 				if (got_smaller) {
 					pack_type = setKthBit(pack_type, 2);
+					offsets_size = getMemSize(mb.offsets);
 				}
 			}
-			if (get_file_size_from_name(distances_name) > profile.recursive_limit) {
+			if (distances_size > profile.recursive_limit) {
 
-				got_smaller = MultiPackAndTest(distances_name, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
+				got_smaller = MultiPackAndTest(mb.distances, distancesProfile, seqlensProfile, offsetsProfile, distancesProfile);
 				if (got_smaller) {
 					pack_type = setKthBit(pack_type, 3);
+					distances_size = getMemSize(mb.distances);
 				}
 			}
 			/*
 
 			char tmp7[100] = { 0 };
 			concat_int(tmp7, "c:/test/meta/offsets", metacount);
-			copy_file(offsets_name, tmp7);
+			cp(offsets_name, tmp7);
 			concat_int(tmp7, "c:/test/meta/seqlens", metacount);
-			copy_file(seqlens_name, tmp7);
+			cp(seqlens_name, tmp7);
 			concat_int(tmp7, "c:/test/meta/distances", metacount);
-			copy_file(distances_name, tmp7);
+			cp(distances_name, tmp7);
 			metacount++;
 			*/
 
-
-			uint64_t offsets_size = get_file_size_from_name(offsets_name);
-			uint64_t seqlens_size = get_file_size_from_name(seqlens_name);
-			uint64_t distances_size = get_file_size_from_name(distances_name);
 			uint64_t meta_size = offsets_size +
 				seqlens_size + distances_size + 9;
-			uint64_t size_after_seq = meta_size + get_file_size_from_name(main_name);
+			uint64_t size_after_seq = getMemSize(mb.main) + meta_size;
 
 			if (size_after_seq < before_seqpack_size) {
 				//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 				pack_type = setKthBit(pack_type, 7);
-				remove(before_seqpack);
-				if (get_file_size_from_name(main_name) > profile.sizeMinForCanonical) {
-					char canonicalled[100];
-					getTempFile(canonicalled, "multi_canonicalled");
-					uint64_t size_before_canonical = get_file_size_from_name(main_name);
-					CanonicalEncode(main_name, canonicalled);
-					uint64_t size_after_canonical = get_file_size_from_name(canonicalled);
+				fre(before_seqpack);
+				if (getMemSize(mb.main) > profile.sizeMinForCanonical) {
+					uint64_t size_before_canonical = getMemSize(mb.main);
+					memfile* canonicalled = CanonicalEncodeMem(mb.main);
+					uint64_t size_after_canonical = getMemSize(canonicalled);
 					if (size_after_canonical < size_before_canonical) {
 						pack_type = setKthBit(pack_type, 0);
-						my_rename(canonicalled, main_name);
+						deepCopyMem(canonicalled, mb.main);
 					}
-					remove(canonicalled);
+					fre(canonicalled);
 				}
-				packCandidates[candidatesIndex++] = getPackCandidate2(main_name, pack_type, get_file_size_from_name(main_name) + meta_size);
+				packCandidates[candidatesIndex++] = getPackCandidate2(mb.main, pack_type, getMemSize(mb.main) + meta_size);
 			}
 			else {
 				//seqpack not used so clear metafile pack bits
@@ -452,8 +421,8 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 
 		}
 		else {
-			//to small for seqpack
-			copy_file(before_seqpack, main_name);
+			//to small for seqpack			
+			deepCopyMem(before_seqpack, mb.main);
 		}
 	}
 	packCandidate_t bestCandidate = packCandidates[0];
@@ -463,162 +432,153 @@ uint8_t multiPackInternal(const char* src, const char* dst, packProfile profile,
 		}
 	}
 
-	printf("\nWinner is %s  packed %d > %d", bestCandidate.filename, source_size, bestCandidate.size);
-	pack_type = bestCandidate.packType;
-	
-	if (equals(bestCandidate.filename, slim_multipacked)) {
-		printf("\n Using only slimseq");
-		my_rename(slim_multipacked, dst);
-		return slimPackType;
-	}
-	else
-
-	if (equals(bestCandidate.filename, src)) {
-		copy_file(src, main_name);
-	}
-	else {
-		my_rename(bestCandidate.filename, main_name);
+	wprintf(L"\nWinner is %s packtype %d  packed %d > %d", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
+	pack_type = bestCandidate.packType;	
+	if (bestCandidate.filename != mb.main) {
+		deepCopyMem(bestCandidate.filename, mb.main);
 	}
 	printf("\nTar writing %s packtype %d", dst, pack_type);
-	pack_type = tar(dst, base_dir, pack_type, storePackType);
+	pack_type = tar(dst, mb, pack_type, storePackType);
 
 	for (int i = 0; i < candidatesIndex; i++) {
-		const char* s = packCandidates[i].filename;
-		if (!equals(s, src)) {
-			remove(s);
+		memfile* s = packCandidates[i].filename;
+		if (s != src) {
+			fre(s);
 		}
 	}
-	remove(seqlens_name);
-	remove(offsets_name);
-	remove(distances_name);
-	remove(main_name);
+	
+	fre(mb.main);
+	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
 }
 
+
+
 // ------------------------------------------------------------------
 
-void multiUnpackInternal(const char* src, const char* dst, uint8_t pack_type, bool readPackTypeFromFile) {
-	pack_info_t pi;
-	FILE* in = fopen(src, "rb");
-	if (in == NULL) {
-		printf("\n Couldn't open file %s ", src);
-		exit(1);
-	}
+memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile) {
+	rewindMem(in);
+	memfile* dst = getMemfile(getMemSize(in), L"multiunpack_dst");
+	
 	if (readPackTypeFromFile) {
-		fread(&pack_type, 1, 1, in);
+		pack_type = fgetcc(in);
 	}
-	printf("\n Multiunpack %s => %s  packtype %d", src, dst, pack_type);
-	pi.pack_type = pack_type;
 	if (pack_type == 0) {
 		printf("\n  UNSTORE!!  ");
-		copy_the_rest(in, dst);
-		fclose(in);
-		return;
+		copy_the_rest_mem(in, dst);
+		return dst;
 	}
-	char base_dir[100] = { 0 };
-	get_clock_dir(base_dir);
-	pi.dir = base_dir;
-	untar(in, pi);
-
-	const char main_name[100] = { 0 };
-	const char seqlens_name[100] = { 0 };
-	const char offsets_name[100] = { 0 };
-	const char distances_name[100] = { 0 };
-	concat(main_name, base_dir, "main");
-	concat(seqlens_name, base_dir, "seqlens");
-	concat(offsets_name, base_dir, "offsets");
-	concat(distances_name, base_dir, "distances");
-
+	wprintf(L"\n Multi unpack of %s with packtype %d", getMemName(in), pack_type);
+	seqPackBundle mb = untar(in, pack_type);
+	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
-		CanonicalDecodeAndReplace(main_name);
+		CanonicalDecodeAndReplace(mb.main);
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
 		if (isKthBitSet(pack_type, 1)) {
-			MultiUnpackAndReplace(seqlens_name);
+			MultiUnpackAndReplace(mb.seqlens);
 		}
 		if (isKthBitSet(pack_type, 2)) {
-			MultiUnpackAndReplace(offsets_name);
+			MultiUnpackAndReplace(mb.offsets);
 		}
 		if (isKthBitSet(pack_type, 3)) {
-			MultiUnpackAndReplace(distances_name);
+			MultiUnpackAndReplace(mb.distances);
 		}
 	}
-	const char seq_dst[100] = { 0 };
-	getTempFile(seq_dst, "multi_seqsepunp");
-	if (seqPacked) {
-		printf("\n SEQ unpack separate of %smain", base_dir);
-		seq_unpack_separate(main_name, seq_dst, base_dir);
+	memfile* seq_dst = getEmptyMem(L"multipack.seq_dst");	
+	if (seqPacked) {		
+		memfile* tmp = seqUnpack(mb);		
+		deepCopyMem(tmp, seq_dst);
 	}
 	else {
-		my_rename(main_name, seq_dst);
+		deepCopyMem(mb.main, seq_dst);
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
 		TwoByteUnpackAndReplace(seq_dst);
 	}
 	if (isCanonicalHeaderPacked(pack_type)) {
-		halfbyte_rle_unpack(seq_dst, dst, getKindFromPackType(pack_type));
+		memfile* tmp = halfbyteRleUnpack(seq_dst, getKindFromPackType(pack_type));
+		deepCopyMem(tmp, dst);
 	}
 	else {
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5
-			RLE_simple_unpack(seq_dst, dst);
+			memfile* tmp = RleSimpleUnpack(seq_dst);
+			deepCopyMem(tmp, dst);
 		}
 		else {
-			my_rename(seq_dst, dst);
+			deepCopyMem(seq_dst, dst);
 		}
 	}
-	remove(seq_dst);
-
-	remove(seqlens_name);
-	remove(offsets_name);
-	remove(distances_name);
-	remove(main_name);
+	fre(seq_dst);	
+	freBundle(mb);
+	return dst;
 }
 
+uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
 
-uint8_t multiPack(const char* src, const char* dst, packProfile profile,
+	memfile* srcm = getMemfileFromFile(src);
+	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
+
+	uint8_t pt = multiPackInternal(srcm, dstm, profile, seqlensProfile, offsetsProfile, 
+		distancesProfile, false);
+
+	fre(srcm);
+	memfileToFile(dstm, dst);
+	fre(dstm);
+	return pt;
+}
+
+uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
 	return multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, false);
+
 }
 
-void multi_pack(const char* src, const char* dst, packProfile profile,
+memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+	memfile* dst = getEmptyMem(L"multipacker.multipackstorepacktype");
 	multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, true);
+	return dst;
 }
 
-void multiUnpack(const char* src, const char* dst, uint8_t pack_type) {
-	multiUnpackInternal(src, dst, pack_type, false);
+memfile* multiUnpack(memfile* m, uint8_t pack_type) {
+	return multiUnpackInternal(m, pack_type, false);
 }
 
-void multi_unpack(const char* src, const char* dst) {
-	multiUnpackInternal(src, dst, 0, true);
-}
-
-// this should be refactored when all code uses widechar
 void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw) {
-	const char src[500] = { 0 };
-	const char dst[500] = { 0 };
-
-	to_narrow(srcw, src);
-	to_narrow(dstw, dst);
-	multi_unpack(src, dst);
+	memfile* srcm = getMemfileFromFile(srcw);	
+	memfile* dstm = multiUnpackInternal(srcm, 0, true);
+	memfileToFile(dstm, dstw);
+	fre(srcm);
+	fre(dstm);
 }
 
-// this should be refactored when all code uses widechar
 void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile) {
 
-	const char src[500] = { 0 };
-	const char dst[500] = { 0 };
-
-	to_narrow(srcw, src);
-	to_narrow(dstw, dst);
-	multi_pack(src, dst, profile, seqlenProfile, offsetProfile, distancesProfile);
+	memfile* srcm = getMemfileFromFile(srcw);
+	memfile* dstm = getEmptyMem(L"multi_packw_dstm");
+	
+	multiPackInternal(srcm, dstm, profile, seqlenProfile, offsetProfile, distancesProfile, true);
+	memfileToFile(dstm, dstw);
+	fre(srcm);
+	fre(dstm);
 }
 
-void multiUnpackAndReplace(const char* src, uint8_t pack_type) {
-	const char dst[500] = { 0 };
-	getTempFile(dst, "multipacker_unpackandreplace");
-	multiUnpack(src, dst, pack_type);	
-	my_rename(dst, src);
+void multiUnpackAndReplace(memfile* src, uint8_t packType) {
+	memfile* dst = multiUnpack(src, packType);
+	deepCopyMem(dst, src); // memory leak 
+}
+
+memfile* multiPack2(memfile* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+	memfile* dst = getEmptyMem(L"multipack2_dst");
+	multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, true);
+	return dst;
+}
+
+memfile* multiUnpack2(memfile* m) {
+	return multiUnpackInternal(m, 0, true);
 }

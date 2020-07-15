@@ -117,14 +117,14 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 
 	debug("\nTwo-byte pack pass=%d", pass);
 	
-	uint64_t source_size = getSize(infil);
+	uint64_t source_size = getMemSize(infil);
 
 	int pair_table_pos;
 	if (pass >= 2) {
 		pair_table_pos = create_two_byte_table(source_size);
 
 		if (pass == 3) {
-			utfil = getMemfile(infil->size + 200);
+			utfil = getMemfile(infil->size + 200, L"twobytepack_utfil");
 
 			//write the metadata table
 			for (int i = 0; i < pair_table_pos; i++) {
@@ -219,14 +219,6 @@ void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 	memfileToFile(dstm, dest);
 	fre(dstm);
 }
-
-void two_byte_pack(const char* src, const char* dest, packProfile prof) {
-	wchar_t d[500], s[500];
-	toUni(d, dest);
-	toUni(s, src);
-	two_byte_packw(s, d, prof);
-}
-
 
 
 

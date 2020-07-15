@@ -50,7 +50,7 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 
 	unsigned char code1 = 15, code2 = 14, code3 = 13;
 
-	memfile* utfil = getMemfile((uint64_t)2 * infil->size + 300);
+	memfile* utfil = getMemfile((uint64_t)2 * infil->size + 300, L"halfbyterleunpack.utfil");
 	readHalfbyte(infil, -1); // init
 
 	int cc;
@@ -110,14 +110,6 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 		}
 	}
 	return utfil;
-}
-
-void halfbyte_rle_unpack(const char* src, const char* dest, int kind) {
-	memfile* s = get_memfile_from_file(src);
-	memfile* packed = halfbyte_rle_unpack_internal(s, kind);
-	fre(s);
-	memfile_to_file(packed, dest);
-	fre(packed);
 }
 
 memfile* halfbyteRleUnpack(memfile* mem, int kind) {

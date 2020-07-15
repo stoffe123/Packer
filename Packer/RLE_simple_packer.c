@@ -14,11 +14,13 @@
 
 /* RLE simple packer */
 
+__declspec(thread) static uint8_t code;
+
 //--------------------------------------------------------------------------------------------------------
 
-memfile* RLE_pack_internal(memfile* infil, int pass, int code) {
+memfile* RLE_pack_internal(memfile* infil, int pass) {
 	rewindMem(infil);
-	memfile* utfil = getMemfile(pass == 1 ? 1 : (infil->size + 200));
+	memfile* utfil = getMemfile(pass == 1 ? 1 : (infil->size + 200), L"rle_pack_utfil");
 	unsigned long char_freq[256] = { 0 };
 	debug("\nRLE_simple_pack pass=%d", pass);
 	
@@ -89,29 +91,20 @@ memfile* RLE_pack_internal(memfile* infil, int pass, int code) {
 		}
 	}//end while
 	if (pass == 1) {
-		setPos(utfil, find_best_code(char_freq).value); // ugly but temporary!	
+		code = find_best_code(char_freq).value; 
 	}
 	return utfil;
 }
 
 memfile* RLE_simple_pack_internal(memfile* src)
 {
-	memfile* res = RLE_pack_internal(src, 1, 0); //find code
-	int code = getPos(res);
+	memfile* res = RLE_pack_internal(src, 1); //find code
 	fre(res);
-	return RLE_pack_internal(src, 2, code); //pack
+	return RLE_pack_internal(src, 2); //pack
 }
 
 memfile* RleSimplePack(memfile* src) {
 	return RLE_simple_pack_internal(src);
-}
-
-void RLE_simple_pack(const char* src, const char* dst) {	
-	memfile* s = get_memfile_from_file(src);
-	memfile* packed = RLE_simple_pack_internal(s);
-	fre(s);
-	memfile_to_file(packed, dst);
-	fre(packed);
 }
 
 void RLE_simple_packw(const wchar_t* srcw, const wchar_t* dstw) {

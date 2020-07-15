@@ -96,7 +96,7 @@ memfile* halfbyte_rle_pack_internal(memfile* infil, int kind) {
 	}
 	//printf("\n canonical header pack %s", src);
 
-	memfile* utfil = getMemfile((uint64_t)200 + infil->size);
+	memfile* utfil = getMemfile((uint64_t)200 + infil->size, L"halfbyterlepack.utfil");
 	// start compression!
 	writeHalfbyte(utfil, -1); // init
 
@@ -196,15 +196,6 @@ memfile* halfbyte_rle_pack_internal(memfile* infil, int kind) {
 	}//end while
 	writeHalfbyte(utfil, -2); // flush
 	return utfil;
-}
-
-void halfbyte_rle_pack(const char* src, const char* dest, int kind)
-{
-	memfile* s = get_memfile_from_file(src);
-	memfile* packed = halfbyte_rle_pack_internal(s, kind);
-	fre(s);
-	memfile_to_file(packed, dest);
-	fre(packed);
 }
 
 memfile* halfbyteRlePack(memfile* mem, int kind) {

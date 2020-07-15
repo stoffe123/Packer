@@ -6,9 +6,20 @@
 #include "common_tools.h"
 #include "multi_packer.h"
 #include "canonical.h"
+#include "memfile.h"
+
+
+void append_mem_to_file(FILE* main_file, memfile* append_file) {	
+	
+	int ch;
+	rewindMem(append_file);
+	while ((ch = fgetcc(append_file)) != EOF) {
+		fputc(ch, main_file);
+	}
+}
 
 // tar contents of src => utfil
-append_to_tar(FILE* utfil, char* src, uint32_t size, uint8_t packType) {
+append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 
 	if (size == 0) {
 		packType = setKthBit(packType, 4);
@@ -19,9 +30,19 @@ append_to_tar(FILE* utfil, char* src, uint32_t size, uint8_t packType) {
 	}
 
 	//write contents
-	append_to_file(utfil, src);
+	append_mem_to_file(utfil, src);
 }
 
+void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_to_copy) {	
+	uint8_t ch;
+	for (int i = 0; i < size_to_copy; i++) {
+		size_t bytes_got = fread(&ch, 1, 1, source_file);
+		if (bytes_got == 0) {
+			break;
+		}
+		fputcc(ch, dest_filename);
+	}	
+}
 
 //----------------------------------------------------------------------------------------
 
@@ -29,14 +50,11 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 	uint64_t src_size = get_file_size_from_wname(src);
 
-
-
 	FILE* utfil = openWrite(dst);
 	FILE* infil = openRead(src);
 	uint64_t chunkSize, read_size;
 	do {
-		const char chunkFilename[100] = { 0 };
-		getTempFile(chunkFilename, "block_chunck");
+		memfile* chunkFilename = getEmptyMem(L"blockpacker_chunk");		
 		read_size = BLOCK_SIZE - profile.blockSizeMinus * (uint64_t)10000;
 
 		assert(read_size < 16777215, "too large blocksize must be < 16777215");
@@ -47,11 +65,10 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 			read_size--;
 		}
 		printf("\n Real blocksize used %d", read_size);
-		copy_chunk(infil, chunkFilename, read_size);
-		chunkSize = get_file_size_from_name(chunkFilename);
+		copy_chunk_to_mem(infil, chunkFilename, read_size);
+		chunkSize = getMemSize(chunkFilename);
 
-		const char packedFilename[100] = { 0 };
-		getTempFile(packedFilename, "block_multipacked");
+		memfile* packedFilename = getEmptyMem(L"blockpacker_packed");
 
 		//meta testsuit 1170029  / 33s
 		packProfile seqlenProfile = getPackProfile();
@@ -93,20 +110,29 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		distanceProfile.sizeMinForSeqPack = 2600;
 		distanceProfile.sizeMinForCanonical = 300;
 
-
-		uint8_t packType = multiPack(chunkFilename, packedFilename, profile, seqlenProfile,
+		printf("\ blockpack multipack of chunk");
+		uint8_t packType = multiPackAndReturnPackType(chunkFilename, packedFilename, profile, seqlenProfile,
 			offsetProfile, distanceProfile);
-		remove(chunkFilename);
-		uint32_t size = get_file_size_from_name(packedFilename);
+		fre(chunkFilename);
+		printf("\n blockpack checking size of chunk %s", getMemName(packedFilename));
+		uint32_t size = getMemSize(packedFilename);
 		if (chunkSize < read_size) {
 			size = 0;
 		}
 		append_to_tar(utfil, packedFilename, size, packType);
-		remove(packedFilename);
+		fre(packedFilename);
 	} while (chunkSize == read_size);
 
 	fclose(infil);
 	fclose(utfil);
+}
+
+void copy_the_rest2(FILE* in, memfile* out) {	
+	
+	int ch;
+	while ((ch = fgetc(in)) != EOF) {
+		fputcc(ch, out);
+	}	
 }
 
 
@@ -121,30 +147,27 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 	while (true) {
 
 		uint8_t packType;
-		const char tmp[100] = { 0 };
-		getTempFile(tmp, "block_tobeunpacked");
+		memfile* tmp = getEmptyMem(L"blockpacker_tmp");
 		if (fread(&packType, 1, 1, infil) == 0) {
 			break;
 		}
 		if (isKthBitSet(packType, 4)) {
-			copy_the_rest(infil, tmp);
+			copy_the_rest2(infil, tmp);
 		}
 		else {
 			uint32_t size = 0;
 			//3 bytes can handle block sizes up to 16777216‬
 			//note that these are the sizes of the compressed chunks!
 			fread(&size, 3, 1, infil);
-			copy_chunk(infil, tmp, size);
-		}
-		const char tmp2[100] = { 0 };
-		getTempFile(tmp2, "block_multiunpacked");
-		multiUnpack(tmp, tmp2, packType);
+			copy_chunk_to_mem(infil, tmp, size);
+		}				
+		memfile* tmp2 = multiUnpack(tmp, packType);
 
-		remove(tmp);
+		fre(tmp);
 
-		append_to_file(utfil, tmp2);
+		append_mem_to_file(utfil, tmp2);
 
-		remove(tmp2);
+		fre(tmp2);
 	}
 	fclose(infil);
 	fclose(utfil);

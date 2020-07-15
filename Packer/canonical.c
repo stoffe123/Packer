@@ -42,9 +42,9 @@
 #include "bitfile.h"
 #include "common_tools.h"
 #include "packer_commons.h"
-#include "multi_packer.h"
 #include "halfbyte_rle_packer.h"
-#include "RLE_simple_packer.h"
+#include "memfile.h"
+#include "multi_packer.h"
 
 
 static packProfile profile = {
@@ -621,42 +621,39 @@ static int AssignCanonicalCodes(canonical_list_t* cl)
 ****************************************************************************/
 static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
-
-    char headerFilename[100] = { 0 };
-    getTempFile(headerFilename, "canonical_header");
-    FILE* headerFile = fopen(headerFilename, "wb");
+    
+    memfile* headerFile = getMemfile(260, L"canonicalHeader");
     for (int i = 0; i < NUM_CHARS; i++)
     {
         byte_t len = cl[i].codeLen;
-        putc(len, headerFile);
+        fputcc(len, headerFile);
     }
-    fclose(headerFile);
-    char packedFilename[100] = { 0 };
-    getTempFile(packedFilename, "canonical_header_packed");
-    int packType = multiPack(headerFilename, packedFilename, profile, profile, profile, profile);
-    uint64_t orgSize = get_file_size_from_name(headerFilename);
-    uint64_t packedSize = get_file_size_from_name(packedFilename);
+    rewindMem(headerFile);
+    memfile* packedFilename = getEmptyMem(L"canicalHeaderPacked");
+    int packType = multiPackAndReturnPackType(headerFile, packedFilename, profile, profile, profile, profile);
+    uint64_t orgSize = getMemSize(headerFile);
+    uint64_t packedSize = getMemSize(packedFilename);
 
     //printf("\n packed canonical header down to %d bytes", size);
 
-    const char* fileToRead;
+    memfile* fileToRead;
     if (packedSize <= 2 || packedSize >= 256) {
-        printf("\n wrong size of canonical header packed %d original %d => using store", packedSize, orgSize);
+        printf("\n canonical header pack was too large %d original %d => using store", packedSize, orgSize);
         packedSize = 0; // flag for store
-        remove(packedFilename);
-        fileToRead = headerFilename;
+        fre(packedFilename);
+        fileToRead = headerFile;
     }
     else {
         fileToRead = packedFilename;
     }
-   
+    printf("\n Canonical.writeheader: multipack case packtype %d packedsize %d", packType, packedSize);
     if (packedSize == 0) {
         //store case
         //printf("\n unpack can header: store case case size=%d", packedSize);
         BitFilePutChar(0, bfp);
     }
     else if (packType == packTypeForHalfbyteRlePack(0)) {
-        //printf("\n unpack can header: can header pack case case packtype=%d", packType);
+      
         BitFilePutChar(packedSize, bfp);
     }
     else if (packType == packTypeRlePlusTwobyte()) {
@@ -665,20 +662,19 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
         BitFilePutChar(packedSize, bfp);
     }
     else { // multipack case
-        //printf("\n unpack can header: multipack case packtype=%d", packType);
+        printf("\n Canonical.writeheader: multipack case packtype %d packedsize %d", packType, packedSize);
         BitFilePutChar(1, bfp);
         BitFilePutChar(packedSize, bfp);
         BitFilePutChar(packType, bfp);
     }
 
-    byte_t ch;
-    FILE* packedFile = fopen(fileToRead, "rb");
-    while (fread(&ch, 1, 1, packedFile) == 1) {
+    int ch;
+    rewindMem(fileToRead);
+    while ((ch = fgetcc(fileToRead)) != EOF) {
         BitFilePutChar(ch, bfp);
     }
-    fclose(packedFile);
-    remove(packedFilename);
-    remove(headerFilename);
+    fre(packedFilename);
+    fre(headerFile);
 }
 
 /****************************************************************************
@@ -696,16 +692,14 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 ****************************************************************************/
 static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
-
-    char headerFilename[100] = { 0 };
-    getTempFile(headerFilename, "canonical_packedheader");
-   
     int size = BitFileGetChar(bfp);
+    printf("\n Canonical.ReadHeader size %d", size);
     int bytesToCopy = NUM_CHARS;  // normally 257
     uint8_t packType = 0;
     if (size == 1) { // multi case
         bytesToCopy = BitFileGetChar(bfp);
         packType = BitFileGetChar(bfp);
+        printf("\n   multicase packType %d", packType);
     }
     else if (size == 2) { // RLE case
         bytesToCopy = BitFileGetChar(bfp);
@@ -716,24 +710,24 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
         bytesToCopy = size;
         packType = packTypeForHalfbyteRlePack(0);
     }
-    FILE* file = fopen(headerFilename, "wb");
+    memfile* file = getMemfile(260, L"headerPacked");
     for (int i = 0; i < bytesToCopy; i++) {
         uint8_t ch = BitFileGetChar(bfp);
-        fwrite(&ch, 1, 1, file);
-    }
-    fclose(file);
+        fputcc(ch, file);
+    }    
       
     if (size > 0) {
-        multiUnpackAndReplace(headerFilename, packType);
+        multiUnpackAndReplace(file, packType);
     }    
-    FILE* unpFile = fopen(headerFilename, "rb");
+    assert(getMemSize(file) == 257, "\n canonical.c header unpacked had wrong size not 257");
+    rewindMem(file);
 
     /* read the code length */
     for (int i = 0; i < NUM_CHARS; i++)
     {
         int c = 0;
 
-        if (fread(&c, 1, 1, unpFile) == 1) {
+        if ((c = fgetcc(file)) != EOF) {
 
             cl[i].value = i;
             cl[i].codeLen = (byte_t)c;
@@ -744,27 +738,71 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
             errno = EILSEQ;     /* Illegal byte sequence seems reasonable */
             exit(1);
         }
-    }
-    fclose(unpFile);
-    remove(headerFilename);    
+    }    
+    fre(file);
     return 0;
 }
 
 
-int CanonicalEncode(const char* src, const char* dst) {
-    FILE* inFile = fopen(src, "rb");
-    FILE* outFile = fopen(dst, "wb");
+int CanonicalEncode(const wchar_t* src, const wchar_t* dst) {
+    FILE* inFile = openRead(src);
+    FILE* outFile = openWrite(dst);
     int res = CanonicalEncodeFile(inFile, outFile);
     fclose(inFile);
     fclose(outFile);
     return res;
 }
 
-int CanonicalDecode(const char* src, const char* dst) {
-    FILE* inFile = fopen(src, "rb");
-    FILE* outFile = fopen(dst, "wb");
+int CanonicalDecode(const wchar_t* src, const wchar_t* dst) {
+    FILE* inFile = openRead(src);
+    FILE* outFile = openWrite(dst);
     int res = CanonicalDecodeFile(inFile, outFile);
     fclose(inFile);
     fclose(outFile);
+    return res;
+}
+
+memfile* CanonicalEncodeMem(memfile* m) {
+    wprintf(L"\n CanonicalEncodeMem of %s", getMemName(m));
+    wchar_t tmp[500] = { 0 };
+    get_temp_filew(tmp, L"canonical_unp");
+    wchar_t tmp2[500] = { 0 };
+    get_temp_filew(tmp2, L"canonical_pack");
+    memfileToFile(m, tmp);
+    CanonicalEncode(tmp, tmp2);
+    memfile* res = getMemfileFromFile(tmp2);
+   
+
+    if (DOUBLE_CHECK_PACK) {
+        wprintf(L"\n ?Double checking canonical pack of %s", getMemName(m));
+        wchar_t tmp3[500] = { 0 };
+        get_temp_filew(tmp3, L"canonical_unp3");
+        CanonicalDecode(tmp2, tmp3);
+        bool sc = files_equalw(tmp3, tmp);
+        _wremove(tmp3);
+        if (!sc) {
+            wprintf(L"\n\n\n ** Failed to canonical pack: %s", getMemName(m));
+            const wchar_t filename[100] = { 0 };
+            concatw(filename, L"c:/test/temp_files/", getMemName(m));
+            memfileToFile(m, filename);
+            exit(1);
+        }
+    }
+    _wremove(tmp);
+    _wremove(tmp2);
+    return res;
+}
+
+memfile* CanonicalDecodeMem(memfile* m) {
+    wprintf(L"\n CanonicalDecodeMem of %s", getMemName(m));
+    wchar_t tmp[500] = { 0 };
+    get_temp_filew(tmp, L"canonical_enc");
+    wchar_t tmp2[500] = { 0 };
+    get_temp_filew(tmp2, L"canonical_dec");
+    memfileToFile(m, tmp);
+    CanonicalDecode(tmp, tmp2);
+    memfile* res = getMemfileFromFile(tmp2);
+    _wremove(tmp);
+    _wremove(tmp2);
     return res;
 }

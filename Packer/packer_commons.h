@@ -3,6 +3,7 @@
 
 #include "common_tools.h"
 #include <stdbool.h>
+#include "memfile.h"
 
 //3 bytes can handle block sizes up to 16777216‬
 
@@ -54,25 +55,23 @@ void quickSortCompareEndings(file_t* f, uint64_t size);
 
 void printProfile(packProfile*);
 
-bool testPack(const char* src, const char* tmp, const char* packerName, int limit);
+bool testPack(memfile* src, memfile* tmp, const wchar_t* packerName, int limit);
 
 void copyProfile(packProfile* source, packProfile* dest);
 
-uint64_t CanonicalEncodeAndTest(const char*);
-
-bool MultiPackAndTest(const char* src, packProfile profile,
+bool MultiPackAndTest(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
 packProfile getPackProfile();
 
-void doDoubleCheck(const char* src, const char* packedName, const char* kind);
+void doDoubleCheck(memfile* src, memfile* packedName, const wchar_t* kind);
 
-bool packAndTest(const char* kind, const char* src, packProfile profile,
+bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
 
-void unpackByKind(const char* kind, const char* tmp, const char* tmp2);
+memfile* unpackByKind(const wchar_t* kind, memfile* tmp);
 
 
 

@@ -8,7 +8,12 @@ static uint64_t SUPERSLIM_SIZELIMIT = 16384;
 static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 111;
 static uint64_t SEQLEN_MIN_LIMIT4 = 57360;
 
-
+typedef struct seqPackBundle {
+	memfile* main;
+	memfile* seqlens;
+	memfile* offsets;
+	memfile* distances;
+} seqPackBundle;
 
 typedef struct pageCoding_t {
 	uint64_t pages;
@@ -20,6 +25,10 @@ typedef enum {
 } meta_kind_t;
 
 unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile);
+
+uint64_t getBundleSize(seqPackBundle b);
+
+void freBundle(seqPackBundle b);
 
 uint64_t getLastByte(uint64_t longRange);
 

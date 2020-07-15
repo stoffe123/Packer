@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include "common_tools.h"
 #include "packer_commons.h"
+#include "memfile.h"
+#include "Two_byte_packer.h"
+#include "RLE_simple_packer.h"
+#include "canonical.h"
+#include "multi_packer.h"
 
 
 void lockTempfileMutex() {
@@ -14,98 +19,79 @@ void releaseTempfileMutex() {
 }
 
 
-bool testPack(const char* src, const char* tmp, const char* packerName, int limit) {
-	uint64_t size_org = get_file_size_from_name(src);
-	uint64_t size_packed = get_file_size_from_name(tmp);
+bool testPack(memfile* src, memfile* tmp, const wchar_t* kind, int limit) {
+	wprintf(L"\n testPack of %s to %s with kind %s", getMemName(src), getMemName(tmp), kind);
+	uint64_t size_org = getMemSize(src);
+	uint64_t size_packed = getMemSize(tmp);
 	double packed_ratio = ((double)size_packed / (double)size_org) * 100.0;
-	printf("\n %s packed %s  got ratio %.1f (limit %d)", packerName, src, packed_ratio, limit);
+	wprintf(L"\n %s packed got ratio %.1f (limit %d)", kind, packed_ratio, limit);
 	return packed_ratio < (double)limit;
 }
 
-void doDoubleCheck2(const char* src, const char* packedName, const char* kind) {
-	if (DOUBLE_CHECK_PACK) {
-		const char tmp[100] = { 0 };
-		getTempFile(tmp, kind);
-		unpackByKind(kind, packedName, tmp);
+void doDoubleCheck2(memfile* src, memfile* packedName, const wchar_t* kind) {
+	if (DOUBLE_CHECK_PACK) {		
+		wprintf(L"\n ?Double check of %s pack of %s", kind, getMemName(src));
+		memfile* tmp = unpackByKind(kind, packedName);
 		doDoubleCheck(tmp, src, kind);
 	}
-	my_rename(packedName, src);
+	//has to fre src 
+	deepCopyMem(packedName, src);
 }
 
-void doDoubleCheck(const char* tmp, const char* src, const char* type) {
-	bool sc = files_equal(tmp, src);
+void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {
+	bool sc = memsEqual(tmp, src);
 	if (!sc) {
-		printf("\n\n\n ** Failed to %s pack: %s", type, src);
+		wprintf(L"\n\n\n ** Failed to %s pack: %s", kind, getMemName(src));
+		const wchar_t filename[100] = { 0 };
+		concatw(filename, L"c:/test/temp_files/", getMemName(src));
+		memfileToFile(src, filename);
 		exit(1);
 	}
-	remove(tmp);
+	fre(tmp);
 }
 
-uint64_t CanonicalEncodeAndTest(const char* src) {
-	const char packedName[100] = { 0 };
-	getTempFile(packedName, "multi_canonicaled");
-	CanonicalEncode(src, packedName);
-	uint64_t size_org = get_file_size_from_name(src);
-	uint64_t size_packed = get_file_size_from_name(packedName);
-	//printf("\n CanonicalEncode:%s  (%f)", src, (double)size_packed / (double)size_org);
-	bool compression_success = (size_packed < size_org);
-	if (compression_success) {
-		
-		doDoubleCheck2(src, packedName, "canonical");
+memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
+	if (equalsw(kind, L"multi")) {
+		return multiUnpack2(packedFilename);
+	}
+	if (equalsw(kind, L"rle simple")) {
+		return RleSimpleUnpack(packedFilename);
+	}
+	else if (equalsw(kind, L"twobyte")) {
+		return twoByteUnpack(packedFilename);
+	}	
+	else if (equalsw(kind, L"canonical")) {
+		return CanonicalDecodeMem(packedFilename);
 	}
 	else {
-		remove(packedName);
-	}
-	return size_packed;
-}
-
-void unpackByKind(const char* kind, const char* packedFilename, const char* unpackedFilename) {
-	if (equals(kind, "multi")) {
-		multi_unpack(packedFilename, unpackedFilename);
-	}
-	else if (equals(kind, "rle simple")) {
-		RLE_simple_unpack(packedFilename, unpackedFilename);
-	}
-	else if (equals(kind, "twobyte")) {
-		two_byte_unpack(packedFilename, unpackedFilename);
-	}
-	else if (equals(kind, "rle advanced")) {
-		RLE_advanced_unpack(packedFilename, unpackedFilename);
-	}
-	else if (equals(kind, "canonical")) {
-		CanonicalDecode(packedFilename, unpackedFilename);
-	}
-	else {
-		printf("\n kind=%s not found in packer_commons.unpackByKind", kind);
+		wprintf(L"\n kind=%s not found in packer_commons.unpackByKind", kind);
 		exit(1);
 	}
 }
 
 
-bool packAndTest(const char* kind, const char* src, packProfile profile,
+bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+	
+	wprintf(L"\n PackAndTest %s with kind=%s src.size=%d", getMemName(src), kind, getMemSize(src));
 
-	const char packedName[100] = { 0 };
-	const char tmp[100] = { 0 };
-	concat(tmp, "multi_", kind);
+	memfile* packedName = NULL;
+	
 	int limit = 100;
-	getTempFile(packedName, tmp);
-	if (equals(kind, "multi")) {
-		multi_pack(src, packedName, profile, seqlensProfile, offsetsProfile, distancesProfile);
-	} 
-	else if (equals(kind, "rle simple")) {
-		RLE_simple_pack(src, packedName, profile);
+	
+	if (equalsw(kind, L"multi")) {
+		packedName = multiPackAndStorePackType(src, profile, seqlensProfile, offsetsProfile, distancesProfile);		
+	}
+	else if (equalsw(kind, L"rle simple")) {
+		packedName = RleSimplePack(src, profile);
 		limit = profile.rle_ratio;
 	}
-	else if (equals(kind, "twobyte")) {
-		two_byte_pack(src, packedName, profile);
+	else if (equalsw(kind, L"twobyte")) {
+		packedName = twoBytePack(src, profile);
 		limit = profile.twobyte_ratio;
-	}
-	else if (equals(kind, "rle advanced")) {
-		RLE_advanced_pack(src, packedName, profile);
-	}
+	}	
 	else {
-		printf("\n kind=%s not found in packer_commons.packAndTest", kind);
+		wprintf(L"\n kind=%s not found in packer_commons.packAndTest", kind);
 		exit(1);
 	}
 
@@ -114,14 +100,14 @@ bool packAndTest(const char* kind, const char* src, packProfile profile,
 		doDoubleCheck2(src, packedName, kind);
 	}
 	else {
-		remove(packedName);
+		fre(packedName);
 	}
 	return under_limit;
 }
 
-bool MultiPackAndTest(const char* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile, 
+bool MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile, packProfile offsetProfile, 
 	packProfile distancesProfile) {
-	return packAndTest("multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
+	return packAndTest(L"multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
 }
 
 void printProfile(packProfile* profile) {
@@ -199,43 +185,43 @@ value_freq_t find_best_code(unsigned long* char_freq) {
 static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 
 	int res;
-	char ext1[500] = { 0 };
-	char ext2[500] = { 0 };
+	wchar_t ext1[500] = { 0 };
+	wchar_t ext2[500] = { 0 };
 
 	substringAfterLast(ext1, s1, L".");
 	substringAfterLast(ext2, s2, L".");
 
 	if (equalsw(ext1, L"txt")) {
-		strcpy(ext1, "zzz");
+		wcscpy(ext1, "zzz");
 	}
 	if (equalsw(ext2, L"txt")) {
-		strcpy(ext2, "zzz");
+		wcscpy(ext2, "zzz");
 	}
 	if (equalsw(ext1, L"htm")) {
-		strcpy(ext1, "zzy");
+		wcscpy(ext1, "zzy");
 	}
 	if (equalsw(ext2, L"htm")) {
-		strcpy(ext2, "zzy");
+		wcscpy(ext2, "zzy");
 	}
 	if (equalsw(ext1, L"html")) {
-		strcpy(ext1, "zzx");
+		wcscpy(ext1, "zzx");
 	}
 	if (equalsw(ext2, L"html")) {
-		strcpy(ext2, "zzx");
+		wcscpy(ext2, "zzx");
 	}
 
 	if (equalsw(ext1, L"wav")) {
-		strcpy(ext1, "aab");
+		wcscpy(ext1, "aab");
 	}
 	if (equalsw(ext2, L"wav")) {
-		strcpy(ext2, "aab");
+		wcscpy(ext2, "aab");
 	}
 
 	if (equalsw(ext1, L"exe")) {
-		strcpy(ext1, "aaa");
+		wcscpy(ext1, "aaa");
 	}
 	if (equalsw(ext2, L"exe")) {
-		strcpy(ext2, "aaa");
+		wcscpy(ext2, "aaa");
 	}
 
 

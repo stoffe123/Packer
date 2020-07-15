@@ -23,8 +23,6 @@ void quickSortCompareEndings(file_t* f, uint64_t size);
 
 void quickSort(file_t* f, uint64_t size);
 
-void my_rename(const char* f_old, const char* f_new);
-
 void my_renamew(const wchar_t* f_old, const wchar_t* f_new);
 
 size_t to_narrow(const wchar_t* src, char* dest);
@@ -39,8 +37,6 @@ uint64_t indexOfChar(const wchar_t* s, const wchar_t find);
 
 uint64_t get_file_size(const FILE* f);
 
-uint64_t get_file_size_from_name(const char* name);
-
 uint64_t get_file_size_from_wname(wchar_t* name);
 
 unsigned char isKthBitSet(unsigned char value, unsigned char bit);
@@ -51,15 +47,7 @@ unsigned char clearKthBit(unsigned char value, unsigned char bit);
 
 unsigned char setKthBitToVal(unsigned char value, unsigned char bit, unsigned char bitValue);
 
-void copy_file(const char* src, const char* dst);
-
-void copy_chunk(FILE* source_file, const char* dest_filename, uint64_t size_to_copy);
-
 void copy_chunkw(FILE * source_file, wchar_t* dest_filename, uint64_t size_to_copy);
-
-void copy_the_rest(FILE* source_file, const char* dest_filename);
-
-void append_to_file(FILE* main_file, const char* append_filename);
 
 void append_to_filew(FILE * main_file, wchar_t* append_filename);
 
@@ -89,17 +77,9 @@ void int_to_string(const char* dst, int64_t i);
 
 void int_to_stringw(const wchar_t* dst, int64_t i);
 
-void get_rand(const char* dst);
-
 void get_randw(const wchar_t* dst);
 
-void getTempFile(const char* dst, const char* s);
-
 void get_temp_filew(const wchar_t* dst, const wchar_t* s);
-
-void get_clock_dir(const char* dst);
-
-bool files_equal(const char* source_filename, const char* dest_filename);
 
 bool files_equalw(wchar_t* source_filename, wchar_t* dest_filename);
 

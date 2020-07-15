@@ -4,23 +4,10 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "memfile.h"
+#include "seq_packer_commons.h"
 
-/*
-void seq_pack(const char* source_filename, const char* dest_filename, packProfile profile);
+seqPackBundle seqPackSep(memfile* mem, packProfile profile);
 
-void seqPack(const wchar_t* src, const wchar_t* dst, packProfile profile);
-*/
-
-void seqUnpackFiles(const wchar_t* src, const wchar_t* dst);
-
-void seqPackSeparate(const wchar_t* src, const wchar_t* dir, packProfile profile);
-
-void seq_unpack(const char* source_filename, const char* dest_filename);
-
-void seq_unpack_separate(const char* source_filename, const char* dest_filename, const char* dir);
-
-void seq_pack_separate(const char* source_filename, const char* dir, packProfile profile);
-
-memfile** seqPackSep(memfile* mem, packProfile profile);
+memfile* seqUnpack(seqPackBundle m);
 
 #endif

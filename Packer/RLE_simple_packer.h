@@ -2,14 +2,9 @@
 #define RLE_SIMPLE_PACKER_H
 #include "memfile.h"
 
-memfile* RleSimplePack(memfile* src);
-
-void RLE_simple_pack(const char* src, const char* dst);
+memfile* RleSimplePack(memfile* m);
 
 memfile* RleSimpleUnpack(memfile* m);
-
-void RLE_simple_unpack(const char* src, const char* dst);
-
 
 void RLE_simple_packw(const wchar_t* srcw, const wchar_t* dstw);
 

@@ -11,12 +11,7 @@ memfile* twoByteUnpack(memfile* m);
 
 void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof);
 
-void two_byte_pack(const char* src, const char* dest, packProfile prof);
-
 void two_byte_unpackw(const wchar_t* src, const wchar_t* dest);
-
-void two_byte_unpack(const char* src, const char* dest);
-
 
 
 #endif

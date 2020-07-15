@@ -25,3 +25,16 @@ uint64_t getLowestSpecial(pageCoding_t pageCoding) {
 uint64_t calcPageMax(pageCoding_t coding) {
 	return 	coding.pages * (uint64_t)256 + ((coding.useLongRange ? 254 : 255) - coding.pages);
 }
+
+uint64_t getBundleSize(seqPackBundle b) {
+	uint32_t size = getMemSize(b.main) + getMemSize(b.seqlens) + getMemSize(b.offsets)
+		+ getMemSize(b.distances);
+	return (uint64_t)size;
+}
+
+void freBundle(seqPackBundle b) {
+	fre(b.main);
+	fre(b.seqlens);
+	fre(b.offsets);
+	fre(b.distances);
+}

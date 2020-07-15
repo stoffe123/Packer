@@ -26,7 +26,8 @@ int get_two_byte_for_code(unsigned char code, uint8_t* two_byte_table, int two_b
 
 memfile* two_byte_unpack_internal(memfile* infil) {
 
-	memfile* utfil = getMemfile(infil->size * 2);
+	rewindMem(infil);
+	memfile* utfil = getMemfile(infil->size * 2, L"twobyteunpack.utfil");
 	uint8_t* two_byte_table = malloc(16384 * sizeof(uint8_t));
 	uint8_t master_code;
 	int two_byte_table_size;
@@ -68,13 +69,6 @@ void two_byte_unpackw(const wchar_t* src, const wchar_t* dest)
 	fre(m);
 	memfileToFile(d, dest);
 	fre(d);
-}
-
-void two_byte_unpack(const char* src, const char* dest) {
-	wchar_t d[500], s[500];
-	toUni(d, dest);
-	toUni(s, src);
-	two_byte_unpackw(s, d);
 }
 
 memfile* twoByteUnpack(memfile* m) {

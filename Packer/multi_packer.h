@@ -9,33 +9,35 @@
 #include "packer_commons.h"
 #include "seq_packer.h"  
 #include "common_tools.h"
-//#include "huffman2.h"
 #include "canonical.h"
 
-uint8_t multiPack(const char* , const char* , packProfile profile, packProfile seqlenProfile,
+uint8_t multiPackFiles(const wchar_t* , const wchar_t* , packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile);
 
-void multiUnpack(const char* src, const char* dst, uint8_t pack_type);
-
-void multiUnpackAndReplace(const char* src, uint8_t pack_type);
-
-void multi_pack(const char*, const char*, packProfile profile, packProfile seqlenProfile, 
-	packProfile offsetProfile, packProfile distancesProfile);
-
-void multi_unpack(const char* src, const char* dst);
+void multiUnpackAndReplace(memfile* src, uint8_t pack_type);
 
 void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
 
 void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile);
 
-void MultiUnpackAndReplacew(const wchar_t* srcw);
-
 bool isCanonicalHeaderPacked(int packType);
 
-int packTypeForHalfbyteRlePack();
+int packTypeForHalfbyteRlePack(int kind);
 
 int packTypeRlePlusTwobyte();
 
+uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+
+memfile* multiPack2(memfile* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+
+memfile* multiUnpack(memfile* m, uint8_t pack_type);
+
+memfile* multiUnpack2(memfile* m);
+
+memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
 
 #endif
