@@ -423,6 +423,9 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	pack_type = bestCandidate.packType;	
 	if (bestCandidate.filename != mb.main) {
 		deepCopyMem(bestCandidate.filename, mb.main);
+		if (bestCandidate.filename != src) {
+			freMem(bestCandidate.filename);
+		}
 	}
 	printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, mb, pack_type, storePackType);
