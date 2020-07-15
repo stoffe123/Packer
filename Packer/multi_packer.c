@@ -399,7 +399,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			if (size_after_seq < before_seqpack_size) {
 				//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 				pack_type = setKthBit(pack_type, 7);
-				fre(before_seqpack);
+				freMem(before_seqpack);
 				if (getMemSize(mb.main) > profile.sizeMinForCanonical) {
 					uint64_t size_before_canonical = getMemSize(mb.main);
 					memfile* canonicalled = CanonicalEncodeMem(mb.main);
@@ -408,7 +408,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 						pack_type = setKthBit(pack_type, 0);
 						deepCopyMem(canonicalled, mb.main);
 					}
-					fre(canonicalled);
+					freMem(canonicalled);
 				}
 				packCandidates[candidatesIndex++] = getPackCandidate2(mb.main, pack_type, getMemSize(mb.main) + meta_size);
 			}
@@ -446,7 +446,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 	}
 	
-	fre(mb.main);
+	freBundle(mb);
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
 }

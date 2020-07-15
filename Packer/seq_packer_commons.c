@@ -33,8 +33,8 @@ uint64_t getBundleSize(seqPackBundle b) {
 }
 
 void freBundle(seqPackBundle b) {
-	fre(b.main);
-	fre(b.seqlens);
-	fre(b.offsets);
-	fre(b.distances);
+	freMem(b.main);
+	freMem(b.seqlens);
+	freMem(b.offsets);
+	freMem(b.distances);
 }
