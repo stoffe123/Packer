@@ -24,6 +24,8 @@ void memfileToFile(memfile* m, const wchar_t* dst);
 
 void fre(memfile* mf);
 
+void freMem(memfile* mf);
+
 void rewindMem(memfile* m);
 
 uint32_t getMemPos(memfile* m);
@@ -53,8 +55,6 @@ void reallocMem(memfile* mf, uint64_t size);
 uint8_t getCCAtPos(memfile* m, uint64_t pos);
 
 memfile* getEmptyMem(const wchar_t* name);
-
-void shallowCopyMem(memfile* src, memfile* dst);
 
 void deepCopyMem(memfile* src, memfile* dst);
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "seq_packer_commons.h"
 #include "packer_commons.h"
+#include "memfile.h"
 
 
 unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile) {
@@ -33,8 +34,10 @@ uint64_t getBundleSize(seqPackBundle b) {
 }
 
 void freBundle(seqPackBundle b) {
-	freMem(b.main);
-	freMem(b.seqlens);
-	freMem(b.offsets);
-	freMem(b.distances);
+
+		freMem(b.main);
+		freMem(b.seqlens);
+		freMem(b.offsets);
+		freMem(b.distances);
+	
 }

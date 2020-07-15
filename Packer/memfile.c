@@ -182,13 +182,6 @@ memfile* getEmptyMem(const wchar_t* name) {
 	return getMemfile(0, name);
 }
 
-void shallowCopyMem(memfile* src, memfile* dst) {
-	dst->allocSize = src->allocSize;
-	dst->block = src->block;
-	dst->pos = src->pos;
-	dst->size = src->size;
-}
-
 void deepCopyMem(memfile* src, memfile* dst) {
 	if (src == dst) {
 		return;

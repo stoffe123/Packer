@@ -124,6 +124,10 @@ bool TwoBytePackAndTest(memfile* src, packProfile profile) {
 	return packAndTest(L"twobyte", src, profile, profile, profile, profile);
 }
 
+bool RlePackAndTest(memfile* src, packProfile profile) {
+	return packAndTest(L"rle simple", src, profile, profile, profile, profile);
+}
+
 void unpackAndReplace(const wchar_t* kind, memfile* src) {	
 	memfile* tmp = unpackByKind(kind, src);
 	deepCopyMem(tmp, src);	
@@ -264,7 +268,9 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	unsigned char pack_type = 0;
 
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
-	packCandidates[candidatesIndex++] = getPackCandidate(src, 0);
+	memfile* before_seqpack = getMemfile(source_size, "multipacker.before_seqpack");
+	deepCopyMem(src, before_seqpack);
+	packCandidates[candidatesIndex++] = getPackCandidate(before_seqpack, 0);
 	uint8_t slimPackType = 0;
 	seqPackBundle mb;
 	mb.main = getEmptyMem(L"mf_a_main");
@@ -288,8 +294,6 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			packCandidates[candidatesIndex++] = getPackCandidate3(head_pack2, pt, canonicalHeaderCase);			
 		}
 
-		
-
 		if (source_size > 20 && profile.rle_ratio > 0) {
 			memfile* just_two_byte = twoBytePack(src, twobyte100Profile);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_two_byte, 0b1000000);
@@ -299,14 +303,9 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			memfile* just_canonical = CanonicalEncodeMem(src);
 			packCandidates[candidatesIndex++] = getPackCandidate(just_canonical, 1);
 		}
-		memfile* before_seqpack = RleSimplePack(src);
-		bool compression_success = testPack(src, before_seqpack, L"RLE simple", profile.rle_ratio);
-		if (compression_success) {
-			pack_type = setKthBit(pack_type, RLE_BIT);  // bit 5
-		} else {
-			freMem(before_seqpack);
-			before_seqpack = getEmptyMem(L"multipacker_beforeseq");
-			deepCopyMem(src, before_seqpack);//src has to remain!
+		bool got_smaller = RlePackAndTest(before_seqpack, profile);
+		if (got_smaller) {
+			pack_type = setKthBit(pack_type, RLE_BIT);
 		}
 
 		assert(getMemSize(before_seqpack) > 0, "before_seqpack size was 0 in multi_packer.c");
@@ -387,6 +386,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 				//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 				pack_type = setKthBit(pack_type, 7);
 				freMem(before_seqpack);
+				before_seqpack = NULL;
 				if (getMemSize(mb.main) > profile.sizeMinForCanonical) {
 					uint64_t size_before_canonical = getMemSize(mb.main);
 					memfile* canonicalled = CanonicalEncodeMem(mb.main);
@@ -422,22 +422,20 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	wprintf(L"\nWinner is %s packtype %d  packed %d > %d", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
 	pack_type = bestCandidate.packType;	
 	if (bestCandidate.filename != mb.main) {
-		deepCopyMem(bestCandidate.filename, mb.main);
-		if (bestCandidate.filename != src) {
-			freMem(bestCandidate.filename);
-		}
+		mb.main = bestCandidate.filename;
 	}
 	printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, mb, pack_type, storePackType);
 
 	for (int i = 0; i < candidatesIndex; i++) {
 		memfile* s = packCandidates[i].filename;
-		if (s != src) {
+		if (s != src && s != mb.main) {
 			//freMem(s);
 		}
 	}
-	
 	freBundle(mb);
+	
+	
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
 }
