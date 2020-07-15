@@ -177,6 +177,14 @@ void getPackCandidateAndFree(packCandidate_t* bestCandidate, memfile* m, int pac
 	}
 }
 
+void getPackCandidate3AndFree(packCandidate_t* bestCandidate, memfile* m, int packType, 
+	bool canonicalHeaderCase) {
+	getPackCandidate3(bestCandidate, m, packType, canonicalHeaderCase);
+	if (bestCandidate->filename != m) {
+		freMem(m);
+	}
+}
+
 static packProfile prof = { .rle_ratio = 0,
 			.twobyte_ratio = 0,
 			.recursive_limit = 10,
@@ -289,15 +297,15 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		if (source_size < profile.sizeMaxForCanonicalHeaderPack) {
 			memfile* head_pack = halfbyteRlePack(src, 0);
 			int pt = packTypeForHalfbyteRlePack(0);
-			getPackCandidate3(&bestCandidate, head_pack, pt, canonicalHeaderCase);
+			getPackCandidate3AndFree(&bestCandidate, head_pack, pt, canonicalHeaderCase);
 			
 			memfile* head_pack1 = halfbyteRlePack(src, 1);
 			pt = packTypeForHalfbyteRlePack(1);
-			getPackCandidate3(&bestCandidate, head_pack1, pt, canonicalHeaderCase);
+			getPackCandidate3AndFree(&bestCandidate, head_pack1, pt, canonicalHeaderCase);
 						
 			memfile* head_pack2 = halfbyteRlePack(src, 2);
 			pt = packTypeForHalfbyteRlePack(2);
-			getPackCandidate3(&bestCandidate, head_pack2, pt, canonicalHeaderCase);
+			getPackCandidate3AndFree(&bestCandidate, head_pack2, pt, canonicalHeaderCase);
 		}
 
 		if (source_size > 20 && profile.rle_ratio > 0) {
@@ -321,7 +329,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		if (source_size > profile.sizeMinForCanonical) {
 			memfile* canonical_instead_of_seqpack = 	
 				CanonicalEncodeMem(before_seqpack);
-			getPackCandidate(&bestCandidate, canonical_instead_of_seqpack, setKthBit(pack_type, 0));
+			getPackCandidateAndFree(&bestCandidate, canonical_instead_of_seqpack, setKthBit(pack_type, 0));
 		}
 	
 		uint64_t size_after_seq = UINT64_MAX;
