@@ -488,11 +488,12 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	}
 	memfile* seq_dst; 
 	if (seqPacked) {		
-		seq_dst = seqUnpack(mb);				
+		memfile* tmp = seqUnpack(mb);				
+		freBundle(mb);
+		seq_dst = tmp;
 	}
 	else {
-		seq_dst = getEmptyMem(L"multipack.seq_dst");
-		deepCopyMem(mb.main, seq_dst);
+		seq_dst = mb.main;		
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
 		TwoByteUnpackAndReplace(seq_dst);
@@ -512,8 +513,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 			deepCopyMem(seq_dst, dst);
 		}
 	}
-	freMem(seq_dst);	
-	freBundle(mb);
+	freMem(seq_dst);
 	return dst;
 }
 
