@@ -640,13 +640,13 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     if (packedSize <= 2 || packedSize >= 256) {
         printf("\n canonical header pack was too large %d original %d => using store", packedSize, orgSize);
         packedSize = 0; // flag for store
-        freMem(packedFilename);
+        freeMem(packedFilename);
         fileToRead = headerFile;
     }
     else {
         fileToRead = packedFilename;
     }
-    printf("\n Canonical.writeheader: multipack case packtype %d packedsize %d", packType, packedSize);
+    //printf("\n Canonical.writeheader: multipack case packtype %d packedsize %d", packType, packedSize);
     if (packedSize == 0) {
         //store case
         //printf("\n unpack can header: store case case size=%d", packedSize);
@@ -673,8 +673,8 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     while ((ch = fgetcc(fileToRead)) != EOF) {
         BitFilePutChar(ch, bfp);
     }
-    freMem(packedFilename);
-    freMem(headerFile);
+    freeMem(packedFilename);
+    freeMem(headerFile);
 }
 
 /****************************************************************************
@@ -739,7 +739,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
             exit(1);
         }
     }    
-    freMem(file);
+    freeMem(file);
     return 0;
 }
 
@@ -778,7 +778,7 @@ memfile* CanonicalEncodeMem(memfile* m) {
         wchar_t tmp3[500] = { 0 };
         get_temp_filew(tmp3, L"canonical_unp3");
         CanonicalDecode(tmp2, tmp3);
-        bool sc = files_equalw(tmp3, tmp);
+        bool sc = filesEqual(tmp3, tmp);
         _wremove(tmp3);
         if (!sc) {
             wprintf(L"\n\n\n ** Failed to canonical pack: %s", getMemName(m));

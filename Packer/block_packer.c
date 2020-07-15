@@ -48,7 +48,7 @@ void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_
 
 void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
-	uint64_t src_size = get_file_size_from_wname(src);
+	uint64_t src_size = getFileSizeFromName(src);
 
 	FILE* utfil = openWrite(dst);
 	FILE* infil = openRead(src);
@@ -113,14 +113,14 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		printf("\ blockpack multipack of chunk");
 		uint8_t packType = multiPackAndReturnPackType(chunkFilename, packedFilename, profile, seqlenProfile,
 			offsetProfile, distanceProfile);
-		freMem(chunkFilename);
+		freeMem(chunkFilename);
 		printf("\n blockpack checking size of chunk %s", getMemName(packedFilename));
 		uint32_t size = getMemSize(packedFilename);
 		if (chunkSize < read_size) {
 			size = 0;
 		}
 		append_to_tar(utfil, packedFilename, size, packType);
-		freMem(packedFilename);
+		freeMem(packedFilename);
 	} while (chunkSize == read_size);
 
 	fclose(infil);
@@ -163,10 +163,10 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 		}				
 		memfile* tmp2 = multiUnpack(tmp, packType);
 
-		freMem(tmp);
+		freeMem(tmp);
 		append_mem_to_file(utfil, tmp2);
 
-		freMem(tmp2);
+		freeMem(tmp2);
 	}
 	fclose(infil);
 	fclose(utfil);
@@ -178,7 +178,7 @@ void blockUnpackAndReplace(wchar_t* src) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"blockpacker_unpackandreplace");
 	block_unpack(src, tmp);
-	my_renamew(tmp, src);
+	myRename(tmp, src);
 
 }
 

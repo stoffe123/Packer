@@ -22,7 +22,7 @@ void fputcc(int c, memfile* mf);
 
 void memfileToFile(memfile* m, const wchar_t* dst);
 
-void freMem(memfile* mf);
+void freeMem(memfile* mf);
 
 void rewindMem(memfile* m);
 

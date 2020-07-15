@@ -99,7 +99,7 @@ memfile* RLE_pack_internal(memfile* infil, int pass) {
 memfile* RLE_simple_pack_internal(memfile* src)
 {
 	memfile* res = RLE_pack_internal(src, 1); //find code
-	freMem(res);
+	freeMem(res);
 	return RLE_pack_internal(src, 2); //pack
 }
 
@@ -110,8 +110,8 @@ memfile* RleSimplePack(memfile* src) {
 void RLE_simple_packw(const wchar_t* srcw, const wchar_t* dstw) {
 	memfile* s = getMemfileFromFile(srcw);
 	memfile* packed = RLE_simple_pack_internal(s);
-	freMem(s);
+	freeMem(s);
 	memfileToFile(packed, dstw);
-	freMem(packed);
+	freeMem(packed);
 }
 

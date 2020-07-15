@@ -17,7 +17,7 @@
 //Global for all threads
 uint64_t filename_count = 1000000;
 
-void my_renamew(const wchar_t* f_old, const wchar_t* f_new) {
+void myRename(const wchar_t* f_old, const wchar_t* f_new) {
 	if (!equalsw(f_old, f_new)) {
 		_wremove(f_new);
 		_wrename(f_old, f_new);
@@ -47,23 +47,21 @@ size_t to_narrow(const wchar_t* src, char* dest) {
 	return i - 1;
 }
 
-
-uint64_t get_file_size(const FILE* f) {
+uint64_t getFileSize(const FILE* f) {
 	fseek(f, 0, SEEK_END);
 	long long res = ftell(f);
 	fseek(f, 0, SEEK_SET);
 	return res;
 }
 
-uint64_t get_file_size_from_wname(wchar_t* name) {
-	//wprintf(L"\n get_file_size_from_wname:%s", name);
+uint64_t getFileSizeFromName(wchar_t* name) {
 	FILE* f;
 	errno_t err = _wfopen_s(&f, name, L"rb");
 	if (err != 0) {
 		wprintf(L"\n get_file_size_from_wname: can't find file: %s", name);
 		exit(0);
 	}
-	uint64_t res = get_file_size(f);
+	uint64_t res = getFileSize(f);
 	fclose(f);
 	return res;
 }
@@ -140,7 +138,7 @@ FILE* openRead(const wchar_t* filename) {
 	return in;
 }
 
-void copy_chunkw(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy) {
+void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy) {
 	FILE* out = openWrite(dest_filename);
 	
 	uint8_t ch;
@@ -154,7 +152,7 @@ void copy_chunkw(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_cop
 	fclose(out);
 }
 
-void append_to_filew(FILE* main_file, wchar_t* append_filename) {
+void appendFileToFile(FILE* main_file, wchar_t* append_filename) {
 	wprintf(L"\n append_to_filew: %s", append_filename);
 	FILE* append_file = openRead(append_filename); 		
 	int ch;
@@ -321,7 +319,7 @@ or even sort when inserting instead of afterwards
 
 */
 
-bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
+bool dirsEqual(const wchar_t* dir1, const wchar_t* dir2) {
 	fileListAndCount_t res = storeDirectoryFilenames(dir1);
 	file_t* fileList1 = res.fileList;
 	uint64_t count = res.count;
@@ -362,7 +360,7 @@ bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
 	}
 	if (dirsAreEqual) {
 		for (int i = 0; i < count; i++) {
-			if (!files_equalw(fileList1[i].name, fileList2[i].name)) {
+			if (!filesEqual(fileList1[i].name, fileList2[i].name)) {
 				dirsAreEqual = false;
 				break;
 			}
@@ -373,12 +371,12 @@ bool dirs_equalw(const wchar_t* dir1, const wchar_t* dir2) {
 	return dirsAreEqual;
 }
 
-bool files_equalw(wchar_t* name1, wchar_t* name2) {
+bool filesEqual(wchar_t* name1, wchar_t* name2) {
 	FILE* f1 = openRead(name1);
 	FILE* f2 = openRead(name2);
 
-	long f1_size = get_file_size(f1);
-	long f2_size = get_file_size(f2);
+	long f1_size = getFileSize(f1);
+	long f2_size = getFileSize(f2);
 	bool result = true;
 	if (f1_size != f2_size) {
 		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);

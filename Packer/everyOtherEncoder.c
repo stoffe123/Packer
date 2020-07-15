@@ -54,8 +54,8 @@ void everyOtherEncode(const wchar_t* src, const wchar_t* dest) {
 	}
 	fclose(file1);
 	fclose(file2);
-	append_to_filew(utfil, file1name);
-	append_to_filew(utfil, file2name);
+	appendFileToFile(utfil, file1name);
+	appendFileToFile(utfil, file2name);
 	_wremove(file1name);
 	_wremove(file2name);
 	fclose(infil);
@@ -76,7 +76,7 @@ void everyOtherDecode(const wchar_t* src, const wchar_t* dest) {
 	if (!utfil) {
 		printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
 	}
-	uint64_t size = get_file_size_from_wname(src);
+	uint64_t size = getFileSizeFromName(src);
 	uint64_t pos1 = 0, pos2 = size / 2;
 
 	// start with pos2

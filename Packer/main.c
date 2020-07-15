@@ -228,12 +228,12 @@ void testmeta() {
 			concat_int(src, src, kk + 101);			
 			const wchar_t* unpackedFilename = L"C:/test/unp";
 			const wchar_t* packed_name = L"c:/test/packed.bin";
-			long long size_org = get_file_size_from_wname(src);
+			long long size_org = getFileSizeFromName(src);
 			printf("\n Packing %s      length:%d", src, size_org);
 			int cl = clock();
 			//multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
 				
-			long long size_packed = get_file_size_from_wname(packed_name);
+			long long size_packed = getFileSizeFromName(packed_name);
 			acc_size_packed += size_packed;
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
 				earlyBreak = true;
@@ -243,7 +243,7 @@ void testmeta() {
 			if (unpack) {
 				//multi_unpack(packed_name, unpackedFilename);
 				printf("\n\n Comparing files!");
-				if (files_equalw(src, unpackedFilename)) {
+				if (filesEqual(src, unpackedFilename)) {
 					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -254,13 +254,13 @@ void testmeta() {
 
 			concat(src, metaDir, "offsets");
 			concat_int(src, src, kk + 101);
-			size_org = get_file_size_from_wname(src);
+			size_org = getFileSizeFromName(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
 			//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 			int pack_time = (clock() - cl);
 		
-			size_packed = get_file_size_from_wname(packed_name);
+			size_packed = getFileSizeFromName(packed_name);
 			acc_size_packed += size_packed;
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
 				earlyBreak = true;
@@ -270,7 +270,7 @@ void testmeta() {
 			if (unpack) {
 				//multi_unpack(packed_name, unpackedFilename);
 				printf("\n\n Comparing files!");
-				if (files_equalw(src, unpackedFilename)) {
+				if (filesEqual(src, unpackedFilename)) {
 					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -280,13 +280,13 @@ void testmeta() {
 
 			concat(src, metaDir, "distances");
 			concat_int(src, src, kk + 101);
-			size_org = get_file_size_from_wname(src);
+			size_org = getFileSizeFromName(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 
 			//multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
 			pack_time = (clock() - cl);
 
-			size_packed = get_file_size_from_wname(packed_name);
+			size_packed = getFileSizeFromName(packed_name);
 			acc_size_packed += size_packed;
 			
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
@@ -306,7 +306,7 @@ void testmeta() {
 
 			if (unpack) {
 				printf("\n\n Comparing files!");
-				if (files_equalw(src, unpackedFilename)) {
+				if (filesEqual(src, unpackedFilename)) {
 					printf(" ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -347,7 +347,7 @@ void onefile() {
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 
-	long long size_org = get_file_size_from_wname(src);
+	long long size_org = getFileSizeFromName(src);
 
 	wprintf(L"\n Packing... %s with length:%d", src, size_org);
 
@@ -417,7 +417,7 @@ void onefile() {
 	memfileToFile(unpacked, unpackedFilename);
 	printf("\n\n Comparing files!");
 
-	if (files_equalw(src, unpackedFilename)) {
+	if (filesEqual(src, unpackedFilename)) {
 		printf("\n ****** SUCCESS ****** (equal)\n");
 	}
 	else {
@@ -494,7 +494,7 @@ void test16() {
 
 			const wchar_t* packed_name = L"c:/test/packed.bin";
 
-			uint64_t size_org = get_file_size_from_wname(src);
+			uint64_t size_org = getFileSizeFromName(src);
 			printf("\n------------------------------------------------");
 			wprintf(L"\n Packing... %s with length:%d", src, size_org);
 
@@ -505,7 +505,7 @@ void test16() {
 
 			int pack_time = (clock() - cl);
 			//printf("\n Packing finished time it took: %d", pack_time);
-			uint64_t size_packed = get_file_size_from_wname(packed_name);
+			uint64_t size_packed = getFileSizeFromName(packed_name);
 			printf("\n packed size %d", size_packed);
 			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
@@ -528,7 +528,7 @@ void test16() {
 				printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
 				printf("\n\n Comparing files!");
-				if (files_equalw(src, dst)) {
+				if (filesEqual(src, dst)) {
 					printf("\n ****** SUCCESS ****** (equal)\n");
 				}
 				else {
@@ -584,7 +584,7 @@ void testarchive() {
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
 		int pack_time = (clock() - cl);
-		uint64_t acc_size_packed = get_file_size_from_wname(packed_name);
+		uint64_t acc_size_packed = getFileSizeFromName(packed_name);
 
 		printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
@@ -596,7 +596,7 @@ void testarchive() {
 		uint64_t totalTime = clock() - before_suite;
 		if (totalTime < (83 * 1000)) {
 			printf("\n Comparing dirs!");
-			if (dirs_equalw(source_dir, destDir)) {
+			if (dirsEqual(source_dir, destDir)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
 			}
 			else {

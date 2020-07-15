@@ -105,7 +105,7 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
 				if (useSolid) {
-					f.fileList[f.count].size = get_file_size_from_wname(sPath);
+					f.fileList[f.count].size = getFileSizeFromName(sPath);
 				} // if not solid the size of the packed file is written later anyway...
 				f.count++;
 
@@ -209,7 +209,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 			const wchar_t tmpBlocked[500] = { 0 };
 			tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
 			block_pack(fileList[i].name, tmpBlocked, profile);
-			fileList[i].size = get_file_size_from_wname(tmpBlocked);
+			fileList[i].size = getFileSizeFromName(tmpBlocked);
 		}
 		const wchar_t tmp[100] = { 0 };
 		get_temp_filew(tmp, L"archivepacker_header");
@@ -231,8 +231,8 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 		multi_packw(outFilename, headerPackedFilename2, headerPackProfile, headerPackProfile, headerPackProfile, headerPackProfile);
 		out = openWrite(dest);
 		fwrite(&count, sizeof(uint32_t), 1, out);
-		uint32_t headerSize = get_file_size_from_wname(outFilename);
-		uint32_t headerPackedSize = get_file_size_from_wname(headerPackedFilename2);
+		uint32_t headerSize = getFileSizeFromName(outFilename);
+		uint32_t headerPackedSize = getFileSizeFromName(headerPackedFilename2);
 		printf("\n archive header packed from %d to %d", headerSize, headerPackedSize);
 		if (headerPackedSize > UINT32_MAX) {
 			printf("\n archivepacker header too big %d", headerPackedSize);
@@ -240,7 +240,7 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 		}
 		//max size of header is UINT32_max
 		fwrite(&headerPackedSize, sizeof(uint32_t), 1, out);
-		append_to_filew(out, headerPackedFilename2);
+		appendFileToFile(out, headerPackedFilename2);
 		_wremove(headerPackedFilename2);
 		_wremove(headerPackedFilename1);
 		_wremove(outFilename);
@@ -252,11 +252,11 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 		const wchar_t* name = fileList[i].name;
 		if (solid) {
 			wprintf(L"\n append_to_filew: %s", name);
-			append_to_filew(out, name);
+			appendFileToFile(out, name);
 		}
 		else {
 			tmpDirNameOf(tmpBlocked, name, dir);
-			append_to_filew(out, tmpBlocked);
+			appendFileToFile(out, tmpBlocked);
 			_wremove(tmpBlocked);
 		}
 	}
@@ -312,7 +312,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir, bool solid) {
 		const char headerUnpacked2[500] = { 0 };
 		get_temp_filew(headerUnpacked2, L"archiveuntar_headerunpacked");
 
-		copy_chunkw(in, headerPacked, headerSize);
+		copyFileChunkToFile(in, headerPacked, headerSize);
 		multi_unpackw(headerPacked, headerUnpacked2);
 		//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 		FILE* headerFile = openRead(headerUnpacked2);
@@ -329,7 +329,7 @@ void archiveUntar(const wchar_t* src, wchar_t* dir, bool solid) {
 	// Read files
 	for (int i = 0; i < count; i++) {
 		createDirs(filenames[i].name, dir);
-		copy_chunkw(in, filenames[i].name, filenames[i].size);
+		copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
 		if (!solid) {
 			blockUnpackAndReplace(filenames[i].name);
 		}

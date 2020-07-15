@@ -47,7 +47,7 @@ void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {
 		memfileToFile(src, filename);
 		exit(1);
 	}
-	freMem(tmp);
+	freeMem(tmp);
 }
 
 memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
@@ -100,7 +100,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 		doDoubleCheck2(src, packedName, kind);
 	}
 	else {
-		freMem(packedName);
+		freeMem(packedName);
 	}
 	return under_limit;
 }
@@ -238,8 +238,8 @@ static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 			return -res;
 		}
 	}
-	uint64_t size1 = get_file_size_from_wname(s1);
-	uint64_t size2 = get_file_size_from_wname(s2);
+	uint64_t size1 = getFileSizeFromName(s1);
+	uint64_t size2 = getFileSizeFromName(s2);
 	if (size1 < size2) {
 		return 1;
 	}

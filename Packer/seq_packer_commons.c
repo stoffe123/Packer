@@ -35,9 +35,9 @@ uint64_t getBundleSize(seqPackBundle b) {
 
 void freBundle(seqPackBundle b) {
 
-		freMem(b.main);
-		freMem(b.seqlens);
-		freMem(b.offsets);
-		freMem(b.distances);
+		freeMem(b.main);
+		freeMem(b.seqlens);
+		freeMem(b.offsets);
+		freeMem(b.distances);
 	
 }

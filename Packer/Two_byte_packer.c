@@ -213,9 +213,9 @@ void two_byte_packw(const wchar_t* src, const wchar_t* dest, packProfile prof)
 	profile = prof;
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = twoBytePack(srcm, prof);
-	freMem(srcm);
+	freeMem(srcm);
 	memfileToFile(dstm, dest);
-	freMem(dstm);
+	freeMem(dstm);
 }
 
 

@@ -173,7 +173,7 @@ void getPackCandidate(packCandidate_t* bestCandidate, memfile* m, int packType) 
 void getPackCandidateAndFree(packCandidate_t* bestCandidate, memfile* m, int packType) {
 	getPackCandidate2(bestCandidate, m, packType, getMemSize(m));
 	if (bestCandidate->filename != m) {
-		freMem(m);
+		freeMem(m);
 	}
 }
 
@@ -181,7 +181,7 @@ void getPackCandidate3AndFree(packCandidate_t* bestCandidate, memfile* m, int pa
 	bool canonicalHeaderCase) {
 	getPackCandidate3(bestCandidate, m, packType, canonicalHeaderCase);
 	if (bestCandidate->filename != m) {
-		freMem(m);
+		freeMem(m);
 	}
 }
 
@@ -319,7 +319,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			pack_type = setKthBit(pack_type, RLE_BIT);
 		}
 		else {
-			freMem(before_seqpack);
+			freeMem(before_seqpack);
 			before_seqpack = getEmptyMem(L"multipacker_beforeseqpack");
 			deepCopyMem(src, before_seqpack);
 		}
@@ -393,7 +393,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			if (size_after_seq < before_seqpack_size) {
 				//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 				pack_type = setKthBit(pack_type, 7);
-				freMem(before_seqpack);
+				freeMem(before_seqpack);
 				before_seqpack = NULL;
 				if (getMemSize(mb.main) > profile.sizeMinForCanonical) {
 					uint64_t size_before_canonical = getMemSize(mb.main);
@@ -401,7 +401,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 					uint64_t size_after_canonical = getMemSize(canonicalled);
 					if (size_after_canonical < size_before_canonical) {
 						pack_type = setKthBit(pack_type, 0);
-						freMem(mb.main);
+						freeMem(mb.main);
 						mb.main = canonicalled;
 					}					
 				}
@@ -416,7 +416,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 		else {
 			//to small for seqpack		
-			freMem(mb.main);
+			freeMem(mb.main);
 			mb.main = before_seqpack;
 		}
 	}
@@ -429,15 +429,15 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	pack_type = tar(dst, mb, pack_type, storePackType);
 
 	if (mb.main != before_seqpack) {
-		freMem(before_seqpack);
+		freeMem(before_seqpack);
 	}
 
 	if (mb.main != src) {
-		freMem(mb.main);
+		freeMem(mb.main);
 	}
-	freMem(mb.seqlens);
-	freMem(mb.offsets);
-	freMem(mb.distances);
+	freeMem(mb.seqlens);
+	freeMem(mb.offsets);
+	freeMem(mb.distances);
 
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
@@ -501,7 +501,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 			deepCopyMem(seq_dst, dst);
 		}
 	}
-	freMem(seq_dst);
+	freeMem(seq_dst);
 	return dst;
 }
 
@@ -514,9 +514,9 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, packProfile profi
 	uint8_t pt = multiPackInternal(srcm, dstm, profile, seqlensProfile, offsetsProfile, 
 		distancesProfile, false);
 
-	freMem(srcm);
+	freeMem(srcm);
 	memfileToFile(dstm, dst);
-	freMem(dstm);
+	freeMem(dstm);
 	return pt;
 }
 
@@ -541,8 +541,8 @@ void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw) {
 	memfile* srcm = getMemfileFromFile(srcw);	
 	memfile* dstm = multiUnpackInternal(srcm, 0, true);
 	memfileToFile(dstm, dstw);
-	freMem(srcm);
-	freMem(dstm);
+	freeMem(srcm);
+	freeMem(dstm);
 }
 
 void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, packProfile seqlenProfile,
@@ -553,8 +553,8 @@ void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, 
 	
 	multiPackInternal(srcm, dstm, profile, seqlenProfile, offsetProfile, distancesProfile, true);
 	memfileToFile(dstm, dstw);
-	freMem(srcm);
-	freMem(dstm);
+	freeMem(srcm);
+	freeMem(dstm);
 }
 
 void multiUnpackAndReplace(memfile* src, uint8_t packType) {

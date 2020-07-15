@@ -10,11 +10,11 @@ uint32_t getMemPos(memfile* m) {
 	return m->pos;
 }
 
-void reallocMem(memfile* mf, uint64_t size) {
-	assert(size >= mf->size, "wrong argument in memfile.reallocMem");	
-	assert(size > 0, "size=0 in memfile.c reallocmem");
-	assert(size < BLOCK_SIZE * 6, "size was too large in memfile.reallocMem");
-	mf->allocSize = size;
+void reallocMem(memfile* mf, uint64_t newAllocSize) {
+	assert(newAllocSize >= mf->size, "wrong argument in memfile.reallocMem");	
+	assert(newAllocSize > 0, "size=0 in memfile.c reallocmem");
+	assert(newAllocSize < BLOCK_SIZE * 6, "size was too large in memfile.reallocMem");
+	mf->allocSize = newAllocSize;
 	uint8_t* pt = realloc(mf->block, mf->allocSize);
 	if (pt != NULL) {
 		mf->block = pt;
@@ -81,7 +81,7 @@ const wchar_t* getMemName(memfile* m) {
 	//return NULL;
 }
 
-void freMem(memfile* mf) {
+void freeMem(memfile* mf) {
 	if (mf != NULL) {
 		free(mf->block);		
 		free(mf);
@@ -108,7 +108,7 @@ void rewindMem(memfile* m) {
 }
 
 memfile* getMemfileFromFile(const wchar_t* filename) {
-	uint64_t fileSize = get_file_size_from_wname(filename);	
+	uint64_t fileSize = getFileSizeFromName(filename);	
 	memfile* m = getMemfile(fileSize + 1, filename);
 	FILE* infil = openRead(filename);
 	uint64_t size = fread(getBlock(m), 1, fileSize, infil);
