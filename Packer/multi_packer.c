@@ -283,8 +283,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
 	memfile* before_seqpack = getMemfile(source_size, L"multipacker.before_seqpack");
-	deepCopyMem(src, before_seqpack);
-	getPackCandidate(&bestCandidate, before_seqpack, 0);
+	
+	getPackCandidate(&bestCandidate, src, 0);
 	uint8_t slimPackType = 0;
 	seqPackBundle mb;
 	mb.main = NULL;
@@ -311,6 +311,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			memfile* just_canonical = CanonicalEncodeMem(src);
 			getPackCandidateAndFree(&bestCandidate, just_canonical, 1);
 		}
+		memfile* before_seqpack = getEmptyMem(L"multipacker_beforeseqpack");
+		deepCopyMem(src, before_seqpack);
 		pack_type = packAndTest2(L"rle simple", before_seqpack, profile, pack_type, RLE_BIT);
 		
 		assert(getMemSize(before_seqpack) > 0, "before_seqpack size was 0 in multi_packer.c");
@@ -416,7 +418,12 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, mb, pack_type, storePackType);
 
-	freBundle(mb);
+	if (mb.main != src) {
+		freMem(mb.main);
+	}
+	freMem(mb.seqlens);
+	freMem(mb.offsets);
+	freMem(mb.distances);
 
 	printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
