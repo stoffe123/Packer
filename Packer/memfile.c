@@ -121,14 +121,7 @@ memfile* getMemfileFromFile(const wchar_t* filename) {
 }
 
 int fgetcc(memfile* mf) {
-	if (getMemPos(mf) >= getMemSize(mf)) {
-		return EOF;
-	}
-	else {
-		int res = mf->block[getMemPos(mf)];
-		incPos(mf);		
-		return res;
-	}
+	 return (mf->pos < mf->size) ? mf->block[mf->pos++] : EOF;	
 }
 
 int nextcc(memfile* mf) {

@@ -752,7 +752,7 @@ memfile* canonicalDecode(memfile* m) {
 }
 
 memfile* canonicalEncode(memfile* m) {
-    memfile* res = getMemfile((uint64_t)500 + getMemSize(m), L"canonical_dec");
+    memfile* res = getMemfile((uint64_t)500 + getMemSize(m), L"canonical_enc");
     CanonicalEncodeFile(m, res);
     return res;
 }
