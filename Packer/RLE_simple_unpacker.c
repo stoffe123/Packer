@@ -55,7 +55,7 @@ memfile* RleSimpleUnpack(memfile* m) {
 void RLE_simple_unpackw(const wchar_t* src, const wchar_t* dst) {
 	memfile* s = getMemfileFromFile(src);
 	memfile* res = RleSimpleUnpack(s);
-	fre(s);
+	freMem(s);
 	memfileToFile(res, dst);
-	fre(res);
+	freMem(res);
 }

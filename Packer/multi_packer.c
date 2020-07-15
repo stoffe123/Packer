@@ -488,9 +488,8 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	}
 	memfile* seq_dst; 
 	if (seqPacked) {		
-		memfile* tmp = seqUnpack(mb);				
-		freBundle(mb);
-		seq_dst = tmp;
+		seq_dst = seqUnpack(mb);				
+		freBundle(mb);		
 	}
 	else {
 		seq_dst = mb.main;		
@@ -526,9 +525,9 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, packProfile profi
 	uint8_t pt = multiPackInternal(srcm, dstm, profile, seqlensProfile, offsetsProfile, 
 		distancesProfile, false);
 
-	fre(srcm);
+	freMem(srcm);
 	memfileToFile(dstm, dst);
-	fre(dstm);
+	freMem(dstm);
 	return pt;
 }
 

@@ -47,7 +47,7 @@ void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {
 		memfileToFile(src, filename);
 		exit(1);
 	}
-	fre(tmp);
+	freMem(tmp);
 }
 
 memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
@@ -100,7 +100,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 		doDoubleCheck2(src, packedName, kind);
 	}
 	else {
-		fre(packedName);
+		freMem(packedName);
 	}
 	return under_limit;
 }
