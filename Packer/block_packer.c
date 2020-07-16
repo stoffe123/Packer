@@ -136,6 +136,7 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 
 	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
+	uint64_t totalRead = 0;
 	while (true) {
 
 		uint8_t packType;
@@ -143,18 +144,20 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 		if (fread(&packType, 1, 1, infil) == 0) {
 			break;
 		}
-		if (isKthBitSet(packType, 4)) {
+		if (isKthBitSet(packType, 4)) {			
 			copy_the_rest2(infil, tmp);
 		}
 		else {
 			uint32_t size = 0;
 			//3 bytes can handle block sizes up to 16777216‬
 			//note that these are the sizes of the compressed chunks!
+			checkAlloc(tmp, size);
 			fread(&size, 3, 1, infil);
 			copy_chunk_to_mem(infil, tmp, size);
+			
 		}				
 		memfile* tmp2 = multiUnpack(tmp, packType);
-
+		
 		freeMem(tmp);
 		append_mem_to_file(utfil, tmp2);
 
