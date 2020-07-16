@@ -127,16 +127,18 @@ void unpackAndReplace(const wchar_t* kind, memfile* src) {
 	freeMem(tmp);
 }
 
+memfile* unpackAndReplace2(const wchar_t* kind, memfile* src) {
+	memfile* tmp = unpackByKind(kind, src);
+	freeMem(src);
+	return tmp;
+}
+
 void TwoByteUnpackAndReplace(memfile* src) {
 	unpackAndReplace(L"twobyte", src);
 }
 
 void MultiUnpackAndReplace(memfile* src) {
 	unpackAndReplace(L"multi", src);
-}
-
-void CanonicalDecodeAndReplace(memfile* src) {
-	unpackAndReplace(L"canonical", src);
 }
 
 int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t size) {
@@ -467,6 +469,12 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	return pack_type;
 }
 
+memfile* multiUnpackAndReplace3(memfile* src, uint8_t packType) {
+	memfile* res = multiUnpack(src, packType);
+	freeMem(src);
+	return res;
+}
+
 memfile* multiUnpackAndReplace2(memfile* src) {
 	memfile* res = multiUnpack2(src);
 	freeMem(src);
@@ -492,7 +500,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	seqPackBundle mb = untar(in, pack_type);
 	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
-		CanonicalDecodeAndReplace(mb.main);
+		mb.main = unpackAndReplace2(L"canonical", mb.main); 
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
@@ -586,13 +594,6 @@ void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, 
 	freeMem(srcm);
 	freeMem(dstm);
 }
-
-void multiUnpackAndReplace(memfile* src, uint8_t packType) {
-	memfile* dst = multiUnpack(src, packType);
-	deepCopyMem(dst, src); // memory leak 
-}
-
-
 
 memfile* multiPack2(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {

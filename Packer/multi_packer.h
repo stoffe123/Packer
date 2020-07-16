@@ -14,7 +14,9 @@
 uint8_t multiPackFiles(const wchar_t* , const wchar_t* , packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile);
 
-void multiUnpackAndReplace(memfile* src, uint8_t pack_type);
+memfile* multiUnpackAndReplace2(memfile* src);
+
+memfile* multiUnpackAndReplace3(memfile* src, uint8_t packType);
 
 void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
 
