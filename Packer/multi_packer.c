@@ -467,6 +467,12 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	return pack_type;
 }
 
+memfile* multiUnpackAndReplace2(memfile* src) {
+	memfile* res = multiUnpack2(src);
+	freeMem(src);
+	return res;
+}
+
 // ------------------------------------------------------------------
 
 memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile) {
@@ -491,13 +497,13 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
 		if (isKthBitSet(pack_type, 1)) {
-			MultiUnpackAndReplace(mb.seqlens);
+			mb.seqlens = multiUnpackAndReplace2(mb.seqlens);
 		}
 		if (isKthBitSet(pack_type, 2)) {
-			MultiUnpackAndReplace(mb.offsets);
+			mb.offsets = multiUnpackAndReplace2(mb.offsets);
 		}
 		if (isKthBitSet(pack_type, 3)) {
-			MultiUnpackAndReplace(mb.distances);
+			mb.distances = multiUnpackAndReplace2(mb.distances);
 		}
 	}
 	memfile* seq_dst;
@@ -519,8 +525,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5
 			 dst = RleSimpleUnpack(seq_dst);			
 		}
-		else {
-		
+		else {		
 			dst = seq_dst;	
 		}
 	}
@@ -586,6 +591,8 @@ void multiUnpackAndReplace(memfile* src, uint8_t packType) {
 	memfile* dst = multiUnpack(src, packType);
 	deepCopyMem(dst, src); // memory leak 
 }
+
+
 
 memfile* multiPack2(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
