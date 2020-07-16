@@ -34,7 +34,7 @@ memfile* two_byte_unpack_internal(memfile* infil) {
 
 	two_byte_table_size = fgetcc(infil);
 	master_code = fgetcc(infil);
-	printf("\n mastercode:%d  two_byte_table_pos:%d", master_code, two_byte_table_size);
+	debug("\n mastercode:%d  two_byte_table_pos:%d", master_code, two_byte_table_size);
 	two_byte_table_size *= 3;
 
 	memRead(&two_byte_table[START_CODES_SIZE], two_byte_table_size, infil);

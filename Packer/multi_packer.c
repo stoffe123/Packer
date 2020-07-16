@@ -124,7 +124,7 @@ int packAndTest2(wchar_t* kind, memfile* src, packProfile profile, int pt, int b
 void unpackAndReplace(const wchar_t* kind, memfile* src) {	
 	memfile* tmp = unpackByKind(kind, src);
 	deepCopyMem(tmp, src);	
-	free(tmp);
+	freeMem(tmp);
 }
 
 void TwoByteUnpackAndReplace(memfile* src) {
@@ -328,9 +328,25 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 
 		assert(getMemSize(before_seqpack) > 0, "before_seqpack size was 0 in multi_packer.c");
+		
+		
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
-			pack_type = packAndTest2(L"twobyte", before_seqpack, profile, pack_type, TWOBYTE_BIT);			
+			memfile* afterTwoByte = twoBytePack(before_seqpack, profile);
+			uint64_t sizeAfterTwoByte= getMemSize(afterTwoByte);
+			double packed_ratio = ((double)sizeAfterTwoByte / (double)getMemSize(before_seqpack)) * 100.0;
+			if (packed_ratio < (double)profile.twobyte_ratio) {
+				freeMem(before_seqpack);
+				before_seqpack = afterTwoByte;
+				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
+			}
+			else {
+				freeMem(afterTwoByte);
+			}
+			
+			//pack_type = packAndTest2(L"twobyte", before_seqpack, profile, pack_type, TWOBYTE_BIT);			
 		}
+
+
 		getPackCandidate3(&bestCandidate, before_seqpack, pack_type, canonicalHeaderCase);
 		uint64_t before_seqpack_size = getMemSize(before_seqpack);
 
