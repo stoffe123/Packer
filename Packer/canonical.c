@@ -624,14 +624,13 @@ static int AssignCanonicalCodes(canonical_list_t* cl)
 static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 {
     
-    memfile* headerFile = getMemfile(260, L"canonicalHeader");
+    memfile* headerFile = getMemfile(257, L"canonicalHeader");
     for (int i = 0; i < NUM_CHARS; i++)
-    {
-        byte_t len = cl[i].codeLen;
-        fputcc(len, headerFile);
+    {        
+        fputcc(cl[i].codeLen, headerFile);
     }
     rewindMem(headerFile);
-    memfile* packedFilename = getEmptyMem(L"canicalHeaderPacked");
+    memfile* packedFilename = getMemfile(300, L"canicalHeaderPacked");
     int packType = multiPackAndReturnPackType(headerFile, packedFilename, profile, profile, profile, profile);
     uint64_t orgSize = getMemSize(headerFile);
     uint64_t packedSize = getMemSize(packedFilename);
@@ -641,8 +640,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     memfile* fileToRead;
     if (packedSize <= 2 || packedSize >= 256) {
         printf("\n canonical header pack was too large %d original %d => using store", packedSize, orgSize);
-        packedSize = 0; // flag for store
-        freeMem(packedFilename);
+        packedSize = 0; // flag for store      
         fileToRead = headerFile;
     }
     else {
@@ -669,7 +667,6 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
         BitFilePutChar(packedSize, bfp);
         BitFilePutChar(packType, bfp);
     }
-
     int ch;
     rewindMem(fileToRead);
     while ((ch = fgetcc(fileToRead)) != EOF) {
@@ -712,7 +709,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
         bytesToCopy = size;
         packType = packTypeForHalfbyteRlePack(0);
     }
-    memfile* file = getMemfile(260, L"headerPacked");
+    memfile* file = getMemfile(257, L"headerPacked");
     for (int i = 0; i < bytesToCopy; i++) {
         uint8_t ch = BitFileGetChar(bfp);
         fputcc(ch, file);
