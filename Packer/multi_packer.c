@@ -119,12 +119,6 @@ int packAndTest2(wchar_t* kind, memfile* src, packProfile profile, int pt, int b
 	return pt;
 }
 
-void unpackAndReplace(const wchar_t* kind, memfile* src) {	
-	memfile* tmp = unpackByKind(kind, src);
-	deepCopyMem(tmp, src);	
-	freeMem(tmp);
-}
-
 memfile* unpackAndReplace2(const wchar_t* kind, memfile* src) {
 	memfile* tmp = unpackByKind(kind, src);
 	freeMem(src);
