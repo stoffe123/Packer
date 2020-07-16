@@ -26,10 +26,9 @@ append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 }
 
 void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_to_copy) {	
-	uint8_t ch;
+	int ch;
 	for (int i = 0; i < size_to_copy; i++) {
-		size_t bytes_got = fread(&ch, 1, 1, source_file);
-		if (bytes_got == 0) {
+		if ((ch = fgetc(source_file)) == EOF) {
 			break;
 		}
 		fputcc(ch, dest_filename);
