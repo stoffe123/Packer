@@ -78,28 +78,36 @@ seqPackBundle untar(memfile* in, uint8_t packType) {
 
 
 uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool storePackType) {
-	
+
 	rewindMem(outFile);
-	uint32_t size_seqlens = 0;
-	uint32_t size_offsets = 0;
-	uint32_t size_distances = 0;
+	uint64_t size_seqlens = 0;
+	uint64_t size_offsets = 0;
+	uint64_t size_distances = 0;
 
 	if (storePackType) {
 		fputcc(packType, outFile);
 	}
-	if (isKthBitSet(packType, 7)) {
+	bool seqPacked = isKthBitSet(packType, 7);
+
+
+	if (seqPacked) {
 		size_seqlens = getMemSize(mf_arr.seqlens);
 		size_offsets = getMemSize(mf_arr.offsets);
 		size_distances = getMemSize(mf_arr.distances);
-
+	}
+	uint64_t sizeOut = getMemSize(mf_arr.main) + size_seqlens + size_offsets + size_distances;
+	checkAlloc(outFile, sizeOut);
+	if (seqPacked) {
 		memWrite(&size_seqlens, 3, outFile);
 		memWrite(&size_offsets, 3, outFile);
 		memWrite(&size_distances, 3, outFile);
+
 
 		append_to_mem(outFile, mf_arr.seqlens);
 		append_to_mem(outFile, mf_arr.offsets);
 		append_to_mem(outFile, mf_arr.distances);
 	}
+
 	append_to_mem(outFile, mf_arr.main);
 	return packType;
 }

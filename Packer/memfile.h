@@ -60,6 +60,8 @@ bool memsEqual(memfile* m1, memfile* m2);
 
 void copy_chunk_mem(memfile* source, memfile* dest, uint64_t size);
 
+void append_to_mem(memfile* main_file, memfile* append_file);
+
 void append_mem_to_file(FILE* main_file, memfile* append_file);
 
 #endif
