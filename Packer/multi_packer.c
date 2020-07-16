@@ -38,7 +38,7 @@ bool isSeqPacked(int packType) {
 }
 
 void copy_the_rest_mem(memfile* in, memfile* dest) {
-
+	//change to memwrite  ... improve performance
 	int ch;
 	while ((ch = fgetcc(in)) != EOF) {
 		fputcc(ch, dest);
@@ -103,12 +103,10 @@ uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool store
 		memWrite(&size_offsets, 3, outFile);
 		memWrite(&size_distances, 3, outFile);
 
-
 		append_to_mem(outFile, mf_arr.seqlens);
 		append_to_mem(outFile, mf_arr.offsets);
 		append_to_mem(outFile, mf_arr.distances);
 	}
-
 	append_to_mem(outFile, mf_arr.main);
 	return packType;
 }
@@ -131,14 +129,6 @@ memfile* unpackAndReplace2(const wchar_t* kind, memfile* src) {
 	memfile* tmp = unpackByKind(kind, src);
 	freeMem(src);
 	return tmp;
-}
-
-void TwoByteUnpackAndReplace(memfile* src) {
-	unpackAndReplace(L"twobyte", src);
-}
-
-void MultiUnpackAndReplace(memfile* src) {
-	unpackAndReplace(L"multi", src);
 }
 
 int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t size) {
@@ -523,7 +513,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 		seq_dst = mb.main;		
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
-		TwoByteUnpackAndReplace(seq_dst);
+		seq_dst = unpackAndReplace2(L"twobyte", seq_dst);
 	}
 	if (isCanonicalHeaderPacked(pack_type)) {
 		
