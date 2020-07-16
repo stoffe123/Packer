@@ -304,7 +304,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 		else {
 			freeMem(before_seqpack);
-			before_seqpack = getEmptyMem(L"multipacker_beforeseqpack");
+			before_seqpack = getMemfile(source_size, L"multipacker_beforeseqpack");
 			deepCopyMem(src, before_seqpack);
 		}
 

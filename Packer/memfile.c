@@ -33,11 +33,11 @@ void reallocMem(memfile* mf, uint64_t newAllocSize) {
 	}
 }
 
-void checkAlloc(memfile* mf, int pos) {
-	if (pos >= (mf->allocSize)) {
+void checkAlloc(memfile* mf, int allocSizeNeeded) {
+	if (allocSizeNeeded >= (mf->allocSize)) {
 		uint64_t newAllocSize = mf->allocSize + 16384;
-		if (pos > newAllocSize) {
-			newAllocSize = pos;
+		if (allocSizeNeeded > newAllocSize) {
+			newAllocSize = allocSizeNeeded;
 		}
 		reallocMem(mf, newAllocSize);
 	}
@@ -183,15 +183,18 @@ void deepCopyMem(memfile* src, memfile* dst) {
 	if (src == dst) {
 		return;
 	}
-	if (dst->allocSize < src->size) {
-		dst->allocSize = src->size;
-	}	
+	uint64_t size = src->size;		
+	if (dst->block == NULL) {
+		dst->block = malloc(size);
+	}
+	else {
+		checkAlloc(dst, size);
+	}
 	dst->pos = src->pos;
-	dst->size = src->size;
+	dst->size = size;
 	wcscpy(dst->name, src->name);
-	free(dst->block);
-	dst->block = malloc(src->size);
-	for (int i = 0; i < src->size; i++) {
+
+	for (int i = 0; i < size; i++) {
 		dst->block[i] = src->block[i];
 	}
 }
