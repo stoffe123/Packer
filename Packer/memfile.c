@@ -193,9 +193,9 @@ void deepCopyMem(memfile* src, memfile* dst) {
 	dst->pos = src->pos;
 	dst->size = size;
 	wcscpy(dst->name, src->name);
-
+	uint8_t* src_block = src->block;
 	for (int i = 0; i < size; i++) {
-		dst->block[i] = src->block[i];
+		dst->block[i] = src_block[i];
 	}
 }
 
