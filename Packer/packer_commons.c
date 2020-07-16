@@ -36,6 +36,7 @@ void doDoubleCheck2(memfile* src, memfile* packedName, const wchar_t* kind) {
 	}
 	//has to fre src 
 	deepCopyMem(packedName, src);
+	freeMem(packedName);
 }
 
 void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {

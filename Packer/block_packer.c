@@ -18,10 +18,12 @@ static packProfile seqlenProfile = {
 .twobyte_threshold_divide = 2233,
 .twobyte_threshold_min = 185,
 .seqlenMinLimit3 = 43,
+.seqlenMinLimit4 = 57360,
 .winsize = 78725,
 .sizeMaxForCanonicalHeaderPack = 175,
 .sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 30
+.sizeMinForCanonical = 30,
+.sizeMaxForSuperslim = 16384
 },
 
 offsetProfile = {
@@ -32,10 +34,12 @@ offsetProfile = {
 .twobyte_threshold_divide = 2520,
 .twobyte_threshold_min = 384,
 .seqlenMinLimit3 = 82,
+.seqlenMinLimit4 = 57360,
 .winsize = 91812,
 .sizeMaxForCanonicalHeaderPack = 530,
 .sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 261 },
+.sizeMinForCanonical = 261,
+.sizeMaxForSuperslim = 16384 },
 
 distanceProfile = {
 .rle_ratio = 71,
@@ -45,10 +49,12 @@ distanceProfile = {
 .twobyte_threshold_divide = 3972,
 .twobyte_threshold_min = 37,
 .seqlenMinLimit3 = 35,
+.seqlenMinLimit4 = 57360,
 .winsize = 80403,
 .sizeMaxForCanonicalHeaderPack = 256,
 .sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 300 };
+.sizeMinForCanonical = 300,
+.sizeMaxForSuperslim = 16384 };
 
 // tar contents of src => utfil
 append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
