@@ -203,8 +203,9 @@ bool memsEqual(memfile* m1, memfile* m2) {
 	if (m1->size != m2->size) {
 		return false;
 	}
+	uint8_t* m2_block = m2->block;
 	for (int i = 0; i < m1->size; i++) {
-		if (m1->block[i] != m2->block[i]) {
+		if (m1->block[i] != m2_block[i]) {
 			return false;
 		}
 	}
@@ -213,10 +214,9 @@ bool memsEqual(memfile* m1, memfile* m2) {
 
 void copy_chunk_mem(memfile* source, memfile* dest, uint64_t size) {
 	checkAlloc(dest, dest->pos + size);
-	uint8_t* dest_ar = dest->block;
 	uint8_t* source_ar = source->block;
 	for (int i = 0; i < size; i++) {
-		dest_ar[dest->pos++] = source_ar[source->pos++];
+		dest->block[dest->pos++] = source_ar[source->pos++];
 	}
 	syncMemSize(dest);
 }
@@ -242,11 +242,15 @@ void append_mem_to_file(FILE* main_file, memfile* append_file) {
 	}
 }
 
-void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_to_copy) {
+void copy_chunk_to_mem(FILE* source_file, memfile* dest, uint64_t size) {
 	int ch;
+	checkAlloc(dest, dest->pos + size);
 	uint64_t i = 0;
-	while (i++ < size_to_copy && (ch = fgetc(source_file)) != EOF) {
-		fputcc(ch, dest_filename);
+	while (i < size && (ch = fgetc(source_file)) != EOF) {
+		dest->block[dest->pos + (i++)] = ch;
 	}
+	setPos(dest, dest->pos + i);
+	syncMemSize(dest);
+
 }
 
