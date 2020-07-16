@@ -12,6 +12,7 @@
 #include "canonical.h"
 #include "halfbyte_rle_packer.h"
 #include "seq_packer_commons.h"
+#include "memfile.h"
 
 #define META_SIZE_MAX 1048575
 
@@ -322,7 +323,6 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		uint64_t size_after_seq = UINT64_MAX;
 		if (source_size > profile.sizeMinForSeqPack) {
 			printf("\n now trying seqPack of file w size %d", getMemSize(before_seqpack));
-			 free(mb.main);
 			 mb = seqPackSep(before_seqpack, profile);
 			
 			if (DOUBLE_CHECK_PACK) {				
@@ -405,12 +405,13 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	wprintf(L"\nWinner is %s packtype %d  packed %d > %d", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
 	pack_type = bestCandidate.packType;	
 	if (bestCandidate.filename != mb.main) {
+		freeMem(mb.main);
 		mb.main = bestCandidate.filename;
 	}
 	printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, mb, pack_type, storePackType);
 
-	if (mb.main != before_seqpack) {
+	if (mb.main != before_seqpack && before_seqpack != src) {
 		freeMem(before_seqpack);
 	}
 

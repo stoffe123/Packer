@@ -10,6 +10,14 @@ uint32_t getMemPos(memfile* m) {
 	return m->pos;
 }
 
+
+
+void syncMemSize(memfile* m) { //internal
+	if (m->pos > m->size) {
+		m->size = m->pos;
+	}
+}
+
 void reallocMem(memfile* mf, uint64_t newAllocSize) {
 	assert(newAllocSize >= mf->size, "wrong argument in memfile.reallocMem");	
 	assert(newAllocSize > 0, "size=0 in memfile.c reallocmem");
@@ -27,7 +35,11 @@ void reallocMem(memfile* mf, uint64_t newAllocSize) {
 
 void checkAlloc(memfile* mf, int pos) {
 	if (pos >= (mf->allocSize)) {
-		reallocMem(mf, mf->allocSize + 8192);
+		uint64_t newAllocSize = mf->allocSize + 16384;
+		if (pos > newAllocSize) {
+			newAllocSize = pos;
+		}
+		reallocMem(mf, newAllocSize);
 	}
 }
 
@@ -196,24 +208,28 @@ bool memsEqual(memfile* m1, memfile* m2) {
 	return true;
 }
 
-void copy_chunk_mem(memfile* source_file, memfile* dest, uint64_t size) {
+void copy_chunk_mem(memfile* source, memfile* dest, uint64_t size) {
 	checkAlloc(dest, dest->pos + size);
+	uint8_t* dest_ar = dest->block;
+	uint8_t* source_ar = source->block;
 	for (int i = 0; i < size; i++) {
-		dest->block[dest->pos++] = source_file->block[source_file->pos++];
+		dest_ar[dest->pos++] = source_ar[source->pos++];
 	}
-	if (dest->pos > dest->size) {
-		setSize(dest, dest->pos);
-	}
+	syncMemSize(dest);
 }
 
 
 void append_to_mem(memfile* main_file, memfile* append_file) {
-	rewindMem(append_file);
-	int ch;
-	while ((ch = fgetcc(append_file)) != EOF) {
-		fputcc(ch, main_file);
-	}
+		
+	uint8_t* ar = append_file->block;
+	uint64_t size = getMemSize(append_file);
+	checkAlloc(main_file, main_file->pos + size);
+	for (int i = 0; i < size; i++) {
+		main_file->block[main_file->pos++] = ar[i];
+	}	
+	syncMemSize(main_file);
 }
+
 
 void append_mem_to_file(FILE* main_file, memfile* append_file) {
 	uint64_t size = getMemSize(append_file);
