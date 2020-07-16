@@ -43,16 +43,6 @@ void copy_the_rest_mem(memfile* in, memfile* dest) {
 	}
 }
 
-void copy_chunk_mem(memfile* source_file, memfile* dest_filename, uint64_t size_to_copy) {	
-
-	for (int i = 0; i < size_to_copy; i++) {
-		int ch = fgetcc(source_file);
-		if (ch == EOF) {
-			break;
-		}
-		fputcc(ch, dest_filename);
-	}	
-}
 
 
 seqPackBundle untar(memfile* in, uint8_t packType) {
@@ -85,13 +75,6 @@ seqPackBundle untar(memfile* in, uint8_t packType) {
 }
 
 
-void append_to_mem(memfile* main_file, memfile* append_file) {	
-	rewindMem(append_file);
-	int ch;
-	while ((ch = fgetcc(append_file)) != EOF) {
-		fputcc(ch, main_file);
-	}
-}
 
 uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool storePackType) {
 	

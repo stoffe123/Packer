@@ -9,14 +9,6 @@
 #include "memfile.h"
 
 
-void append_mem_to_file(FILE* main_file, memfile* append_file) {	
-	
-	int ch;
-	rewindMem(append_file);
-	while ((ch = fgetcc(append_file)) != EOF) {
-		fputc(ch, main_file);
-	}
-}
 
 // tar contents of src => utfil
 append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {

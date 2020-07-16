@@ -195,3 +195,31 @@ bool memsEqual(memfile* m1, memfile* m2) {
 	}
 	return true;
 }
+
+void copy_chunk_mem(memfile* source_file, memfile* dest, uint64_t size) {
+	checkAlloc(dest, dest->pos + size);
+	for (int i = 0; i < size; i++) {
+		dest->block[dest->pos++] = source_file->block[source_file->pos++];
+	}
+	if (dest->pos > dest->size) {
+		setSize(dest, dest->pos);
+	}
+}
+
+
+void append_to_mem(memfile* main_file, memfile* append_file) {
+	rewindMem(append_file);
+	int ch;
+	while ((ch = fgetcc(append_file)) != EOF) {
+		fputcc(ch, main_file);
+	}
+}
+
+void append_mem_to_file(FILE* main_file, memfile* append_file) {
+	uint64_t size = getMemSize(append_file);
+	uint8_t* ar = append_file->block;
+	for (int i=0; i<size; i++) {	
+		fputc(ar[i], main_file);
+	}
+}
+
