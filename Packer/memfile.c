@@ -242,3 +242,11 @@ void append_mem_to_file(FILE* main_file, memfile* append_file) {
 	}
 }
 
+void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_to_copy) {
+	int ch;
+	uint64_t i = 0;
+	while (i++ < size_to_copy && (ch = fgetc(source_file)) != EOF) {
+		fputcc(ch, dest_filename);
+	}
+}
+

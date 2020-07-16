@@ -9,6 +9,46 @@
 #include "memfile.h"
 
 
+//meta testsuit 1170029  / 33s
+static packProfile seqlenProfile = {
+.rle_ratio = 31,
+.twobyte_ratio = 97,
+.recursive_limit = 180,
+.twobyte_threshold_max = 5226,
+.twobyte_threshold_divide = 2233,
+.twobyte_threshold_min = 185,
+.seqlenMinLimit3 = 43,
+.winsize = 78725,
+.sizeMaxForCanonicalHeaderPack = 175,
+.sizeMinForSeqPack = 2600,
+.sizeMinForCanonical = 30
+},
+
+offsetProfile = {
+.rle_ratio = 74,
+.twobyte_ratio = 95,
+.recursive_limit = 61,
+.twobyte_threshold_max = 11404,
+.twobyte_threshold_divide = 2520,
+.twobyte_threshold_min = 384,
+.seqlenMinLimit3 = 82,
+.winsize = 91812,
+.sizeMaxForCanonicalHeaderPack = 530,
+.sizeMinForSeqPack = 2600,
+.sizeMinForCanonical = 261 },
+
+distanceProfile = {
+.rle_ratio = 71,
+.twobyte_ratio = 100,
+.recursive_limit = 20,
+.twobyte_threshold_max = 3641,
+.twobyte_threshold_divide = 3972,
+.twobyte_threshold_min = 37,
+.seqlenMinLimit3 = 35,
+.winsize = 80403,
+.sizeMaxForCanonicalHeaderPack = 256,
+.sizeMinForSeqPack = 2600,
+.sizeMinForCanonical = 300 };
 
 // tar contents of src => utfil
 append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
@@ -25,15 +65,7 @@ append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 	append_mem_to_file(utfil, src);
 }
 
-void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_to_copy) {	
-	int ch;
-	for (int i = 0; i < size_to_copy; i++) {
-		if ((ch = fgetc(source_file)) == EOF) {
-			break;
-		}
-		fputcc(ch, dest_filename);
-	}	
-}
+
 
 //----------------------------------------------------------------------------------------
 
@@ -60,46 +92,6 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 		chunkSize = getMemSize(chunkFilename);
 
 		memfile* packedFilename = getEmptyMem(L"blockpacker_packed");
-
-		//meta testsuit 1170029  / 33s
-		packProfile seqlenProfile = getPackProfile();
-		seqlenProfile.rle_ratio = 31;
-		seqlenProfile.twobyte_ratio = 97;
-		seqlenProfile.recursive_limit = 180;
-		seqlenProfile.twobyte_threshold_max = 5226;
-		seqlenProfile.twobyte_threshold_divide = 2233;
-		seqlenProfile.twobyte_threshold_min = 185;
-		seqlenProfile.seqlenMinLimit3 = 43;
-		seqlenProfile.winsize = 78725;
-		seqlenProfile.sizeMaxForCanonicalHeaderPack = 175;
-		seqlenProfile.sizeMinForSeqPack = 2600;
-		seqlenProfile.sizeMinForCanonical = 30;
-
-		packProfile offsetProfile = getPackProfile();
-		offsetProfile.rle_ratio = 74;
-		offsetProfile.twobyte_ratio = 95;
-		offsetProfile.recursive_limit = 61;
-		offsetProfile.twobyte_threshold_max = 11404;
-		offsetProfile.twobyte_threshold_divide = 2520;
-		offsetProfile.twobyte_threshold_min = 384;
-		offsetProfile.seqlenMinLimit3 = 82;
-		offsetProfile.winsize = 91812;
-		offsetProfile.sizeMaxForCanonicalHeaderPack = 530;
-		offsetProfile.sizeMinForSeqPack = 2600;
-		offsetProfile.sizeMinForCanonical = 261;
-
-		packProfile distanceProfile = getPackProfile();
-		distanceProfile.rle_ratio = 71;
-		distanceProfile.twobyte_ratio = 100;
-		distanceProfile.recursive_limit = 20;
-		distanceProfile.twobyte_threshold_max = 3641;
-		distanceProfile.twobyte_threshold_divide = 3972;
-		distanceProfile.twobyte_threshold_min = 37;
-		distanceProfile.seqlenMinLimit3 = 35;
-		distanceProfile.winsize = 80403;
-		distanceProfile.sizeMaxForCanonicalHeaderPack = 256;
-		distanceProfile.sizeMinForSeqPack = 2600;
-		distanceProfile.sizeMinForCanonical = 300;
 
 		printf("\ blockpack multipack of chunk");
 		uint8_t packType = multiPackAndReturnPackType(chunkFilename, packedFilename, profile, seqlenProfile,
