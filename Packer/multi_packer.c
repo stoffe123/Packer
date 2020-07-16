@@ -251,6 +251,11 @@ int packTypeRlePlusTwobyte() {
 	return pt;
 }
 
+bool belowRatio(uint64_t packedSize, uint64_t orgSize, int ratio) {
+	double packed_ratio = ((double)packedSize / (double)orgSize) * 100.0;
+	return (packed_ratio < (double)ratio);
+}
+
 /* ----------------------------------------------------------------------------------------
 
  Bit layout packtype
@@ -316,9 +321,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		}
 
 		memfile* before_seqpack = RleSimplePack(src);
-		uint64_t sizeAfterRle = getMemSize(before_seqpack);
-		double packed_ratio = ((double)sizeAfterRle / (double)source_size) * 100.0;
-		if (packed_ratio < (double)profile.rle_ratio) {
+		uint64_t sizeAfterRle = getMemSize(before_seqpack);		
+		if (belowRatio(sizeAfterRle, source_size, profile.rle_ratio)) {
 			pack_type = setKthBit(pack_type, RLE_BIT);
 		}
 		else {
@@ -332,9 +336,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		
 		if (source_size > profile.sizeMinForSeqPack  && profile.rle_ratio > 0) {
 			memfile* afterTwoByte = twoBytePack(before_seqpack, profile);
-			uint64_t sizeAfterTwoByte= getMemSize(afterTwoByte);
-			double packed_ratio = ((double)sizeAfterTwoByte / (double)getMemSize(before_seqpack)) * 100.0;
-			if (packed_ratio < (double)profile.twobyte_ratio) {
+			uint64_t sizeAfterTwoByte= getMemSize(afterTwoByte);			
+			if (belowRatio(sizeAfterTwoByte, getMemSize(before_seqpack), profile.twobyte_ratio)) {
 				freeMem(before_seqpack);
 				before_seqpack = afterTwoByte;
 				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
@@ -468,13 +471,14 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 
 memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile) {
 	rewindMem(in);
-	memfile* dst = getMemfile(getMemSize(in), L"multiunpack_dst");
+	memfile* dst;
 	
 	if (readPackTypeFromFile) {
 		pack_type = fgetcc(in);
 	}
 	if (pack_type == 0) {
 		printf("\n  UNSTORE!!  ");
+		dst = getMemfile(getMemSize(in), L"multiunpack_dst");
 		copy_the_rest_mem(in, dst);
 		return dst;
 	}
@@ -496,7 +500,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 			MultiUnpackAndReplace(mb.distances);
 		}
 	}
-	memfile* seq_dst; 
+	memfile* seq_dst;
 	if (seqPacked) {		
 		seq_dst = seqUnpack(mb);				
 		freBundle(mb);		
@@ -508,21 +512,21 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 		TwoByteUnpackAndReplace(seq_dst);
 	}
 	if (isCanonicalHeaderPacked(pack_type)) {
-		memfile* tmp = halfbyteRleUnpack(seq_dst, getKindFromPackType(pack_type));
-		deepCopyMem(tmp, dst);
-		free(tmp);
+		
+		 dst = halfbyteRleUnpack(seq_dst, getKindFromPackType(pack_type));
 	}
 	else {
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5
-			memfile* tmp = RleSimpleUnpack(seq_dst);
-			deepCopyMem(tmp, dst);
-			free(tmp);
+			 dst = RleSimpleUnpack(seq_dst);			
 		}
 		else {
-			deepCopyMem(seq_dst, dst);
+		
+			dst = seq_dst;	
 		}
 	}
-	freeMem(seq_dst);
+	if (dst != seq_dst) {
+		freeMem(seq_dst);
+	}
 	return dst;
 }
 
