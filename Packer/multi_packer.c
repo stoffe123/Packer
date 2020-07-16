@@ -30,6 +30,7 @@ typedef struct packCandidate_t {
 	memfile* filename;
 	unsigned char packType;
 	uint64_t size;
+	bool canBeFreed;
 } packCandidate_t;
 
 bool isSeqPacked(int packType) {
@@ -140,9 +141,13 @@ void CanonicalDecodeAndReplace(memfile* src) {
 
 int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t size) {
 	if (size < bestCandidate->size) {
+		if (bestCandidate->canBeFreed) {
+			freeMem(bestCandidate->filename);
+		}
 		bestCandidate->filename = m;
 		bestCandidate->size = size;
 		bestCandidate->packType = packType;
+		bestCandidate->canBeFreed = false;
 	}
 	
 }
@@ -167,6 +172,9 @@ void getPackCandidateAndFree(packCandidate_t* bestCandidate, memfile* m, int pac
 	if (bestCandidate->filename != m) {
 		freeMem(m);
 	}
+	else {
+		bestCandidate->canBeFreed = true;
+	}
 }
 
 void getPackCandidate3AndFree(packCandidate_t* bestCandidate, memfile* m, int packType, 
@@ -174,6 +182,9 @@ void getPackCandidate3AndFree(packCandidate_t* bestCandidate, memfile* m, int pa
 	getPackCandidate3(bestCandidate, m, packType, canonicalHeaderCase);
 	if (bestCandidate->filename != m) {
 		freeMem(m);
+	}
+	else {
+		bestCandidate->canBeFreed = true;
 	}
 }
 
