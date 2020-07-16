@@ -385,7 +385,10 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 						pack_type = setKthBit(pack_type, 0);
 						freeMem(mb.main);
 						mb.main = canonicalled;
-					}					
+					}
+					else {
+						freeMem(canonicalled);
+					}
 				}
 				getPackCandidate2(&bestCandidate, mb.main, pack_type, getMemSize(mb.main) + meta_size);
 			}
