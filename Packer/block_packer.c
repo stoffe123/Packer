@@ -46,7 +46,6 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	FILE* infil = openRead(src);
 	uint64_t chunkSize, read_size;
 	do {
-		memfile* chunkFilename = getEmptyMem(L"blockpacker_chunk");		
 		read_size = BLOCK_SIZE - profile.blockSizeMinus * (uint64_t)10000;
 
 		assert(read_size < 16777215, "too large blocksize must be < 16777215");
@@ -57,6 +56,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 			read_size--;
 		}
 		printf("\n Real blocksize used %d", read_size);
+		memfile* chunkFilename = getMemfile(read_size, L"blockpacker_chunk");		
 		copy_chunk_to_mem(infil, chunkFilename, read_size);
 		chunkSize = getMemSize(chunkFilename);
 
