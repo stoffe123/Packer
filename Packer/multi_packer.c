@@ -119,6 +119,8 @@ memfile* unpackAndReplace2(const wchar_t* kind, memfile* src) {
 }
 
 int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t size) {
+	assert(getMemSize(m) < BLOCK_SIZE && size < BLOCK_SIZE, "multi_packer candidate size over BLOCK_SIZE");
+
 	if (size < bestCandidate->size) {
 		if (bestCandidate->canBeFreed) {
 			freeMem(bestCandidate->filename);
@@ -126,7 +128,7 @@ int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, 
 		bestCandidate->filename = m;
 		bestCandidate->size = size;
 		bestCandidate->packType = packType;
-		bestCandidate->canBeFreed = false;
+		bestCandidate->canBeFreed = false;		
 	}
 	
 }
@@ -260,18 +262,19 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	
 	packCandidate_t bestCandidate;
 	bestCandidate.filename = NULL;
-	bestCandidate.packType = 0;
 	bestCandidate.size = UINT64_MAX;
-	
+	getPackCandidate(&bestCandidate, src, 0);
+
 	//printProfile(&profile);
 	uint64_t source_size = getMemSize(src);
 	printf("\n --------- Multi pack started of file sized %d -------------", source_size);
-	unsigned char pack_type = 0;
+	uint8_t pack_type = 0;
 
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);
+	
+	
 	memfile* before_seqpack = getMemfile(source_size, L"multipacker.before_seqpack");
 	
-	getPackCandidate(&bestCandidate, src, 0);
 	uint8_t slimPackType = 0;
 	seqPackBundle mb;
 	mb.main = NULL;
@@ -317,7 +320,9 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			memfile* afterTwoByte = twoBytePack(before_seqpack, profile);
 			uint64_t sizeAfterTwoByte= getMemSize(afterTwoByte);			
 			if (belowRatio(sizeAfterTwoByte, getMemSize(before_seqpack), profile.twobyte_ratio)) {
-				freeMem(before_seqpack);
+				if (bestCandidate.filename != before_seqpack) {
+					freeMem(before_seqpack);
+				}
 				before_seqpack = afterTwoByte;
 				pack_type = setKthBit(pack_type, TWOBYTE_BIT);
 			}
@@ -392,7 +397,9 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			if (size_after_seq < before_seqpack_size) {
 				//printf("\n Normal seqpack worked with ratio %.3f", (double)size_after_seq / (double)before_seqpack_size);
 				pack_type = setKthBit(pack_type, 7);
-				freeMem(before_seqpack);
+				if (bestCandidate.filename != before_seqpack) {
+					freeMem(before_seqpack);				
+				}
 				before_seqpack = NULL;
 				if (getMemSize(mb.main) > profile.sizeMinForCanonical) {
 					uint64_t size_before_canonical = getMemSize(mb.main);
