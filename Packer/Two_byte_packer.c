@@ -129,7 +129,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 			//write the metadata table
 			for (int i = 0; i < pair_table_pos; i++) {
 
-				fputcc(pair_table[i], utfil);
+				fputccLight(pair_table[i], utfil);
 				debug(" %d", pair_table[i]);
 			}
 		}
@@ -142,10 +142,9 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 			char_freq[i] = 0;
 		}
 	}
+	int ch1;
+	while ((ch1 = fgetcc(infil)) != EOF) {
 
-	while (!eofcc(infil)) {
-
-		int ch1 = fgetcc(infil);
 		int ch2 = nextcc(infil);
 		bool lastChar = (ch2 == EOF);
 		int val = lastChar ? 0 : ch1 + 256 * ch2;
@@ -160,15 +159,11 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 						char_freq[ch1]++;
 					}
 				}
-				else {
+				else if (pass == 3) {
 					if (is_code(ch1, pair_table_pos)) {
-						if (pass == 3) {
-							fputcc(master_code, utfil);
-						}
+						fputccLight(master_code, utfil);
 					}
-					if (pass == 3) {
-						fputcc(ch1, utfil);
-					}
+					fputccLight(ch1, utfil);
 				}
 			}
 			else { // write the code for the pair
@@ -178,7 +173,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 					}
 				}
 				else if (pass == 3) {
-					fputcc((unsigned char)code, utfil);
+					fputccLight(code, utfil);
 				}
 				fgetcc(infil);
 			}
@@ -196,6 +191,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 	}//end while
 
 	if (pass == 3) {
+		syncMemSize(utfil);
 		return utfil;
 	}
 }

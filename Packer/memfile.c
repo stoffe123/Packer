@@ -12,7 +12,7 @@ uint32_t getMemPos(memfile* m) {
 
 
 
-void syncMemSize(memfile* m) { //internal
+void syncMemSize(memfile* m) {
 	if (m->pos > m->size) {
 		m->size = m->pos;
 	}
@@ -149,6 +149,13 @@ int fputcc(int c, memfile* mf) {
 	mf->block[mf->pos++] = c;	
 	mf->size = mf->pos;
 	return c;
+}
+
+int fputccLight(int c, memfile* mf) {
+	if (mf->pos >= mf->allocSize) {
+		reallocMem(mf, mf->allocSize + 16384);
+	}
+	return (mf->block[mf->pos++] = c);
 }
 
 memRead(uint8_t* arr, uint32_t size, memfile* m) {	

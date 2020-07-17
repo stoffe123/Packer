@@ -68,4 +68,6 @@ void copy_chunk_to_mem(FILE* source_file, memfile* dest_filename, uint64_t size_
 
 void copy_the_rest_mem(memfile* in, memfile* dest);
 
+void syncMemSize(memfile* m);
+
 #endif

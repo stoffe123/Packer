@@ -20,7 +20,10 @@ __declspec(thread) static uint8_t code;
 
 memfile* RLE_pack_internal(memfile* infil, int pass) {
 	rewindMem(infil);
-	memfile* utfil = getMemfile(pass == 1 ? 1 : (infil->size + 200), L"rle_pack_utfil");
+	memfile* utfil = NULL;
+	if (pass == 2) {
+		utfil = getMemfile(1.2 * infil->size, L"rle_pack_utfil");
+	}
 	unsigned long char_freq[256] = { 0 };
 	debug("\nRLE_simple_pack pass=%d", pass);
 	
@@ -30,7 +33,7 @@ memfile* RLE_pack_internal(memfile* infil, int pass) {
 		
 		// start compression!
 		//write_runlength(code_occurred ? 1 : 0, utfil, runlengths_file);
-		fputcc(code, utfil);
+		fputccLight(code, utfil);
 	}
 	else { // pass = 1
 		//code_occurred = false;
@@ -66,21 +69,21 @@ memfile* RLE_pack_internal(memfile* infil, int pass) {
 			else { // pass = 2
 				for (int i = 0; i < runlength; i++) {
 					if (first_char == code) {
-						fputcc(code, utfil);
-						fputcc(255, utfil);
+						fputccLight(code, utfil);
+						fputccLight(255, utfil);
 						//assert(code_occurred, "code_occured in RLE_simple_packer.RLE_pack_internal");
 					}
 					else {
-						fputcc(first_char, utfil);
+						fputccLight(first_char, utfil);
 					}
 				}
 			}
 		}
 		else { // Runlength fond!
 			if (pass == 2) {
-				fputcc(code, utfil);
-				fputcc(runlength - MIN_RUNLENGTH, utfil);
-				fputcc(first_char, utfil);
+				fputccLight(code, utfil);
+				fputccLight(runlength - MIN_RUNLENGTH, utfil);
+				fputccLight(first_char, utfil);
 			}
 			else {
 				//since the code appeared in a runlength no penalty needed!
@@ -93,23 +96,20 @@ memfile* RLE_pack_internal(memfile* infil, int pass) {
 	if (pass == 1) {
 		code = find_best_code(char_freq).value; 
 	}
-	return utfil;
-}
-
-memfile* RLE_simple_pack_internal(memfile* src)
-{
-	memfile* res = RLE_pack_internal(src, 1); //find code
-	freeMem(res);
-	return RLE_pack_internal(src, 2); //pack
+	else {
+		syncMemSize(utfil);
+		return utfil;
+	}
 }
 
 memfile* RleSimplePack(memfile* src) {
-	return RLE_simple_pack_internal(src);
+	RLE_pack_internal(src, 1); //find code
+	return RLE_pack_internal(src, 2); //pack
 }
 
 void RLE_simple_packw(const wchar_t* srcw, const wchar_t* dstw) {
 	memfile* s = getMemfileFromFile(srcw);
-	memfile* packed = RLE_simple_pack_internal(s);
+	memfile* packed = RleSimplePack(s);
 	freeMem(s);
 	memfileToFile(packed, dstw);
 	freeMem(packed);
