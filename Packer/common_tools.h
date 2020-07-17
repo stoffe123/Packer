@@ -94,4 +94,6 @@ bool equalsw(const wchar_t* s1, const wchar_t* s2);
 
 void substringAfterLast(const wchar_t* dst, const wchar_t* s, const wchar_t* find);
 
+void myExit();
+
 #endif

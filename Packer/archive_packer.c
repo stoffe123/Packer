@@ -66,7 +66,7 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 	if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
 	{
 		wprintf(L"Path not found: [%s]\n", sDir);
-		exit(0);
+		myExit();
 	}
 
 	do

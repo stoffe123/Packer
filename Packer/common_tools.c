@@ -59,7 +59,7 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 	errno_t err = _wfopen_s(&f, name, L"rb");
 	if (err != 0) {
 		wprintf(L"\n get_file_size_from_wname: can't find file: %s", name);
-		exit(0);
+		myExit();
 	}
 	uint64_t res = getFileSize(f);
 	fclose(f);
@@ -165,21 +165,26 @@ void appendFileToFile(FILE* main_file, wchar_t* append_filename) {
 void assert(uint64_t x, const char* msg) {
 	if (!x) {
 		printf("\n\n\a ASSERTION FAILURE: %s", msg);
-		exit(0);
+		myExit();
 	}
+}
+
+void myExit() {
+	uint8_t* x = 0;
+	x[5] = 7;
 }
 
 void assertEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x != y) {
 		printf("\n\n\a ASSERTION FAILURE: %d != %d \n %s", x, y, msg);
-		exit(0);
+		myExit();
 	}
 }
 
 void assertSmallerOrEqual(uint64_t x, uint64_t y, const char* msg) {
 	if (x > y) {
 		printf("\n\n\a ASSERTION FAILURE: %d <= %d \n %s", x, y, msg);
-		exit(0);
+		myExit();
 	}
 }
 
@@ -277,7 +282,7 @@ void deleteAllFilesInDir(const wchar_t* sDir) {
 	if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
 	{
 		wprintf(L"Path not found: [%s]\n", sDir);
-		exit(0);
+		myExit();
 	}
 
 	do

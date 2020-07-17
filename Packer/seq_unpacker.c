@@ -173,7 +173,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	memfile* infil = mf_arr.main;
 	uint64_t infil_orgsize = getMemSize(infil);
 	packed_file_end = getMemSize(infil);
-	
+	assert(buf_size == BLOCK_SIZE * 4, "buf_size was not equal to BLOCK_SIZE*4 in seq_unpacker");
 	reallocMem(infil, buf_size);
 	buf = infil->block;
 	debug("\n packed_file_end %d", packed_file_end);	

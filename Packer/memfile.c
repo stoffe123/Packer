@@ -34,20 +34,14 @@ void reallocMem(memfile* mf, uint64_t newAllocSize) {
 }
 
 void checkAlloc(memfile* mf, int allocSizeNeeded) {
-	if (allocSizeNeeded >= (mf->allocSize)) {
-		uint64_t newAllocSize = mf->allocSize + 16384;
-		if (allocSizeNeeded > newAllocSize) {
-			newAllocSize = allocSizeNeeded;
-		}
-		reallocMem(mf, newAllocSize);
+	if (allocSizeNeeded > (mf->allocSize)) {		
+		reallocMem(mf, allocSizeNeeded);
 	}
 }
 
 uint32_t setPos(memfile* m, uint32_t p) {
-		checkAlloc(m, p);
-	
-		m->pos = p;
-	
+		checkAlloc(m, p);	
+		m->pos = p;	
 }
 
 uint32_t incPos(memfile* m) {
@@ -222,15 +216,15 @@ void copy_chunk_mem(memfile* source, memfile* dest, uint64_t size) {
 }
 
 //writes the whole of "append_file" into "main_file"'s current position
-void append_to_mem(memfile* main_file, memfile* append_file) {
+void append_to_mem(memfile* dest, memfile* append_file) {
 		
 	uint8_t* ar = append_file->block;
 	uint64_t size = getMemSize(append_file);
-	checkAlloc(main_file, main_file->pos + size);
+	checkAlloc(dest, dest->pos + size);
 	for (int i = 0; i < size; i++) {
-		main_file->block[main_file->pos++] = ar[i];
+		dest->block[dest->pos++] = ar[i];
 	}	
-	syncMemSize(main_file);
+	syncMemSize(dest);
 }
 
 
