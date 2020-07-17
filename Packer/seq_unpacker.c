@@ -283,6 +283,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	debug("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
 	memfile* utfil = getMemfile(size_out, L"sequnpacker_utfil");
 	memWrite(&buf[buf_pos + 1], size_out, utfil);
+	
 	setSize(infil, infil_orgsize);
 	return utfil;
 }

@@ -63,7 +63,7 @@ void writeMeta(memfile* file, uint64_t c) {
 	}
 	//debug("\nwrite_offset:%d", c);
 	if (separate_files) {
-		fputcc(c, file);
+		fputccLight(c, file);
 	}
 	else {
 		//TODO  fix nonseparate
@@ -245,12 +245,14 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 	for (int i = 0; i < metaValuesCount; i++) {		
 		convertMeta(file, values[i], bestPageCoding);		
 	}
+	syncMemSize(file);
 	uint64_t filesize = getMemSize(file);
 	if (bestSize != filesize) {
 	    wprintf(L"\n   comparing %s meta file sizes ... %d %d when seqpacking file %s", metaname, bestSize, filesize, src_name);
 		exit(1);
 	}
 	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
+	
 	return bestPageCoding;
 }
 
@@ -396,7 +398,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 				updateNextCharTable(ch, buffer_pos);
 			}
 			else {
-				fputcc(ch, utfil.main);
+				fputccLight(ch, utfil.main);
 				//assert(absolute_end < BLOCK_SIZE, "absolute_end < BLOCK_SIZE in seqpacker");
 				updateNextCharTable(ch, absolute_end);
 				buffer[absolute_end++] = ch; // write start to end to wrap-around find sequences					
@@ -467,9 +469,9 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 
 		bool slimCase = (seqlenPages + offsetPages + distancePages == 0);
 		if (!slimCase) {
-			fputcc(seqlenPages, utfil.main);
-			fputcc(offsetPages, utfil.main);
-			fputcc(distancePages, utfil.main);
+			fputccLight(seqlenPages, utfil.main);
+			fputccLight(offsetPages, utfil.main);
+			fputccLight(distancePages, utfil.main);
 		}
 		unsigned char packType = 0;
 		packType = storeLongRange(packType, useOffsetLongRange, 1);
@@ -482,12 +484,13 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 			packType = setKthBit(packType, 7);
 		}
 		if (!superslim) {
-			fputcc(profile.seqlenMinLimit3, utfil.main);
+			fputccLight(profile.seqlenMinLimit3, utfil.main);
 		}
 		else {
 			printf("\n superslim used!");
 		}
-		fputcc(packType, utfil.main);		
+		fputccLight(packType, utfil.main);		
+		syncMemSize(utfil.main);
 		return utfil;
 	}
 }

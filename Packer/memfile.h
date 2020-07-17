@@ -70,4 +70,6 @@ void copy_the_rest_mem(memfile* in, memfile* dest);
 
 void syncMemSize(memfile* m);
 
+int fputccLight(int c, memfile* mf);
+
 #endif

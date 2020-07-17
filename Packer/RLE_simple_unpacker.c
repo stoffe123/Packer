@@ -28,20 +28,21 @@ memfile* RLE_simple_unpack_internal(memfile* infil)
 
 			if (runlength == 255) {
 				//occurrence of code in original
-				fputcc(code, utfil);
+				fputccLight(code, utfil);
 			}
 			else {
 				cc = fgetcc(infil);
 				assert(cc != EOF, "cc == EOF  in RLE_simple_unpacker.RLE_simple_unpack");
 				for (i = 0; i < (runlength + MIN_RUNLENGTH); i++) {
-					fputcc(cc, utfil);
+					fputccLight(cc, utfil);
 				}
 			}
 		}
 		else {
-			fputcc(cc, utfil);
+			fputccLight(cc, utfil);
 		}
 	}
+	syncMemSize(utfil);
 	return utfil;
 }
 

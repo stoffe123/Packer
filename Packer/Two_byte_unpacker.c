@@ -45,20 +45,21 @@ memfile* two_byte_unpack_internal(memfile* infil) {
 
 		if (cc == master_code) {
 			cc = fgetcc(infil);
-			fputcc(cc, utfil);
+			fputccLight(cc, utfil);
 		}
 		else {
 			int two_byte = get_two_byte_for_code(cc, two_byte_table, two_byte_table_size);
 			if (two_byte == -1) {
-				fputcc(cc, utfil);
+				fputccLight(cc, utfil);
 			}
 			else {
-				fputcc(two_byte % 256, utfil);
-				fputcc(two_byte / 256, utfil);
+				fputccLight(two_byte % 256, utfil);
+				fputccLight(two_byte / 256, utfil);
 			}
 		}
 	}
 	free(two_byte_table);
+	syncMemSize(utfil);
 	return utfil;
 }
 
