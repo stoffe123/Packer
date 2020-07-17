@@ -29,7 +29,7 @@ void writeHalfbyte(memfile* file, int halfbyte)
 		//tricky part here if we get a trailing value
 		//we want that trailing value to be a code
 		//so we can ignore it in the unpacker
-		if (globalPos == 1) fputcc((uint64_t)15 + globalByte, file);
+		if (globalPos == 1) fputccLight((uint64_t)15 + globalByte, file);
 		break;
 	default:
 		if (globalPos == 0)
@@ -39,7 +39,7 @@ void writeHalfbyte(memfile* file, int halfbyte)
 		}
 		else
 		{
-			fputcc((uint64_t)halfbyte + globalByte, file);
+			fputccLight((uint64_t)halfbyte + globalByte, file);
 			globalPos = 0;
 		}
 	}
@@ -195,6 +195,7 @@ memfile* halfbyte_rle_pack_internal(memfile* infil, int kind) {
 		}
 	}//end while
 	writeHalfbyte(utfil, -2); // flush
+	syncMemSize(utfil);
 	return utfil;
 }
 

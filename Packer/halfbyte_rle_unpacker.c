@@ -6,38 +6,30 @@
 
 #define MIN_RUNLENGTH 2
 
-// canonical header unpacker
+// Halfbyte RLE unpacker
 
-//Global vars
-
-__declspec(thread) static  long long read_packedfile_pos;
+// Global vars
 
 __declspec(thread) static int globalByte, globalPos;
 
-int readHalfbyte(memfile* infil, int cmd)
+void initReadHalfbyte() {
+	globalPos = 0;
+}
+
+int readHalfbyte(memfile* infil)
 {
-	if (cmd == -1)
+	if (globalPos == 0)
 	{
-		/* initialize */
-		globalPos = 0;
-		return 0;   /* the return value here is not used */
+		if ((globalByte = fgetcc(infil)) != EOF) {
+			globalPos = 1;
+			return(globalByte / 16);
+		}
+		return -1; // EOF						
 	}
 	else
 	{
-		if (globalPos == 0)
-		{
-			if ((globalByte = fgetcc(infil)) != EOF) {
-				globalPos = 1;
-				return(globalByte / 16);
-			}			
-			return -1; // EOF						
-		}
-		else
-		{
-			globalPos = 0;
-			return(globalByte % 16);
-
-		}
+		globalPos = 0;
+		return(globalByte % 16);
 	}
 }
 
@@ -51,34 +43,34 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 	unsigned char code1 = 15, code2 = 14, code3 = 13;
 
 	memfile* utfil = getMemfile((uint64_t)2 * infil->size + 300, L"halfbyterleunpack.utfil");
-	readHalfbyte(infil, -1); // init
+	initReadHalfbyte();
 
 	int cc;
-	while ((cc = readHalfbyte(infil, 0)) != -1) {
+	while ((cc = readHalfbyte(infil)) != -1) {
 
 		if (kind < 2) {
 
 			if (cc == code1 || (cc == code2 && kind == 0)) {
-				int byte = readHalfbyte(infil, 0);
+				int byte = readHalfbyte(infil);
 				if (byte == -1) {
 					//encountered a trailing value at end of file => ignore
 					break;
 				}
 				if (byte == code1 && cc == code1) {
 					//escape sequence
-					unsigned int escapedByte = readHalfbyte(infil, 0) + 16 * readHalfbyte(infil, 0);
-					fputcc(escapedByte, utfil);
+					unsigned int escapedByte = readHalfbyte(infil) + 16 * readHalfbyte(infil);
+					fputccLight(escapedByte, utfil);
 				}
 				else {
-					int runlength = readHalfbyte(infil, 0);
-					runlength += (cc == code1 ? MIN_RUNLENGTH : (18 + 16 * readHalfbyte(infil, 0)));
+					int runlength = readHalfbyte(infil);
+					runlength += (cc == code1 ? MIN_RUNLENGTH : (18 + 16 * readHalfbyte(infil)));
 					for (int i = 0; i < runlength; i++) {
-						fputcc(byte, utfil);
+						fputccLight(byte, utfil);
 					}
 				}
 			}
 			else {
-				fputcc(cc, utfil);
+				fputccLight(cc, utfil);
 			}
 		}
 		else {
@@ -86,29 +78,30 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 			// kind = 2
 
 			if (cc == code1 || cc == code2 || cc == code3) {
-				int byte = readHalfbyte(infil, 0);
+				int byte = readHalfbyte(infil);
 				if (byte == -1) {
 					//encountered a trailing value at end of file => ignore
 					break;
 				}
 				if (cc == code3) {
 					//escape sequence
-					int escapedByte = byte + 16 * readHalfbyte(infil, 0);
-					fputcc(escapedByte, utfil);
+					int escapedByte = byte + 16 * readHalfbyte(infil);
+					fputccLight(escapedByte, utfil);
 				}
 				else {
-					int runlength = readHalfbyte(infil, 0);
-					runlength += (cc == code1 ? MIN_RUNLENGTH : (18 + 16 * readHalfbyte(infil, 0)));
+					int runlength = readHalfbyte(infil);
+					runlength += (cc == code1 ? MIN_RUNLENGTH : (18 + 16 * readHalfbyte(infil)));
 					for (int i = 0; i < runlength; i++) {
-						fputcc(byte, utfil);
+						fputccLight(byte, utfil);
 					}
 				}
 			}
 			else {
-				fputcc(cc, utfil);
+				fputccLight(cc, utfil);
 			}
 		}
 	}
+	syncMemSize(utfil);
 	return utfil;
 }
 
