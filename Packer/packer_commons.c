@@ -53,7 +53,7 @@ void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {
 
 memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
 	if (equalsw(kind, L"multi")) {
-		return multiUnpack2(packedFilename);
+		return multiUnpack(packedFilename);
 	}
 	if (equalsw(kind, L"rle simple")) {
 		return RleSimpleUnpack(packedFilename);

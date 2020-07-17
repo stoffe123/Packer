@@ -221,7 +221,7 @@ void copy_chunk_mem(memfile* source, memfile* dest, uint64_t size) {
 	syncMemSize(dest);
 }
 
-
+//writes the whole of "append_file" into "main_file"'s current position
 void append_to_mem(memfile* main_file, memfile* append_file) {
 		
 	uint8_t* ar = append_file->block;
@@ -231,6 +231,19 @@ void append_to_mem(memfile* main_file, memfile* append_file) {
 		main_file->block[main_file->pos++] = ar[i];
 	}	
 	syncMemSize(main_file);
+}
+
+
+// writes the rest of file "in" into file "dest"'s current position
+void copy_the_rest_mem(memfile* in, memfile* dest) {
+
+	uint64_t size = getMemSize(in) - getMemPos(in);
+	checkAlloc(dest, dest->pos + size);
+	uint8_t* in_block = in->block;
+	for (int i = 0; i < size; i++) {
+		dest->block[dest->pos++] = in_block[in->pos++];
+	}
+	syncMemSize(dest);
 }
 
 
@@ -251,6 +264,7 @@ void copy_chunk_to_mem(FILE* source_file, memfile* dest, uint64_t size) {
 	}
 	setPos(dest, dest->pos + i);
 	syncMemSize(dest);
-
 }
+
+
 

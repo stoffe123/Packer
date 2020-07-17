@@ -37,13 +37,6 @@ bool isSeqPacked(int packType) {
 	return isKthBitSet(packType, 7);
 }
 
-void copy_the_rest_mem(memfile* in, memfile* dest) {
-	//change to memwrite  ... improve performance
-	int ch;
-	while ((ch = fgetcc(in)) != EOF) {
-		fputcc(ch, dest);
-	}
-}
 
 
 
@@ -453,14 +446,14 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	return pack_type;
 }
 
-memfile* multiUnpackAndReplace3(memfile* src, uint8_t packType) {
-	memfile* res = multiUnpack(src, packType);
+memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType) {
+	memfile* res = multiUnpackWithPackType(src, packType);
 	freeMem(src);
 	return res;
 }
 
-memfile* multiUnpackAndReplace2(memfile* src) {
-	memfile* res = multiUnpack2(src);
+memfile* multiUnpackAndReplace(memfile* src) {
+	memfile* res = multiUnpack(src);
 	freeMem(src);
 	return res;
 }
@@ -489,13 +482,13 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
 		if (isKthBitSet(pack_type, 1)) {
-			mb.seqlens = multiUnpackAndReplace2(mb.seqlens);
+			mb.seqlens = multiUnpackAndReplace(mb.seqlens);
 		}
 		if (isKthBitSet(pack_type, 2)) {
-			mb.offsets = multiUnpackAndReplace2(mb.offsets);
+			mb.offsets = multiUnpackAndReplace(mb.offsets);
 		}
 		if (isKthBitSet(pack_type, 3)) {
-			mb.distances = multiUnpackAndReplace2(mb.distances);
+			mb.distances = multiUnpackAndReplace(mb.distances);
 		}
 	}
 	memfile* seq_dst;
@@ -555,7 +548,7 @@ memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
 	return dst;
 }
 
-memfile* multiUnpack(memfile* m, uint8_t pack_type) {
+memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type) {
 	return multiUnpackInternal(m, pack_type, false);
 }
 
@@ -586,6 +579,6 @@ memfile* multiPack2(memfile* src, packProfile profile,
 	return dst;
 }
 
-memfile* multiUnpack2(memfile* m) {
+memfile* multiUnpack(memfile* m) {
 	return multiUnpackInternal(m, 0, true);
 }

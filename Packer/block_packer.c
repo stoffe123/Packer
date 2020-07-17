@@ -153,7 +153,7 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 			copy_chunk_to_mem(infil, tmp, size);
 			
 		}				
-		memfile* tmp2 = multiUnpack(tmp, packType);
+		memfile* tmp2 = multiUnpackWithPackType(tmp, packType);
 		
 		freeMem(tmp);
 		append_mem_to_file(utfil, tmp2);
