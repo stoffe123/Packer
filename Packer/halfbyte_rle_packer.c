@@ -13,35 +13,33 @@
 
 #define MIN_RUNLENGTH 2
 
-/* Canonical header packer */
+/* Halfbyte RLE packer */
 
 __declspec(thread) static int globalByte, globalPos;
 
-void writeHalfbyte(memfile* file, int halfbyte)
-{
-
-	switch (halfbyte)
-	{
-	case -1:  /* initialize */
-		globalPos = 0;
-		break;
-	case -2:  /* flush */
-		//tricky part here if we get a trailing value
+void flushWriteHalfbyte(memfile* file) {
+	//tricky part here if we get a trailing value
 		//we want that trailing value to be a code
 		//so we can ignore it in the unpacker
-		if (globalPos == 1) fputccLight((uint64_t)15 + globalByte, file);
-		break;
-	default:
-		if (globalPos == 0)
-		{
-			globalByte = halfbyte * 16;
-			globalPos = 1;
-		}
-		else
-		{
-			fputccLight((uint64_t)halfbyte + globalByte, file);
-			globalPos = 0;
-		}
+	if (globalPos == 1) fputccLight((uint64_t)15 + globalByte, file);
+}
+
+void initWriteHalfbyte() {
+	globalPos = 0;
+}
+
+
+void writeHalfbyte(memfile* file, int halfbyte)
+{
+	if (globalPos == 0)
+	{
+		globalByte = halfbyte * 16;
+		globalPos = 1;
+	}
+	else
+	{
+		fputccLight(halfbyte + globalByte, file);
+		globalPos = 0;
 	}
 }
 
@@ -97,8 +95,8 @@ memfile* halfbyte_rle_pack_internal(memfile* infil, int kind) {
 	//printf("\n canonical header pack %s", src);
 
 	memfile* utfil = getMemfile((uint64_t)200 + infil->size, L"halfbyterlepack.utfil");
-	// start compression!
-	writeHalfbyte(utfil, -1); // init
+	
+	initWriteHalfbyte();
 
 	/* start compression */
 
@@ -194,7 +192,7 @@ memfile* halfbyte_rle_pack_internal(memfile* infil, int kind) {
 
 		}
 	}//end while
-	writeHalfbyte(utfil, -2); // flush
+	flushWriteHalfbyte(utfil);
 	syncMemSize(utfil);
 	return utfil;
 }
