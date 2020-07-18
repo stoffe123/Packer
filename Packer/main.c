@@ -342,7 +342,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/canonical_unp";
+	const wchar_t* src = L"c:/test/rel.pdf";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -357,9 +357,9 @@ void onefile() {
 	profile.rle_ratio = 85;
 	profile.twobyte_ratio = 90;
 	profile.recursive_limit = 242;
-	profile.twobyte_threshold_max = 200;
-	profile.twobyte_threshold_divide = 1111;
-	profile.twobyte_threshold_min = 50;
+	profile.twobyte_threshold_max = 3;
+		profile.twobyte_threshold_divide = 555;
+		profile.twobyte_threshold_min = 3;
 
 	//meta testsuit 838297
 	packProfile seqlenProfile = getPackProfile();
@@ -395,14 +395,18 @@ void onefile() {
 	//size_packed = getBundleSize(packed);
 	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
 	//memfile* packed = halfbyteRlePack(srcm, 0);
-	memfile* packed = canonicalEncode(srcm);
+	//memfile* packed = canonicalEncode(srcm);
+	memfile* packed = twoBytePack(srcm, profile);
+
+
 	size_packed = getMemSize(packed);
 	printf("\n size_packed %d", size_packed);
 	int pack_time = (clock() - cl);
 		
 	cl = clock();
 
-	memfile* unpacked = canonicalDecode(packed);
+	memfile* unpacked = twoByteUnpack(packed);
+	//memfile* unpacked = canonicalDecode(packed);
 	//memfile* unpacked = multiUnpack2(packed);
 	//memfile* unpacked = seqUnpack(packed);
 	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
@@ -429,7 +433,7 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[16][100] = {
+	wchar_t test_filenames[16][100] = { L"did.csh",
 		
 		L"rel.pdf",
 		L"book.txt",
@@ -438,7 +442,7 @@ void test16() {
 		L"empty.txt",
 		L"onechar.txt",	
 		L"book_med.txt",
-		L"did.csh",
+		
 		L"voc.wav",
 		L"tob.pdf",
 		L"pazera.exe",
@@ -453,24 +457,24 @@ void test16() {
 	
 	packProfile bestProfile, 
 		profile = {
-			.rle_ratio = 76,
-			.twobyte_ratio = 82,
+			.rle_ratio = 73,
+			.twobyte_ratio = 77,
 			.recursive_limit = 437,
-			.twobyte_threshold_max = 11371,
+			.twobyte_threshold_max = 10653,
 			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 718,
-			.seqlenMinLimit3 = 111,
+			.twobyte_threshold_min = 703,
+			.seqlenMinLimit3 = 115,
 			.seqlenMinLimit4 = 72867,
 			.blockSizeMinus = 112,
 			.winsize = 18233,
-			.sizeMaxForCanonicalHeaderPack = 332,
-			.sizeMinForSeqPack = 6934,
-			.sizeMinForCanonical = 124,
+			.sizeMaxForCanonicalHeaderPack = 256,
+			.sizeMinForSeqPack = 12521,
+			.sizeMinForCanonical = 93,
 			.sizeMaxForSuperslim = 16921
 	};
 
 	copyProfile(&profile, &bestProfile);
-	uint64_t timeLimit = 260;
+	uint64_t timeLimit = 300;
 	bool unpack = true;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 

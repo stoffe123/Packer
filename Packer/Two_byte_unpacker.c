@@ -27,14 +27,17 @@ int get_two_byte_for_code(unsigned char code, uint8_t* two_byte_table, int two_b
 memfile* two_byte_unpack_internal(memfile* infil) {
 
 	rewindMem(infil);
-	memfile* utfil = getMemfile(infil->size * 2, L"twobyteunpack.utfil");
+	memfile* utfil = getMemfile(infil->size * (uint64_t)2, L"twobyteunpack.utfil");
 	uint8_t* two_byte_table = malloc(16384 * sizeof(uint8_t));
-	uint8_t master_code;
-	int two_byte_table_size;
 
-	two_byte_table_size = fgetcc(infil);
-	master_code = fgetcc(infil);
+	
+
+	
+
+	uint8_t master_code = fgetcc(infil);
+	int two_byte_table_size = fgetcc(infil);
 	debug("\n mastercode:%d  two_byte_table_pos:%d", master_code, two_byte_table_size);
+
 	two_byte_table_size *= 3;
 
 	memRead(&two_byte_table[START_CODES_SIZE], two_byte_table_size, infil);
@@ -53,8 +56,7 @@ memfile* two_byte_unpack_internal(memfile* infil) {
 				fputccLight(cc, utfil);
 			}
 			else {
-				fputccLight(two_byte % 256, utfil);
-				fputccLight(two_byte / 256, utfil);
+				fput2ccLight(two_byte, utfil);			
 			}
 		}
 	}

@@ -158,6 +158,15 @@ int fputccLight(int c, memfile* mf) {
 	return (mf->block[mf->pos++] = c);
 }
 
+int fput2ccLight(int c, memfile* mf) {
+	if (mf->pos + (uint64_t)1 >= mf->allocSize) {
+		reallocMem(mf, mf->allocSize + 16384);
+	}
+	mf->block[mf->pos++] = c % 256;
+	mf->block[mf->pos++] = c / 256;
+	return c;
+}
+
 memRead(uint8_t* arr, uint32_t size, memfile* m) {	
 	for (int i = 0; i < size; i++) {
 		arr[i] = m->block[m->pos + i];		

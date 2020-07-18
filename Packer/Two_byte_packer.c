@@ -15,13 +15,18 @@
 //Global variables used in compressor
 
 __declspec(thread) static  unsigned long two_byte_freq_table[65536] = { 0 };
-__declspec(thread) static  uint8_t pair_table[2048] = { 0 }, master_code;
+
 __declspec(thread) static  unsigned long char_freq[256];
 __declspec(thread) static  packProfile profile;
 
+
+__declspec(thread) static  uint8_t codes[256];
+__declspec(thread) static  uint16_t values[256];
+__declspec(thread) static uint8_t master_code, numberOfCodes;
+
 val_freq_t find_best_two_byte() {
 	unsigned long best = 0;
-	uint64_t two_byte = 0;
+	uint16_t two_byte = 0;
 	for (unsigned int i = 0; i < 65536; i++) {
 		if (two_byte_freq_table[i] > best) {
 			best = two_byte_freq_table[i];
@@ -50,6 +55,14 @@ uint64_t getGainThreshold(uint64_t source_size) {
 	return res;
 }
 
+
+/*
+this code sets global vars:
+codes and values arrays
+master_code
+numberOfCodes
+
+*/
 int create_two_byte_table(uint64_t source_size) {
 	debug("\n creating two_byte_table \n");
 
@@ -58,7 +71,7 @@ int create_two_byte_table(uint64_t source_size) {
 	uint64_t threshold = getGainThreshold(source_size);
 	debug("\n Two byte packer gain threshhold %lld", threshold);
 	bool found_twobyte = false;
-	int pair_table_pos = START_CODES_SIZE;
+	int pair_table_pos = 0;
 	do {
 		val_freq_t two_byte = find_best_two_byte(); //ineffecient to search whole 65k table every time
 		if (two_byte.freq < threshold) {
@@ -68,37 +81,30 @@ int create_two_byte_table(uint64_t source_size) {
 		found_twobyte = (code.freq + threshold < two_byte.freq);
 		if (found_twobyte) {
 			//worthwile
-			pair_table[pair_table_pos++] = (uint8_t)code.value;
-			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value % 256);
-			pair_table[pair_table_pos++] = (uint8_t)(two_byte.value / 256);
-			debug("\n Code %lu for '%c%c' with freq:(%lld,%lld)", code.value, two_byte.value % 256, two_byte.value / 256, two_byte.freq, code.freq);
+			codes[pair_table_pos] = (uint8_t)code.value;
+			values[pair_table_pos] = two_byte.value;			
+			pair_table_pos++;
 		}
 	} while (found_twobyte);
-
-	assert(pair_table_pos > 0, "two_byte_table_pos = 0 !!!");
-	pair_table[0] = (uint8_t)((pair_table_pos - START_CODES_SIZE) / 3);
-	pair_table[1] = master_code;
-	debug("\nCreated two_byte table size: %d\n", pair_table_pos);
-	return pair_table_pos;
+	numberOfCodes = pair_table_pos;	
+	debug("\nCreated two_byte table size: %d\n", numberOfCodes);
 }
 
-int find_code_for_pair(int val, int pair_table_pos) {
-	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
-		unsigned int table_val = pair_table[i + 1] +
-			256 * pair_table[i + 2];
-		if (table_val == val) {
-			return pair_table[i];
+int find_code_for_pair(uint16_t val) {
+	for (int i = 0; i < numberOfCodes; i++) {
+		if (values[i] == val) {
+			return codes[i];
 		}
 	}
 	return 256;
 }
 
-bool is_code(unsigned char ch, int pair_table_pos) {
+bool is_code(uint8_t ch) {
 	if (ch == master_code) {
 		return true;
 	}
-	for (int i = START_CODES_SIZE; i < pair_table_pos; i += 3) {
-		if (pair_table[i] == ch) {
+	for (int i = 0; i<numberOfCodes; i++) {
+		if (codes[i] == ch) {
 			return true;
 		}
 	}
@@ -119,18 +125,20 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 
 	uint64_t source_size = getMemSize(infil);
 
-	int pair_table_pos;
+
 	if (pass >= 2) {
-		pair_table_pos = create_two_byte_table(source_size);
+		create_two_byte_table(source_size);
 
 		if (pass == 3) {
 			utfil = getMemfile((uint64_t)200 + infil->size, L"twobytepack_utfil");
 
 			//write the metadata table
-			for (int i = 0; i < pair_table_pos; i++) {
+			fputccLight(master_code, utfil);
+			fputccLight(numberOfCodes, utfil);
+			for (int i = 0; i < numberOfCodes; i++) {
 
-				fputccLight(pair_table[i], utfil);
-				debug(" %d", pair_table[i]);
+				fputccLight(codes[i], utfil);
+				fput2ccLight(values[i], utfil);	
 			}
 		}
 	}
@@ -150,7 +158,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 		int val = lastChar ? 0 : ch1 + 256 * ch2;
 		if (pass >= 2) {
 			int code = (lastChar ? 256 :
-				find_code_for_pair(val, pair_table_pos));
+				find_code_for_pair(val));
 
 			if (code == 256) {
 				// not found
@@ -160,7 +168,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 					}
 				}
 				else if (pass == 3) {
-					if (is_code(ch1, pair_table_pos)) {
+					if (is_code(ch1)) {
 						fputccLight(master_code, utfil);
 					}
 					fputccLight(ch1, utfil);
