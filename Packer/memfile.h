@@ -72,4 +72,8 @@ void syncMemSize(memfile* m);
 
 int fputccLight(int c, memfile* mf);
 
+int fput2ccLight(int c, memfile* mf);
+
+int fget2cc(memfile* mf);
+
 #endif

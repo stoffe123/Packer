@@ -342,7 +342,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/rel.pdf";
+	const wchar_t* src = L"c:/test/blockpacker_chunk";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";

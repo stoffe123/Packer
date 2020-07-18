@@ -130,6 +130,17 @@ int fgetcc(memfile* mf) {
 	 return (mf->pos < mf->size) ? mf->block[mf->pos++] : EOF;	
 }
 
+int fget2cc(memfile* mf) {
+	if (mf->pos < mf->size - 1) {
+		int res = mf->block[mf->pos++];
+		return res += 256 * mf->block[mf->pos++];
+	}
+	else {
+		return EOF;
+	}
+	
+}
+
 int nextcc(memfile* mf) {
 	if (getMemPos(mf) >= getMemSize(mf)) {
 		return EOF;

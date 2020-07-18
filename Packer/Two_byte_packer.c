@@ -6,9 +6,10 @@
 #include "common_tools.h"
 #include "packer_commons.h"
 #include "memfile.h"
+#include "Two_byte_packer.h"
 
 #define VERBOSE false
-#define START_CODES_SIZE 2
+
 
 /* Two-byte packer */
 
@@ -90,9 +91,10 @@ int create_two_byte_table(uint64_t source_size) {
 	debug("\nCreated two_byte table size: %d\n", numberOfCodes);
 }
 
-int find_code_for_pair(uint16_t val) {
+//return the code for a specific twobyte sequence
+int find_code_for_pair(uint16_t twoByteSequence) {
 	for (int i = 0; i < numberOfCodes; i++) {
-		if (values[i] == val) {
+		if (values[i] == twoByteSequence) {
 			return codes[i];
 		}
 	}
@@ -138,7 +140,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 			for (int i = 0; i < numberOfCodes; i++) {
 
 				fputccLight(codes[i], utfil);
-				fput2ccLight(values[i], utfil);	
+				fput2ccLight(values[i], utfil);
 			}
 		}
 	}
@@ -208,7 +210,21 @@ memfile* twoBytePack(memfile* m, packProfile prof) {
 	profile = prof;
 	two_byte_pack_internal(m, 1); //analyse and build metadata
 	two_byte_pack_internal(m, 2); //simulate pack and adjust metadata
-	return two_byte_pack_internal(m, 3); //pack	
+	memfile* res =  two_byte_pack_internal(m, 3); //pack	
+
+	if (DOUBLE_CHECK_PACK) {
+		memfile* tmp = twoByteUnpack(res);
+		bool sc = memsEqual(tmp, m);
+		if (!sc) {
+			wprintf(L"\n\n\n ** Failed to twobyte pack: %s", getMemName(m));
+			const wchar_t filename[100] = { 0 };
+			concatw(filename, L"c:/test/temp_files/", getMemName(m));
+			memfileToFile(m, filename);
+			myExit();
+		}
+		freeMem(tmp);
+	}
+	return res;
 }
 
 
