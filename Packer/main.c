@@ -342,7 +342,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/blockpacker_chunk";
+	const wchar_t* src = L"c:/test/rle_pack_utfil";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -353,13 +353,22 @@ void onefile() {
 
 	int cl = clock();
 
-	packProfile profile = getPackProfile();
-	profile.rle_ratio = 85;
-	profile.twobyte_ratio = 90;
-	profile.recursive_limit = 242;
-	profile.twobyte_threshold_max = 3;
-		profile.twobyte_threshold_divide = 555;
-		profile.twobyte_threshold_min = 3;
+	packProfile profile = {
+			.rle_ratio = 73,
+			.twobyte_ratio = 77,
+			.recursive_limit = 437,
+			.twobyte_threshold_max = 5,
+			.twobyte_threshold_divide = 1,
+			.twobyte_threshold_min = 5,
+			.seqlenMinLimit3 = 115,
+			.seqlenMinLimit4 = 72867,
+			.blockSizeMinus = 112,
+			.winsize = 18233,
+			.sizeMaxForCanonicalHeaderPack = 256,
+			.sizeMinForSeqPack = 12521,
+			.sizeMinForCanonical = 93,
+			.sizeMaxForSuperslim = 16921
+	};
 
 	//meta testsuit 838297
 	packProfile seqlenProfile = getPackProfile();

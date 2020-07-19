@@ -8,15 +8,13 @@
 
 
 #define VERBOSE false
-#define START_CODES_SIZE 2
 
 /* Two-byte unpacker */
 
-int get_two_byte_for_code(unsigned char code, uint8_t* two_byte_table, int two_byte_table_pos) {
-	for (int i = START_CODES_SIZE; i < two_byte_table_pos; i += 3) {
+int get_two_byte_for_code(unsigned char code, uint8_t* two_byte_table, uint16_t* values, int two_byte_table_pos) {
+	for (int i = 0; i < two_byte_table_pos; i++) {
 		if (code == two_byte_table[i]) {
-			return two_byte_table[i + 1] + 256 * two_byte_table[i + 2];
-
+			return values[i];
 		}
 	}
 	return -1;
@@ -28,21 +26,25 @@ memfile* two_byte_unpack_internal(memfile* infil) {
 
 	rewindMem(infil);
 	memfile* utfil = getMemfile(infil->size * (uint64_t)2, L"twobyteunpack.utfil");
-	uint8_t* two_byte_table = malloc(16384 * sizeof(uint8_t));
-
-	
-
-	
 
 	uint8_t master_code = fgetcc(infil);
 	int two_byte_table_size = fgetcc(infil);
-	debug("\n mastercode:%d  two_byte_table_pos:%d", master_code, two_byte_table_size);
+	debug("\n twobyte unpack mastercode:%d  two_byte_table_size:%d\n", master_code, two_byte_table_size);
 
-	two_byte_table_size *= 3;
-
-	memRead(&two_byte_table[START_CODES_SIZE], two_byte_table_size, infil);
-	two_byte_table_size += START_CODES_SIZE;
-
+	uint8_t* two_byte_table = malloc(two_byte_table_size * sizeof(uint8_t));
+	uint16_t* values = malloc(two_byte_table_size * sizeof(uint16_t));
+	int lastCode = -1;
+	for (int i = 0; i < two_byte_table_size; i++) {
+		int c = fgetcc(infil);
+		c = (c + lastCode) + 1;
+		lastCode = c;
+		debug("%d ", c);
+		two_byte_table[i] = c;
+}
+	debug("\n");
+	for (int i = 0; i < two_byte_table_size; i++) {
+		values[i] = fget2cc(infil);
+	}	
 	int cc;
 	while ((cc = fgetcc(infil)) != EOF) {
 
@@ -51,7 +53,7 @@ memfile* two_byte_unpack_internal(memfile* infil) {
 			fputccLight(cc, utfil);
 		}
 		else {
-			int two_byte = get_two_byte_for_code(cc, two_byte_table, two_byte_table_size);
+			int two_byte = get_two_byte_for_code(cc, two_byte_table, values, two_byte_table_size);
 			if (two_byte == -1) {
 				fputccLight(cc, utfil);
 			}
@@ -61,6 +63,7 @@ memfile* two_byte_unpack_internal(memfile* infil) {
 		}
 	}
 	free(two_byte_table);
+	free(values);
 	syncMemSize(utfil);
 	return utfil;
 }

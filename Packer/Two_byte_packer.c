@@ -21,9 +21,41 @@ __declspec(thread) static  unsigned long char_freq[256];
 __declspec(thread) static  packProfile profile;
 
 
+//TODO put these in a struct and pass it around instead of global
 __declspec(thread) static  uint8_t codes[256];
 __declspec(thread) static  uint16_t values[256];
 __declspec(thread) static uint8_t master_code, numberOfCodes;
+
+static void qqSort(uint8_t* A, uint16_t* B, int lo, int hi) {
+	if (lo < hi) {
+		int p = part(A, B, lo, hi);
+		qqSort(A, B, lo, p - 1);
+		qqSort(A, B, p + 1, hi);
+	}
+}
+
+static void swap2(uint8_t* A, uint16_t* B, uint8_t i1, uint8_t i2) {
+	uint8_t tmp = A[i1];
+	A[i1] = (uint8_t)A[i2];
+	A[i2] = tmp;
+
+	uint16_t tm = B[i1];
+	B[i1] = (uint16_t)B[i2];
+	B[i2] = tm;
+}
+
+static int part(uint8_t* A, uint16_t* B, uint8_t lo, uint8_t hi) {
+	uint8_t pivot = A[hi];
+	uint8_t p = lo;
+	for (uint8_t j = lo; j <= hi; j++) {
+		if (A[j] < pivot) {
+			swap2(A, B, p, j);			
+			p++;
+		}
+	}
+	swap2(A, B, p, hi);	
+	return p;
+}
 
 val_freq_t find_best_two_byte() {
 	unsigned long best = 0;
@@ -130,16 +162,29 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 
 	if (pass >= 2) {
 		create_two_byte_table(source_size);
+		
 
 		if (pass == 3) {
+			debug("\n two byte pack mastercode=%d numberofcodes=%d\n", master_code, numberOfCodes);
+
 			utfil = getMemfile((uint64_t)200 + infil->size, L"twobytepack_utfil");
 
 			//write the metadata table
 			fputccLight(master_code, utfil);
 			fputccLight(numberOfCodes, utfil);
-			for (int i = 0; i < numberOfCodes; i++) {
 
-				fputccLight(codes[i], utfil);
+			qqSort(codes, values, 0, numberOfCodes - 1);
+			int lastCode = -1;
+			printf("\n");
+			for (int i = 0; i < numberOfCodes; i++) {
+				int out = (codes[i] - lastCode) - 1;
+				lastCode = codes[i];
+				debug("%d , ", out);
+				fputccLight(out, utfil);
+				//fputccLight(codes[i], utfil);
+			}
+			printf("\n");
+			for (int i = 0; i < numberOfCodes; i++) {
 				fput2ccLight(values[i], utfil);
 			}
 		}
@@ -220,7 +265,7 @@ memfile* twoBytePack(memfile* m, packProfile prof) {
 			const wchar_t filename[100] = { 0 };
 			concatw(filename, L"c:/test/temp_files/", getMemName(m));
 			memfileToFile(m, filename);
-			myExit();
+			exit(1);
 		}
 		freeMem(tmp);
 	}
