@@ -175,7 +175,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 
 			qqSort(codes, values, 0, numberOfCodes - 1);
 			int lastCode = -1;
-			printf("\n");
+			debug("\n");
 			for (int i = 0; i < numberOfCodes; i++) {
 				int out = (codes[i] - lastCode) - 1;
 				lastCode = codes[i];
@@ -183,7 +183,7 @@ memfile* two_byte_pack_internal(memfile* infil, int pass) {
 				fputccLight(out, utfil);
 				//fputccLight(codes[i], utfil);
 			}
-			printf("\n");
+			debug("\n");
 			for (int i = 0; i < numberOfCodes; i++) {
 				fput2ccLight(values[i], utfil);
 			}

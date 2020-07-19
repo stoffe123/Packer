@@ -209,7 +209,7 @@ int getKindBits(int bit1, int bit2) {
 	return setKthBitToVal(pt, 2, bit2);
 }
 
-int getKindFromPackType(int packType) {
+int getHalfbyteKindFromPackType(int packType) {
 	if (isKthBitSet(packType, 1)) {
 		return isKthBitSet(packType, 2) ? 0 : 2;
 	}
@@ -217,7 +217,7 @@ int getKindFromPackType(int packType) {
 }
 
 
-bool isCanonicalHeaderPacked(int packType) {
+bool isHalfByteRlePacked(int packType) {
 	if (isKthBitSet(packType, 7) ||
 		((!isKthBitSet(packType, 1) && !isKthBitSet(packType, 2)))) {
 		return false;
@@ -509,9 +509,9 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
 		seq_dst = unpackAndReplace2(L"twobyte", seq_dst);
 	}
-	if (isCanonicalHeaderPacked(pack_type)) {
+	if (isHalfByteRlePacked(pack_type)) {
 		
-		 dst = halfbyteRleUnpack(seq_dst, getKindFromPackType(pack_type));
+		 dst = halfbyteRleUnpack(seq_dst, getHalfbyteKindFromPackType(pack_type));
 	}
 	else {
 		if (isKthBitSet(pack_type, RLE_BIT)) {  // bit 5

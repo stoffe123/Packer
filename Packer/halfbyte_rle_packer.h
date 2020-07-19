@@ -7,5 +7,8 @@ memfile* halfbyteRlePack(memfile* mem, int kind);
 
 memfile* halfbyteRleUnpack(memfile* mem, int kind);
 
+memfile* halfbyteRleUnpackTilSize(memfile* mem, int kind, int stopSize);
+
+
 
 #endif

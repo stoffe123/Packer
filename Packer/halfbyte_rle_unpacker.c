@@ -34,9 +34,11 @@ int readHalfbyte(memfile* infil)
 }
 
 //------------------------------------------------------------------------------
-memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
+memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind, int stopSize)
 {
-	rewindMem(infil);
+	if (stopSize == -1) {
+		rewindMem(infil);
+	}
 	//printf("\n canonical_header_unpack: %s", source_filename);
 	unsigned long i;
 
@@ -46,6 +48,8 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 	initReadHalfbyte();
 
 	int cc;
+	//change these lines if you want to use pack til stopsize
+	//while (utfil->pos != stopSize && (cc = readHalfbyte(infil)) != -1) {
 	while ((cc = readHalfbyte(infil)) != -1) {
 
 		if (kind < 2) {
@@ -99,12 +103,16 @@ memfile* halfbyte_rle_unpack_internal(memfile* infil, int kind)
 			else {
 				fputccLight(cc, utfil);
 			}
-		}
+		}		
 	}
 	syncMemSize(utfil);
 	return utfil;
 }
 
 memfile* halfbyteRleUnpack(memfile* mem, int kind) {
-	return halfbyte_rle_unpack_internal(mem, kind);
+	return halfbyte_rle_unpack_internal(mem, kind, -1);
+}
+
+memfile* halfbyteRleUnpackTilSize(memfile* mem, int kind, int stopSize) {
+	return halfbyte_rle_unpack_internal(mem, kind, stopSize);
 }

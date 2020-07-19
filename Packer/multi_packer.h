@@ -23,7 +23,7 @@ void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
 void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile);
 
-bool isCanonicalHeaderPacked(int packType);
+bool isHalfByteRlePacked(int packType);
 
 int packTypeForHalfbyteRlePack(int kind);
 
@@ -41,5 +41,9 @@ memfile* multiUnpack(memfile* m);
 
 memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+
+int getHalfbyteKindFromPackType(int packType);
+
+bool isHalfByteRlePacked(int packType);
 
 #endif
