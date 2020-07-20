@@ -580,21 +580,22 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 91,
-			.twobyte_ratio = 94,
-			.recursive_limit = 10,
-			.twobyte_threshold_max = 11854,
+			.rle_ratio = 94,
+			.twobyte_ratio = 91,
+			.recursive_limit = 320,
+			.twobyte_threshold_max = 11750,
 			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 906,
-			.seqlenMinLimit3 = 161,
-			.seqlenMinLimit4 = 51458,
-			.blockSizeMinus = 109,
-			.winsize = 18468, //104172
-			.sizeMaxForCanonicalHeaderPack = 284,
-			.sizeMinForSeqPack = 10877,
-			.sizeMinForCanonical = 171,
-			.sizeMaxForSuperslim = 10
+			.twobyte_threshold_min = 848,
+			.seqlenMinLimit3 = 151,
+			.seqlenMinLimit4 = 52447,
+			.blockSizeMinus = 121,
+			.winsize = 2000,
+			.sizeMaxForCanonicalHeaderPack = 268,
+			.sizeMinForSeqPack = 8470,
+			.sizeMinForCanonical = 278,
+			.sizeMaxForSuperslim = 16384
 	};
+	uint64_t time_limit = 500;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
@@ -622,9 +623,8 @@ void testarchive() {
 
 		archive_unpack(packed_name, destDir);
 
-		int unpack_time = (clock() - cl);
 		uint64_t totalTime = clock() - before_suite;
-		if (totalTime < (83 * 1000)) {
+		if (totalTime < (time_limit * 1000)) {
 			printf("\n Comparing dirs!");
 			if (dirsEqual(source_dir, destDir)) {
 				printf("\n ****** SUCCESS ****** (equal)\n");
@@ -657,7 +657,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    test16();
-	//testarchive();
+    //test16();
+	testarchive();
     //onefile();
 }
