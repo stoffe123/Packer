@@ -81,7 +81,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
-	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 512);
+	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
 	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 20000, 90000);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
 	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 160000);
@@ -342,7 +342,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/rle_pack_utfil";
+	const wchar_t* src = L"c:/test/twobytepack_utfil";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -354,70 +354,89 @@ void onefile() {
 	int cl = clock();
 
 	packProfile profile = {
-			.rle_ratio = 73,
-			.twobyte_ratio = 77,
-			.recursive_limit = 437,
-			.twobyte_threshold_max = 5,
-			.twobyte_threshold_divide = 1,
-			.twobyte_threshold_min = 5,
-			.seqlenMinLimit3 = 115,
-			.seqlenMinLimit4 = 72867,
-			.blockSizeMinus = 112,
-			.winsize = 18233,
-			.sizeMaxForCanonicalHeaderPack = 256,
-			.sizeMinForSeqPack = 12521,
-			.sizeMinForCanonical = 93,
-			.sizeMaxForSuperslim = 16921
+			.rle_ratio = 67,
+			.twobyte_ratio = 97,
+			.recursive_limit = 429,
+			.twobyte_threshold_max = 10502,
+			.twobyte_threshold_divide = 20,
+			.twobyte_threshold_min = 721,
+			.seqlenMinLimit3 = 276,
+			.seqlenMinLimit4 = 76079,
+			.blockSizeMinus = 108,
+			.winsize = 6633,
+			.sizeMaxForCanonicalHeaderPack = 85,
+			.sizeMinForSeqPack = 3641,
+			.sizeMinForCanonical = 51,
+			.sizeMaxForSuperslim = 6683
 	};
 
-	//meta testsuit 838297
-	packProfile seqlenProfile = getPackProfile();
-	seqlenProfile.rle_ratio = 64;
-	seqlenProfile.twobyte_ratio = 62;
-	seqlenProfile.recursive_limit = 10;
-	seqlenProfile.twobyte_threshold_max = 8373;
-	seqlenProfile.twobyte_threshold_divide = 3598;
-	seqlenProfile.twobyte_threshold_min = 24;
-	
+	 packProfile seqlenProfile = {
+.rle_ratio = 31,
+.twobyte_ratio = 97,
+.recursive_limit = 180,
+.twobyte_threshold_max = 5226,
+.twobyte_threshold_divide = 2233,
+.twobyte_threshold_min = 185,
+.seqlenMinLimit3 = 43,
+.seqlenMinLimit4 = 57360,
+.winsize = 78725,
+.sizeMaxForCanonicalHeaderPack = 175,
+.sizeMinForSeqPack = 2600,
+.sizeMinForCanonical = 30,
+.sizeMaxForSuperslim = 16384
+	},
 
-	packProfile offsetProfile = getPackProfile(72, 56, 10);
-	offsetProfile.rle_ratio = 56;
-	offsetProfile.twobyte_ratio = 82;
-	offsetProfile.recursive_limit = 220;
-	offsetProfile.twobyte_threshold_max = 11235;
-	offsetProfile.twobyte_threshold_divide = 1906;
-	offsetProfile.twobyte_threshold_min = 913;
-	offsetProfile.seqlenMinLimit3 = 20;
+		offsetProfile = {
+		.rle_ratio = 74,
+		.twobyte_ratio = 95,
+		.recursive_limit = 61,
+		.twobyte_threshold_max = 11404,
+		.twobyte_threshold_divide = 2520,
+		.twobyte_threshold_min = 384,
+		.seqlenMinLimit3 = 82,
+		.seqlenMinLimit4 = 57360,
+		.winsize = 91812,
+		.sizeMaxForCanonicalHeaderPack = 530,
+		.sizeMinForSeqPack = 2600,
+		.sizeMinForCanonical = 261,
+		.sizeMaxForSuperslim = 16384 },
 
-	packProfile distanceProfile = getPackProfile();
-	distanceProfile.rle_ratio = 95;
-	distanceProfile.twobyte_ratio = 100;
-	distanceProfile.recursive_limit = 90;
-	distanceProfile.twobyte_threshold_max = 2365;
-	distanceProfile.twobyte_threshold_divide = 2281;
-	distanceProfile.twobyte_threshold_min = 64;
-	distanceProfile.seqlenMinLimit3 = 20;
+		distanceProfile = {
+		.rle_ratio = 71,
+		.twobyte_ratio = 100,
+		.recursive_limit = 20,
+		.twobyte_threshold_max = 3641,
+		.twobyte_threshold_divide = 3972,
+		.twobyte_threshold_min = 37,
+		.seqlenMinLimit3 = 35,
+		.seqlenMinLimit4 = 57360,
+		.winsize = 80403,
+		.sizeMaxForCanonicalHeaderPack = 256,
+		.sizeMinForSeqPack = 2600,
+		.sizeMinForCanonical = 300,
+		.sizeMaxForSuperslim = 16384 };
 	uint64_t size_packed;
 	memfile* srcm = getMemfileFromFile(src);
 	
-	//seqPackBundle packed = seqPackSep(srcm, profile);
+	seqPackBundle packed = seqPackSep(srcm, profile);
 	//size_packed = getBundleSize(packed);
 	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
 	//memfile* packed = halfbyteRlePack(srcm, 0);
 	//memfile* packed = canonicalEncode(srcm);
-	memfile* packed = twoBytePack(srcm, profile);
+	//memfile* packed = twoBytePack(srcm, profile);
 
 
-	size_packed = getMemSize(packed);
+	//size_packed = getMemSize(packed);
+	size_packed = getBundleSize(packed);
 	printf("\n size_packed %d", size_packed);
 	int pack_time = (clock() - cl);
 		
 	cl = clock();
 
-	memfile* unpacked = twoByteUnpack(packed);
+	//memfile* unpacked = twoByteUnpack(packed);
 	//memfile* unpacked = canonicalDecode(packed);
 	//memfile* unpacked = multiUnpack2(packed);
-	//memfile* unpacked = seqUnpack(packed);
+	memfile* unpacked = seqUnpack(packed);
 	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
 	
 
@@ -466,24 +485,24 @@ void test16() {
 	
 	packProfile bestProfile, 
 		profile = {
-			.rle_ratio = 73,
-			.twobyte_ratio = 77,
-			.recursive_limit = 437,
-			.twobyte_threshold_max = 10653,
+			.rle_ratio = 67,
+			.twobyte_ratio = 97,
+			.recursive_limit = 429,
+			.twobyte_threshold_max = 10502,
 			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 703,
-			.seqlenMinLimit3 = 115,
-			.seqlenMinLimit4 = 72867,
-			.blockSizeMinus = 112,
-			.winsize = 18233,
-			.sizeMaxForCanonicalHeaderPack = 256,
-			.sizeMinForSeqPack = 12521,
-			.sizeMinForCanonical = 93,
-			.sizeMaxForSuperslim = 16921
+			.twobyte_threshold_min = 721,
+			.seqlenMinLimit3 = 276,
+			.seqlenMinLimit4 = 76079,
+			.blockSizeMinus = 108,
+			.winsize = 6633,
+			.sizeMaxForCanonicalHeaderPack = 85,
+			.sizeMinForSeqPack = 3641,
+			.sizeMinForCanonical = 51,
+			.sizeMaxForSuperslim = 6683
 	};
 
 	copyProfile(&profile, &bestProfile);
-	uint64_t timeLimit = 300;
+	uint64_t timeLimit = 66;
 	bool unpack = true;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
@@ -542,6 +561,8 @@ void test16() {
 					printf("\n ****** SUCCESS ****** (equal)\n");
 				}
 				else {
+					printf("\n profile used:");
+					printProfile(&profile);
 					exit(1);
 				}
 			}

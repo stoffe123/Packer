@@ -21,9 +21,8 @@ __declspec(thread) static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wrap
 __declspec(thread) static  bool separate_files = true;
 
 
-uint8_t read_byte_from_file() {
-	packed_file_end--;
-	return buf[packed_file_end];
+uint8_t read_byte_from_file() {	
+	return buf[--packed_file_end];
 }
 
 void put_buf(uint8_t c) {
@@ -79,7 +78,7 @@ uint64_t getMeta(pageCoding_t pageCoding, meta_kind_t kind) {
 }
 
 
-uint64_t get_offset(pageCoding_t p) {	
+uint64_t get_offset(pageCoding_t p) {
 	return getMeta(p, OFFSET);
 }
 
@@ -105,7 +104,7 @@ uint64_t copyWrapAround(uint8_t seqlen_pages, uint8_t offset_pages, uint64_t use
 		if (separate_files) {
 			temp_ar[--j] = ch;
 			continue;
-		} 
+		}
 		else {
 
 			// ch was code
@@ -152,8 +151,8 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 {
 	wprintf(L"\n starting seq_unpack of %s", getMemName(mf_arr.main));
 	separate_files = sep;
-	uint8_t offset_pages, seqlen_pages, distance_pages;	
-	uint64_t useDistanceLongRange, useOffsetLongRange, useSeqlenLongRange;
+	uint8_t offset_pages, seqlen_pages, distance_pages;
+
 
 	if (separate_files) {
 
@@ -162,29 +161,27 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 
 		offsets = mf_arr.offsets;
 		offsets_pos = getMemSize(offsets);
-		
+
 		distances = mf_arr.distances;
 		distances_pos = getMemSize(distances);
 	}
 
-	debug("\n\n Seq unpack !!");
-    uint8_t cc;
-	
-	memfile* infil = mf_arr.main;
-	uint64_t infil_orgsize = getMemSize(infil);
-	packed_file_end = getMemSize(infil);
+	debug("\n\n ---------- Seq UNPACKER ----------------- ");
+	uint8_t cc;
+	uint64_t infil_orgsize = getMemSize(mf_arr.main);
+	packed_file_end = infil_orgsize;
 	assert(buf_size == BLOCK_SIZE * 4, "buf_size was not equal to BLOCK_SIZE*4 in seq_unpacker");
-	reallocMem(infil, buf_size);
-	buf = infil->block;
-	debug("\n packed_file_end %d", packed_file_end);	
+	reallocMem(mf_arr.main, buf_size);
+	buf = mf_arr.main->block;
+	debug("\n packed_file_end %d", packed_file_end);
 
 	unsigned char packType = read_byte_from_file();
 	bool superslim = isKthBitSet(packType, 7);
 	uint64_t seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
-	uint64_t seqlenMinLimit4 = SEQLEN_MIN_LIMIT4;
 	if (!superslim) {
 		seqlenMinLimit3 = read_byte_from_file();
 	}
+	
 
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
@@ -194,7 +191,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	else {
 		distance_pages = read_byte_from_file();
 		offset_pages = read_byte_from_file();
-		seqlen_pages = read_byte_from_file();		
+		seqlen_pages = read_byte_from_file();
 	}
 	pageCoding_t distancePageCoding;
 	distancePageCoding.pages = distance_pages;
@@ -211,18 +208,12 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	uint64_t lastDistance = get_distance(distancePageCoding);
 
 	buf_pos = copyWrapAround(seqlen_pages, offset_pages, offsetPageCoding.useLongRange);
-	
+
 	debug(" \n pages=(%d, %d, %d)", offset_pages, seqlen_pages, distance_pages);
-	
+
 	debug("\n buf_pos after wraparound %d", buf_pos);
 
 	debug("\n distance to first code: %d", lastDistance);
-
-	debug("\n useOffsetLongrange: %d", useOffsetLongRange);
-
-	debug("\n useDistanceLongrange: %d", useDistanceLongRange);
-
-	debug("\n useSeqlenLongrange: %d", useSeqlenLongRange);
 
 	if (VERBOSE) {
 		printf("\nwrap around:\n");
@@ -231,9 +222,6 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 		}
 		printf("\n\n");
 	}
-	packProfile profile = getPackProfile();
-	profile.seqlenMinLimit3 = seqlenMinLimit3;
-
 
 	uint64_t distance = 0;
 	while (packed_file_end > 0 || distance == lastDistance) {
@@ -246,18 +234,24 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 			uint64_t seqlen = get_seqlen(seqlenPageCoding);
 			uint64_t offset = get_offset(offsetPageCoding);
 
-			seqlen += getSeqlenMin(offset, profile);
+			seqlen += getSeqlenMin(offset, seqlenMinLimit3);
 
 			uint64_t match_index = buf_pos + offset + seqlen;
-			debug("unp: (%d, %d, %d)  packed_file_end %d match_index:%d buf_pos:%d buf_size:%d '", seqlen, offset, lastDistance, packed_file_end, match_index, buf_pos, buf_size);
+#if VERBOSE
+			printf("unp: (%d, %d, %d)  packed_file_end %d match_index:%d buf_pos:%d buf_size:%d '", seqlen, offset, lastDistance, packed_file_end, match_index, buf_pos, buf_size);
 			assert(match_index < buf_size, "match_index < buf_size in seq_unpacker.unpack");
+#endif
 			//write the sequence at the right place!
 			//if (seq_len > offset) {
 			for (uint64_t i = 0; i < seqlen; i++) {
 				put_buf(buf[match_index - i]);
-				debug("%d ", buf[(match_index - seqlen) + (i + 1)]);
+#if VERBOSE
+				printf("%d ", buf[(match_index - seqlen) + (i + 1)]);
+#endif
 			}
-			debug("'\n");
+#if VERBOSE
+			printf("'\n");
+#endif
 			/*	}
 
 				else {  //offset < seq_len, repeating
@@ -283,8 +277,12 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	debug("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
 	memfile* utfil = getMemfile(size_out, L"sequnpacker_utfil");
 	memWrite(&buf[buf_pos + 1], size_out, utfil);
-	
-	setSize(infil, infil_orgsize);
+
+	setSize(mf_arr.main, infil_orgsize);
+
+	debug("\n seqlenMinLimit3=%d", seqlenMinLimit3);
+	debug("\n superslim=%d", superslim);
+
 	return utfil;
 }
 

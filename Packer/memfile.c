@@ -110,7 +110,7 @@ void memfileToFile(memfile* mf, const wchar_t* dst) {
 }
 
 void rewindMem(memfile* m) {
-	setPos(m, 0);
+	m->pos = 0;
 }
 
 memfile* getMemfileFromFile(const wchar_t* filename) {

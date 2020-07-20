@@ -45,7 +45,7 @@ void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {
 		wprintf(L"\n\n\n ** Failed to %s pack: %s", kind, getMemName(src));
 		const wchar_t filename[100] = { 0 };
 		concatw(filename, L"c:/test/temp_files/", getMemName(src));
-		memfileToFile(src, filename);
+		memfileToFile(src, filename);		
 		exit(1);
 	}
 	freeMem(tmp);

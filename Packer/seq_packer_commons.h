@@ -24,7 +24,7 @@ typedef enum {
     SEQLEN, OFFSET, DISTANCE    
 } meta_kind_t;
 
-unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile);
+unsigned char getSeqlenMin(uint64_t best_offset, int seqlenMinLimit3);
 
 uint64_t getBundleSize(seqPackBundle b);
 

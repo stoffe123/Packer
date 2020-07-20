@@ -346,12 +346,6 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		if (source_size > profile.sizeMinForSeqPack) {
 			printf("\n now trying seqPack of file w size %d", getMemSize(before_seqpack));
 			 mb = seqPackSep(before_seqpack, profile);
-			
-			if (DOUBLE_CHECK_PACK) {				
-				wprintf(L"\n ?Double checking the seqpack of: %s", getMemName(before_seqpack));								
-				memfile* tmp = seqUnpack(mb);
-				doDoubleCheck(tmp, before_seqpack, L"seq");				
-			}
 
 			//try to pack meta files!
 			uint64_t seqlens_size = getMemSize(mb.seqlens);

@@ -138,7 +138,7 @@ void convertMeta(memfile* file, unsigned long distance, pageCoding_t pageCoding)
 
 uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqTable, int32_t pos)
 {
-	uint64_t lowestSpecial = getLowestSpecial(pageCoding);	
+	uint64_t lowestSpecial = getLowestSpecial(pageCoding);
 	uint64_t size = 0;
 
 	//1 bytes
@@ -187,17 +187,17 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 	if (equalsw(metaname, L"offsets")) {
 		freqs = offsetFreq;
 		values = offsets;
-		metaValuesCount = offsetsPos;		
+		metaValuesCount = offsetsPos;
 	}
 	else if (equalsw(metaname, L"distances")) {
 		freqs = distanceFreq;
 		values = distances;
-		metaValuesCount = distancesPos;		
+		metaValuesCount = distancesPos;
 	}
 	else if (equalsw(metaname, L"seqlens")) {
 		freqs = seqlenFreq;
 		values = seqlens;
-		metaValuesCount = seqlensPos;		
+		metaValuesCount = seqlensPos;
 	}
 	else {
 		printf("\n wrong metaname in seq_packer.createMetaFile");
@@ -210,7 +210,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 		highestValue--;
 	}
 	//wprintf(L"\n Highest %s was %d", metaname, highestValue);
-	
+
 
 	uint32_t bestSize = UINT32_MAX;
 
@@ -225,38 +225,38 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 
 		//calc pageMax without using longRange to see if longRange could be skipped	
 		pageCoding.useLongRange = false;
-		uint64_t pageMax = calcPageMax(pageCoding);		
+		uint64_t pageMax = calcPageMax(pageCoding);
 		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
 
 		pageMax = calcPageMax(pageCoding);
 		//update now that pageMax has changed
 		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
-		
+
 		uint32_t size = calcMetaSize(pageCoding, pageMax, freqs, metaValuesCount);
 		if (size < bestSize) {
 			bestSize = size;
-			bestPageCoding = pageCoding;			
+			bestPageCoding = pageCoding;
 		}
 		//printf("\n pages %d gave size %d useOffsetLongRange %d", pages, size, useLongRange);
 		if (highestValue < pageMax) {
 			break;
 		}
 	}
-	for (int i = 0; i < metaValuesCount; i++) {		
-		convertMeta(file, values[i], bestPageCoding);		
+	for (int i = 0; i < metaValuesCount; i++) {
+		convertMeta(file, values[i], bestPageCoding);
 	}
 	syncMemSize(file);
 	uint64_t filesize = getMemSize(file);
 	if (bestSize != filesize) {
-	    wprintf(L"\n   comparing %s meta file sizes ... %d %d when seqpacking file %s", metaname, bestSize, filesize, src_name);
+		wprintf(L"\n   comparing %s meta file sizes ... %d %d when seqpacking file %s", metaname, bestSize, filesize, src_name);
 		exit(1);
 	}
 	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
-	
+
 	return bestPageCoding;
 }
 
-uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBit) {
+uint64_t storeLongRange(uint64_t packType, uint64_t longRange, uint64_t startBit) {
 
 	if (longRange / 2 == 1) {
 		packType = setKthBit(packType, startBit);
@@ -272,17 +272,24 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange,  uint64_t startBi
 seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile profile)
 {
 	rewindMem(infil);
-	
+
 	unsigned int max_seqlen = 65791;
 	bool superslim = false;
 	uint64_t size_org = getMemSize(infil);
 	assert(size_org > 0, "size_org negative in seqpacker");
 	assert(size_org < BLOCK_SIZE, "size_org larger than BLOCK_SIZE in seqpacker");
 	reallocMem(infil, size_org * 3);
+	int64_t seqlenMinLimit3 = profile.seqlenMinLimit3;
+	if (seqlenMinLimit3 > 255) {
+		printf("\n WARNING!!!  seqlenMinLimit3 was over 255. Doing % 256 on it!");
+		seqlenMinLimit3 %= 256;
+	}
 	if (size_org < profile.sizeMaxForSuperslim) {
 		superslim = true;
-		profile.seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
+		seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}
+	debug("\n seqlenMinLimit3=%d", seqlenMinLimit3);
+	debug("\n superslim=%d", superslim);
 
 	uint64_t	offset,
 		winsize = profile.winsize,
@@ -294,7 +301,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 	uint32_t buffer_pos = 0;
 	debug("\n Seq_packer pass: %d", pass);
 
-	
+
 	seqPackBundle utfil;
 	utfil.main = NULL;
 	if (pass == 2) {
@@ -302,13 +309,13 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 		debug("\nWinsize: %d", winsize);
 		debug("\nmax_seqlen: %d", max_seqlen);
 
-		utfil.main = getMemfile(size_org * 3 + 1000, L"seqpacker_utfilmain");		
-		
+		utfil.main = getMemfile(size_org * 3 + 1000, L"seqpacker_utfilmain");
+
 	}
 
 	printf("\n");
 	/* start compression */
-	
+
 	buffer_endpos = size_org;
 
 	absolute_end = buffer_endpos;
@@ -381,7 +388,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 						best_seqlen = seq_len;
 						best_offset = offset;
 						if (best_seqlen >= max_seqlen) {
-							best_seqlen = max_seqlen;						
+							best_seqlen = max_seqlen;
 							break;
 						}
 					}
@@ -390,7 +397,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 		}
 		/* now we found the longest sequence in the window! */
 		best_offset -= best_seqlen;
-		unsigned char seqlen_min = getSeqlenMin(best_offset, profile);
+		unsigned char seqlen_min = getSeqlenMin(best_offset, seqlenMinLimit3);
 
 		if (best_seqlen < seqlen_min)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
@@ -405,7 +412,6 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 				distance++;
 			}
 			buffer_pos++;
-			display_progress(buffer_pos, pass);
 		}
 		else { // insert code triple instead of the matching sequence!
 			//debug("\n  seqlenmin:%d  offset:%d", seqlen_min, best_offset);
@@ -420,31 +426,30 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 				out_offset(best_offset);
 
 				out_seqlen(best_seqlen - seqlen_min);
-				if (VERBOSE) {
-					printf("\n(%d, %d, %d)  buffer_startpos %d   buffer_endpos %d  seq \"", best_seqlen, best_offset, distance, buffer_pos, buffer_endpos);
-					for (int i = 0; i < best_seqlen; i++) {
-						printf("%d ", buffer[buffer_pos + i]);
-					}
-					printf("\"");
+#if VERBOSE
+				printf("\n(%d, %d, %d)  buffer_startpos %d   buffer_endpos %d  seq \"", best_seqlen, best_offset, distance, buffer_pos, buffer_endpos);
+				for (int i = 0; i < best_seqlen; i++) {
+					printf("%d ", buffer[buffer_pos + i]);
 				}
+				printf("\"");
+#endif
 
-				
+
 				/* note file is read backwards during unpack! */
 				out_distance(distance);
 				distance = 0;
 			}
 			buffer_pos += best_seqlen;
-			display_progress(buffer_pos, pass);
 		}//end if
 	}//end while
 
-	if (VERBOSE && false) {
-		printf("\nwrap around:\n");
-		for (int i = buffer_endpos; i < absolute_end; i++) {
-			//printf("%c", buffer[i]);
-		}
-		printf("\n\n");
+#if VERBOSE
+	printf("\nwrap around:\n");
+	for (int i = buffer_endpos; i < absolute_end; i++) {
+		//printf("%c", buffer[i]);
 	}
+	printf("\n\n");
+#endif
 	setSize(infil, size_org);
 	if (pass == 2) {
 
@@ -484,13 +489,14 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 			packType = setKthBit(packType, 7);
 		}
 		if (!superslim) {
-			fputccLight(profile.seqlenMinLimit3, utfil.main);
+			fputccLight(seqlenMinLimit3, utfil.main);
 		}
 		else {
 			printf("\n superslim used!");
 		}
-		fputccLight(packType, utfil.main);		
+		fputccLight(packType, utfil.main);
 		syncMemSize(utfil.main);
+		debug("utfil.main size=%d", getMemSize(utfil.main));
 		return utfil;
 	}
 }
@@ -509,18 +515,41 @@ void initGlobalArrays() {
 		offsets[i] = 0;
 		offsetFreq[i] = 0;
 		seqlens[i] = 0;
-		seqlenFreq[i] = 0;		
-	}	
+		seqlenFreq[i] = 0;
+	}
 	distancesPos = 0;
 	offsetsPos = 0;
 	seqlensPos = 0;
 }
 
-seqPackBundle seq_pack_internal(memfile* m, packProfile profile, bool sep) {	
+seqPackBundle seq_pack_internal(memfile* m, packProfile profile, bool sep) {
 	separate_files = sep;
 	initGlobalArrays();
 	pack_internal(m, 1, profile);
-	return pack_internal(m, 2, profile);
+	seqPackBundle res = pack_internal(m, 2, profile);
+
+	if (DOUBLE_CHECK_PACK) {
+		wchar_t* name = getMemName(m);
+		wprintf(L"\n ?Double checking the seqpack of: %s", name);
+		memfile* tmp = seqUnpack(res);
+		bool sc = memsEqual(tmp, m);
+		if (!sc) {
+			wprintf(L"\n\n\n ** FAILED to seq pack: %s", name);
+			const wchar_t filename[100] = { 0 };
+			if (name[1] != ':') {
+				concatw(filename, L"c:/test/temp_files/", name);
+			}
+			else {
+				wcscpy(filename, name);
+			}
+			memfileToFile(m, filename);
+			printf("\n\n profile used:");
+			printProfile(&profile);
+			exit(1);
+		}
+		freeMem(tmp);
+	}
+	return res;
 }
 
 seqPackBundle seqPackSep(memfile* mem, packProfile profile) {
