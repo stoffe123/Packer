@@ -123,14 +123,13 @@ unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned 
 	return best_size;
 }
 
-bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t before_suite, uint64_t seconds) {
+bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t totalTime, uint64_t seconds) {
 	if ((best_size > 0 && acc_size_packed > best_size)) {
 		printf("\n early break because of too big size.. size had become: %d", acc_size_packed);
 		return true;
 	}
-	int time = clock() - before_suite;
-	if (time > (seconds * 1000)) {
-		printf("\n early break because of too big time, time was %d", time);
+	if (totalTime > (seconds * 1000)) {
+		printf("\n early break because of too big time, time was %d", totalTime);
 		return true;
 	}
 	return false;
@@ -235,7 +234,7 @@ void testmeta() {
 				
 			long long size_packed = getFileSizeFromName(packed_name);
 			acc_size_packed += size_packed;
-			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
+			if (isEarlyBreak(best_size, acc_size_packed, totalTime, timeLimit)) {
 				earlyBreak = true;
 				break;
 			}
@@ -511,7 +510,7 @@ void test16() {
 		unsigned long long acc_size_packed = 0,
 			acc_size_org = 0;
 
-		uint64_t before_suite = clock(), totalTime = 0;
+		uint64_t totalTime = 0;
 		int kk = 0;
 		bool earlyBreak = true;
 		for (; kk < 16; kk++)
@@ -527,19 +526,20 @@ void test16() {
 			printf("\n------------------------------------------------");
 			wprintf(L"\n Packing... %s with length:%d", src, size_org);
 
-			int cl = clock();
+			uint64_t beforePack = clock();
 
 			block_pack(src, packed_name, profile);
 			//seq_pack_separate(src, "c:/test/", profile);
 
-			int pack_time = (clock() - cl);
+			uint64_t pack_time = (clock() - beforePack);
+			totalTime += pack_time;
 			//printf("\n Packing finished time it took: %d", pack_time);
 			uint64_t size_packed = getFileSizeFromName(packed_name);
 			printf("\n packed size %d", size_packed);
 			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 			acc_size_packed += size_packed;
-			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
+			if (isEarlyBreak(best_size, acc_size_packed, totalTime, timeLimit)) {
 				earlyBreak = true;
 				break;
 			}
@@ -547,12 +547,13 @@ void test16() {
 
 			printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
 
-			cl = clock();
+			uint64_t beforeUnpack = clock();
 			if (unpack) {
 				block_unpack(packed_name, dst);
 				//seq_unpack_separate("main", dst, "c:/test/");
 
-				int unpack_time = (clock() - cl);
+				uint64_t unpack_time = (clock() - beforeUnpack);
+				totalTime += unpack_time;
 				//printf("\n Unpacking finished time it took: %d", unpack_time);
 				printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
@@ -566,9 +567,7 @@ void test16() {
 					exit(1);
 				}
 			}
-	
-			totalTime = clock() - before_suite;
-			earlyBreak = isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit);
+			earlyBreak = isEarlyBreak(best_size, acc_size_packed, totalTime, timeLimit);
 		}//end for
 		best_size = presentResult(earlyBreak, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		fuzzProfile(&profile, bestProfile);
