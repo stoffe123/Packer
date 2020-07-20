@@ -311,9 +311,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 
 		utfil.main = getMemfile(size_org * 3 + 1000, L"seqpacker_utfilmain");
 
-	}
-
-	printf("\n");
+	}	
 	/* start compression */
 
 	buffer_endpos = size_org;

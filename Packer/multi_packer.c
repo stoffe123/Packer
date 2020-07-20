@@ -344,7 +344,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	
 		uint64_t size_after_seq = UINT64_MAX;
 		if (source_size > profile.sizeMinForSeqPack) {
-			printf("\n now trying seqPack of file w size %d", getMemSize(before_seqpack));
+			//printf("\n now trying seqPack of file w size %d", getMemSize(before_seqpack));
 			 mb = seqPackSep(before_seqpack, profile);
 
 			//try to pack meta files!
@@ -429,7 +429,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 		freeMem(mb.main);
 		mb.main = bestCandidate.filename;
 	}
-	printf("\nTar writing %s packtype %d", dst, pack_type);
+	//printf("\nTar writing %s packtype %d", dst, pack_type);
 	pack_type = tar(dst, mb, pack_type, storePackType);
 
 	if (mb.main != before_seqpack && before_seqpack != src) {
@@ -443,7 +443,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	freeMem(mb.offsets);
 	freeMem(mb.distances);
 
-	printf("\n ---------------  returning multipack -----------------");
+	//printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
 }
 

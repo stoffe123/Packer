@@ -595,10 +595,11 @@ void testarchive() {
 			.sizeMinForCanonical = 278,
 			.sizeMaxForSuperslim = 16384
 	};
-	uint64_t time_limit = 500;
+	uint64_t time_limit = 2000;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
+	
 	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
     //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
 
@@ -641,7 +642,8 @@ void testarchive() {
 			printf("\n Too long time %d", totalTime);
 			printf("\n size was %d", acc_size_packed);
 			printProfile(&profile);
-			printf("\n Current best profile");
+			printf("\n --------------------");
+			printf("\n Current best profile, size %d", best_size);
 			printf("\n --------------------");
 			printProfile(&bestProfile);
 		}

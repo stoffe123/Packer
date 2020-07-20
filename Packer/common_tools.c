@@ -304,7 +304,7 @@ void deleteAllFilesInDir(const wchar_t* sDir) {
 			//Is the entity a File or Folder? 
 			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				wprintf(L"removing Directory: %s\n", sPath);
+				//wprintf(L"removing Directory: %s\n", sPath);
 				deleteAllFilesInDir(sPath); //Recursion, I love it! 
 				RemoveDirectory(sPath);
 			}
