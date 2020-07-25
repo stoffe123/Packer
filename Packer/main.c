@@ -501,7 +501,7 @@ void test16() {
 	};
 
 	copyProfile(&profile, &bestProfile);
-	uint64_t timeLimit = 69;
+	uint64_t timeLimit = 39;
 	bool unpack = true;
 	unsigned long long best_size = 0; // 44127835; // (43094 kb)
 	while (true) 
@@ -659,7 +659,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    //test16();
-	testarchive();
+    test16();
+	//testarchive();
     //onefile();
 }

@@ -58,7 +58,7 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 	FILE* f;
 	errno_t err = _wfopen_s(&f, name, L"rb");
 	if (err != 0) {
-		wprintf(L"\n get_file_size_from_wname: can't find file: %s", name);
+		wprintf(L"\n getFileSizeFromName: can't find file: %s", name);
 		myExit();
 	}
 	uint64_t res = getFileSize(f);
@@ -198,11 +198,11 @@ void get_randw(const wchar_t* s) {
 }
 
 void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
-	lockTempfileMutex();
+	
 	wchar_t number[40] = { 0 };
 	get_randw(number);
 	concat3w(dst, TEMP_DIRW, s, number);
-	releaseTempfileMutex();
+
 }
 
 void concat(const char* dst, const char* s1, const char* s2) {
