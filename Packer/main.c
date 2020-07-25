@@ -580,22 +580,22 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 94,
-			.twobyte_ratio = 91,
-			.recursive_limit = 320,
-			.twobyte_threshold_max = 11750,
-			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 848,
-			.seqlenMinLimit3 = 151,
-			.seqlenMinLimit4 = 52447,
-			.blockSizeMinus = 121,
-			.winsize = 2000,
-			.sizeMaxForCanonicalHeaderPack = 268,
-			.sizeMinForSeqPack = 8470,
-			.sizeMinForCanonical = 278,
-			.sizeMaxForSuperslim = 16384
+			.rle_ratio = 96,
+			.twobyte_ratio = 100,
+			.recursive_limit = 391,
+			.twobyte_threshold_max = 10286,
+			.twobyte_threshold_divide = 829,
+			.twobyte_threshold_min = 969,
+			.seqlenMinLimit3 = 142,
+			.seqlenMinLimit4 = 50607,
+			.blockSizeMinus = 88,
+			.winsize = 28360,
+			.sizeMaxForCanonicalHeaderPack = 167,
+			.sizeMinForSeqPack = 21839,
+			.sizeMinForCanonical = 307,
+			.sizeMaxForSuperslim = 2380
 	};
-	uint64_t time_limit = 2000;
+	uint64_t time_limit = 100;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
@@ -659,7 +659,7 @@ int main()
 	time_t t;
 	srand((unsigned)time(&t));
 	//testmeta();
-    test16();
-	//testarchive();
+    //test16();
+	testarchive();
     //onefile();
 }

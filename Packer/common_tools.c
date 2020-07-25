@@ -153,7 +153,7 @@ void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t siz
 }
 
 void appendFileToFile(FILE* main_file, wchar_t* append_filename) {
-	wprintf(L"\n append_to_filew: %s", append_filename);
+	//wprintf(L"\n append_to_filew: %s", append_filename);
 	FILE* append_file = openRead(append_filename); 		
 	int ch;
 	while ((ch = fgetc(append_file)) != EOF) {

@@ -250,8 +250,8 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 	const wchar_t tmpBlocked[500] = { 0 }; //put here for perfomance
 	for (int i = 0; i < count; i++) {
 		const wchar_t* name = fileList[i].name;
+	    wprintf(L"\n%s", name);
 		if (solid) {
-			wprintf(L"\n append_to_filew: %s", name);
 			appendFileToFile(out, name);
 		}
 		else {
@@ -283,10 +283,10 @@ file_t* readHeader(FILE* in, char* dir, uint64_t count) {
 		wchar_t ch;
 		int i = 0;
 		while ((ch = fgetwc(in)) != 0) {
-			wprintf(L"%c", ch);
+			//wprintf(L"%c", ch);
 			filename[i++] = ch;
 		}
-		wprintf(L"\n");
+		//wprintf(L"\n");
 		filename[i] = 0;
 		wcscpy(filenames[readNames].name, dir);
 		wcscat(filenames[readNames].name, filename);
