@@ -192,6 +192,7 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 		lockBlockchunkMutex();		
 		freeMem(blockChunk.packed);
+		freeMem(blockChunk.unpacked);
 		releaseBlockchunkMutex();
 	}	
 	fclose(utfil);
@@ -236,7 +237,6 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 		}
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].packType = packType;
-//		blockChunks[chunkNumber].unpacked = 
 		blockChunks[chunkNumber].packed = tmp;
 		printf("\n STARTING THREAD FOR MULTIUNPACK %d ", chunkNumber);
 		releaseBlockchunkMutex();

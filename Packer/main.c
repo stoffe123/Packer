@@ -484,20 +484,20 @@ void test16() {
 	
 	packProfile bestProfile, 
 		profile = {
-			.rle_ratio = 75,
-			.twobyte_ratio = 86,
-			.recursive_limit = 456,
-			.twobyte_threshold_max = 9866,
+			.rle_ratio = 85,
+			.twobyte_ratio = 81,
+			.recursive_limit = 600,
+			.twobyte_threshold_max = 13000,
 			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 703,
-			.seqlenMinLimit3 = 164,
-			.seqlenMinLimit4 = 72867,
-			.blockSizeMinus = 119,
-			.winsize = 18233,
-			.sizeMaxForCanonicalHeaderPack = 212,
-			.sizeMinForSeqPack = 12521,
-			.sizeMinForCanonical = 93,
-			.sizeMaxForSuperslim = 8714
+			.twobyte_threshold_min = 679,
+			.seqlenMinLimit3 = 91,
+			.seqlenMinLimit4 = 72817,
+			.blockSizeMinus = 141,
+			.winsize = 30715,
+			.sizeMaxForCanonicalHeaderPack = 412,
+			.sizeMinForSeqPack = 22649,
+			.sizeMinForCanonical = 75,
+			.sizeMaxForSuperslim = 10
 	};
 
 	copyProfile(&profile, &bestProfile);
