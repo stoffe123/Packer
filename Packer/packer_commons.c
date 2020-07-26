@@ -122,7 +122,7 @@ void printProfile(packProfile* profile) {
 	printf("\nRecursive limit   %d", profile->recursive_limit);
 	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
 	printf("\nSeqlenMin limit3 %d", profile->seqlenMinLimit3);	
-	printf("\nSeqlenMin limit4 %d", profile->seqlenMinLimit4);
+	
 	printf("\nBlock size minus (10k): %d", profile->blockSizeMinus);
 	printf("\nWinsize: %d", profile->winsize);
 	printf("\nSize max for Canonical Header Pack %d", profile->sizeMaxForCanonicalHeaderPack);
@@ -140,7 +140,7 @@ packProfile getPackProfile() {
 	.twobyte_threshold_divide = 27,
 	.twobyte_threshold_min = 3150,
 	.seqlenMinLimit3 = 128,
-	.seqlenMinLimit4 = 57360,
+	
 	.blockSizeMinus = 139,
 	.winsize = 95536,
 	.sizeMaxForCanonicalHeaderPack = 256,
@@ -160,7 +160,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
 	dst->seqlenMinLimit3 = src->seqlenMinLimit3;
-	dst->seqlenMinLimit4 = src->seqlenMinLimit4;
+	
 	dst->blockSizeMinus = src->blockSizeMinus;
 	dst->winsize = src->winsize;
 	dst->sizeMaxForCanonicalHeaderPack = src->sizeMaxForCanonicalHeaderPack;

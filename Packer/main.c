@@ -82,7 +82,6 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
-	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 20000, 90000);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
 	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 160000);
 
@@ -154,7 +153,6 @@ void testmeta() {
 		.twobyte_threshold_divide = 1979,
 		.twobyte_threshold_min = 160,
 		.seqlenMinLimit3 = 58,
-		.seqlenMinLimit4 = 20000,
 		.winsize = 77525,
 		.sizeMaxForCanonicalHeaderPack = 175,
 		.sizeMinForSeqPack = 5690,
@@ -169,7 +167,6 @@ void testmeta() {
 			.twobyte_threshold_divide = 2520,
 			.twobyte_threshold_min = 411,
 			.seqlenMinLimit3 = 82,
-			.seqlenMinLimit4 = 20000,
 			.winsize = 92198,
 			.sizeMaxForCanonicalHeaderPack = 563,
 			.sizeMinForSeqPack = 4753,
@@ -184,7 +181,6 @@ void testmeta() {
 			.twobyte_threshold_divide = 3609,
 			.twobyte_threshold_min = 37,
 			.seqlenMinLimit3 = 35,
-			.seqlenMinLimit4 = 20000,
 			.winsize = 83179,
 			.sizeMaxForCanonicalHeaderPack = 214,
 			.sizeMinForSeqPack = 10,
@@ -360,7 +356,6 @@ void onefile() {
 			.twobyte_threshold_divide = 20,
 			.twobyte_threshold_min = 721,
 			.seqlenMinLimit3 = 276,
-			.seqlenMinLimit4 = 76079,
 			.blockSizeMinus = 108,
 			.winsize = 6633,
 			.sizeMaxForCanonicalHeaderPack = 85,
@@ -377,7 +372,6 @@ void onefile() {
 .twobyte_threshold_divide = 2233,
 .twobyte_threshold_min = 185,
 .seqlenMinLimit3 = 43,
-.seqlenMinLimit4 = 57360,
 .winsize = 78725,
 .sizeMaxForCanonicalHeaderPack = 175,
 .sizeMinForSeqPack = 2600,
@@ -393,7 +387,7 @@ void onefile() {
 		.twobyte_threshold_divide = 2520,
 		.twobyte_threshold_min = 384,
 		.seqlenMinLimit3 = 82,
-		.seqlenMinLimit4 = 57360,
+	
 		.winsize = 91812,
 		.sizeMaxForCanonicalHeaderPack = 530,
 		.sizeMinForSeqPack = 2600,
@@ -408,7 +402,7 @@ void onefile() {
 		.twobyte_threshold_divide = 3972,
 		.twobyte_threshold_min = 37,
 		.seqlenMinLimit3 = 35,
-		.seqlenMinLimit4 = 57360,
+	
 		.winsize = 80403,
 		.sizeMaxForCanonicalHeaderPack = 256,
 		.sizeMinForSeqPack = 2600,
@@ -491,7 +485,7 @@ void test16() {
 			.twobyte_threshold_divide = 20,
 			.twobyte_threshold_min = 679,
 			.seqlenMinLimit3 = 91,
-			.seqlenMinLimit4 = 72817,
+			
 			.blockSizeMinus = 141,
 			.winsize = 30715,
 			.sizeMaxForCanonicalHeaderPack = 412,
@@ -580,22 +574,21 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 96,
+			.rle_ratio = 95,
 			.twobyte_ratio = 100,
-			.recursive_limit = 391,
-			.twobyte_threshold_max = 10286,
-			.twobyte_threshold_divide = 829,
-			.twobyte_threshold_min = 969,
-			.seqlenMinLimit3 = 142,
-			.seqlenMinLimit4 = 50607,
-			.blockSizeMinus = 88,
-			.winsize = 28360,
-			.sizeMaxForCanonicalHeaderPack = 167,
-			.sizeMinForSeqPack = 21839,
-			.sizeMinForCanonical = 307,
-			.sizeMaxForSuperslim = 2380
+			.recursive_limit = 359,
+			.twobyte_threshold_max = 9638,
+			.twobyte_threshold_divide = 899,
+			.twobyte_threshold_min = 783,
+			.seqlenMinLimit3 = 76,
+			.blockSizeMinus = 107,
+			.winsize = 29128,
+			.sizeMaxForCanonicalHeaderPack = 157,
+			.sizeMinForSeqPack = 9632,
+			.sizeMinForCanonical = 375,
+			.sizeMaxForSuperslim = 20161
 	};
-	uint64_t time_limit = 100;
+	uint64_t time_limit = 82;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";

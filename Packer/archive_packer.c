@@ -31,7 +31,7 @@ static packProfile headerPackProfile = {
 			.twobyte_threshold_divide = 1383,
 			.twobyte_threshold_min = 1000,
 			.seqlenMinLimit3 = 188,
-			.seqlenMinLimit4 = 42151,
+		
 			.blockSizeMinus = 155,
 			.winsize = 97340,
 			.sizeMaxForCanonicalHeaderPack = 253,

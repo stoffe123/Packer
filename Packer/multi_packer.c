@@ -176,7 +176,7 @@ static packProfile prof = { .rle_ratio = 0,
 			.twobyte_threshold_divide = 20,
 			.twobyte_threshold_min = 848,
 			.seqlenMinLimit3 = 151,
-			.seqlenMinLimit4 = 52447,
+			
 			.blockSizeMinus = 121,
 			.winsize = 2000,
 			.sizeMaxForCanonicalHeaderPack = 1,
