@@ -611,7 +611,7 @@ void testarchive() {
 		int pack_time = (clock() - cl);
 		uint64_t acc_size_packed = getFileSizeFromName(packed_name);
 
-		printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
+		printf("\n Accumulated size %lu kb", (int)(acc_size_packed / 1024));
 
 		cl = clock();
 
@@ -632,11 +632,11 @@ void testarchive() {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {
-			printf("\n Too long time %d", totalTime);
-			printf("\n size was %d", acc_size_packed);
+			printf("\n Too long time %d", (int)totalTime);
+			printf("\n size was %d", (int)acc_size_packed);
 			printProfile(&profile);
 			printf("\n --------------------");
-			printf("\n Current best profile, size %d", best_size);
+			printf("\n Current best profile, size %d", (int)best_size);
 			printf("\n --------------------");
 			printProfile(&bestProfile);
 		}
