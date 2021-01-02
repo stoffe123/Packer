@@ -143,18 +143,13 @@ void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
 		//wprintf(L"%s  ,  %d\n", fileList[i].name, fileList[i].size);
 		//fprintf(out, L"%s\n", fileList[i].name);
 
-		int j = 0;
+		int j = lengthOfDirName;
 		wchar_t ch;
 
-		int skip = lengthOfDirName;
-		while ((ch = fileList[i].name[j]) != 0) {
-			if (skip >= 0) {
-				skip--;
-			}
-			else {
-				//wprintf(L"%c", ch);
-				fputwc(ch, out);
-			}
+		//TODO: set j to lengthOfDirName directly instead!!		
+		while ((ch = fileList[i].name[j]) != 0) {			
+			//wprintf(L"%c", ch);
+			fputwc(ch, out);			
 			j++;
 		}
 		//wprintf(L"\n");
@@ -166,6 +161,7 @@ void createHeader(FILE* out, wchar_t* dir, file_t* fileList, uint32_t count) {
 creates the dirs in fullPath
 that are not in existingDir(which should be a prefix of fullPath)
 
+TODO: extract to file tools 
 */
 void createDirs(wchar_t* fullPath, wchar_t* existingDir) {
 	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
@@ -227,8 +223,10 @@ void archiveTar(wchar_t* dir, const wchar_t* dest, bool solid, packProfile profi
 		get_temp_filew(headerPackedFilename1, L"archivepacker_everyother");
 		const wchar_t headerPackedFilename2[100] = { 0 };
 		get_temp_filew(headerPackedFilename2, L"archivepacker_multipacked");
+		//TODO  have a bit for 16 or 8 bit chars in header
 		//everyOtherEncode(outFilename, headerPackedFilename1);
-		multi_packw(outFilename, headerPackedFilename2, headerPackProfile, headerPackProfile, headerPackProfile, headerPackProfile);
+		multi_packw(outFilename, headerPackedFilename2, headerPackProfile, headerPackProfile, 
+			headerPackProfile, headerPackProfile);
 		out = openWrite(dest);
 		fwrite(&count, sizeof(uint32_t), 1, out);
 		uint32_t headerSize = getFileSizeFromName(outFilename);

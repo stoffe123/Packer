@@ -582,13 +582,13 @@ void testarchive() {
 			.twobyte_threshold_min = 783,
 			.seqlenMinLimit3 = 76,
 			.blockSizeMinus = 107,
-			.winsize = 29128,
+			.winsize = 10000,
 			.sizeMaxForCanonicalHeaderPack = 157,
 			.sizeMinForSeqPack = 9632,
 			.sizeMinForCanonical = 375,
-			.sizeMaxForSuperslim = 20161
+			.sizeMaxForSuperslim = 20161			
 	};
-	uint64_t time_limit = 82;
+	uint64_t time_limit = 200;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
