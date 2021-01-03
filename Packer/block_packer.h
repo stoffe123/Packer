@@ -18,4 +18,10 @@ void block_unpack(const wchar_t*, const wchar_t*);
 
 void blockUnpackAndReplace(wchar_t* src);
 
+void blockPackAndReplace(const wchar_t* src, packProfile profile);
+
+void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile);
+
+void block_unpack_file(FILE* infil, const wchar_t* dst);
+
 #endif

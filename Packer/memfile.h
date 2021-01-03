@@ -30,6 +30,8 @@ uint32_t getMemPos(memfile* m);
 
 uint32_t setPos(memfile* m, uint32_t p);
 
+
+
 uint32_t incPos(memfile* m);
 
 uint32_t getMemSize(memfile* m);
@@ -75,5 +77,7 @@ int fputccLight(int c, memfile* mf);
 int fput2ccLight(int c, memfile* mf);
 
 int fget2cc(memfile* mf);
+
+void copy_the_rest_to_mem(FILE* in, memfile* out);
 
 #endif

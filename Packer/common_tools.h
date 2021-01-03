@@ -1,9 +1,11 @@
 #ifndef COMMON_TOOLS_H 
 #define COMMON_TOOLS_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 
 #define debug if(VERBOSE) printf
 
@@ -12,6 +14,7 @@
 
 #define TEMP_DIR "c:/test/temp_files/"
 #define TEMP_DIRW L"c:/test/temp_files/"
+
 
 
 typedef struct file_t {
@@ -38,6 +41,9 @@ uint64_t indexOfChar(const wchar_t* s, const wchar_t find);
 uint64_t getFileSizeFromName(wchar_t* name);
 
 uint64_t getFileSize(const FILE* f);
+
+uint64_t getSizeLeftToRead(const FILE* f);
+
 unsigned char isKthBitSet(unsigned char value, unsigned char bit);
 
 unsigned char setKthBit(unsigned char value, unsigned char bit);
@@ -47,6 +53,8 @@ unsigned char clearKthBit(unsigned char value, unsigned char bit);
 unsigned char setKthBitToVal(unsigned char value, unsigned char bit, unsigned char bitValue);
 
 void copyFileChunkToFile(FILE * source_file, wchar_t* dest_filename, uint64_t size_to_copy);
+
+
 
 void appendFileToFile(FILE * main_file, wchar_t* append_filename);
 

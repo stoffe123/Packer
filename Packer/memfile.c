@@ -18,6 +18,15 @@ void syncMemSize(memfile* m) {
 	}
 }
 
+
+void copy_the_rest_to_mem(FILE* in, memfile* out) {
+
+	int ch;
+	while ((ch = fgetc(in)) != EOF) {
+		fputcc(ch, out);
+	}
+}
+
 void reallocMem(memfile* mf, uint64_t newAllocSize) {
 	assert(newAllocSize >= mf->size, "wrong argument in memfile.reallocMem");	
 	assert(newAllocSize > 0, "size=0 in memfile.c reallocmem");
@@ -120,7 +129,7 @@ memfile* getMemfileFromFile(const wchar_t* filename) {
 	uint64_t size = fread(getBlock(m), 1, fileSize, infil);
 	fclose(infil);
 	if (size > BLOCK_SIZE) {
-		printf("\n error too large file %s in packer_commons.getMemfileFromFile", filename);
+		wprintf(L"\n error too large file: '%s' in packer_commons.getMemfileFromFile", filename);
 	}
 	m->size = size;
 	return m;

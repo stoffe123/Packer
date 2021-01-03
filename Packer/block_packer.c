@@ -137,11 +137,9 @@ append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 
 //----------------------------------------------------------------------------------------
 
-void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
-	uint64_t src_size = getFileSizeFromName(src);
-
-	FILE* infil = openRead(src);
+void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
+	uint64_t src_size = getSizeLeftToRead(infil);
 	uint64_t chunkSize, chunkNumber = 0;
 	do {
 		read_size = BLOCK_SIZE - profile.blockSizeMinus * (uint64_t)10000;
@@ -198,21 +196,18 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	fclose(utfil);
 }
 
-void copy_the_rest2(FILE* in, memfile* out) {
 
-	int ch;
-	while ((ch = fgetc(in)) != EOF) {
-		fputcc(ch, out);
-	}
+void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
+	FILE* infil = openRead(src);
+	block_pack_file(infil, dst, profile);
+	fclose(infil);
 }
 
 
 // ----------------------------------------------------------------
 
-void block_unpack(const wchar_t* src, const wchar_t* dst) {
-	
-	FILE* infil = openRead(src);
 
+void block_unpack_file(FILE* infil,const wchar_t* dst) {
 	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
 	uint64_t totalRead = 0, chunkNumber = 0;
@@ -224,7 +219,7 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 			break;
 		}
 		if (isKthBitSet(packType, 4)) {
-			copy_the_rest2(infil, tmp);
+			copy_the_rest_to_mem(infil, tmp);
 		}
 		else {
 			uint32_t size = 0;
@@ -248,7 +243,7 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 		releaseBlockchunkMutex();
 
 		chunkNumber++;
-	}
+	}	
 	fclose(infil);
 
 	FILE* utfil = openWrite(dst);
@@ -266,6 +261,14 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 }
 
 
+
+void block_unpack(const wchar_t* src, const wchar_t* dst) {
+
+	FILE* infil = openRead(src);
+	block_unpack_file(infil, dst);	
+}
+
+
 void blockUnpackAndReplace(wchar_t* src) {
 
 	const wchar_t tmp[100] = { 0 };
@@ -273,6 +276,17 @@ void blockUnpackAndReplace(wchar_t* src) {
 	block_unpack(src, tmp);
 	myRename(tmp, src);
 }
+
+
+
+void blockPackAndReplace(const wchar_t* src, packProfile profile) {
+	const wchar_t tmp[100] = { 0 };
+	get_temp_filew(tmp, L"blockpacker_packandreplace");
+	block_pack(src, tmp, profile);
+	myRename(tmp, src);
+}
+
+
 
 
 

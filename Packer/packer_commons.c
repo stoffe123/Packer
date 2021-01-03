@@ -129,6 +129,7 @@ void printProfile(packProfile* profile) {
 	printf("\nSize min for seqpack %d", profile->sizeMinForSeqPack);
 	printf("\nSize min for canonical %d", profile->sizeMinForCanonical);
 	printf("\nSize max for superslim %d", profile->sizeMaxForSuperslim);
+	printf("\nArchive type (0 solid) %d", profile->archiveType);
 }
 
 packProfile getPackProfile() {
@@ -146,7 +147,8 @@ packProfile getPackProfile() {
 	.sizeMaxForCanonicalHeaderPack = 256,
 	.sizeMinForSeqPack = 300,
 	.sizeMinForCanonical = 40,
-	.sizeMaxForSuperslim = 16384
+	.sizeMaxForSuperslim = 16384,
+	.archiveType = 0
 	};
 	return profile;
 }
@@ -167,6 +169,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->sizeMinForSeqPack = src->sizeMinForSeqPack;
 	dst->sizeMinForCanonical = src->sizeMinForCanonical;
 	dst->sizeMaxForSuperslim = src->sizeMaxForSuperslim;
+	dst->archiveType = src->archiveType;
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {

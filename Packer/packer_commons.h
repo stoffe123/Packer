@@ -43,6 +43,7 @@ typedef struct packProfile {
 	int64_t sizeMinForSeqPack;
 	int64_t sizeMinForCanonical;
 	int64_t sizeMaxForSuperslim;
+	int64_t archiveType;
 } packProfile;
 
 

@@ -89,6 +89,14 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
 	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 93000);
 	profile->sizeMaxForSuperslim = doFuzz(profile->sizeMaxForSuperslim, best.sizeMaxForSuperslim, 10, 100000);
+
+	if (profile->archiveType == 0) {
+		profile->archiveType = 1;
+	}
+	else {
+		profile->archiveType = 0;
+	}
+
 }
 
 
@@ -574,27 +582,28 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 95,
-			.twobyte_ratio = 100,
-			.recursive_limit = 359,
-			.twobyte_threshold_max = 9638,
-			.twobyte_threshold_divide = 899,
-			.twobyte_threshold_min = 783,
-			.seqlenMinLimit3 = 76,
-			.blockSizeMinus = 107,
+			.rle_ratio = 81,
+			.twobyte_ratio = 90,
+			.recursive_limit = 500,
+			.twobyte_threshold_max = 9353,
+			.twobyte_threshold_divide = 1559,
+			.twobyte_threshold_min = 681,
+			.seqlenMinLimit3 = 103,
+			.blockSizeMinus = 82,
 			.winsize = 10000,
-			.sizeMaxForCanonicalHeaderPack = 157,
-			.sizeMinForSeqPack = 9632,
-			.sizeMinForCanonical = 375,
-			.sizeMaxForSuperslim = 20161			
+			.sizeMaxForCanonicalHeaderPack = 80,
+			.sizeMinForSeqPack = 21041,
+			.sizeMinForCanonical = 452,
+			.sizeMaxForSuperslim = 24052,
+			.archiveType = 0  // 0 solid, 1 separate
 	};
-	uint64_t time_limit = 200;
+	uint64_t time_limit = 400;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-    //wchar_t* source_dir = L"D:/Dropbox/Personal/Programmering/Compression/test/test13";
+    //wchar_t* source_dir = L"c:/test/test13";
 
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -603,8 +612,7 @@ void testarchive() {
 		deleteAllFilesInDir(destDir);
 		uint64_t acc_size_org = 0;
 
-		uint64_t before_suite = clock();
-		
+		uint64_t before_suite = clock();		
 
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
@@ -641,6 +649,9 @@ void testarchive() {
 			printProfile(&bestProfile);
 		}
 		fuzzProfile(&profile, bestProfile);
+		printf("\n\n Now doing a new try with this new profile: ");
+		printProfile(&profile);
+		printf("\n\n");
 	}//end while true
 }
 

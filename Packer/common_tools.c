@@ -24,6 +24,12 @@ void myRename(const wchar_t* f_old, const wchar_t* f_new) {
 	}
 }
 
+void checkForErr13(errno_t err) {
+	if (err == 13) {
+		wprintf(L"\n\n This error code indicates that the current user did not have permission to access a file. This error usually occurs if the user does not have read or write permission on a file (e.g. PERSON.RRN) or a directory (e.g. the directory containing .RRN files). It may also occur if the user doesn't have execute permission on a program.");
+		wprintf(L"\n\n Did you in code forget to close the file before accessing it via its name?");
+	}
+}
 
 size_t to_narrow(const wchar_t* src, char* dest) {
 	size_t i;
@@ -48,17 +54,28 @@ size_t to_narrow(const wchar_t* src, char* dest) {
 }
 
 uint64_t getFileSize(const FILE* f) {
+	long int pos = ftell(f);
 	fseek(f, 0, SEEK_END);
 	long long res = ftell(f);
-	fseek(f, 0, SEEK_SET);
+	fseek(f, pos, SEEK_SET);
 	return res;
 }
+
+uint64_t getSizeLeftToRead(const FILE* f) {
+    long int pos = ftell(f);
+	fseek(f, 0, SEEK_END);
+	long long size = ftell(f);
+	fseek(f, pos, SEEK_SET);
+	return size-pos;
+}
+
 
 uint64_t getFileSizeFromName(wchar_t* name) {
 	FILE* f;
 	errno_t err = _wfopen_s(&f, name, L"rb");
 	if (err != 0) {
-		wprintf(L"\n getFileSizeFromName: can't find file: %s", name);
+		wprintf(L"\n\n getFileSizeFromName: can't open file: %s Errno:%d", name, err);
+		checkForErr13(err);
 		myExit();
 	}
 	uint64_t res = getFileSize(f);
@@ -122,17 +139,21 @@ FILE* openWrite(const wchar_t* filename) {
 	FILE* out;
 	errno_t err = _wfopen_s(&out, filename, L"wb");
 	if (err != 0) {
-		wprintf(L"\n Common_tools.c : can't create outfile %s", filename);
+		wprintf(L"\n Common_tools.openWrite : can't create outfile %s", filename);
+		checkForErr13(err);			
 		exit(1);
 	}
 	return out;
 }
 
+
+
 FILE* openRead(const wchar_t* filename) {
 	FILE* in;
 	errno_t err = _wfopen_s(&in, filename, L"rb");
 	if (err != 0) {
-		wprintf(L"\n Common_tools.c : can't find infile '%s'", filename);
+		wprintf(L"\n Common_tools.openRead : can't find infile '%s'", filename);
+		checkForErr13(err);
 		exit(1);
 	}
 	return in;
@@ -151,6 +172,8 @@ void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t siz
 	}
 	fclose(out);
 }
+
+
 
 void appendFileToFile(FILE* main_file, wchar_t* append_filename) {
 	//wprintf(L"\n append_to_filew: %s", append_filename);
