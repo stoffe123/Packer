@@ -381,7 +381,8 @@ bool dirsEqual(const wchar_t* dir1, const wchar_t* dir2) {
 			break;
 		}
 		if (fileList1[i].size != fileList2[i].size) {
-			wprintf(L"\n file nr %d differed by size %d <=> %d", i, fileList1[i].size, fileList2[i].size);
+			wprintf(L"\n\n File nr %d:'%s' differed by size %d <=> %d", 
+				i,  fileList1[i].name, fileList1[i].size, fileList2[i].size);
 			dirsAreEqual = false;
 			break;
 		}
