@@ -309,19 +309,9 @@ file_t* readHeader(FILE* in, char* dir, uint64_t count) {
 	return filenames;
 }
 
-void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 
-	printf("\n *** Archive Unpack *** ");
-	FILE* in = openRead(src);
-	uint32_t count;
-	int archiveType;
-	fread(&archiveType, 1, 1, in);
-	printf("\n Archive type: %d", archiveType);
-	bool solid = (archiveType == 0);
-	fread(&count, sizeof(uint32_t), 1, in);
-	printf("\n Count: %d", count);
-	file_t* filenames;
-	
+//TODO  count not needed here since we know the size of the header
+file_t* readPackedHeader(FILE* in, wchar_t* dir, uint32_t count) {
 	uint32_t headerSize;
 	fread(&headerSize, sizeof(uint32_t), 1, in);
 	printf("\n Header size: %d", headerSize);
@@ -336,13 +326,28 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	multi_unpackw(headerPacked, headerUnpacked);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	FILE* headerFile = openRead(headerUnpacked);
-
-	//TODO  count not needed here since we know the size of the header
-	filenames = readHeader(headerFile, dir, count);
+	
+	file_t* res =  readHeader(headerFile, dir, count);
 	fclose(headerFile);
 	_wremove(headerPacked);
-	_wremove(headerUnpacked);	
+	_wremove(headerUnpacked);
+	return res;
+}
 
+void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
+
+	printf("\n *** Archive Unpack *** ");
+	FILE* in = openRead(src);
+	uint32_t count;
+	int archiveType;
+	fread(&archiveType, 1, 1, in);
+	printf("\n Archive type: %d", archiveType);
+	bool solid = (archiveType == 0);
+	fread(&count, sizeof(uint32_t), 1, in);
+	printf("\n Count: %d", count);
+				
+	file_t* filenames = readPackedHeader(in, dir, count);
+	
 	// Read files
 	const char blockUnpackFilename[100] = { 0 };
 	if (solid) {	
@@ -366,6 +371,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	}
 
 }
+
 
 void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
     archivePackInternal(dir, dest, profile);			
