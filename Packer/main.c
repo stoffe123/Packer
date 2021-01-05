@@ -641,8 +641,8 @@ void testarchive() {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {
-			printf("\n Too long time %d", (int)totalTime);
-			printf("\n size was %d", (int)acc_size_packed);
+			printf("\n Too long time %ud", totalTime);
+			printf("\n size was %ud", acc_size_packed);
 			printProfile(&profile);
 			printf("\n --------------------");
 			printf("\n Current best profile, size %d", (int)best_size);

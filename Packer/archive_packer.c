@@ -13,6 +13,7 @@
 #include "packer_commons.h"
 #include "block_packer.h"
 #include "everyOtherEncoder.h"
+#include <inttypes.h>
 
 #pragma comment(lib, "User32.lib")
 
@@ -178,7 +179,8 @@ void createDirs(wchar_t* fullPath, wchar_t* existingDir) {
 		const wchar_t dirToCreateFullPath[2000] = { 0 };
 		concatw(dirToCreateFullPath, existingDir, dirToCreate);
 
-		_wmkdir(dirToCreateFullPath);
+		int res = _wmkdir(dirToCreateFullPath);
+		//if res = err  etc
 		createDirs(fullPath, dirToCreateFullPath);
 	}
 }
@@ -189,6 +191,28 @@ void tmpDirNameOf(const wchar_t* tmpBlocked, const wchar_t* name, const wchar_t*
 	createDirs(tmpBlocked, TEMP_DIRW);
 }
 
+uint64_t createPackedHeader(wchar_t* headerPackedFilename, wchar_t* dir, file_t* fileList, uint32_t count) {
+	const wchar_t headerFilename[500] = { 0 };
+	get_temp_filew(headerFilename, L"archiveunpack_headerFilename");
+
+	FILE* headerFile = openWrite(headerFilename);
+	createHeader(headerFile, dir, fileList, count);
+	fclose(headerFile);
+
+	//const wchar_t headerPackedFilename1[100] = { 0 };
+	//get_temp_filew(headerPackedFilename1, L"archivepacker_everyother");
+
+	//TODO  have a bit for 16 or 8 bit chars in header
+	//everyOtherEncode(outFilename, headerPackedFilename1);
+	multi_packw(headerFilename, headerPackedFilename, headerPackProfile, headerPackProfile,
+		headerPackProfile, headerPackProfile);
+	uint64_t headerPackedSize = getFileSizeFromName(headerPackedFilename);
+	uint64_t headerSize = getFileSizeFromName(headerFilename);
+	printf("\n archive header packed from %" PRId64 " to %" PRId64, headerSize, headerPackedSize);
+	_wremove(headerFilename);
+	return headerPackedSize;
+}
+
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
 
 	bool solid = (profile.archiveType == 0);
@@ -196,11 +220,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	file_t* fileList = res.fileList;
 	uint32_t count = res.count;
 	quickSortCompareEndings(fileList, count);
-
 	printf("\n archiveTar count=%d", count);
-
-	const wchar_t headerFilename[500] = { 0 };
-	get_temp_filew(headerFilename, L"archiveunpack_headerFilename");
 
 	if (!solid) {
 		//pack all files and put them in TEMP_DIR
@@ -211,35 +231,23 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 			fileList[i].size = getFileSizeFromName(tmpBlocked);
 		}		
 	}
-	FILE* headerFile = openWrite(headerFilename);				
-	createHeader(headerFile, dir, fileList, count);
-	fclose(headerFile);
-
-	//const wchar_t headerPackedFilename1[100] = { 0 };
-	//get_temp_filew(headerPackedFilename1, L"archivepacker_everyother");
 	const wchar_t headerPackedFilename[100] = { 0 };
-	get_temp_filew(headerPackedFilename, L"archivepacker_multipacked");
-	//TODO  have a bit for 16 or 8 bit chars in header
-	//everyOtherEncode(outFilename, headerPackedFilename1);
-	multi_packw(headerFilename, headerPackedFilename, headerPackProfile, headerPackProfile,
-		headerPackProfile, headerPackProfile);
+	get_temp_filew(headerPackedFilename, L"archivepacker_headerpacked");
+	uint64_t headerPackedSize = createPackedHeader(headerPackedFilename, dir, fileList, count);
 
 	FILE* out = openWrite(dest);	
 	fwrite(&(profile.archiveType), 1, 1, out);
 	fwrite(&count, sizeof(uint32_t), 1, out);
-	
-	uint32_t headerSize = getFileSizeFromName(headerFilename);
-	uint32_t headerPackedSize = getFileSizeFromName(headerPackedFilename);
-	printf("\n archive header packed from %d to %d", headerSize, headerPackedSize);
+		
 	if (headerPackedSize > UINT32_MAX) {
-		printf("\n\n Archivepacker header too big %d", headerPackedSize);
+		printf("\n\n Archivepacker header too big %" PRId64, headerPackedSize);
 		exit(1);
 	}
 	//max size of header is UINT32_max
 	fwrite(&headerPackedSize, sizeof(uint32_t), 1, out);
 	appendFileToFile(out, headerPackedFilename);
 	_wremove(headerPackedFilename);
-	_wremove(headerFilename);
+
 	//_wremove(headerPackedFilename1);
 
 
@@ -282,6 +290,10 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 
 file_t* readHeader(FILE* in, char* dir, uint64_t count) {
 	file_t* filenames = malloc(count * sizeof(file_t));
+	if (filenames == NULL) {
+		printf("\n out of memory in archive_packer.readHeader!!");
+		myExit();
+	}
 
 	// Read sizes
 	//printf("\n");
