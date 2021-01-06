@@ -11,6 +11,7 @@
 #include <string.h>
 #include <conio.h>
 #include <process.h>
+#include <inttypes.h>
 
 typedef struct blockChunk_t {
 	memfile* packed;
@@ -134,12 +135,12 @@ append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 }
 
 
-
 //----------------------------------------------------------------------------------------
 
 
-void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
+void block_pack_file_internal(FILE* infil, const wchar_t* dst, packProfile profile, bool closeInfil) {
 	uint64_t src_size = getSizeLeftToRead(infil);
+	printf("\n Entering block_pack_file_internal sizelefttoread=%d" , src_size);
 	uint64_t chunkSize, chunkNumber = 0;
 	do {
 		read_size = BLOCK_SIZE - profile.blockSizeMinus * (uint64_t)10000;
@@ -151,19 +152,19 @@ void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
 		if (read_size % 256 == 0) {
 			read_size--;
 		}
-		printf("\n Real blocksize used %d", read_size);
-		memfile* chunk = getMemfile(read_size, L"blockpacker_chunk");
-		copy_chunk_to_mem(infil, chunk, read_size);
+		printf("\n Real blocksize used %" PRId64, read_size);
+		memfile* chunk = getMemfile(read_size, L"blockpackfile_chunk");
+		copy_chunk_to_mem(infil, chunk, read_size);		
 		chunkSize = getMemSize(chunk);
 
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].chunkSize = chunkSize;
 		blockChunks[chunkNumber].unpacked = chunk;
-		blockChunks[chunkNumber].packed = getMemfile(chunkSize, L"blockpacker_packed");
+		blockChunks[chunkNumber].packed = getMemfile(chunkSize, L"blockpacker_packedchunk");
 		blockChunks[chunkNumber].profile = profile;
 		releaseBlockchunkMutex();
 
-		printf("\n STARTING THREAD FOR MULTIPACK %d ", chunkNumber);
+		printf("\n STARTING THREAD FOR MULTIPACK %" PRId64, chunkNumber);
 		HANDLE handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
 
 		lockBlockchunkMutex();
@@ -175,7 +176,9 @@ void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
 		}		
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
-	fclose(infil);	
+	if (closeInfil) {
+		fclose(infil);	
+	}
 
 	FILE* utfil = openWrite(dst);
 	for (int i = 0; i < chunkNumber; i++) {
@@ -197,10 +200,14 @@ void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
 }
 
 
+void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
+	block_pack_file_internal(infil, dst, profile, false);
+}
+
+
 void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	FILE* infil = openRead(src);
-	block_pack_file(infil, dst, profile);
-	fclose(infil);
+	block_pack_file_internal(infil, dst, profile, true);	
 }
 
 
@@ -214,29 +221,29 @@ void block_unpack_file(FILE* infil,const wchar_t* dst) {
 	while (true) {
 
 		uint8_t packType;
-		memfile* tmp = getEmptyMem(L"blockpacker_tmp");
+		memfile* tmp = getEmptyMem(L"blockpacker_unpacktmp");
 		if (fread(&packType, 1, 1, infil) == 0) {
 			break;
 		}
-		if (isKthBitSet(packType, 4)) {
-			copy_the_rest_to_mem(infil, tmp);
+		if (isKthBitSet(packType, 4)) {					
+			copy_the_rest_to_mem(infil, tmp);					
 		}
 		else {
 			uint32_t size = 0;
 			//3 bytes can handle block sizes up to 16777216‬
 			//note that these are the sizes of the compressed chunks!
 			checkAlloc(tmp, size);
-			fread(&size, 3, 1, infil);
-			copy_chunk_to_mem(infil, tmp, size);
-
+			fread(&size, 3, 1, infil);			
+			copy_chunk_to_mem(infil, tmp, size);		
 		}
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].packType = packType;
 		blockChunks[chunkNumber].packed = tmp;
-		printf("\n STARTING THREAD FOR MULTIUNPACK %d ", chunkNumber);
+		printf("\n STARTING THREAD FOR MULTIUNPACK %" PRId64, chunkNumber);
 		releaseBlockchunkMutex();
 
 		HANDLE handle = _beginthread(threadMultiUnpack, 0, &blockChunks[chunkNumber]);
+		//threadMultiUnpack(&blockChunks[chunkNumber]);
 
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].handle = handle;
@@ -270,7 +277,6 @@ void block_unpack(const wchar_t* src, const wchar_t* dst) {
 
 
 void blockUnpackAndReplace(wchar_t* src) {
-
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"blockpacker_unpackandreplace");
 	block_unpack(src, tmp);

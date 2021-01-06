@@ -8,7 +8,7 @@ typedef struct {
 	uint32_t pos;
 	uint32_t size;
 	uint64_t allocSize;
-	wchar_t name[100];
+	wchar_t name[200];
 	uint8_t* block;
 } memfile;
 
@@ -29,8 +29,6 @@ void rewindMem(memfile* m);
 uint32_t getMemPos(memfile* m);
 
 uint32_t setPos(memfile* m, uint32_t p);
-
-
 
 uint32_t incPos(memfile* m);
 

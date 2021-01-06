@@ -46,4 +46,8 @@ int getHalfbyteKindFromPackType(int packType);
 
 bool isHalfByteRlePacked(int packType);
 
+memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead);
+
+void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead);
+
 #endif

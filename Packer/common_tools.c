@@ -56,7 +56,7 @@ size_t to_narrow(const wchar_t* src, char* dest) {
 uint64_t getFileSize(const FILE* f) {
 	long int pos = ftell(f);
 	fseek(f, 0, SEEK_END);
-	long long res = ftell(f);
+	uint64_t res = ftell(f);
 	fseek(f, pos, SEEK_SET);
 	return res;
 }
@@ -64,7 +64,7 @@ uint64_t getFileSize(const FILE* f) {
 uint64_t getSizeLeftToRead(const FILE* f) {
     long int pos = ftell(f);
 	fseek(f, 0, SEEK_END);
-	long long size = ftell(f);
+	uint64_t size = ftell(f);
 	fseek(f, pos, SEEK_SET);
 	return size-pos;
 }
@@ -79,7 +79,9 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 		myExit();
 	}
 	uint64_t res = getFileSize(f);
-	fclose(f);
+	if (f != 0) {
+		fclose(f);
+	}
 	return res;
 }
 

@@ -461,6 +461,7 @@ memfile* multiUnpackAndReplace(memfile* src) {
 
 // ------------------------------------------------------------------
 
+//TODO: instead have pack_type = -1 signaling to read pack type from file
 memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile) {
 	rewindMem(in);
 	memfile* dst;
@@ -474,7 +475,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 		copy_the_rest_mem(in, dst);
 		return dst;
 	}
-	wprintf(L"\n Multi unpack of %s with packtype %d", getMemName(in), pack_type);
+	wprintf(L"\n Multi unpack of %s with size %d and packtype %d", getMemName(in), getMemSize(in), pack_type);
 	seqPackBundle mb = untar(in, pack_type);
 	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
@@ -582,4 +583,17 @@ memfile* multiPack2(memfile* src, packProfile profile,
 
 memfile* multiUnpack(memfile* m) {
 	return multiUnpackInternal(m, 0, true);
+}
+
+memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead) {
+	memfile* src = getEmptyMem(L"multiunpackblock_src");
+	copy_chunk_to_mem(in, src, bytesToRead);
+	return multiUnpack(src);
+}
+
+void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead) {
+	memfile* dstMem = multiUnpackBlock(in, bytesToRead);
+	FILE* dstFile = openWrite(dstFilename);
+	append_mem_to_file(dstFile, dstMem);
+	fclose(dstFile);
 }
