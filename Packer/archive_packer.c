@@ -125,15 +125,30 @@ fileListAndCount_t storeDirectoryFilenames(const wchar_t* dir, bool useSolid) {
 	return storeDirectoryFilenamesInternal(dir, f, useSolid);
 }
 
+uint8_t getByteAtPos(uint64_t bytes, int pos)
+{
+	return (bytes >> (8 * pos)) & 0xff;
+}
+
+void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos) {
+	*bytes &= ~((uint64_t)0xff << (8 * pos)); // Clear the current byte
+	*bytes |= ((uint64_t)byte << (8 * pos)); // Set the new byte
+}
+
 void createSizesHeader(const wchar_t* filename, wchar_t* dir, file_t* fileList, uint32_t count) {
 	FILE* out = openWrite(filename);
 
 	//write sizes
-	for (int i = 0; i < count; i++) {
-		//todo write MSB together and so on...
-		uint64_t size = fileList[i].size;
-		fwrite(&size, sizeof(uint64_t), 1, out);
-		printf("\n writing size for %d as %d", i, size);
+
+	for (int k = 0; k < 8; k++) {
+
+		for (int i = 0; i < count; i++) {
+			//todo write MSB together and so on...
+			//uint64_t size = fileList[i].size;
+			uint8_t byte = getByteAtPos(fileList[i].size, k);
+			fwrite(&byte, 1, 1, out);
+			//printf("\n writing size for %d as %d", i, size);
+		}
 	}
 	fclose(out);
 }
@@ -321,24 +336,25 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 
 
 fileListAndCount_t readSizesHeader(FILE* in) {
-	fileListAndCount_t res;
-	res.allocSize = 16384;
-	res.fileList = malloc(res.allocSize * sizeof(file_t));
+	fileListAndCount_t res;	
+	uint64_t count = getFileSize(in) / 8;
+	res.fileList = malloc(count * sizeof(file_t));
+	for (int i = 0; i < count; i++) {
+		res.fileList[i].size = 0;
+	}
 	if (res.fileList == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
 	}
-
-	uint64_t i = 0;
-	uint64_t sz; 
-	while (fread(&sz, sizeof(uint64_t), 1, in) == 1) {
-		res.fileList[i++].size = sz;		
-		if (i >= (res.allocSize-1)) {
-			res.allocSize += 4096;
-			res.fileList = realloc(res.fileList, res.allocSize * sizeof(file_t));
+	
+	uint8_t byte; 
+	for (int k = 0; k < 8; k++) {
+		for (int i = 0; i < count; i++) {
+			fread(&byte, 1, 1, in);
+			setByteAtPos(&(res.fileList[i]), byte, k);
 		}
 	}
-	res.count = i;		
+	res.count = count;
 	return res;
 }
 
