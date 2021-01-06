@@ -435,3 +435,14 @@ bool filesEqual(wchar_t* name1, wchar_t* name2) {
 	fclose(f2);
 	return result;
 }
+
+uint8_t getByteAtPos(uint64_t bytes, int pos)
+{
+	return (bytes >> (8 * pos)) & 0xff;
+}
+
+void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos) {
+	*bytes &= ~((uint64_t)0xff << (8 * pos)); // Clear the current byte
+	*bytes |= ((uint64_t)byte << (8 * pos)); // Set the new byte
+}
+

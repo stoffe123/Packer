@@ -125,16 +125,6 @@ fileListAndCount_t storeDirectoryFilenames(const wchar_t* dir, bool useSolid) {
 	return storeDirectoryFilenamesInternal(dir, f, useSolid);
 }
 
-uint8_t getByteAtPos(uint64_t bytes, int pos)
-{
-	return (bytes >> (8 * pos)) & 0xff;
-}
-
-void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos) {
-	*bytes &= ~((uint64_t)0xff << (8 * pos)); // Clear the current byte
-	*bytes |= ((uint64_t)byte << (8 * pos)); // Set the new byte
-}
-
 void createSizesHeader(const wchar_t* filename, wchar_t* dir, file_t* fileList, uint32_t count) {
 	FILE* out = openWrite(filename);
 

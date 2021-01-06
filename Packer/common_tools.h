@@ -104,4 +104,8 @@ void substringAfterLast(const wchar_t* dst, const wchar_t* s, const wchar_t* fin
 
 void myExit();
 
+uint8_t getByteAtPos(uint64_t bytes, int pos);
+
+void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos);
+
 #endif
