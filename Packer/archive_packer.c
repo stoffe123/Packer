@@ -326,7 +326,6 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 }
 
 
-
 fileListAndCount_t readSizesHeader(FILE* in) {
 	fileListAndCount_t res;	
 	uint64_t count = getFileSize(in) / 8;
@@ -350,8 +349,8 @@ fileListAndCount_t readSizesHeader(FILE* in) {
 	return res;
 }
 
-fileListAndCount_t readNamesHeader(FILE* in, char* dir, fileListAndCount_t list) {
-	file_t* filenames = list.fileList;
+void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
+	file_t* filenames = list->fileList;
 	if (filenames == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
@@ -359,7 +358,7 @@ fileListAndCount_t readNamesHeader(FILE* in, char* dir, fileListAndCount_t list)
 
 	// Read names
 	int readNames = 0;
-	while (readNames < list.count) {
+	while (readNames < list->count) {
 		wchar_t filename[500] = { 0 };
 		wchar_t ch;
 		int i = 0;
@@ -372,8 +371,7 @@ fileListAndCount_t readNamesHeader(FILE* in, char* dir, fileListAndCount_t list)
 		wcscpy(filenames[readNames].name, dir);
 		wcscat(filenames[readNames].name, filename);
 		readNames++;
-	}
-	return list;
+	}	
 }
 
 
@@ -388,7 +386,7 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 	get_temp_filew(headerUnpacked, L"archiveuntar_headersizesunpacked");
 
 	//TODO unnecessary to copy to a new file.. instead make a method to pack n bytes from IN-stream
-	copyFileChunkToFile(in, headerPacked, headerSize);
+	copyFileChunkToFile(in, headerPacked, headerSize);	
 	multi_unpackw(headerPacked, headerUnpacked);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	FILE* headerFile = openRead(headerUnpacked);
@@ -401,7 +399,7 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 	return res;
 }
 
-fileListAndCount_t readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileListAndCount_t fileList) {	
+void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileListAndCount_t* fileList) {	
 	
 	printf("\n Read packed Names Header size: %d", headerSize);
 
@@ -415,11 +413,10 @@ fileListAndCount_t readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t header
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	
 	FILE* headerFile = openRead(headerUnpacked);
-	fileListAndCount_t res = readNamesHeader(headerFile, dir, fileList);
-	fclose(headerFile);
+	readNamesHeader(headerFile, dir, fileList);
 
-	_wremove(headerUnpacked);	
-	return res;
+	fclose(headerFile);
+	_wremove(headerUnpacked);		
 }
 
 void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
@@ -436,7 +433,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	fread(&headerNamesPackedSize, sizeof(uint32_t), 1, in);
 				
 	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize);
-	fileList = readPackedNamesHeader(in, dir, headerNamesPackedSize, fileList);	
+	readPackedNamesHeader(in, dir, headerNamesPackedSize, &fileList);	
 
 	printf("\n Unpacked and read headers successfully! Now unpacking files...");
 	printf(solid ? "\nSolid case" : "\nNon-solid case");
