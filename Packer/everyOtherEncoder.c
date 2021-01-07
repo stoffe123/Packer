@@ -21,13 +21,15 @@ void everyOtherEncode(const wchar_t* src, const wchar_t* dest) {
 
 	infil = openRead(src);
 	if (!infil) {
-		printf("Hittade inte infil: %s", src);
-		getchar();
-		exit(1);
+		printf("Hittade inte infil: %ls", src);
+		myExit();
+		return;
 	}
 	utfil = openWrite(dest);
 	if (!utfil) {
-		printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
+		printf("Hittade inte utfil: %ls", dest); 
+		myExit();
+		return;
 	}
 	const wchar_t file1name[500] = { 0 };
 	get_temp_filew(file1name, L"everyotherencoder_file_a");
@@ -59,22 +61,24 @@ void everyOtherEncode(const wchar_t* src, const wchar_t* dest) {
 	_wremove(file1name);
 	_wremove(file2name);
 	fclose(infil);
-	fclose(utfil);
+	if (utfil != NULL) {
+		fclose(utfil);	
+	}
 }
 
 void everyOtherDecode(const wchar_t* src, const wchar_t* dest) {
-
-	FILE* infil = NULL, * utfil = NULL;
-
-	infil = openRead(src);
-	if (!infil) {
-		printf("Hittade inte infil: %s", src);
-		getchar();
-		exit(1);
+	
+	FILE* infil = openRead(src);
+	if (infil == NULL || infil == 0) {
+		printf("Hittade inte infil: %ls", src);
+		myExit();
+		return;
 	}
-	utfil = openWrite(dest);
-	if (!utfil) {
-		printf("Hittade inte utfil!%s", dest); getchar(); exit(1);
+	FILE* utfil = openWrite(dest);
+	if (utfil == NULL || utfil == 0) {
+		printf("Hittade inte utfil!%ls", dest);
+		myExit();
+		return;
 	}
 	uint64_t size = getFileSizeFromName(src);
 	uint64_t pos1 = 0, pos2 = size / 2;
@@ -85,6 +89,7 @@ void everyOtherDecode(const wchar_t* src, const wchar_t* dest) {
 
 	int read_char;
 	while (true) {
+
 		if (everyOtherFlag) {
 			fseek(infil, pos2++, SEEK_SET);
 		}
