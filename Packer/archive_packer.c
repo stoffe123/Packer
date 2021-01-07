@@ -330,7 +330,10 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 fileListAndCount_t readSizesHeader(FILE* in) {
 	fileListAndCount_t res;	
 	uint64_t count = getFileSize(in) / 8;
-	res.fileList = calloc(count, sizeof(file_t));	
+	res.fileList = malloc(count * sizeof(file_t));	
+	for (int i = 0; i < count; i++) {
+		res.fileList[i].size = 0;
+	}
 	if (res.fileList == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
@@ -340,7 +343,7 @@ fileListAndCount_t readSizesHeader(FILE* in) {
 	for (int k = 0; k < 8; k++) {
 		for (int i = 0; i < count; i++) {
 			fread(&byte, 1, 1, in);
-			setByteAtPos(&(res.fileList[i]), byte, k);
+			setByteAtPos(&(res.fileList[i].size), byte, k);
 		}
 	}
 	res.count = count;
