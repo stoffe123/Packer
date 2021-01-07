@@ -604,7 +604,7 @@ void testarchive() {
 	
 	wchar_t* source_dir = 		 
 		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         //L"c:/test/test13";
+         //L"c:/test/test6";
 
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -652,7 +652,7 @@ void testarchive() {
 		fuzzProfile(&profile, bestProfile);
 		printf("\n\n Now doing a new try with this new profile: ");
 		printProfile(&profile);
-		printf("\n\n");
+		printf("\n\n");		
 	}//end while true
 }
 

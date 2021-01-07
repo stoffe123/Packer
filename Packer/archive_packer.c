@@ -98,7 +98,8 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 						f.fileList = newMem;
 					}
 					else {
-						printf("\n out of memory in archive_packer!");
+						printf("\n\n Out of memory in archive_packer!");
+						myExit();
 					}
 				}
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
@@ -238,6 +239,7 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 		, headerSizesPackedSize = getFileSizeFromName(headerSizesPackedFilename);
 	printf("\n Archive header sizes packed to %u", headerSizesPackedSize);		
 	printf("\n Archive header names packed to %u", headerNamesPackedSize);
+	printf("\n Total packed header size is  %u", headerNamesPackedSize + headerSizesPackedSize);
 
 	printf("\n NOW WRITING ARCHIVETYPE %d", archiveType);
 	fwrite(&archiveType, 1, 1, out);
@@ -270,7 +272,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	if (!solid) {
 		//pack all files and put them in TEMP_DIR
 		for (int i = 0; i < count; i++) {
-			wprintf("\n >>>>>>>>>>>>>>  nonsolid case packing %s of size: %d", fileList[i].name, fileList[i].size);
+			printf("\n Non-solid case packing %ls of size: %" PRId64, fileList[i].name, fileList[i].size);
 			const wchar_t tmpBlocked[500] = { 0 };
 			tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
 			block_pack(fileList[i].name, tmpBlocked, profile);
@@ -300,10 +302,10 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	   blobFile = openWrite(blobFilename);
 	}
 	
-	printf("\n Phase 2 of archive pack count=%d", count);
+	printf("\n Phase 2 of archive pack count=%" PRId64, count);
 	for (int i = 0; i < count; i++) {
 		const wchar_t* filename = fileList[i].name;
-	    wprintf(L"\n Appending %s with size %u", filename, fileList[i].size);
+	    wprintf(L"\n Appending %s with size %" PRId64, filename, fileList[i].size);
 		if (solid) {
 			appendFileToFile(blobFile, filename);
 		}
@@ -328,10 +330,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 fileListAndCount_t readSizesHeader(FILE* in) {
 	fileListAndCount_t res;	
 	uint64_t count = getFileSize(in) / 8;
-	res.fileList = malloc(count * sizeof(file_t));
-	for (int i = 0; i < count; i++) {
-		res.fileList[i].size = 0;
-	}
+	res.fileList = calloc(count, sizeof(file_t));	
 	if (res.fileList == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
