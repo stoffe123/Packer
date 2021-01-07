@@ -267,7 +267,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	file_t* fileList = dirFilesAndCount.fileList;
 	int64_t count = dirFilesAndCount.count;
 	quickSortCompareEndings(fileList, count);
-	printf("\n Count = %d", count);
+	printf("\n Count = %" PRId64, count);
 
 	if (!solid) {
 		//pack all files and put them in TEMP_DIR
@@ -326,9 +326,10 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 }
 
 
-fileListAndCount_t readSizesHeader(FILE* in) {
+fileListAndCount_t readSizesHeader(memfile* in) {
 	fileListAndCount_t res;	
-	uint64_t count = getFileSize(in) / 8;
+	rewindMem(in);
+	uint64_t count = getMemSize(in) / 8;
 	res.fileList = malloc(count * sizeof(file_t));	
 	for (int i = 0; i < count; i++) {
 		res.fileList[i].size = 0;
@@ -337,12 +338,10 @@ fileListAndCount_t readSizesHeader(FILE* in) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
 	}
-	
-	uint8_t byte; 
+		
 	for (int k = 0; k < 8; k++) {
-		for (int i = 0; i < count; i++) {
-			fread(&byte, 1, 1, in);
-			setByteAtPos(&(res.fileList[i].size), byte, k);
+		for (int i = 0; i < count; i++) {			
+			setByteAtPos(&(res.fileList[i].size), fgetcc(in), k);
 		}
 	}
 	res.count = count;
@@ -378,24 +377,14 @@ void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 	
 	printf("\n Read packed sizes Header size: %d", headerSize);
-	const wchar_t headerPacked[200] = { 0 };
-	get_temp_filew(headerPacked, L"archiveuntar_headersizespacked");
-	//const wchar_t headerUnpacked1[100] = { 0 };
-	//get_temp_filew(headerUnpacked1, L"archiveuntar_headerunpackedhalf");
-	const wchar_t headerUnpacked[200] = { 0 };
-	get_temp_filew(headerUnpacked, L"archiveuntar_headersizesunpacked");
-
-	//TODO unnecessary to copy to a new file.. instead make a method to pack n bytes from IN-stream
-	copyFileChunkToFile(in, headerPacked, headerSize);	
-	multi_unpackw(headerPacked, headerUnpacked);
+		
+	memfile* headerPackedMem = getEmptyMem(L"archiveunpack_headersizespacked");
+	copy_chunk_to_mem(in, headerPackedMem, headerSize);
+	memfile* headerUnpacked = multiUnpack(headerPackedMem);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
-	FILE* headerFile = openRead(headerUnpacked);
 	
-	fileListAndCount_t res =  readSizesHeader(headerFile);
+	fileListAndCount_t res =  readSizesHeader(headerUnpacked);
 
-	fclose(headerFile);
-	_wremove(headerPacked);
-	_wremove(headerUnpacked);
 	return res;
 }
 
