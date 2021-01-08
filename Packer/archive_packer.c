@@ -79,7 +79,7 @@ memfile* createNamesHeader(wchar_t* dir, file_t * fileList, uint32_t count) {
 		//wprintf(L"%s  ,  %d\n", fileList[i].name, fileList[i].size);
 		//fprintf(out, L"%s\n", fileList[i].name);
 
-		int j = lengthOfDirName;
+		int j = lengthOfDirName + 1;
 
 		wchar_t cc = fileList[i].name[j];
 		uint8_t multiByteStr[2000] = { 0 };
@@ -309,8 +309,9 @@ void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 	// Read names
 	int readNames = 0;
 	wchar_t temp_wstr[2000] = { 0 };
+	temp_wstr[0] = '/';
 	while (readNames < list->count) {
-		wcharDecode(in, &temp_wstr);
+		wcharDecode(in, &temp_wstr[1]);
 		
 		wcscpy(filenames[readNames].name, dir);
 		wcscat(filenames[readNames].name, temp_wstr);
