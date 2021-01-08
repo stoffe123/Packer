@@ -83,12 +83,12 @@ memfile* createNamesHeader(wchar_t* dir, file_t * fileList, uint32_t count) {
 
 		wchar_t cc = fileList[i].name[j];
 		uint8_t multiByteStr[2000] = { 0 };
-		int size = wcharEncode(&(fileList[i].name[j]), multiByteStr);
+		int size = wcharEncode(&(fileList[i].name[j]), &multiByteStr);
 		memWrite(&multiByteStr, size, out);
 
 		//wprintf(L"\n");
 		//use 8-bit size and special value for 16-bit size
-		if (i < count - 1) {
+		if (i < (count - 1)) {
 			fputcc(0, out);
 		}
 	}
@@ -172,14 +172,14 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
 
-	printf("\n Starting archive pack archiveType = %" PRId64, profile.archiveType);
+	printf("\n Starting archive pack for %ls archiveType %lld", dir, profile.archiveType);
 	bool solid = (profile.archiveType == 0);
 	
 	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames2(dir, solid);
 	file_t* fileList = dirFilesAndCount.fileList;
 	int64_t count = dirFilesAndCount.count;
 	quickSortCompareEndings(fileList, count);
-	printf("\n Count = %" PRId64, count);
+	printf("\n Count = %lld", count);
 
 	if (!solid) {
 		//pack all files and put them in TEMP_DIR
@@ -277,18 +277,18 @@ int wcharEncode(wchar_t* wcharBuf, uint8_t* codedBuf) {
 	return codedBufPos;
 }
 
-int wcharDecode(uint8_t* codedBuf, wchar_t* wcharBuf) {
+int wcharDecode(FILE* in, wchar_t* wcharBuf) {
 	int wcharBufPos = 0;
 	int codedBufPos = 0;
-	uint8_t ch;
-	while ((ch = codedBuf[codedBufPos++]) != 0) {
+	int ch;
+	while ((ch = fgetc(in)) > 0) {
 		if (ch <= 127) {
 			wcharBuf[wcharBufPos++] = (wchar_t)ch;
 		}
 		else {			
-			int msb = codedBuf[codedBufPos++];
-			int lsb = codedBuf[codedBufPos++];
-			wcharBuf[wcharBufPos++] = (msb * 256 + lsb);
+			int msb = fgetc(in);
+			int lsb = fgetc(in);
+			wcharBuf[wcharBufPos++] = (wchar_t)(msb * 256 + lsb);
 		}
 	}
 	wcharBuf[wcharBufPos++] = 0;
@@ -306,24 +306,16 @@ void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 		return;
 	}
 
-
-	uint8_t buffer[20000] = { 0 };
-	int i = 0;
-	int buffer_size = fread(&buffer, 1, 20000, in);
-	printf("\n buffer size = %d", buffer_size);
-
 	// Read names
 	int readNames = 0;
-	int bufferPos = 0;
 	wchar_t temp_wstr[2000] = { 0 };
 	while (readNames < list->count) {
-		bufferPos += wcharDecode(&buffer[bufferPos], &temp_wstr);
+		wcharDecode(in, &temp_wstr);
 		
 		wcscpy(filenames[readNames].name, dir);
 		wcscat(filenames[readNames].name, temp_wstr);
 		printf("\n result: %ls", filenames[readNames].name);
 	
-		printf("\n bufferpos:%d", bufferPos);
 		readNames++;
 	}	
 }

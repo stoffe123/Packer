@@ -140,9 +140,10 @@ void substringAfterLast(const wchar_t* dst, const wchar_t* s, const wchar_t* fin
 
 FILE* openWrite(const wchar_t* filename) {
 	FILE* out;
+	_wremove(filename);
 	errno_t err = _wfopen_s(&out, filename, L"wb");
 	if (err != 0) {
-		wprintf(L"\n Common_tools.openWrite : can't create outfile %s", filename);
+		wprintf(L"\n Common_tools.openWrite : can't create outfile %s \nError code %d", filename, err);
 		checkForErr13(err);			
 		exit(1);
 	}

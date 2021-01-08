@@ -585,13 +585,13 @@ void testarchive() {
 		profile = {
 			.rle_ratio = 77,
 			.twobyte_ratio = 76,
-			.recursive_limit = 146,
+			.recursive_limit = 750,
 			.twobyte_threshold_max = 13000,
 			.twobyte_threshold_divide = 3055,
 			.twobyte_threshold_min = 1000,
 			.seqlenMinLimit3 = 160,
 			.blockSizeMinus = 137,
-			.winsize = 124164,
+			.winsize = 10000,
 			.sizeMaxForCanonicalHeaderPack = 80,
 			.sizeMinForSeqPack = 3920,
 			.sizeMinForCanonical = 383,
@@ -604,8 +604,8 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir = 		 
-		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         L"c:/test/test13";
+		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+         //L"c:/test/test13";
 	     //L"c:/test/47";
 
 	unsigned long long best_size = 0;
@@ -643,8 +643,8 @@ void testarchive() {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {
-			printf("\n Too long time %ud", totalTime);
-			printf("\n size was %ud", acc_size_packed);
+			printf("\n Too long time %lld", totalTime);
+			printf("\n size was %lld", acc_size_packed);
 			printProfile(&profile);
 			printf("\n --------------------");
 			printf("\n Current best profile, size %d", (int)best_size);
