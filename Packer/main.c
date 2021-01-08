@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "common_tools.h"  
+#include "file_tools.h"
 #include "seq_packer.h"  
 #include "multi_packer.h"
 #include "block_packer.h"
@@ -582,19 +583,19 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 81,
-			.twobyte_ratio = 90,
-			.recursive_limit = 500,
-			.twobyte_threshold_max = 9353,
-			.twobyte_threshold_divide = 1559,
-			.twobyte_threshold_min = 681,
-			.seqlenMinLimit3 = 103,
-			.blockSizeMinus = 82,
-			.winsize = 10000,
+			.rle_ratio = 77,
+			.twobyte_ratio = 76,
+			.recursive_limit = 146,
+			.twobyte_threshold_max = 13000,
+			.twobyte_threshold_divide = 3055,
+			.twobyte_threshold_min = 1000,
+			.seqlenMinLimit3 = 160,
+			.blockSizeMinus = 137,
+			.winsize = 124164,
 			.sizeMaxForCanonicalHeaderPack = 80,
-			.sizeMinForSeqPack = 21041,
-			.sizeMinForCanonical = 452,
-			.sizeMaxForSuperslim = 24052,
+			.sizeMinForSeqPack = 3920,
+			.sizeMinForCanonical = 383,
+			.sizeMaxForSuperslim = 38239,
 			.archiveType = 0  // 0 solid, 1 separate
 	};
 	uint64_t time_limit = 400;
@@ -603,8 +604,9 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir = 		 
-		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         //L"c:/test/test6";
+		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+         L"c:/test/test13";
+	     //L"c:/test/47";
 
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

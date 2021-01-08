@@ -10,7 +10,8 @@
 
 #include "common_tools.h"
 #include "block_packer.h"
-#include "archive_packer.h"
+#include "file_tools.h"
+
 
 
 
@@ -339,101 +340,6 @@ void deleteAllFilesInDir(const wchar_t* sDir) {
 		}
 	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
 	FindClose(hFind); //Always, Always, clean things up! 	
-}
-
-/*
-count and store should be done in one go
-
-sorting could be done more effecient
-or even sort when inserting instead of afterwards
-
-*/
-
-bool dirsEqual(const wchar_t* dir1, const wchar_t* dir2) {
-	fileListAndCount_t res = storeDirectoryFilenames(dir1);
-	file_t* fileList1 = res.fileList;
-	uint64_t count = res.count;
-
-	res = storeDirectoryFilenames(dir2);
-	file_t* fileList2 = res.fileList;
-	uint64_t count2 = res.count;
-
-	if (count != count2) {
-		printf("\n dirs_equal: number of files differed... %d %d", count, count2);
-		return false;
-	}
-	quickSort(fileList1, count);
-	quickSort(fileList2, count);
-
-	bool dirsAreEqual = true;
-	for (int i = 0; i < count; i++) {
-		wchar_t* n1 = fileList1[i].name;
-		wchar_t* n2 = fileList2[i].name;
-		n1 += wcslen(dir1);
-		n2 += wcslen(dir2);
-		if (n1[0] == '/') {
-			n1++;
-		}
-		if (n2[0] == '/') {
-			n2++;
-		}
-		if (!equalsw(n1 , n2)) {
-			wprintf(L"\n file nr %d differed by name %s <=> %s", i, n1, n2);
-			dirsAreEqual = false;
-			break;
-		}
-		if (fileList1[i].size != fileList2[i].size) {
-			wprintf(L"\n\n File nr %d:'%s' differed by size %d <=> %d", 
-				i,  fileList1[i].name, fileList1[i].size, fileList2[i].size);
-			dirsAreEqual = false;
-			break;
-		}
-	}
-	if (dirsAreEqual) {
-		for (int i = 0; i < count; i++) {
-			if (!filesEqual(fileList1[i].name, fileList2[i].name)) {
-				dirsAreEqual = false;
-				break;
-			}
-		}
-	}
-	free(fileList1);
-	free(fileList2);
-	return dirsAreEqual;
-}
-
-bool filesEqual(wchar_t* name1, wchar_t* name2) {
-	FILE* f1 = openRead(name1);
-	FILE* f2 = openRead(name2);
-
-	long f1_size = getFileSize(f1);
-	long f2_size = getFileSize(f2);
-	bool result = true;
-	if (f1_size != f2_size) {
-		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
-		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
-		result = false;
-	}
-	unsigned char tmp1, tmp2;
-
-	size_t bytes = 0;
-	int count = 0;
-	while (fread(&tmp1, 1, 1, f1) && fread(&tmp2, 1, 1, f2)) {
-		if (tmp1 != tmp2) {
-			printf("\n Contents differ at position  %d ", count);
-			printf("\n File1:");
-			printf("%c", tmp1);
-			//print_string_rep(tmp1);
-			printf("\n File2:");
-			//print_string_rep(tmp2);
-			printf("%c", tmp2);
-			return false;
-		}
-		count++;
-	}
-	fclose(f1);
-	fclose(f2);
-	return result;
 }
 
 uint8_t getByteAtPos(uint64_t bytes, int pos)

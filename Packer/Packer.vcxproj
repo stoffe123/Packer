@@ -144,6 +144,7 @@
     <ClCompile Include="block_packer.c" />
     <ClCompile Include="bounce.c" />
     <ClCompile Include="canonical.c" />
+    <ClCompile Include="file_tools.c" />
     <ClCompile Include="halfbyte_rle_packer.c" />
     <ClCompile Include="halfbyte_rle_unpacker.c" />
     <ClCompile Include="common_tools.c" />
@@ -172,6 +173,7 @@
     <ClInclude Include="bitfile.h" />
     <ClInclude Include="block_packer.h" />
     <ClInclude Include="canonical.h" />
+    <ClInclude Include="file_tools.h" />
     <ClInclude Include="halfbyte_rle_packer.h" />
     <ClInclude Include="common_tools.h" />
     <ClInclude Include="everyOtherEncoder.h" />

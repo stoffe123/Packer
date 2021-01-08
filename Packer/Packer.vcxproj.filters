@@ -96,6 +96,9 @@
     <ClCompile Include="halfbyte_rle_unpacker.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="file_tools.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h">
@@ -165,6 +168,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="halfbyte_rle_packer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_tools.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

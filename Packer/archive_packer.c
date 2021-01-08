@@ -14,13 +14,11 @@
 #include "block_packer.h"
 #include "everyOtherEncoder.h"
 #include <inttypes.h>
+#include "file_tools.h"
+#include "block_packer.h"
 
 #pragma comment(lib, "User32.lib")
 
-
-#include "block_packer.h"
-
-static uint64_t fileListInitialAllocSize = 8192;
 
 static packProfile headerPackProfile = {
 	        .rle_ratio = 90,
@@ -52,82 +50,8 @@ void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 
 
 
-fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileListAndCount_t f, bool useSolid)
-{
-	WIN32_FIND_DATA fdFile;
-	HANDLE hFind = NULL;
-
-	wchar_t sPath[4096];
-
-	//Specify a file mask. *.* = We want everything! 
-	wsprintf(sPath, L"%s\\*.*", sDir);
-
-	if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
-	{
-		wprintf(L"Path not found: [%s]\n", sDir);
-		myExit();
-	}
-
-	do
-	{
-		//Find first file will always return "."
-		//    and ".." as the first two directories. 
-		if (wcscmp(fdFile.cFileName, L".") != 0
-			&& wcscmp(fdFile.cFileName, L"..") != 0)
-		{
-			//Build up our file path using the passed in 
-			//  [sDir] and the file/foldername we just found: 
-			/* if (sDir[wcslen(sDir) - 1] == '/') {
-				wsprintf(sPath, L"%s%s", sDir, fdFile.cFileName);
-			}
-			else {*/
-			wsprintf(sPath, L"%s\\%s", sDir, fdFile.cFileName);
-			//}
-
-			//Is the entity a File or Folder? 
-			if (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			{
-				//wprintf(L"Directory: %s\n", sPath);
-				f = storeDirectoryFilenamesInternal(sPath, f, useSolid); //Recursion, I love it! 				
-			}
-			else {
-				if (f.count >= f.allocSize) {
-					f.allocSize += fileListInitialAllocSize;					
-					file_t* newMem = realloc(f.fileList, f.allocSize * sizeof(file_t));					
-					if (newMem != NULL) {
-						f.fileList = newMem;
-					}
-					else {
-						printf("\n\n Out of memory in archive_packer!");
-						myExit();
-					}
-				}
-				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
-				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
-				if (useSolid) {
-					f.fileList[f.count].size = getFileSizeFromName(sPath);
-				} // if not solid the size of the packed file is written later anyway...
-				f.count++;
-
-			}
-		}
-	} while (FindNextFile(hFind, &fdFile)); //Find the next file. 
-
-	FindClose(hFind); //Always, Always, clean things up! 	
-	return f;
-}
-
-fileListAndCount_t storeDirectoryFilenames(const wchar_t* dir, bool useSolid) {
-
-	fileListAndCount_t f;
-	f.fileList = malloc(fileListInitialAllocSize * sizeof(file_t));
-	f.count = 0;
-	f.allocSize = fileListInitialAllocSize;
-	return storeDirectoryFilenamesInternal(dir, f, useSolid);
-}
-
-void createSizesHeader(const wchar_t* filename, wchar_t* dir, file_t* fileList, uint32_t count) {
-	FILE* out = openWrite(filename);
+memfile* createSizesHeader(wchar_t* dir, file_t* fileList, uint32_t count) {
+	memfile* out = getEmptyMem(L"archivepacker_createsizes");
 
 	//write sizes
 
@@ -137,15 +61,16 @@ void createSizesHeader(const wchar_t* filename, wchar_t* dir, file_t* fileList, 
 			//todo write MSB together and so on...
 			//uint64_t size = fileList[i].size;
 			uint8_t byte = getByteAtPos(fileList[i].size, k);
-			fwrite(&byte, 1, 1, out);
+			memWrite(&byte, 1, out);
 			//printf("\n writing size for %d as %d", i, size);
 		}
 	}
-	fclose(out);
+	return out;
 }
 
-void createNamesHeader(wchar_t* headerFilename, wchar_t* dir, file_t * fileList, uint32_t count) {
-	FILE* out = openWrite(headerFilename);
+memfile* createNamesHeader(wchar_t* dir, file_t * fileList, uint32_t count) {	
+
+	memfile* out = getEmptyMem(L"archivepacker_names_header_mem");
 	//write names separated by 0
 	int lengthOfDirName = wcslen(dir);
 
@@ -155,17 +80,19 @@ void createNamesHeader(wchar_t* headerFilename, wchar_t* dir, file_t * fileList,
 		//fprintf(out, L"%s\n", fileList[i].name);
 
 		int j = lengthOfDirName;
-		wchar_t ch;
-		while ((ch = fileList[i].name[j]) != 0) {			
-			//wprintf(L"%c", ch);
-			fputwc(ch, out);			
-			j++;
-		}
+
+		wchar_t cc = fileList[i].name[j];
+		uint8_t multiByteStr[2000] = { 0 };
+		int size = wcharEncode(&(fileList[i].name[j]), multiByteStr);
+		memWrite(&multiByteStr, size, out);
+
 		//wprintf(L"\n");
 		//use 8-bit size and special value for 16-bit size
-		fputwc(0, out);
+		if (i < count - 1) {
+			fputcc(0, out);
+		}
 	}
-	fclose(out);
+	return out;
 }
 
 /*
@@ -201,46 +128,33 @@ void tmpDirNameOf(const wchar_t* tmpBlocked, const wchar_t* name, const wchar_t*
 	createMissingDirs(tmpBlocked, TEMP_DIRW);
 }
 
-void createPackedSizesHeader(wchar_t* headerPackedFilename, wchar_t* dir, file_t* fileList, int64_t count) {
-	const wchar_t headerFilename[200] = { 0 };
-	get_temp_filew(headerFilename, L"archiveunpack_headersizes");
+memfile* createPackedSizesHeader(wchar_t* dir, file_t* fileList, int64_t count) {
 	
-	createSizesHeader(headerFilename, dir, fileList, count);
+	memfile* sizes = createSizesHeader(dir, fileList, count);
 
-	//everyOtherEncode(outFilename, headerPackedFilename1);
-	multi_packw(headerFilename, headerPackedFilename, headerPackProfile, headerPackProfile,
-		headerPackProfile, headerPackProfile);		
-	_wremove(headerFilename);
+	return multiPackAndStorePackType(sizes, headerPackProfile, headerPackProfile,
+		headerPackProfile, headerPackProfile);			
 }
 
-void createPackedNamesHeader(wchar_t* headerPackedFilename, wchar_t* dir, file_t* fileList, int64_t count) {
-	const wchar_t headerFilename[200] = { 0 };
-	get_temp_filew(headerFilename, L"archiveunpack_headernames");
+memfile* createPackedNamesHeader(wchar_t* dir, file_t* fileList, int64_t count) {
+		
+	memfile* header = createNamesHeader(dir, fileList, count);	
+	//myExit();
 	
-	createNamesHeader(headerFilename, dir, fileList, count);	
-
-	//TODO  have a bit for 16 or 8 bit chars in header
-	//everyOtherEncode(outFilename, headerPackedFilename1);
-	multi_packw(headerFilename, headerPackedFilename, headerPackProfile, headerPackProfile,
+	return multiPackAndStorePackType(header, headerPackProfile, headerPackProfile,
 		headerPackProfile, headerPackProfile);
-	_wremove(headerFilename);
 }
 
 void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count, uint8_t archiveType) {
-	const wchar_t headerSizesPackedFilename[200] = { 0 };
-	get_temp_filew(headerSizesPackedFilename, L"archivepacker_headersizespacked");
-	const wchar_t headerNamesPackedFilename[200] = { 0 };
-	get_temp_filew(headerNamesPackedFilename, L"archivepacker_headernamespacked");
+	
+	memfile* sizes = createPackedSizesHeader(dir, fileList, count);
+	memfile* header = createPackedNamesHeader(dir, fileList, count);
 
-	createPackedSizesHeader(headerSizesPackedFilename, dir, fileList, count);
-	createPackedNamesHeader(headerNamesPackedFilename, dir, fileList, count);
-
-	uint32_t headerNamesPackedSize = getFileSizeFromName(headerNamesPackedFilename)
-		, headerSizesPackedSize = getFileSizeFromName(headerSizesPackedFilename);
+	uint32_t headerNamesPackedSize = getMemSize(header)
+		, headerSizesPackedSize = getMemSize(sizes);
 	printf("\n Archive header sizes packed to %u", headerSizesPackedSize);		
 	printf("\n Archive header names packed to %u", headerNamesPackedSize);
 	printf("\n Total packed header size is  %u", headerNamesPackedSize + headerSizesPackedSize);
-
 	printf("\n NOW WRITING ARCHIVETYPE %d", archiveType);
 	fwrite(&archiveType, 1, 1, out);
 
@@ -252,10 +166,8 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 	fwrite(&headerSizesPackedSize, sizeof(uint32_t), 1, out);
 	fwrite(&headerNamesPackedSize, sizeof(uint32_t), 1, out);
 
-	appendFileToFile(out, headerSizesPackedFilename);
-	_wremove(headerSizesPackedFilename);
-	appendFileToFile(out, headerNamesPackedFilename);
-	_wremove(headerNamesPackedFilename);
+	append_mem_to_file(out, sizes);
+	append_mem_to_file(out, header);
 }
 
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
@@ -263,7 +175,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	printf("\n Starting archive pack archiveType = %" PRId64, profile.archiveType);
 	bool solid = (profile.archiveType == 0);
 	
-	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, solid);
+	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames2(dir, solid);
 	file_t* fileList = dirFilesAndCount.fileList;
 	int64_t count = dirFilesAndCount.count;
 	quickSortCompareEndings(fileList, count);
@@ -286,8 +198,6 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	FILE* out = openWrite(dest);
 	writeArchiveHeader(out, fileList, dir, count, profile.archiveType);
 
-	
-
 	//_wremove(headerPackedFilename1);
 	//Write contents of files	
 
@@ -305,7 +215,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	printf("\n Phase 2 of archive pack count=%" PRId64, count);
 	for (int i = 0; i < count; i++) {
 		const wchar_t* filename = fileList[i].name;
-	    wprintf(L"\n Appending %s with size %" PRId64, filename, fileList[i].size);
+	    printf("\n Appending %ls with size %" PRId64, filename, fileList[i].size);
 		if (solid) {
 			appendFileToFile(blobFile, filename);
 		}
@@ -348,27 +258,72 @@ fileListAndCount_t readSizesHeader(memfile* in) {
 	return res;
 }
 
+int wcharEncode(wchar_t* wcharBuf, uint8_t* codedBuf) {
+	int wcharBufPos = 0;
+	int codedBufPos = 0;
+	wchar_t ch;
+	while ((ch = wcharBuf[wcharBufPos++]) != 0) {
+		if (ch <= 127) {
+			codedBuf[codedBufPos++] = (uint8_t)ch;
+		}
+		else {
+			codedBuf[codedBufPos++] = 128;
+			codedBuf[codedBufPos++] = (ch / 256);
+			codedBuf[codedBufPos++] = (ch % 256);
+			//TODO wchar_t could be 32-bit
+		}
+	}
+	codedBuf[codedBufPos] = 0;
+	return codedBufPos;
+}
+
+int wcharDecode(uint8_t* codedBuf, wchar_t* wcharBuf) {
+	int wcharBufPos = 0;
+	int codedBufPos = 0;
+	uint8_t ch;
+	while ((ch = codedBuf[codedBufPos++]) != 0) {
+		if (ch <= 127) {
+			wcharBuf[wcharBufPos++] = (wchar_t)ch;
+		}
+		else {			
+			int msb = codedBuf[codedBufPos++];
+			int lsb = codedBuf[codedBufPos++];
+			wcharBuf[wcharBufPos++] = (msb * 256 + lsb);
+		}
+	}
+	wcharBuf[wcharBufPos++] = 0;
+	return codedBufPos;
+
+}
+
+
+
 void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 	file_t* filenames = list->fileList;
 	if (filenames == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
+		return;
 	}
+
+
+	uint8_t buffer[20000] = { 0 };
+	int i = 0;
+	int buffer_size = fread(&buffer, 1, 20000, in);
+	printf("\n buffer size = %d", buffer_size);
 
 	// Read names
 	int readNames = 0;
+	int bufferPos = 0;
+	wchar_t temp_wstr[2000] = { 0 };
 	while (readNames < list->count) {
-		wchar_t filename[500] = { 0 };
-		wchar_t ch;
-		int i = 0;
-		while ((ch = fgetwc(in)) != 0) {
-			//wprintf(L"%c", ch);
-			filename[i++] = ch;
-		}
-		//wprintf(L"\n");
-		filename[i] = 0;
+		bufferPos += wcharDecode(&buffer[bufferPos], &temp_wstr);
+		
 		wcscpy(filenames[readNames].name, dir);
-		wcscat(filenames[readNames].name, filename);
+		wcscat(filenames[readNames].name, temp_wstr);
+		printf("\n result: %ls", filenames[readNames].name);
+	
+		printf("\n bufferpos:%d", bufferPos);
 		readNames++;
 	}	
 }
@@ -397,9 +352,14 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 	const wchar_t headerUnpacked[200] = { 0 };
 	get_temp_filew(headerUnpacked, L"archiveuntar_headernamesunpacked");
 
+	//const wchar_t headerUnpacked1[200] = { 0 };
+	//get_temp_filew(headerUnpacked1, L"archiveuntar_headernamesunpacked1");
+
+
 	//TODO should pack to memfile instead
 	multiUnpackBlockToFile(in, headerUnpacked, headerSize);
-	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
+	
+	//everyOtherDecode(headerUnpacked1, headerUnpacked);
 	
 	FILE* headerFile = openRead(headerUnpacked);
 	readNamesHeader(headerFile, dir, fileList);
