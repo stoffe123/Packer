@@ -583,22 +583,22 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 84,
-			.twobyte_ratio = 89,
-			.recursive_limit = 700,
-			.twobyte_threshold_max = 12432,
-			.twobyte_threshold_divide = 3540,
-			.twobyte_threshold_min = 956,
-			.seqlenMinLimit3 = 156,
-			.blockSizeMinus = 132,
-			.winsize = 21492,
-			.sizeMaxForCanonicalHeaderPack = 80,
-			.sizeMinForSeqPack = 3484,
-			.sizeMinForCanonical = 299,
-			.sizeMaxForSuperslim = 43174,
-			.archiveType = 1  // 0 solid, 1 separate
+			.rle_ratio = 82,
+			.twobyte_ratio = 72,
+			.recursive_limit = 607,
+			.twobyte_threshold_max = 11105,
+			.twobyte_threshold_divide = 2862,
+			.twobyte_threshold_min = 843,
+			.seqlenMinLimit3 = 171,
+			.blockSizeMinus = 104,
+			.winsize = 40321,
+			.sizeMaxForCanonicalHeaderPack = 100,
+			.sizeMinForSeqPack = 18752,
+			.sizeMinForCanonical = 111,
+			.sizeMaxForSuperslim = 46872,
+			.archiveType = 0  // 0 solid, 1 separate
 	};
-	uint64_t time_limit = 23;
+	uint64_t time_limit = 15;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";

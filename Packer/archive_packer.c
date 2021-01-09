@@ -67,11 +67,8 @@ void unDiffSizes(file_t* fileList, uint64_t count) {
 	}
 }
 
-memfile* createSizesHeader(wchar_t* dir, file_t* fileList, uint32_t count, bool solid) {
+memfile* createSizesHeader(wchar_t* dir, file_t* fileList, uint32_t count) {
 	memfile* out = getEmptyMem(L"archivepacker_createsizes");
-	if (!solid) {
-		makeSizesDiffed(fileList, count);
-	}
 	//write sizes
 
 	for (int k = 0; k < 8; k++) {
@@ -147,32 +144,34 @@ void tmpDirNameOf(const wchar_t* tmpBlocked, const wchar_t* name, const wchar_t*
 	createMissingDirs(tmpBlocked, TEMP_DIRW);
 }
 
-memfile* createPackedSizesHeader(wchar_t* dir, file_t* fileList, int64_t count, bool solid) {
+memfile* createPackedSizesHeader(wchar_t* dir, file_t* fileList, int64_t count) {
 	
-	memfile* sizes = createSizesHeader(dir, fileList, count, solid);
+	memfile* sizesHeader = createSizesHeader(dir, fileList, count);
 
-	return multiPackAndStorePackType(sizes, headerPackProfile, headerPackProfile,
+	return multiPackAndStorePackType(sizesHeader, headerPackProfile, headerPackProfile,
 		headerPackProfile, headerPackProfile);			
 }
 
 memfile* createPackedNamesHeader(wchar_t* dir, file_t* fileList, int64_t count) {
 		
-	memfile* header = createNamesHeader(dir, fileList, count);	
+	memfile* namesHeader = createNamesHeader(dir, fileList, count);	
 	//myExit();
 	
-	return multiPackAndStorePackType(header, headerPackProfile, headerPackProfile,
+	return multiPackAndStorePackType(namesHeader, headerPackProfile, headerPackProfile,
 		headerPackProfile, headerPackProfile);
 }
 
 void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count, uint8_t archiveType) {
 
 	bool solid = (archiveType == 0);
-	
-	memfile* sizes = createPackedSizesHeader(dir, fileList, count, solid);
-	memfile* header = createPackedNamesHeader(dir, fileList, count);
+	if (!solid) {
+		makeSizesDiffed(fileList, count);
+	}	
+	memfile* sizesHeader = createPackedSizesHeader(dir, fileList, count);
+	memfile* namesHeader = createPackedNamesHeader(dir, fileList, count);
 
-	uint64_t headerNamesPackedSize = getMemSize(header)
-		, headerSizesPackedSize = getMemSize(sizes);
+	uint64_t headerNamesPackedSize = getMemSize(namesHeader)
+		, headerSizesPackedSize = getMemSize(sizesHeader);
 	printf("\n Archive header sizes packed to %lld", headerSizesPackedSize);		
 	printf("\n Archive header names packed to %lld", headerNamesPackedSize);
 	printf("\n Total packed header size is  %lld", headerNamesPackedSize + headerSizesPackedSize);
@@ -186,11 +185,9 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 	//max size of header is UINT32_max
 	writeDynamicSize(headerSizesPackedSize, out);
 	writeDynamicSize(headerNamesPackedSize, out);
-	
-	
-
-	append_mem_to_file(out, sizes);
-	append_mem_to_file(out, header);
+		
+	append_mem_to_file(out, sizesHeader);
+	append_mem_to_file(out, namesHeader);
 }
 
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
@@ -204,13 +201,12 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	if (solid) {
 		quickSortCompareEndings(fileList, count);
 	}
-	
 	printf("\n Count = %lld", count);
 
 	if (!solid) {
 		//pack all files and put them in TEMP_DIR
 		for (int i = 0; i < count; i++) {
-			printf("\n Non-solid case packing %ls of size: %" PRId64, fileList[i].name, fileList[i].size);
+			printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);
 			const wchar_t tmpBlocked[500] = { 0 };
 			tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
 			block_pack(fileList[i].name, tmpBlocked, profile);
@@ -221,7 +217,6 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	else {
 		printf("\n  IT WAS SOLID CASE!");
 	}
-	
 	
 	FILE* out = openWrite(dest);
 	writeArchiveHeader(out, fileList, dir, count, profile.archiveType);
