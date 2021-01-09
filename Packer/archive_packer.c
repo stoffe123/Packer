@@ -190,16 +190,12 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 	append_mem_to_file(out, namesHeader);
 }
 
-void archivePackSemiSeparated(wchar_t* dir, const wchar_t* dest) {
+void archivePackSemiSeparated(wchar_t* dir, const wchar_t* dest, file_t* fileList, uint64_t count) {
 
-	// write sizes header
-	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, true);
-	file_t* fileList = dirFilesAndCount.fileList;
-	int64_t count = dirFilesAndCount.count;
+	// write sizes header	
 	for (int i = 0; i < count; i++) {
 		printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);
 	}
-
 }
 
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
@@ -207,16 +203,18 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	//archiveType   0 = solid   1 = semi-separated   2 = separated
 	printf("\n Starting archive pack for %ls archiveType %lld", dir, profile.archiveType);
 	uint8_t archiveType = profile.archiveType;
-	if (archiveType == TYPE_SEMISEPARATED) {
-		archivePackSemiSeparated(dir, dest);
-		return;
-	}
-
 	bool solid = (archiveType == TYPE_SOLID);
-	
 	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, solid);
 	file_t* fileList = dirFilesAndCount.fileList;
 	int64_t count = dirFilesAndCount.count;
+
+	if (archiveType == TYPE_SEMISEPARATED) {
+		archivePackSemiSeparated(dir, dest, fileList, count);
+		return;
+	}
+
+	
+	
 	if (solid) {
 		quickSortCompareEndings(fileList, count);
 	}
