@@ -191,6 +191,16 @@ value_freq_t find_best_code(unsigned long* char_freq) {
 	return res;
 }
 
+static int compareSizes(const wchar_t* s1, const wchar_t* s2, uint64_t size1, uint64_t size2) {
+	if (size1 < size2) {
+		return -1;
+	}
+	if (size1 > size2) {
+		return 1;
+	}
+	return 0;
+}
+
 static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 
 	int res;
@@ -273,7 +283,7 @@ int32_t partition(file_t* A, int32_t lo, int32_t hi, compareFuncType cmp) {
 	file_t pivot = A[hi];
 	int32_t p = lo;
 	for (int32_t j = lo; j <= hi; j++) {
-		if ((*cmp)(A[j].name, pivot.name) < 0) {
+		if ((*cmp)(A[j].name, pivot.name, A[j].size, pivot.size) < 0) {
 			swap(A, p, j);
 			p++;
 		}
@@ -290,6 +300,10 @@ int simpleCompare(wchar_t* s1, wchar_t* s2) {
 void quickSortCompareEndings(file_t* f, uint64_t size)
 {
 	quicksort_internal(f, 0, size - 1, compareEndings);
+}
+
+void quickSortOnSizes(file_t* f, uint64_t size) {
+	quicksort_internal(f, 0, size - 1, compareSizes);
 }
 
 void quickSort(file_t* f, uint64_t size)

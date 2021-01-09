@@ -583,29 +583,29 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 77,
-			.twobyte_ratio = 76,
-			.recursive_limit = 750,
-			.twobyte_threshold_max = 13000,
-			.twobyte_threshold_divide = 3055,
-			.twobyte_threshold_min = 1000,
-			.seqlenMinLimit3 = 160,
-			.blockSizeMinus = 137,
-			.winsize = 10000,
+			.rle_ratio = 84,
+			.twobyte_ratio = 89,
+			.recursive_limit = 700,
+			.twobyte_threshold_max = 12432,
+			.twobyte_threshold_divide = 3540,
+			.twobyte_threshold_min = 956,
+			.seqlenMinLimit3 = 156,
+			.blockSizeMinus = 132,
+			.winsize = 21492,
 			.sizeMaxForCanonicalHeaderPack = 80,
-			.sizeMinForSeqPack = 3920,
-			.sizeMinForCanonical = 383,
-			.sizeMaxForSuperslim = 38239,
-			.archiveType = 0  // 0 solid, 1 separate
+			.sizeMinForSeqPack = 3484,
+			.sizeMinForCanonical = 299,
+			.sizeMaxForSuperslim = 43174,
+			.archiveType = 1  // 0 solid, 1 separate
 	};
-	uint64_t time_limit = 400;
+	uint64_t time_limit = 23;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir = 		 
 		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         L"c:/test/test6";
+         L"c:/test/test13";
 	     //L"c:/test/47";
 
 	unsigned long long best_size = 0;
@@ -638,8 +638,6 @@ void testarchive() {
 				printf("\n => dirs not equal, exiting!");
 				exit(1);
 			}
-
-
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {

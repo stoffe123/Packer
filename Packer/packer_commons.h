@@ -53,6 +53,8 @@ void releaseTempfileMutex();
 
 void quickSortCompareEndings(file_t* f, uint64_t size);
 
+void quickSortOnSizes(file_t* f, uint64_t size);
+
 void printProfile(packProfile*);
 
 bool testPack(memfile* src, memfile* tmp, const wchar_t* packerName, int limit);
