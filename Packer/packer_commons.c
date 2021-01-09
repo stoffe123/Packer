@@ -298,3 +298,28 @@ void quickSort(file_t* f, uint64_t size)
 }
 
 
+void writeDynamicSize(uint64_t s, FILE* out) {
+	uint16_t new_s;
+	if (s < 65535) {
+		new_s = (uint16_t)s;
+		fwrite(&new_s, sizeof(uint16_t), 1, out);
+	}
+	else {
+		new_s = 65535;
+		fwrite(&new_s, sizeof(uint16_t), 1, out);
+		fwrite(&s, sizeof(uint64_t), 1, out);
+	}
+}
+
+uint64_t readDynamicSize(FILE* in) {
+	uint16_t new_s;
+	fread(&new_s, sizeof(uint16_t), 1, in);
+	if (new_s < 65535) {
+		return (uint64_t)new_s;
+	}
+	uint64_t res;
+	fread(&res, sizeof(uint64_t), 1, in);
+	return res;
+}
+
+
