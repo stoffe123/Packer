@@ -145,16 +145,40 @@ memfile* createPackedNamesHeader(wchar_t* dir, file_t* fileList, int64_t count) 
 		headerPackProfile, headerPackProfile);
 }
 
+void writeDynamicSize(uint64_t s, FILE* out) {
+	uint16_t new_s; 
+	if (s < 65535) {
+		new_s = (uint16_t)s;
+		fwrite(&new_s, sizeof(uint16_t), 1, out);
+	}
+	else {
+		new_s = 65535;
+		fwrite(&new_s, sizeof(uint16_t), 1, out);
+		fwrite(&s, sizeof(uint64_t), 1, out);
+	}
+}
+
+uint64_t readDynamicSize(FILE* in) {
+	uint16_t new_s;
+    fread(&new_s, sizeof(uint16_t), 1, in);
+	if (new_s < 65535) {
+		return (uint64_t)new_s;
+	}	
+	uint64_t res;
+	fread(&res, sizeof(uint64_t), 1, in);
+	return res;
+}
+
 void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count, uint8_t archiveType) {
 	
 	memfile* sizes = createPackedSizesHeader(dir, fileList, count);
 	memfile* header = createPackedNamesHeader(dir, fileList, count);
 
-	uint32_t headerNamesPackedSize = getMemSize(header)
+	uint64_t headerNamesPackedSize = getMemSize(header)
 		, headerSizesPackedSize = getMemSize(sizes);
-	printf("\n Archive header sizes packed to %u", headerSizesPackedSize);		
-	printf("\n Archive header names packed to %u", headerNamesPackedSize);
-	printf("\n Total packed header size is  %u", headerNamesPackedSize + headerSizesPackedSize);
+	printf("\n Archive header sizes packed to %lld", headerSizesPackedSize);		
+	printf("\n Archive header names packed to %lld", headerNamesPackedSize);
+	printf("\n Total packed header size is  %lld", headerNamesPackedSize + headerSizesPackedSize);
 	printf("\n NOW WRITING ARCHIVETYPE %d", archiveType);
 	fwrite(&archiveType, 1, 1, out);
 
@@ -163,8 +187,10 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 		exit(1);
 	}
 	//max size of header is UINT32_max
-	fwrite(&headerSizesPackedSize, sizeof(uint32_t), 1, out);
-	fwrite(&headerNamesPackedSize, sizeof(uint32_t), 1, out);
+	writeDynamicSize(headerSizesPackedSize, out);
+	writeDynamicSize(headerNamesPackedSize, out);
+	
+	
 
 	append_mem_to_file(out, sizes);
 	append_mem_to_file(out, header);
@@ -363,16 +389,15 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 
 void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 
-	printf("\n *** Archive Unpack *** ");
-	uint32_t headerSizesPackedSize, headerNamesPackedSize;
+	printf("\n *** Archive Unpack *** ");	
 	uint8_t archiveType;
 
 	FILE* in = openRead(src);	
 	fread(&archiveType, 1, 1, in);
 	printf("\n Archive type: %d", archiveType);
 	bool solid = (archiveType == 0);
-	fread(&headerSizesPackedSize, sizeof(uint32_t), 1, in);
-	fread(&headerNamesPackedSize, sizeof(uint32_t), 1, in);
+	uint64_t headerSizesPackedSize = readDynamicSize(in);
+	uint64_t headerNamesPackedSize = readDynamicSize(in); 
 				
 	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize);
 	readPackedNamesHeader(in, dir, headerNamesPackedSize, &fileList);	

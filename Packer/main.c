@@ -604,8 +604,8 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir = 		 
-		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         //L"c:/test/test13";
+		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+         L"c:/test/test6";
 	     //L"c:/test/47";
 
 	unsigned long long best_size = 0;
