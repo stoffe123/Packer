@@ -16,6 +16,7 @@
 #include <inttypes.h>
 #include "file_tools.h"
 #include "block_packer.h"
+#include "archive_packer.h"
 
 #pragma comment(lib, "User32.lib")
 
@@ -36,7 +37,6 @@ static packProfile headerPackProfile = {
 			.sizeMinForCanonical = 20,
 			.sizeMaxForSuperslim = 16384
 };
-
 
 
 void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
@@ -190,12 +190,31 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 	append_mem_to_file(out, namesHeader);
 }
 
+void archivePackSemiSeparated(wchar_t* dir, const wchar_t* dest) {
+
+	// write sizes header
+	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, true);
+	file_t* fileList = dirFilesAndCount.fileList;
+	int64_t count = dirFilesAndCount.count;
+	for (int i = 0; i < count; i++) {
+		printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);
+	}
+
+}
+
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
 
+	//archiveType   0 = solid   1 = semi-separated   2 = separated
 	printf("\n Starting archive pack for %ls archiveType %lld", dir, profile.archiveType);
-	bool solid = (profile.archiveType == 0);
+	uint8_t archiveType = profile.archiveType;
+	if (archiveType == TYPE_SEMISEPARATED) {
+		archivePackSemiSeparated(dir, dest);
+		return;
+	}
+
+	bool solid = (archiveType == TYPE_SOLID);
 	
-	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames2(dir, solid);
+	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, solid);
 	file_t* fileList = dirFilesAndCount.fileList;
 	int64_t count = dirFilesAndCount.count;
 	if (solid) {
@@ -203,7 +222,8 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	}
 	printf("\n Count = %lld", count);
 
-	if (!solid) {
+	if (archiveType == TYPE_SEPARATED) {
+		
 		//pack all files and put them in TEMP_DIR
 		for (int i = 0; i < count; i++) {
 			printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);

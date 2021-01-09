@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <tchar.h> 
 #include <strsafe.h>
+#include "file_tools.h"
 
 static uint64_t fileListInitialAllocSize = 8192;
 
@@ -76,17 +77,13 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 	return f;
 }
 
-fileListAndCount_t storeDirectoryFilenames2(const wchar_t* dir, bool storeSizes) {
+fileListAndCount_t storeDirectoryFilenames(const wchar_t* dir, bool storeSizes) {
 
 	fileListAndCount_t f;
 	f.fileList = malloc(fileListInitialAllocSize * sizeof(file_t));
 	f.count = 0;
 	f.allocSize = fileListInitialAllocSize;
 	return storeDirectoryFilenamesInternal(dir, f, storeSizes);
-}
-
-fileListAndCount_t storeDirectoryFilenames(const wchar_t* dir) {
-	return storeDirectoryFilenames2(dir, true);
 }
 
 
@@ -135,11 +132,11 @@ or even sort when inserting instead of afterwards
 
 bool dirsEqual(const wchar_t* dir1, const wchar_t* dir2) {
 	fileListAndCount_t dirStruct;
-	dirStruct = storeDirectoryFilenames(dir1);
+	dirStruct = storeDirectoryFilenames(dir1, true);
 	file_t* fileList1 = dirStruct.fileList;
 	uint64_t count = dirStruct.count;
 
-	dirStruct = storeDirectoryFilenames(dir2);
+	dirStruct = storeDirectoryFilenames(dir2, true);
 	file_t* fileList2 = dirStruct.fileList;
 	uint64_t count2 = dirStruct.count;
 
