@@ -48,7 +48,7 @@ void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 	wcsncpy(dst, (src + m), len);
 }
 
-void makeSizesDiffed(file_t* fileList, uint64_t count) {
+void diffSizes(file_t* fileList, uint64_t count) {
 	uint64_t last = 0;
 	for (int i = 0; i < count; i++) {
 		uint64_t size = fileList[i].size;
@@ -164,8 +164,8 @@ memfile* createPackedNamesHeader(wchar_t* dir, file_t* fileList, int64_t count) 
 void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count, uint8_t archiveType) {
 
 	bool solid = (archiveType == 0);
-	if (!solid) {
-		makeSizesDiffed(fileList, count);
+	if (archiveType == TYPE_SEPARATED) {
+		diffSizes(fileList, count);
 	}	
 	memfile* sizesHeader = createPackedSizesHeader(dir, fileList, count);
 	memfile* namesHeader = createPackedNamesHeader(dir, fileList, count);
@@ -190,12 +190,44 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 	append_mem_to_file(out, namesHeader);
 }
 
-void archivePackSemiSeparated(wchar_t* dir, const wchar_t* dest, file_t* fileList, uint64_t count) {
+void archivePackSemiSeparated(FILE* out, packProfile profile, file_t* fileList, uint64_t count) {
 
+	printf("\n Start archive pack semiseparated case");
 	// write sizes header	
+	wchar_t ext[100] = { 0 };
+	wchar_t next_ext[100] = { 0 };
+
+	const wchar_t blobFilename[100] = { 0 };
+	get_temp_filew(blobFilename, L"archivepack_blob");
+	FILE* blobFile = openWrite(blobFilename);	
+	uint64_t blobSizes[1000] = { 0 };
+	uint64_t blobCount = 0;
+	bool breakAndCreateBlob;
 	for (int i = 0; i < count; i++) {
-		printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);
+		wchar_t* filename = fileList[i].name;
+		printf("\n%ls of size: %lld", filename, fileList[i].size);
+		substringAfterLast(ext, filename, L".");
+		if (i == count - 1) {
+			breakAndCreateBlob = true;
+		}
+		else {
+			substringAfterLast(next_ext, fileList[i + 1].name, L".");
+			breakAndCreateBlob = !equalsw(next_ext, ext);
+		}	
+		appendFileToFile(blobFile, filename);
+		if (breakAndCreateBlob) {
+			//pack and flush file and start over
+			fclose(blobFile);		
+			blockPackAndReplace(blobFilename, profile);
+			appendFileToFile(out, blobFilename);
+			blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
+			printf("\n Blob nr %lld has size %lld and for extension %ls", blobCount - 1, blobSizes[blobCount - 1], ext);					    			
+			if (i < count - 1) {
+				blobFile = openWrite(blobFilename); // start over
+			}
+		}
 	}
+	fclose(out);
 }
 
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
@@ -204,20 +236,11 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	printf("\n Starting archive pack for %ls archiveType %lld", dir, profile.archiveType);
 	uint8_t archiveType = profile.archiveType;
 	bool solid = (archiveType == TYPE_SOLID);
-	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, solid);
+	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, archiveType != TYPE_SEPARATED);
 	file_t* fileList = dirFilesAndCount.fileList;
 	int64_t count = dirFilesAndCount.count;
 
-	if (archiveType == TYPE_SEMISEPARATED) {
-		archivePackSemiSeparated(dir, dest, fileList, count);
-		return;
-	}
-
 	
-	
-	if (solid) {
-		quickSortCompareEndings(fileList, count);
-	}
 	printf("\n Count = %lld", count);
 
 	if (archiveType == TYPE_SEPARATED) {
@@ -233,11 +256,17 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 		quickSortOnSizes(fileList, count);
 	}
 	else {
-		printf("\n  IT WAS SOLID CASE!");
+		quickSortCompareEndings(fileList, count);
 	}
 	
 	FILE* out = openWrite(dest);
-	writeArchiveHeader(out, fileList, dir, count, profile.archiveType);
+	writeArchiveHeader(out, fileList, dir, count, archiveType);
+
+	if (archiveType == TYPE_SEMISEPARATED) {
+		archivePackSemiSeparated(out, profile, fileList, count);
+		fclose(out);
+		return;
+	}
 
 	//_wremove(headerPackedFilename1);
 	//Write contents of files	
@@ -277,7 +306,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 }
 
 
-fileListAndCount_t readSizesHeader(memfile* in, bool solid) {
+fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
 	fileListAndCount_t res;	
 	rewindMem(in);	
 	uint64_t count = getMemSize(in) / 8;
@@ -296,7 +325,7 @@ fileListAndCount_t readSizesHeader(memfile* in, bool solid) {
 		}
 	}
 	res.count = count;
-	if (!solid) {
+	if (archiveType == TYPE_SEPARATED) {
 		unDiffSizes(res.fileList, count);
 	}
 	return res;
@@ -366,7 +395,7 @@ void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 }
 
 
-fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize, bool solid) {
+fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize, int archiveType) {
 	
 	printf("\n Read packed sizes Header size: %d", headerSize);
 		
@@ -375,7 +404,7 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize, bool sol
 	memfile* headerUnpacked = multiUnpack(headerPackedMem);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	
-	fileListAndCount_t res =  readSizesHeader(headerUnpacked, solid);
+	fileListAndCount_t res =  readSizesHeader(headerUnpacked, archiveType);
 
 	return res;
 }
@@ -417,7 +446,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	uint64_t headerSizesPackedSize = readDynamicSize(in);
 	uint64_t headerNamesPackedSize = readDynamicSize(in); 
 				
-	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize, solid);
+	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize, archiveType);
 	readPackedNamesHeader(in, dir, headerNamesPackedSize, &fileList);	
 
 	printf("\n Unpacked and read headers successfully! Now unpacking files...");

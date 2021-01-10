@@ -596,7 +596,7 @@ void testarchive() {
 			.sizeMinForSeqPack = 18752,
 			.sizeMinForCanonical = 111,
 			.sizeMaxForSuperslim = 46872,
-			.archiveType = 0  // 0 solid, 1 separate
+			.archiveType = 0  // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 15;
 	copyProfile(&profile, &bestProfile);
