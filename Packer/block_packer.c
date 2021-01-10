@@ -213,18 +213,21 @@ void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 
 // ----------------------------------------------------------------
 
-
-void block_unpack_file(FILE* infil,const wchar_t* dst) {
+void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, const wchar_t* dst) {
 	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
+	if (infil == NULL) {
+		infil = openRead(src);
+	}
 	uint64_t totalRead = 0, chunkNumber = 0;
 	while (true) {
 
 		uint8_t packType;
-		memfile* tmp = getEmptyMem(L"blockpacker_unpacktmp");
 		if (fread(&packType, 1, 1, infil) == 0) {
+			printf("\n packtype was 0 breaking!");
 			break;
 		}
+		memfile* tmp = getEmptyMem(L"blockpacker_unpacktmp");
 		if (isKthBitSet(packType, 4)) {					
 			copy_the_rest_to_mem(infil, tmp);					
 		}
@@ -252,8 +255,9 @@ void block_unpack_file(FILE* infil,const wchar_t* dst) {
 		chunkNumber++;
 	}	
 	fclose(infil);
-
-	FILE* utfil = openWrite(dst);
+	if (dst != NULL) {
+		utfil = openWrite(dst);
+	}
 	for (int i = 0; i < chunkNumber; i++) {
 		WaitForSingleObject(blockChunks[i].handle, INFINITE);
 		
@@ -264,9 +268,22 @@ void block_unpack_file(FILE* infil,const wchar_t* dst) {
 		freeMem(blockChunks[i].packed);
 		releaseBlockchunkMutex();
 	}
-	fclose(utfil);
+	if (dst != NULL) {
+		fclose(utfil);
+	}
 }
 
+void block_unpack_file(FILE* infil, const wchar_t* dst) {
+	block_unpack_file_internal(infil, NULL, NULL, dst);
+}
+
+void blockUnpackFileToFile(FILE* infil, FILE* utfil) {
+	block_unpack_file_internal(infil, NULL, utfil, NULL);
+}
+
+void blockUnpackNameToFile(const wchar_t* src, FILE* utfil) {
+	block_unpack_file_internal(NULL, src, utfil, NULL);
+}
 
 
 void block_unpack(const wchar_t* src, const wchar_t* dst) {

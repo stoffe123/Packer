@@ -24,4 +24,9 @@ void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile);
 
 void block_unpack_file(FILE* infil, const wchar_t* dst);
 
+
+void blockUnpackFileToFile(FILE* infil, FILE* utfil);
+
+void blockUnpackNameToFile(const wchar_t* src, FILE* utfil);
+
 #endif

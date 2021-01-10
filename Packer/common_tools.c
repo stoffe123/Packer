@@ -127,16 +127,33 @@ int64_t indexOfChar(const wchar_t* s, const wchar_t find) {
 	return -1;
 }
 
-void substringAfterLast(const wchar_t* dst, const wchar_t* s, const wchar_t* find) {
-	for (int64_t i = wcslen(s) - 1; i >= 0; i--) {
-		if (s[i] == find[0]) {
-			s += (i + 1);
-			wcscpy(dst, s);
+void substringAfterLast(const wchar_t* dst, const wchar_t* sourceStr, const wchar_t* find) {
+	for (int64_t i = wcslen(sourceStr) - 1; i >= 0; i--) {
+		if (sourceStr[i] == find[0]) {
+			sourceStr += (i + 1);
+			wcscpy(dst, sourceStr);
 			return;
 		}
 	}
 	wcscpy(dst, L"");	
 }
+
+void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr) {
+	uint64_t len = wcslen(sourceStr);
+	for (int64_t i = len - 1; i >= 0; i--) {
+		if (sourceStr[i] == L'.') {
+			sourceStr += (i + 1);
+			wcscpy(dst, sourceStr);
+			return;
+		}
+		//max len for extensions
+		if (len - i > 10 || sourceStr[i] == L'\\' || sourceStr[i] == 'L/') {
+			break; 
+		}
+	}
+	wcscpy(dst, L"");
+}
+
 
 FILE* openWrite(const wchar_t* filename) {
 	FILE* out;

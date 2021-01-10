@@ -104,4 +104,6 @@ uint8_t getByteAtPos(uint64_t bytes, int pos);
 
 void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos);
 
+void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr);
+
 #endif

@@ -190,12 +190,43 @@ void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count
 	append_mem_to_file(out, namesHeader);
 }
 
-void archivePackSemiSeparated(FILE* out, packProfile profile, file_t* fileList, uint64_t count) {
+uint64_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 
+	file_t* fileList = dirInfo.fileList;
+	uint64_t count = dirInfo.count;
+	uint64_t blobCount = 0;
+
+	wchar_t ext[20] = { 0 };
+	wchar_t next_ext[20] = { 0 };
+
+	bool breakAndCreateBlob;
+	for (int i = 0; i < count; i++) {
+		wchar_t* filename = fileList[i].name;
+		//printf("\n%ls of size: %lld", filename, fileList[i].size);
+		getFileExtension(ext, filename);
+		if (i == count - 1) {
+			breakAndCreateBlob = true;
+		}
+		else {
+			getFileExtension(next_ext, fileList[i + 1].name);
+			breakAndCreateBlob = !equalsw(next_ext, ext);
+		}
+		if (breakAndCreateBlob) {
+			//pack and flush file and start over	
+			blobCount++;					
+		}
+	}
+	return blobCount;
+}
+
+void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t dirInfo) {
+
+	file_t* fileList = dirInfo.fileList;
+	uint64_t count = dirInfo.count;
 	printf("\n Start archive pack semiseparated case");
 	// write sizes header	
-	wchar_t ext[100] = { 0 };
-	wchar_t next_ext[100] = { 0 };
+	wchar_t ext[50] = { 0 };
+	wchar_t next_ext[50] = { 0 };
 
 	const wchar_t blobFilename[100] = { 0 };
 	get_temp_filew(blobFilename, L"archivepack_blob");
@@ -206,12 +237,12 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, file_t* fileList, 
 	for (int i = 0; i < count; i++) {
 		wchar_t* filename = fileList[i].name;
 		printf("\n%ls of size: %lld", filename, fileList[i].size);
-		substringAfterLast(ext, filename, L".");
+		getFileExtension(ext, filename);
 		if (i == count - 1) {
 			breakAndCreateBlob = true;
 		}
 		else {
-			substringAfterLast(next_ext, fileList[i + 1].name, L".");
+			getFileExtension(next_ext, fileList[i + 1].name);
 			breakAndCreateBlob = !equalsw(next_ext, ext);
 		}	
 		appendFileToFile(blobFile, filename);
@@ -219,9 +250,12 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, file_t* fileList, 
 			//pack and flush file and start over
 			fclose(blobFile);		
 			blockPackAndReplace(blobFilename, profile);
+			uint64_t size = getFileSizeFromName(blobFilename);
+			printf("\n writing blob nr %llu size as %llu", blobCount, size);
+			fwrite(&size, sizeof(uint64_t), 1, out);
 			appendFileToFile(out, blobFilename);
 			blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
-			printf("\n Blob nr %lld has size %lld and for extension %ls", blobCount - 1, blobSizes[blobCount - 1], ext);					    			
+			printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);					    			
 			if (i < count - 1) {
 				blobFile = openWrite(blobFilename); // start over
 			}
@@ -236,9 +270,9 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	printf("\n Starting archive pack for %ls archiveType %lld", dir, profile.archiveType);
 	uint8_t archiveType = profile.archiveType;
 	bool solid = (archiveType == TYPE_SOLID);
-	fileListAndCount_t dirFilesAndCount = storeDirectoryFilenames(dir, archiveType != TYPE_SEPARATED);
-	file_t* fileList = dirFilesAndCount.fileList;
-	int64_t count = dirFilesAndCount.count;
+	fileListAndCount_t dirInfo = storeDirectoryFilenames(dir, archiveType != TYPE_SEPARATED);
+	file_t* fileList = dirInfo.fileList;
+	int64_t count = dirInfo.count;
 
 	
 	printf("\n Count = %lld", count);
@@ -263,7 +297,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	writeArchiveHeader(out, fileList, dir, count, archiveType);
 
 	if (archiveType == TYPE_SEMISEPARATED) {
-		archivePackSemiSeparated(out, profile, fileList, count);
+		archivePackSemiSeparated(out, profile, dirInfo);
 		fclose(out);
 		return;
 	}
@@ -434,9 +468,46 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 	_wremove(headerUnpacked);		
 }
 
+void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
+
+	uint64_t nrOfBlobs = determineNumberOfBlobs(dirInfo);
+
+	const wchar_t masterFilename[200] = { 0 };
+	get_temp_filew(masterFilename, L"archive_unpack_semisep_master");
+
+	FILE* masterFile = openWrite(masterFilename);
+
+
+	for (uint64_t blobNr = 0; blobNr < nrOfBlobs; blobNr++) {
+		uint64_t size;
+		fread(&size, sizeof(uint64_t), 1, in);
+		
+		const wchar_t blobFilename[200] = { 0 };
+		get_temp_filew(blobFilename, L"archive_unpack_blob_semisep");
+		
+		const wchar_t blockUnpackFilename[200] = { 0 };
+		get_temp_filew(blockUnpackFilename, L"blockunpacksolidblob");
+		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", blobNr, size);
+		copyFileChunkToFile(in, blobFilename, size);
+		blockUnpackNameToFile(blobFilename, masterFile);
+	}
+	fclose(masterFile);
+	fclose(in);
+	masterFile = openRead(masterFilename);
+	file_t* filenames = dirInfo.fileList;
+
+	//TODO DRY this with code below
+	for (int i = 0; i < dirInfo.count; i++) {
+		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
+		createMissingDirs(filenames[i].name, dir);
+		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
+		copyFileChunkToFile(masterFile, filenames[i].name, filenames[i].size);		
+	}
+}
+
 void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 
-	printf("\n *** Archive Unpack *** ");	
+	printf("\n *** Archive Unpack *** ");		
 	uint8_t archiveType;
 
 	FILE* in = openRead(src);	
@@ -450,12 +521,15 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	readPackedNamesHeader(in, dir, headerNamesPackedSize, &fileList);	
 
 	printf("\n Unpacked and read headers successfully! Now unpacking files...");
-	printf(solid ? "\nSolid case" : "\nNon-solid case");
 	
-
 	file_t* filenames = fileList.fileList;
 	int64_t count = fileList.count;
-	// Read files
+	
+	if (archiveType == TYPE_SEMISEPARATED) {
+		archiveUnpackSemiSeparated(in, fileList, dir);
+		return;
+	}
+
 	const wchar_t blockUnpackFilename[200] = { 0 };
 	if (solid) {	
 		get_temp_filew(blockUnpackFilename, L"blockunpacksolidblob");

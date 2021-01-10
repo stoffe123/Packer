@@ -129,7 +129,7 @@ void printProfile(packProfile* profile) {
 	printf("\nSize min for seqpack %d", profile->sizeMinForSeqPack);
 	printf("\nSize min for canonical %d", profile->sizeMinForCanonical);
 	printf("\nSize max for superslim %d", profile->sizeMaxForSuperslim);
-	printf("\nArchive type (0 solid) %d", profile->archiveType);
+	printf("\nArchive type %d", profile->archiveType);
 }
 
 packProfile getPackProfile() {
@@ -204,11 +204,11 @@ static int compareSizes(const wchar_t* s1, const wchar_t* s2, uint64_t size1, ui
 static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 
 	int res;
-	wchar_t ext1[500] = { 0 };
-	wchar_t ext2[500] = { 0 };
+	wchar_t ext1[20] = { 0 };
+	wchar_t ext2[20] = { 0 };
 
-	substringAfterLast(ext1, s1, L".");
-	substringAfterLast(ext2, s2, L".");
+	getFileExtension(ext1, s1);
+	getFileExtension(ext2, s2);
 
 	if (equalsw(ext1, L"txt")) {
 		wcscpy(ext1, "zzz");

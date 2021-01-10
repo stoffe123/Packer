@@ -91,12 +91,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 93000);
 	profile->sizeMaxForSuperslim = doFuzz(profile->sizeMaxForSuperslim, best.sizeMaxForSuperslim, 10, 100000);
 
-	if (profile->archiveType == 0) {
-		profile->archiveType = 1;
-	}
-	else {
-		profile->archiveType = 0;
-	}
+	profile->archiveType = doFuzz(profile->archiveType, best.archiveType, 0, 2);		
 
 }
 
@@ -583,22 +578,22 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 82,
-			.twobyte_ratio = 72,
-			.recursive_limit = 607,
-			.twobyte_threshold_max = 11105,
-			.twobyte_threshold_divide = 2862,
-			.twobyte_threshold_min = 843,
-			.seqlenMinLimit3 = 171,
-			.blockSizeMinus = 104,
-			.winsize = 40321,
-			.sizeMaxForCanonicalHeaderPack = 100,
-			.sizeMinForSeqPack = 18752,
-			.sizeMinForCanonical = 111,
-			.sizeMaxForSuperslim = 46872,
-			.archiveType = 0  // 0 solid, 1 semiseparate 2 separate
+			.rle_ratio = 77,
+			.twobyte_ratio = 76,
+			.recursive_limit = 146,
+			.twobyte_threshold_max = 9777,
+			.twobyte_threshold_divide = 3068,
+			.twobyte_threshold_min = 851,
+			.seqlenMinLimit3 = 177,
+			.blockSizeMinus = 100,
+			.winsize = 120521,
+			.sizeMaxForCanonicalHeaderPack = 164,
+			.sizeMinForSeqPack = 10,
+			.sizeMinForCanonical = 455,
+			.sizeMaxForSuperslim = 28275,
+			.archiveType = 1  // 0 solid, 1 semiseparate 2 separate
 	};
-	uint64_t time_limit = 15;
+	uint64_t time_limit = 1000;
 	copyProfile(&profile, &bestProfile);
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
