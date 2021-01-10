@@ -586,12 +586,12 @@ void testarchive() {
 			.twobyte_threshold_min = 851,
 			.seqlenMinLimit3 = 177,
 			.blockSizeMinus = 100,
-			.winsize = 120521,
+			.winsize = 2521,
 			.sizeMaxForCanonicalHeaderPack = 164,
 			.sizeMinForSeqPack = 10,
 			.sizeMinForCanonical = 455,
 			.sizeMaxForSuperslim = 28275,
-			.archiveType = 1  // 0 solid, 1 semiseparate 2 separate
+			.archiveType = 0  // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
 	copyProfile(&profile, &bestProfile);
@@ -600,7 +600,7 @@ void testarchive() {
 	
 	wchar_t* source_dir = 		 
 		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         L"c:/test/test13";
+         L"c:/test/test6";
 	     //L"c:/test/47";
 
 	unsigned long long best_size = 0;

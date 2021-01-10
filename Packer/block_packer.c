@@ -223,8 +223,7 @@ void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, co
 	while (true) {
 
 		uint8_t packType;
-		if (fread(&packType, 1, 1, infil) == 0) {
-			printf("\n packtype was 0 breaking!");
+		if (fread(&packType, 1, 1, infil) == 0) {			
 			break;
 		}
 		memfile* tmp = getEmptyMem(L"blockpacker_unpacktmp");

@@ -157,7 +157,7 @@ void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr) {
 
 FILE* openWrite(const wchar_t* filename) {
 	FILE* out;
-	_wremove(filename);
+	//_wremove(filename);
 	errno_t err = _wfopen_s(&out, filename, L"wb");
 	if (err != 0) {
 		wprintf(L"\n Common_tools.openWrite : can't create outfile %s \nError code %d", filename, err);
@@ -181,8 +181,10 @@ FILE* openRead(const wchar_t* filename) {
 }
 
 void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy) {
-	FILE* out = openWrite(dest_filename);
 	
+	//printf("\n entering copyFileChunkToFile size=%d ", size_to_copy);
+	FILE* out = openWrite(dest_filename);
+	//printf("\n starting  ..");
 	uint8_t ch;
 	for (int i = 0; i < size_to_copy; i++) {
 		size_t bytes_got = fread(&ch, 1, 1, source_file);

@@ -484,12 +484,11 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		
 		const wchar_t blobFilename[200] = { 0 };
 		get_temp_filew(blobFilename, L"archive_unpack_blob_semisep");
-		
-		const wchar_t blockUnpackFilename[200] = { 0 };
-		get_temp_filew(blockUnpackFilename, L"blockunpacksolidblob");
+				
 		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", blobNr, size);
 		copyFileChunkToFile(in, blobFilename, size);
 		blockUnpackNameToFile(blobFilename, masterFile);
+		_wremove(blobFilename);
 	}
 	fclose(masterFile);
 	fclose(in);
@@ -501,8 +500,9 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
 		createMissingDirs(filenames[i].name, dir);
 		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
-		copyFileChunkToFile(masterFile, filenames[i].name, filenames[i].size);		
+		copyFileChunkToFile(masterFile, filenames[i].name, filenames[i].size);
 	}
+	_wremove(masterFilename);
 }
 
 void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
@@ -513,7 +513,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	FILE* in = openRead(src);	
 	fread(&archiveType, 1, 1, in);
 	printf("\n Archive type: %d", archiveType);
-	bool solid = (archiveType == 0);
+	
 	uint64_t headerSizesPackedSize = readDynamicSize(in);
 	uint64_t headerNamesPackedSize = readDynamicSize(in); 
 				
@@ -524,14 +524,13 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	
 	file_t* filenames = fileList.fileList;
 	int64_t count = fileList.count;
-	
+	const wchar_t blockUnpackFilename[200] = { 0 };
+
 	if (archiveType == TYPE_SEMISEPARATED) {
 		archiveUnpackSemiSeparated(in, fileList, dir);
 		return;
 	}
-
-	const wchar_t blockUnpackFilename[200] = { 0 };
-	if (solid) {	
+	else if (archiveType == TYPE_SOLID) {
 		get_temp_filew(blockUnpackFilename, L"blockunpacksolidblob");
 		block_unpack_file(in, blockUnpackFilename);
 		fclose(in);
@@ -543,17 +542,15 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 		createMissingDirs(filenames[i].name, dir);
 		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
 		copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
-		if (!solid) {
-			//TODO: flag for block pack or just multipack (for small files)  ?
+		if (archiveType == TYPE_SEPARATED) {			
 			blockUnpackAndReplace(filenames[i].name);
 		}
 	}
 	fclose(in);
 	free(filenames);
-	if (solid) {
+	if (archiveType == TYPE_SOLID) {
 		_wremove(blockUnpackFilename);
 	}
-
 }
 
 
