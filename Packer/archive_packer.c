@@ -495,13 +495,16 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 }
 
 
-void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
+void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, bool unpackFiles) {
 	file_t* filenames = dirInfo.fileList;
 	for (int i = 0; i < dirInfo.count; i++) {
 		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
 		createMissingDirs(filenames[i].name, dir);
 		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
 		copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
+		if (unpackFiles) {
+			blockUnpackAndReplace(filenames[i].name);
+		}
 	}
 }
 
@@ -533,7 +536,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	file_t* filenames = dirInfo.fileList;
 
 	//TODO DRY this with code below
-	createArchiveFiles(masterFile, dirInfo, dir);
+	createArchiveFiles(masterFile, dirInfo, dir, false);
 	_wremove(masterFilename);
 }
 
