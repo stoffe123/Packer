@@ -296,20 +296,3 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 	return res;
 }
 
-
-uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t index) {
-	uint64_t count = dirInfo.count;
-	file_t* fileList = dirInfo.fileList;
-
-	if (index == 0 || index >= count) {
-		//no luck
-		return UINT64_MAX;
-	}
-
-	for (int i = index - 1; i >= 0; i--) {
-		if (filesEqual(fileList[i].name, fileList[index].name)) {
-			return i;
-		}
-	}
-	return UINT64_MAX;
-}

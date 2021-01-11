@@ -591,7 +591,7 @@ void testarchive() {
 			.sizeMinForSeqPack = 10,
 			.sizeMinForCanonical = 455,
 			.sizeMaxForSuperslim = 28275,
-			.archiveType = 0 // 0 solid, 1 semiseparate 2 separate
+			.archiveType = TYPE_SOLID // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
 	copyProfile(&profile, &bestProfile);
@@ -600,9 +600,9 @@ void testarchive() {
 	
 	wchar_t* source_dir =
 		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-		//L"c:/test/test13wequal";
+		L"c:/test/test13wequal";
 		//L"c:/test/test6";
-	     L"c:/test/47";
+	    //L"c:/test/47";
 	
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

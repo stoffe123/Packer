@@ -20,6 +20,8 @@
 
 #pragma comment(lib, "User32.lib")
 
+#define EQUALFILE_POINTER_MAX  7935
+
 
 static packProfile headerPackProfile = {
 	        .rle_ratio = 90,
@@ -61,7 +63,11 @@ uint64_t myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
 	uint64_t wcharBufPos = 0;
     uint64_t codedBufPos = 0;
 	int ch;
-	while ((ch = fgetc(in)) > 31) {
+	while (true) {
+		ch = fgetc(in);
+		if (ch == EOF || ch <= 31) {
+			break;
+		}
 		if (ch <= 127) {
 			wcharBuf[wcharBufPos++] = (wchar_t)ch;
 		}
@@ -72,7 +78,7 @@ uint64_t myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
 		}
 	}
 	wcharBuf[wcharBufPos++] = 0;
-	if (ch > 0) {
+	if (ch > 0 && ch != EOF) {
 		uint8_t lastValue =  fgetc(in);
 		return (((uint64_t)ch - 1) * 256 + lastValue);
 	}
@@ -129,6 +135,27 @@ memfile* createSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo)
 	return out;
 }
 
+
+uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t index) {
+	uint64_t count = dirInfo.count;
+	file_t* fileList = dirInfo.fileList;
+
+	if (index == 0 || index >= count) {
+		//no luck
+		return UINT64_MAX;
+	}
+
+	for (int i = index - 1; i >= 0; i--) {
+		if (index - i > EQUALFILE_POINTER_MAX) {
+			break;
+		}
+		if (filesEqual(fileList[i].name, fileList[index].name)) {
+			return index - i;
+		}
+	}
+	return UINT64_MAX;
+}
+
 memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {	
 
 
@@ -154,7 +181,8 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	    // 1-31  means a pointer to an equal file follows on the next byte
 	    // 1 = 0-255 , 2 = 256-511 , 3 = 512-767  etc
 		uint64_t index = findEqualFileIndex(dirInfo, i);
-		if (index < 7935) {
+
+		if (index <= EQUALFILE_POINTER_MAX) {
 			//TODO support for higher indexes by paging
 			printf("\n FOUND EQUAL FILE NR %llu", index);
 			multiByteStr[size++] = (uint8_t)(index / 256 + 1);
@@ -442,6 +470,8 @@ fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
 }
 
 
+
+
 void readNamesHeader(FILE* in, wchar_t* dir, fileListAndCount_t* dirInfo) {
 	file_t* filenames = dirInfo->fileList;
 	if (filenames == NULL) {
@@ -459,7 +489,7 @@ void readNamesHeader(FILE* in, wchar_t* dir, fileListAndCount_t* dirInfo) {
 		// lastValue could be 0 or index to equal file
 		printf("\n lastValue %llu", lastValue);
 		if (lastValue != UINT64_MAX) {
-			filenames[i].equalSizeNumber = lastValue;
+			filenames[i].equalSizeNumber = i - lastValue;
 			filenames[i].size = 0;
 			printf("\n THERE WAS AN EQUAL FILE nr %llu", lastValue);
 		}
