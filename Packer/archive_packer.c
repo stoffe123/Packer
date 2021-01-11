@@ -571,16 +571,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 		fclose(in);
 		in = openRead(blockUnpackFilename);
 	}
-
-	for (int i = 0; i < count; i++) {
-		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
-		createMissingDirs(filenames[i].name, dir);
-		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
-		copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
-		if (archiveType == TYPE_SEPARATED) {			
-			blockUnpackAndReplace(filenames[i].name);
-		}
-	}
+	createArchiveFiles(in, fileList, dir, archiveType == TYPE_SEPARATED);
 	fclose(in);
 	free(filenames);
 	if (archiveType == TYPE_SOLID) {
