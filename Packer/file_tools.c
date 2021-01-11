@@ -60,7 +60,8 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 						printf("\n\n Out of memory in archive_packer!");
 						myExit();
 					}
-				}		
+				}
+				f.fileList[f.count].equalSizeNumber = UINT64_MAX;
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
 				if (storeSizes) {
@@ -94,9 +95,9 @@ bool filesEqual(wchar_t* name1, wchar_t* name2) {
 	long f2_size = getFileSize(f2);
 	bool result = true;
 	if (f1_size != f2_size) {
-		wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
-		printf("\n Lengths differ   %d  %d", f1_size, f2_size);
-		result = false;
+		//wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
+		//printf("\n Lengths differ   %d  %d", f1_size, f2_size);
+		return false;
 	}
 	unsigned char tmp1, tmp2;
 
@@ -287,8 +288,19 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 }
 
 
-uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t i) {
+uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t index) {
 	uint64_t count = dirInfo.count;
 	file_t* fileList = dirInfo.fileList;
+
+	if (index == 0 || index >= count) {
+		//no luck
+		return UINT64_MAX;
+	}
+
+	for (int i = index - 1; i >= 0; i--) {
+		if (filesEqual(fileList[i].name, fileList[index].name)) {
+			return i;
+		}
+	}
 	return UINT64_MAX;
 }

@@ -20,6 +20,7 @@
 typedef struct file_t {
 	uint64_t size;
 	wchar_t name[2000]; //TODO maybe change to dynamically assigned memory to reduce memory usage
+	uint64_t equalSizeNumber;
 } file_t;
 
 void quickSortCompareEndings(file_t* f, uint64_t size);

@@ -106,7 +106,7 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 
 		wchar_t cc = fileList[i].name[j];
 		uint8_t multiByteStr[2000] = { 0 };
-		int size = wcharEncode(&(fileList[i].name[j]), &multiByteStr);
+		int size = wcharToMyCoding(&(fileList[i].name[j]), &multiByteStr);
 
 		// the last char of the name is special
 	    // 0 = normal end
@@ -383,7 +383,7 @@ fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
 	return dirInfo;
 }
 
-int wcharEncode(wchar_t* wcharBuf, uint8_t* codedBuf) {
+int wcharToMyCoding(wchar_t* wcharBuf, uint8_t* codedBuf) {
 	int wcharBufPos = 0;
 	int codedBufPos = 0;
 	wchar_t ch;
@@ -402,11 +402,11 @@ int wcharEncode(wchar_t* wcharBuf, uint8_t* codedBuf) {
 	return codedBufPos;
 }
 
-int wcharDecode(FILE* in, wchar_t* wcharBuf) {
+int myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
 	int wcharBufPos = 0;
 	int codedBufPos = 0;
 	int ch;
-	while ((ch = fgetc(in)) > 0) {
+	while ((ch = fgetc(in)) > 31) {
 		if (ch <= 127) {
 			wcharBuf[wcharBufPos++] = (wchar_t)ch;
 		}
@@ -417,7 +417,10 @@ int wcharDecode(FILE* in, wchar_t* wcharBuf) {
 		}
 	}
 	wcharBuf[wcharBufPos++] = 0;
-	return codedBufPos;
+	if (ch > 0) {
+		return fgetc(in);
+	} 
+	return 0;
 }
 
 
@@ -434,7 +437,14 @@ void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 	wchar_t temp_wstr[2000] = { 0 };
 	temp_wstr[0] = '/';
 	while (readNames < list->count) {
-		wcharDecode(in, &temp_wstr[1]);
+		uint64_t lastValue = myCodingToWchar(in, &temp_wstr[1]);
+		// lastValue could be 0 or index to equal file
+		if (lastValue > 0) {
+			filenames[readNames].equalSizeNumber = lastValue;
+		}
+		else {
+			filenames[readNames].equalSizeNumber = UINT64_MAX;
+		}
 		
 		wcscpy(filenames[readNames].name, dir);
 		wcscat(filenames[readNames].name, temp_wstr);
@@ -484,6 +494,17 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 	_wremove(headerUnpacked);		
 }
 
+
+void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
+	file_t* filenames = dirInfo.fileList;
+	for (int i = 0; i < dirInfo.count; i++) {
+		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
+		createMissingDirs(filenames[i].name, dir);
+		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
+		copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
+	}
+}
+
 void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
 
 	uint64_t nrOfBlobs = determineNumberOfBlobs(dirInfo);
@@ -512,12 +533,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	file_t* filenames = dirInfo.fileList;
 
 	//TODO DRY this with code below
-	for (int i = 0; i < dirInfo.count; i++) {
-		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
-		createMissingDirs(filenames[i].name, dir);
-		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
-		copyFileChunkToFile(masterFile, filenames[i].name, filenames[i].size);
-	}
+	createArchiveFiles(masterFile, dirInfo, dir);
 	_wremove(masterFilename);
 }
 
