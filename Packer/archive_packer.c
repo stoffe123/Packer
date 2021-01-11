@@ -73,7 +73,8 @@ uint64_t myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
 	}
 	wcharBuf[wcharBufPos++] = 0;
 	if (ch > 0) {
-		return fgetc(in);
+		uint8_t lastValue =  fgetc(in);
+		return (((uint64_t)ch - 1) * 256 + lastValue);
 	}
 	return UINT64_MAX;
 }
@@ -153,11 +154,11 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	    // 1-31  means a pointer to an equal file follows on the next byte
 	    // 1 = 0-255 , 2 = 256-511 , 3 = 512-767  etc
 		uint64_t index = findEqualFileIndex(dirInfo, i);
-		if (index < 256) {
+		if (index < 7935) {
 			//TODO support for higher indexes by paging
 			printf("\n FOUND EQUAL FILE NR %llu", index);
-			multiByteStr[size++] = (uint8_t)1;
-			multiByteStr[size++] = (uint8_t)index;			
+			multiByteStr[size++] = (uint8_t)(index / 256 + 1);
+			multiByteStr[size++] = (uint8_t)(index % 256);
 			fileList[i].equalSizeNumber = index;
 		}
 		else {
