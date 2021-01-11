@@ -35,4 +35,6 @@ uint64_t getSizeLeftToRead(const FILE* f);
 
 uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t i);
 
+void copyFile(wchar_t* src, wchar_t* dst);
+
 #endif

@@ -586,7 +586,7 @@ void testarchive() {
 			.twobyte_threshold_min = 851,
 			.seqlenMinLimit3 = 177,
 			.blockSizeMinus = 100,
-			.winsize = 50521,
+			.winsize = 150521,
 			.sizeMaxForCanonicalHeaderPack = 164,
 			.sizeMinForSeqPack = 10,
 			.sizeMinForCanonical = 455,
@@ -598,9 +598,10 @@ void testarchive() {
 	
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
-	wchar_t* source_dir = 		 
-		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         L"c:/test/test13wequal";
+	wchar_t* source_dir =
+		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		L"c:/test/test13wequal";
+		//L"c:/test/test6";
 	    // L"c:/test/47";
 	
 	unsigned long long best_size = 0;

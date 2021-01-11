@@ -97,21 +97,25 @@ bool filesEqual(wchar_t* name1, wchar_t* name2) {
 	if (f1_size != f2_size) {
 		//wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
 		//printf("\n Lengths differ   %d  %d", f1_size, f2_size);
+		fclose(f1);
+		fclose(f2);
 		return false;
 	}
-	unsigned char tmp1, tmp2;
+	uint8_t tmp1, tmp2;
 
 	size_t bytes = 0;
 	int count = 0;
 	while (fread(&tmp1, 1, 1, f1) && fread(&tmp2, 1, 1, f2)) {
 		if (tmp1 != tmp2) {
-			printf("\n Contents differ at position  %d ", count);
-			printf("\n File1:");
-			printf("%c", tmp1);
+			//printf("\n Contents differ at position  %d ", count);
+			//printf("\n File1:");
+			//printf("%c", tmp1);
 			//print_string_rep(tmp1);
-			printf("\n File2:");
+			//printf("\n File2:");
 			//print_string_rep(tmp2);
-			printf("%c", tmp2);
+			//printf("%c", tmp2);
+			fclose(f1);
+			fclose(f2);
 			return false;
 		}
 		count++;
@@ -242,6 +246,11 @@ void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t siz
 	fclose(out);
 }
 
+void copyFile(wchar_t* src, wchar_t* dst) {	
+	FILE* dstFile = openWrite(dst);
+	appendFileToFile(dstFile, src);
+	fclose(dstFile);
+}
 
 
 void appendFileToFile(FILE* main_file, wchar_t* append_filename) {

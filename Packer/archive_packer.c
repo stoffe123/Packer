@@ -38,6 +38,46 @@ static packProfile headerPackProfile = {
 			.sizeMaxForSuperslim = 16384
 };
 
+uint64_t wcharToMyCoding(wchar_t* wcharBuf, uint8_t* codedBuf) {
+	uint64_t wcharBufPos = 0;
+	uint64_t codedBufPos = 0;
+	wchar_t ch;
+	while ((ch = wcharBuf[wcharBufPos++]) != 0) {
+		if (ch <= 127) {
+			codedBuf[codedBufPos++] = (uint8_t)ch;
+		}
+		else {
+			codedBuf[codedBufPos++] = 128;
+			codedBuf[codedBufPos++] = (ch / 256);
+			codedBuf[codedBufPos++] = (ch % 256);
+			//TODO wchar_t could be 32-bit
+		}
+	}
+	codedBuf[codedBufPos] = 0;
+	return codedBufPos;
+}
+
+uint64_t myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
+	uint64_t wcharBufPos = 0;
+    uint64_t codedBufPos = 0;
+	int ch;
+	while ((ch = fgetc(in)) > 31) {
+		if (ch <= 127) {
+			wcharBuf[wcharBufPos++] = (wchar_t)ch;
+		}
+		else {
+			int msb = fgetc(in);
+			int lsb = fgetc(in);
+			wcharBuf[wcharBufPos++] = (wchar_t)(msb * 256 + lsb);
+		}
+	}
+	wcharBuf[wcharBufPos++] = 0;
+	if (ch > 0) {
+		return fgetc(in);
+	}
+	return UINT64_MAX;
+}
+
 
 void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 {
@@ -99,33 +139,40 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 
 	printf("\n ********* Storing dir names **********\n");
 	for (int i = 0; i < count; i++) {
-		//wprintf(L"%s  ,  %d\n", fileList[i].name, fileList[i].size);
-		//fprintf(out, L"%s\n", fileList[i].name);
+		printf("\nCreateNamesHeader: %ls  ,  %llu\n", fileList[i].name, fileList[i].size);
+		
 
 		int j = lengthOfDirName + 1;
 
 		wchar_t cc = fileList[i].name[j];
 		uint8_t multiByteStr[2000] = { 0 };
-		int size = wcharToMyCoding(&(fileList[i].name[j]), &multiByteStr);
+		uint64_t size = wcharToMyCoding(&(fileList[i].name[j]), &multiByteStr);
 
-		// the last char of the name is special
+		// the last byte of the name is special
 	    // 0 = normal end
 	    // 1-31  means a pointer to an equal file follows on the next byte
 	    // 1 = 0-255 , 2 = 256-511 , 3 = 512-767  etc
 		uint64_t index = findEqualFileIndex(dirInfo, i);
 		if (index < 256) {
 			//TODO support for higher indexes by paging
-			multiByteStr[size++] = 1;
-			multiByteStr[size] = index;			
+			printf("\n FOUND EQUAL FILE NR %llu", index);
+			multiByteStr[size++] = (uint8_t)1;
+			multiByteStr[size++] = (uint8_t)index;			
+			fileList[i].equalSizeNumber = index;
+		}
+		else {
+			fileList[i].equalSizeNumber = UINT64_MAX;
+			if (i < (count - 1)) {
+				size++;
+			}
 		}
 		memWrite(&multiByteStr, size, out);
 
 		//wprintf(L"\n");
 		//use 8-bit size and special value for 16-bit size
-		if (i < (count - 1)) {
-			fputcc(0, out);
-		}
+		
 	}
+	//memfileToFile(out, L"c:/test/memmm"); myExit();
 	return out;
 }
 
@@ -253,29 +300,31 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 	uint64_t blobCount = 0;
 	bool breakAndCreateBlob;
 	for (int i = 0; i < count; i++) {
-		wchar_t* filename = fileList[i].name;
-		printf("\n%ls of size: %lld", filename, fileList[i].size);
-		getFileExtension(ext, filename);
-		if (i == count - 1) {
-			breakAndCreateBlob = true;
-		}
-		else {
-			getFileExtension(next_ext, fileList[i + 1].name);
-			breakAndCreateBlob = !equalsw(next_ext, ext);
-		}	
-		appendFileToFile(blobFile, filename);
-		if (breakAndCreateBlob) {
-			//pack and flush file and start over
-			fclose(blobFile);		
-			blockPackAndReplace(blobFilename, profile);
-			uint64_t size = getFileSizeFromName(blobFilename);
-			printf("\n writing blob nr %llu size as %llu", blobCount, size);
-			fwrite(&size, sizeof(uint64_t), 1, out);
-			appendFileToFile(out, blobFilename);
-			blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
-			printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);					    			
-			if (i < count - 1) {
-				blobFile = openWrite(blobFilename); // start over
+		if (fileList[i].equalSizeNumber == UINT64_MAX) {
+			wchar_t* filename = fileList[i].name;
+			printf("\n%ls of size: %lld", filename, fileList[i].size);
+			getFileExtension(ext, filename);
+			if (i == count - 1) {
+				breakAndCreateBlob = true;
+			}
+			else {
+				getFileExtension(next_ext, fileList[i + 1].name);
+				breakAndCreateBlob = !equalsw(next_ext, ext);
+			}
+			appendFileToFile(blobFile, filename);
+			if (breakAndCreateBlob) {
+				//pack and flush file and start over
+				fclose(blobFile);
+				blockPackAndReplace(blobFilename, profile);
+				uint64_t size = getFileSizeFromName(blobFilename);
+				printf("\n writing blob nr %llu size as %llu", blobCount, size);
+				fwrite(&size, sizeof(uint64_t), 1, out);
+				appendFileToFile(out, blobFilename);
+				blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
+				printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);
+				if (i < count - 1) {
+					blobFile = openWrite(blobFilename); // start over
+				}
 			}
 		}
 	}
@@ -300,10 +349,16 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 		//pack all files and put them in TEMP_DIR
 		for (int i = 0; i < count; i++) {
 			printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);
-			const wchar_t tmpBlocked[500] = { 0 };
-			tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
-			block_pack(fileList[i].name, tmpBlocked, profile);
-			fileList[i].size = getFileSizeFromName(tmpBlocked);
+			//TODO do this after writearchiveheader
+			//if (fileList[i].equalSizeNumber == UINT64_MAX) {
+				const wchar_t tmpBlocked[500] = { 0 };
+				tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
+				block_pack(fileList[i].name, tmpBlocked, profile);
+				fileList[i].size = getFileSizeFromName(tmpBlocked);
+			//}
+			//else {
+			//	fileList[i].size = 0;
+			//}
 		}
 		quickSortOnSizes(fileList, count);
 	}
@@ -336,15 +391,17 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	
 	printf("\n Phase 2 of archive pack count=%lld", count);
 	for (int i = 0; i < count; i++) {
-		const wchar_t* filename = fileList[i].name;
-	    printf("\n Appending %ls with size %lld", filename, fileList[i].size);
-		if (solid) {
-			appendFileToFile(blobFile, filename);
-		}
-		else {			
-			tmpDirNameOf(tmpBlockedFilename, filename, dir);
-			appendFileToFile(out, tmpBlockedFilename);
-			_wremove(tmpBlockedFilename);
+		if (fileList[i].equalSizeNumber == UINT64_MAX) {
+			const wchar_t* filename = fileList[i].name;
+			printf("\n Appending %ls with size %lld", filename, fileList[i].size);
+			if (solid) {
+				appendFileToFile(blobFile, filename);
+			}
+			else {
+				tmpDirNameOf(tmpBlockedFilename, filename, dir);
+				appendFileToFile(out, tmpBlockedFilename);
+				_wremove(tmpBlockedFilename);
+			}
 		}
 	}
 	if (solid) {
@@ -383,49 +440,9 @@ fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
 	return dirInfo;
 }
 
-int wcharToMyCoding(wchar_t* wcharBuf, uint8_t* codedBuf) {
-	int wcharBufPos = 0;
-	int codedBufPos = 0;
-	wchar_t ch;
-	while ((ch = wcharBuf[wcharBufPos++]) != 0) {
-		if (ch <= 127) {
-			codedBuf[codedBufPos++] = (uint8_t)ch;
-		}
-		else {
-			codedBuf[codedBufPos++] = 128;
-			codedBuf[codedBufPos++] = (ch / 256);
-			codedBuf[codedBufPos++] = (ch % 256);
-			//TODO wchar_t could be 32-bit
-		}
-	}	
-	codedBuf[codedBufPos] = 0;
-	return codedBufPos;
-}
 
-int myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
-	int wcharBufPos = 0;
-	int codedBufPos = 0;
-	int ch;
-	while ((ch = fgetc(in)) > 31) {
-		if (ch <= 127) {
-			wcharBuf[wcharBufPos++] = (wchar_t)ch;
-		}
-		else {			
-			int msb = fgetc(in);
-			int lsb = fgetc(in);
-			wcharBuf[wcharBufPos++] = (wchar_t)(msb * 256 + lsb);
-		}
-	}
-	wcharBuf[wcharBufPos++] = 0;
-	if (ch > 0) {
-		return fgetc(in);
-	} 
-	return 0;
-}
-
-
-void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
-	file_t* filenames = list->fileList;
+void readNamesHeader(FILE* in, wchar_t* dir, fileListAndCount_t* dirInfo) {
+	file_t* filenames = dirInfo->fileList;
 	if (filenames == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
@@ -433,24 +450,31 @@ void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {
 	}
 
 	// Read names
-	int readNames = 0;
+	int i = 0;
 	wchar_t temp_wstr[2000] = { 0 };
 	temp_wstr[0] = '/';
-	while (readNames < list->count) {
+	while (i < dirInfo->count) {
 		uint64_t lastValue = myCodingToWchar(in, &temp_wstr[1]);
 		// lastValue could be 0 or index to equal file
-		if (lastValue > 0) {
-			filenames[readNames].equalSizeNumber = lastValue;
+		printf("\n lastValue %llu", lastValue);
+		if (lastValue != UINT64_MAX) {
+			filenames[i].equalSizeNumber = lastValue;
+			filenames[i].size = 0;
+			printf("\n THERE WAS AN EQUAL FILE nr %llu", lastValue);
 		}
 		else {
-			filenames[readNames].equalSizeNumber = UINT64_MAX;
+			filenames[i].equalSizeNumber = UINT64_MAX;
 		}
-		
-		wcscpy(filenames[readNames].name, dir);
-		wcscat(filenames[readNames].name, temp_wstr);
-		printf("\n result: %ls", filenames[readNames].name);
+		/*
+		if (dir[wcslen(dir) - 1] == '/' || dir[wcslen(dir) - 1] == '\\') {
+			dir[wcslen(dir) - 1] = 0;
+		}
+		*/
+		wcscpy(filenames[i].name, dir);
+		wcscat(filenames[i].name, temp_wstr);
+		printf("\n result: %ls %llu", filenames[i].name, filenames[i].size);
 	
-		readNames++;
+		i++;
 	}	
 }
 
@@ -498,12 +522,19 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, bool unpackFiles) {
 	file_t* filenames = dirInfo.fileList;
 	for (int i = 0; i < dirInfo.count; i++) {
-		//TODO: do the cat of dir and name here instead of passing dir to readPackedNamesHeader above
+	
 		createMissingDirs(filenames[i].name, dir);
 		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
-		copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
-		if (unpackFiles) {
-			blockUnpackAndReplace(filenames[i].name);
+		uint64_t equalIndex = filenames[i].equalSizeNumber;
+		if (equalIndex != UINT64_MAX) {
+			printf("\n  OOOOOOOOOOOOOOOOOOOOOOOOO EQUAL FOUND!!");
+			copyFile(filenames[equalIndex].name, filenames[i].name);
+		}
+		else {
+			copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
+			if (unpackFiles) {
+				blockUnpackAndReplace(filenames[i].name);
+			}
 		}
 	}
 }
