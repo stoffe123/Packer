@@ -60,7 +60,7 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 						printf("\n\n Out of memory in archive_packer!");
 						myExit();
 					}
-				}
+				}		
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
 				if (storeSizes) {
@@ -284,4 +284,11 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 		fclose(f);
 	}
 	return res;
+}
+
+
+uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t i) {
+	uint64_t count = dirInfo.count;
+	file_t* fileList = dirInfo.fileList;
+	return UINT64_MAX;
 }

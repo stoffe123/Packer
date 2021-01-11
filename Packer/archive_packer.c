@@ -48,9 +48,10 @@ void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 	wcsncpy(dst, (src + m), len);
 }
 
-void diffSizes(file_t* fileList, uint64_t count) {
+void diffSizes(fileListAndCount_t dirInfo) {
+	file_t* fileList = dirInfo.fileList;
 	uint64_t last = 0;
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < dirInfo.count; i++) {
 		uint64_t size = fileList[i].size;
 		uint64_t diff = size - last;
 		printf("\n %ls %lld %lld", fileList[i].name, size, diff);
@@ -59,21 +60,24 @@ void diffSizes(file_t* fileList, uint64_t count) {
 	}
 }
 
-void unDiffSizes(file_t* fileList, uint64_t count) {
+void unDiffSizes(fileListAndCount_t dirInfo) {
+	file_t* fileList = dirInfo.fileList;
 	uint64_t last = 0;
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < dirInfo.count; i++) {
 		fileList[i].size += last;
 		last = fileList[i].size;		
 	}
 }
 
-memfile* createSizesHeader(wchar_t* dir, file_t* fileList, uint32_t count) {
+memfile* createSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo) 
+{ 
+	file_t* fileList = dirInfo.fileList;
 	memfile* out = getEmptyMem(L"archivepacker_createsizes");
 	//write sizes
 
 	for (int k = 0; k < 8; k++) {
 
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < dirInfo.count; i++) {
 			//todo write MSB together and so on...
 			//uint64_t size = fileList[i].size;
 			uint8_t byte = getByteAtPos(fileList[i].size, k);
@@ -84,8 +88,11 @@ memfile* createSizesHeader(wchar_t* dir, file_t* fileList, uint32_t count) {
 	return out;
 }
 
-memfile* createNamesHeader(wchar_t* dir, file_t * fileList, uint32_t count) {	
+memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {	
 
+
+	file_t* fileList = dirInfo.fileList;
+	uint64_t count = dirInfo.count;
 	memfile* out = getEmptyMem(L"archivepacker_names_header_mem");
 	//write names separated by 0
 	int lengthOfDirName = wcslen(dir);
@@ -100,6 +107,17 @@ memfile* createNamesHeader(wchar_t* dir, file_t * fileList, uint32_t count) {
 		wchar_t cc = fileList[i].name[j];
 		uint8_t multiByteStr[2000] = { 0 };
 		int size = wcharEncode(&(fileList[i].name[j]), &multiByteStr);
+
+		// the last char of the name is special
+	    // 0 = normal end
+	    // 1-31  means a pointer to an equal file follows on the next byte
+	    // 1 = 0-255 , 2 = 256-511 , 3 = 512-767  etc
+		uint64_t index = findEqualFileIndex(dirInfo, i);
+		if (index < 256) {
+			//TODO support for higher indexes by paging
+			multiByteStr[size++] = 1;
+			multiByteStr[size] = index;			
+		}
 		memWrite(&multiByteStr, size, out);
 
 		//wprintf(L"\n");
@@ -144,31 +162,31 @@ void tmpDirNameOf(const wchar_t* tmpBlocked, const wchar_t* name, const wchar_t*
 	createMissingDirs(tmpBlocked, TEMP_DIRW);
 }
 
-memfile* createPackedSizesHeader(wchar_t* dir, file_t* fileList, int64_t count) {
+memfile* createPackedSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	
-	memfile* sizesHeader = createSizesHeader(dir, fileList, count);
+	memfile* sizesHeader = createSizesHeader(dir, dirInfo);
 
 	return multiPackAndStorePackType(sizesHeader, headerPackProfile, headerPackProfile,
 		headerPackProfile, headerPackProfile);			
 }
 
-memfile* createPackedNamesHeader(wchar_t* dir, file_t* fileList, int64_t count) {
+memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 		
-	memfile* namesHeader = createNamesHeader(dir, fileList, count);	
+	memfile* namesHeader = createNamesHeader(dir, dirInfo);
 	//myExit();
 	
 	return multiPackAndStorePackType(namesHeader, headerPackProfile, headerPackProfile,
 		headerPackProfile, headerPackProfile);
 }
 
-void writeArchiveHeader(FILE* out, file_t* fileList, wchar_t* dir, int64_t count, uint8_t archiveType) {
+void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uint8_t archiveType) {
 
 	bool solid = (archiveType == 0);
 	if (archiveType == TYPE_SEPARATED) {
-		diffSizes(fileList, count);
+		diffSizes(dirInfo);
 	}	
-	memfile* sizesHeader = createPackedSizesHeader(dir, fileList, count);
-	memfile* namesHeader = createPackedNamesHeader(dir, fileList, count);
+	memfile* sizesHeader = createPackedSizesHeader(dir, dirInfo);
+	memfile* namesHeader = createPackedNamesHeader(dir, dirInfo);
 
 	uint64_t headerNamesPackedSize = getMemSize(namesHeader)
 		, headerSizesPackedSize = getMemSize(sizesHeader);
@@ -294,7 +312,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	}
 	
 	FILE* out = openWrite(dest);
-	writeArchiveHeader(out, fileList, dir, count, archiveType);
+	writeArchiveHeader(out, dirInfo, dir, archiveType);
 
 	if (archiveType == TYPE_SEMISEPARATED) {
 		archivePackSemiSeparated(out, profile, dirInfo);
@@ -341,28 +359,28 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 
 
 fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
-	fileListAndCount_t res;	
+	fileListAndCount_t dirInfo;	
 	rewindMem(in);	
 	uint64_t count = getMemSize(in) / 8;
-	res.fileList = malloc(count * sizeof(file_t));	
+	dirInfo.fileList = malloc(count * sizeof(file_t));	
 	for (int i = 0; i < count; i++) {
-		res.fileList[i].size = 0;
+		dirInfo.fileList[i].size = 0;
 	}
-	if (res.fileList == NULL) {
+	if (dirInfo.fileList == NULL) {
 		printf("\n out of memory in archive_packer.readHeader!!");
 		myExit();
 	}
 		
 	for (int k = 0; k < 8; k++) {
 		for (int i = 0; i < count; i++) {			
-			setByteAtPos(&(res.fileList[i].size), fgetcc(in), k);
+			setByteAtPos(&(dirInfo.fileList[i].size), fgetcc(in), k);
 		}
 	}
-	res.count = count;
+	dirInfo.count = count;
 	if (archiveType == TYPE_SEPARATED) {
-		unDiffSizes(res.fileList, count);
+		unDiffSizes(dirInfo);
 	}
-	return res;
+	return dirInfo;
 }
 
 int wcharEncode(wchar_t* wcharBuf, uint8_t* codedBuf) {
@@ -379,7 +397,7 @@ int wcharEncode(wchar_t* wcharBuf, uint8_t* codedBuf) {
 			codedBuf[codedBufPos++] = (ch % 256);
 			//TODO wchar_t could be 32-bit
 		}
-	}
+	}	
 	codedBuf[codedBufPos] = 0;
 	return codedBufPos;
 }

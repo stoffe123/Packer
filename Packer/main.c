@@ -586,7 +586,7 @@ void testarchive() {
 			.twobyte_threshold_min = 851,
 			.seqlenMinLimit3 = 177,
 			.blockSizeMinus = 100,
-			.winsize = 2521,
+			.winsize = 50521,
 			.sizeMaxForCanonicalHeaderPack = 164,
 			.sizeMinForSeqPack = 10,
 			.sizeMinForCanonical = 455,
@@ -600,9 +600,9 @@ void testarchive() {
 	
 	wchar_t* source_dir = 		 
 		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         //L"c:/test/test6";
-	     L"c:/test/47";
-
+         L"c:/test/test13wequal";
+	    // L"c:/test/47";
+	
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
