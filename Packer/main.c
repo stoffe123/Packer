@@ -600,8 +600,8 @@ void testarchive() {
 	
 	wchar_t* source_dir = 		 
 		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-         L"c:/test/test6";
-	     //L"c:/test/47";
+         //L"c:/test/test6";
+	     L"c:/test/47";
 
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

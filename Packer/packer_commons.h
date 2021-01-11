@@ -17,11 +17,7 @@ typedef struct {
 	uint64_t freq;
 } val_freq_t;
 
-typedef struct fileListAndCount_t {
-	file_t* fileList;
-	uint64_t count;
-	uint64_t allocSize;
-} fileListAndCount_t;
+
 
 typedef struct value_freq_t {
 	uint8_t value;

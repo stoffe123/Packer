@@ -7,6 +7,7 @@
 #include "multi_packer.h"
 #include "canonical.h"
 #include "memfile.h"
+#include "file_tools.h"
 #include <windows.h>
 #include <string.h>
 #include <conio.h>

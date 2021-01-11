@@ -1,4 +1,3 @@
-#include "packer_commons.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -182,4 +181,107 @@ bool dirsEqual(const wchar_t* dir1, const wchar_t* dir2) {
 	free(fileList1);
 	free(fileList2);
 	return dirsAreEqual;
+}
+
+void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr) {
+	uint64_t len = wcslen(sourceStr);
+	for (int64_t i = len - 1; i >= 0; i--) {
+		if (sourceStr[i] == L'.') {
+			sourceStr += (i + 1);
+			wcscpy(dst, sourceStr);
+			return;
+		}
+		//max len for extensions
+		if (len - i > 10 || sourceStr[i] == L'\\' || sourceStr[i] == 'L/') {
+			break;
+		}
+	}
+	wcscpy(dst, L"");
+}
+
+
+FILE* openWrite(const wchar_t* filename) {
+	FILE* out;
+	//_wremove(filename);
+	errno_t err = _wfopen_s(&out, filename, L"wb");
+	if (err != 0) {
+		wprintf(L"\n Common_tools.openWrite : can't create outfile %s \nError code %d", filename, err);
+		checkForErr13(err);
+		exit(1);
+	}
+	return out;
+}
+
+
+
+FILE* openRead(const wchar_t* filename) {
+	FILE* in;
+	errno_t err = _wfopen_s(&in, filename, L"rb");
+	if (err != 0) {
+		wprintf(L"\n Common_tools.openRead : can't find infile '%s'", filename);
+		checkForErr13(err);
+		exit(1);
+	}
+	return in;
+}
+
+void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy) {
+
+	//printf("\n entering copyFileChunkToFile size=%d ", size_to_copy);
+	FILE* out = openWrite(dest_filename);
+	//printf("\n starting  ..");
+	uint8_t ch;
+	for (int i = 0; i < size_to_copy; i++) {
+		size_t bytes_got = fread(&ch, 1, 1, source_file);
+		if (bytes_got == 0) {
+			break;
+		}
+		fwrite(&ch, 1, 1, out);
+	}
+	fclose(out);
+}
+
+
+
+void appendFileToFile(FILE* main_file, wchar_t* append_filename) {
+	//wprintf(L"\n append_to_filew: %s", append_filename);
+	FILE* append_file = openRead(append_filename);
+	int ch;
+	while ((ch = fgetc(append_file)) != EOF) {
+		fputc(ch, main_file);
+	}
+	fclose(append_file);
+}
+
+
+uint64_t getFileSize(const FILE* f) {
+	uint64_t pos = ftell(f);
+	fseek(f, 0, SEEK_END);
+	uint64_t res = ftell(f);
+	fseek(f, pos, SEEK_SET);
+	return res;
+}
+
+uint64_t getSizeLeftToRead(const FILE* f) {
+	uint64_t pos = ftell(f);
+	fseek(f, 0, SEEK_END);
+	uint64_t size = ftell(f);
+	fseek(f, pos, SEEK_SET);
+	return size - pos;
+}
+
+
+uint64_t getFileSizeFromName(wchar_t* name) {
+	FILE* f;
+	errno_t err = _wfopen_s(&f, name, L"rb");
+	if (err != 0) {
+		wprintf(L"\n\n getFileSizeFromName: can't open file: %s Errno:%d", name, err);
+		checkForErr13(err);
+		myExit();
+	}
+	uint64_t res = getFileSize(f);
+	if (f != 0) {
+		fclose(f);
+	}
+	return res;
 }

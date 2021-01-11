@@ -4,6 +4,7 @@
 #include "memfile.h"
 #include "common_tools.h"
 #include "packer_commons.h"
+#include "file_tools.h"
 
 
 uint32_t getMemPos(memfile* m) {

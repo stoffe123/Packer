@@ -3,6 +3,7 @@
 
 #include "common_tools.h"
 #include <stdbool.h>
+#include "file_tools.h"
 
 typedef struct {
 	uint32_t pos;

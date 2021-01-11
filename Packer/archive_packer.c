@@ -400,9 +400,7 @@ int wcharDecode(FILE* in, wchar_t* wcharBuf) {
 	}
 	wcharBuf[wcharBufPos++] = 0;
 	return codedBufPos;
-
 }
-
 
 
 void readNamesHeader(FILE* in, char* dir, fileListAndCount_t* list) {

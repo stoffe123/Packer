@@ -36,12 +36,6 @@ bool contains(const wchar_t* s, const wchar_t* find);
 
 uint64_t indexOfChar(const wchar_t* s, const wchar_t find);
 
-uint64_t getFileSizeFromName(wchar_t* name);
-
-uint64_t getFileSize(const FILE* f);
-
-uint64_t getSizeLeftToRead(const FILE* f);
-
 unsigned char isKthBitSet(unsigned char value, unsigned char bit);
 
 unsigned char setKthBit(unsigned char value, unsigned char bit);
@@ -49,12 +43,6 @@ unsigned char setKthBit(unsigned char value, unsigned char bit);
 unsigned char clearKthBit(unsigned char value, unsigned char bit);
 
 unsigned char setKthBitToVal(unsigned char value, unsigned char bit, unsigned char bitValue);
-
-void copyFileChunkToFile(FILE * source_file, wchar_t* dest_filename, uint64_t size_to_copy);
-
-
-
-void appendFileToFile(FILE * main_file, wchar_t* append_filename);
 
 void assert(uint64_t x, const char* msg);
 
@@ -88,10 +76,6 @@ void get_temp_filew(const wchar_t* dst, const wchar_t* s);
 
 void toUni(const wchar_t* dst, const char* string);
 
-FILE* openWrite(const wchar_t* filename);
-
-FILE* openRead(const wchar_t* filename);
-
 bool equals(const char* s1, const char* s2);
 
 bool equalsw(const wchar_t* s1, const wchar_t* s2);
@@ -104,6 +88,5 @@ uint8_t getByteAtPos(uint64_t bytes, int pos);
 
 void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos);
 
-void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr);
 
 #endif
