@@ -329,31 +329,27 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 	uint64_t blobCount = 0;
 	bool breakAndCreateBlob;
 	for (int i = 0; i < count; i++) {
+		breakAndCreateBlob = false;
 		if (fileList[i].equalSizeNumber == UINT64_MAX) {
 			wchar_t* filename = fileList[i].name;
 			printf("\n%ls of size: %lld", filename, fileList[i].size);
 			getFileExtension(ext, filename);
-			if (i == count - 1) {
-				breakAndCreateBlob = true;
-			}
-			else {
-				getFileExtension(next_ext, fileList[i + 1].name);
-				breakAndCreateBlob = !equalsw(next_ext, ext);
-			}
 			appendFileToFile(blobFile, filename);
-			if (breakAndCreateBlob) {
-				//pack and flush file and start over
-				fclose(blobFile);
-				blockPackAndReplace(blobFilename, profile);
-				uint64_t size = getFileSizeFromName(blobFilename);
-				printf("\n writing blob nr %llu size as %llu", blobCount, size);
-				fwrite(&size, sizeof(uint64_t), 1, out);
-				appendFileToFile(out, blobFilename);
-				blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
-				printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);
-				if (i < count - 1) {
-					blobFile = openWrite(blobFilename); // start over
-				}
+			getFileExtension(next_ext, fileList[i + 1].name);
+			breakAndCreateBlob = !equalsw(next_ext, ext);
+		}
+		if (breakAndCreateBlob || (i == count - 1)) {
+			//pack and flush file and start over
+			fclose(blobFile);
+			blockPackAndReplace(blobFilename, profile);
+			uint64_t size = getFileSizeFromName(blobFilename);
+			printf("\n writing blob nr %llu size as %llu", blobCount, size);
+			fwrite(&size, sizeof(uint64_t), 1, out);
+			appendFileToFile(out, blobFilename);
+			blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
+			printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);
+			if (i < count - 1) {
+				blobFile = openWrite(blobFilename); // start over
 			}
 		}
 	}
