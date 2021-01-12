@@ -25,6 +25,8 @@ FILE* openRead(const wchar_t* filename);
 
 void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t size_to_copy);
 
+void copyTheRest(FILE* source_file, wchar_t* dest_filename);
+
 void appendFileToFile(FILE* main_file, wchar_t* append_filename);
 
 uint64_t getFileSizeFromName(wchar_t* name);

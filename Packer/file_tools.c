@@ -91,10 +91,11 @@ bool filesEqual(wchar_t* name1, wchar_t* name2) {
 	FILE* f1 = openRead(name1);
 	FILE* f2 = openRead(name2);
 
-	long f1_size = getFileSize(f1);
-	long f2_size = getFileSize(f2);
-	bool result = true;
-	if (f1_size != f2_size) {
+	fseek(f1, 0, SEEK_END);
+	uint64_t f1_size = ftell(f1);
+
+	fseek(f2, 0, SEEK_END);
+	if (f1_size != ftell(f2)) {
 		//wprintf(L"\n\a >>>>>>>>>>>> FILES NOT EQUAL!!!! <<<<<<<<<<<<<<<< %s and %s", name1, name2);
 		//printf("\n Lengths differ   %d  %d", f1_size, f2_size);
 		fclose(f1);
@@ -105,6 +106,9 @@ bool filesEqual(wchar_t* name1, wchar_t* name2) {
 
 	size_t bytes = 0;
 	int count = 0;
+	fseek(f1, 0, SEEK_SET);
+	fseek(f2, 0, SEEK_SET);
+	//TODO read bigger blocks and use memcmp
 	while (fread(&tmp1, 1, 1, f1) && fread(&tmp2, 1, 1, f2)) {
 		if (tmp1 != tmp2) {
 			//printf("\n Contents differ at position  %d ", count);
@@ -118,11 +122,11 @@ bool filesEqual(wchar_t* name1, wchar_t* name2) {
 			fclose(f2);
 			return false;
 		}
-		count++;
+		//count++;
 	}
 	fclose(f1);
 	fclose(f2);
-	return result;
+	return true;
 }
 
 /*
@@ -207,7 +211,7 @@ void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr) {
 
 FILE* openWrite(const wchar_t* filename) {
 	FILE* out;
-	//_wremove(filename);
+	_wremove(filename);
 	errno_t err = _wfopen_s(&out, filename, L"wb");
 	if (err != 0) {
 		wprintf(L"\n Common_tools.openWrite : can't create outfile %s \nError code %d", filename, err);
@@ -237,6 +241,22 @@ void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t siz
 	//printf("\n starting  ..");
 	uint8_t ch;
 	for (int i = 0; i < size_to_copy; i++) {
+		size_t bytes_got = fread(&ch, 1, 1, source_file);
+		if (bytes_got == 0) {
+			break;
+		}
+		fwrite(&ch, 1, 1, out);
+	}
+	fclose(out);
+}
+
+void copyTheRest(FILE* source_file, wchar_t* dest_filename) {
+
+	//printf("\n entering copyFileChunkToFile size=%d ", size_to_copy);
+	FILE* out = openWrite(dest_filename);
+	//printf("\n starting  ..");
+	uint8_t ch;
+	while (true) {
 		size_t bytes_got = fread(&ch, 1, 1, source_file);
 		if (bytes_got == 0) {
 			break;
