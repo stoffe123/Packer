@@ -280,7 +280,9 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uin
 		diffSizes(dirInfo);
 	}	
 	memfile* sizesHeader = createPackedSizesHeader(dir, dirInfo);
-	memfile* namesHeader = createPackedNamesHeader(dir, dirInfo);	
+	memfile* namesHeader = createPackedNamesHeader(dir, dirInfo);
+
+	
 
 	uint64_t headerNamesPackedSize = getMemSize(namesHeader)
 		, headerSizesPackedSize = getMemSize(sizesHeader);

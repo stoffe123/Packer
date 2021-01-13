@@ -458,6 +458,12 @@ void onefile() {
 
 void test16() {
 	
+	wchar_t test_filenames[3][100] = { L"namesHeader47.bin",
+
+		L"namesHeaderTest13.bin",
+		L"namesHeaderWsTodo.bin"
+	};
+	/*
 	wchar_t test_filenames[16][100] = { L"did.csh",
 		
 		L"rel.pdf",
@@ -479,23 +485,24 @@ void test16() {
 		
 			
 	};
+	*/
 	
 	packProfile bestProfile, 
 		profile = {
-			.rle_ratio = 85,
-			.twobyte_ratio = 81,
-			.recursive_limit = 600,
-			.twobyte_threshold_max = 13000,
-			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 679,
-			.seqlenMinLimit3 = 91,
-			
-			.blockSizeMinus = 141,
-			.winsize = 30715,
-			.sizeMaxForCanonicalHeaderPack = 412,
-			.sizeMinForSeqPack = 22649,
-			.sizeMinForCanonical = 75,
-			.sizeMaxForSuperslim = 10
+	  .rle_ratio = 90,
+			.twobyte_ratio = 79,
+			.recursive_limit = 10,
+			.twobyte_threshold_max = 8721,
+			.twobyte_threshold_divide = 1383,
+			.twobyte_threshold_min = 1000,
+			.seqlenMinLimit3 = 188,
+
+			.blockSizeMinus = 155,
+			.winsize = 97340,
+			.sizeMaxForCanonicalHeaderPack = 400,
+			.sizeMinForSeqPack = 10,
+			.sizeMinForCanonical = 15,
+			.sizeMaxForSuperslim = 26384
 	};
 
 	copyProfile(&profile, &bestProfile);
@@ -511,10 +518,10 @@ void test16() {
 		uint64_t totalTime = 0;
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 16; kk++)
+		for (; kk < 3; kk++)
 		{
 			const wchar_t src[200] = { 0 };
-			concatw(src, L"C:/test/test16/", test_filenames[kk]);
+			concatw(src, L"C:/test/namesheaders/", test_filenames[kk]);
 
 			const wchar_t* dst = L"C:/test/unp";
 
@@ -578,20 +585,20 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 77,
-			.twobyte_ratio = 76,
-			.recursive_limit = 146,
+			.rle_ratio = 88,
+			.twobyte_ratio = 66,
+			.recursive_limit = 104,
 			.twobyte_threshold_max = 9777,
-			.twobyte_threshold_divide = 3068,
-			.twobyte_threshold_min = 851,
-			.seqlenMinLimit3 = 177,
-			.blockSizeMinus = 100,
-			.winsize = 150521,
-			.sizeMaxForCanonicalHeaderPack = 164,
+			.twobyte_threshold_divide = 3053,
+			.twobyte_threshold_min = 820,
+			.seqlenMinLimit3 = 189,
+			.blockSizeMinus = 104,
+			.winsize = 151791,
+			.sizeMaxForCanonicalHeaderPack = 90,
 			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 455,
-			.sizeMaxForSuperslim = 28275,
-			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
+			.sizeMinForCanonical = 463,
+			.sizeMaxForSuperslim = 42062,
+			.archiveType = 0 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
 	copyProfile(&profile, &bestProfile);
@@ -599,10 +606,10 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir =
-	    L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+	    //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"c:/test/test13wequal";
-		//L"c:/test/test5";
-	    //L"c:/test/47";
+		//L"c:/test/test13";
+	    L"c:/test/47";
 	
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
