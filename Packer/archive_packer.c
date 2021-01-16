@@ -396,6 +396,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 			//if (fileList[i].equalSizeNumber == UINT64_MAX) {
 				const wchar_t tmpBlocked[500] = { 0 };
 				tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
+			
 				block_pack(fileList[i].name, tmpBlocked, profile);
 				fileList[i].size = getFileSizeFromName(tmpBlocked);
 			//}
@@ -413,8 +414,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	writeArchiveHeader(out, dirInfo, dir, archiveType);
 
 	if (archiveType == TYPE_SEMISEPARATED) {
-		archivePackSemiSeparated(out, profile, dirInfo);
-		fclose(out);
+		archivePackSemiSeparated(out, profile, dirInfo);		
 		return;
 	}
 

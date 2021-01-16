@@ -201,7 +201,7 @@ void getFileExtension(const wchar_t* dst, const wchar_t* sourceStr) {
 			return;
 		}
 		//max len for extensions
-		if (len - i > 10 || sourceStr[i] == L'\\' || sourceStr[i] == 'L/') {
+		if (len - i > MAX_EXTENSION_LENGTH || sourceStr[i] == L'\\' || sourceStr[i] == 'L/') {
 			break;
 		}
 	}

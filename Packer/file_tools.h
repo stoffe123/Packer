@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include "common_tools.h"
 
+#define MAX_EXTENSION_LENGTH 10
+
 typedef struct fileListAndCount_t {
 	file_t* fileList;
 	uint64_t count;
