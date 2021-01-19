@@ -458,10 +458,10 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[3][100] = { L"namesHeader47.bin",
+	wchar_t test_filenames[3][100] = { L"blobs_47/archivepacker_semisepblob_html"
 
-		L"namesHeaderTest13.bin",
-		L"namesHeaderWsTodo.bin"
+		//L"namesHeaderTest13.bin",
+		//L"namesHeaderWsTodo.bin"
 	};
 	/*
 	wchar_t test_filenames[16][100] = { L"did.csh",
@@ -518,10 +518,10 @@ void test16() {
 		uint64_t totalTime = 0;
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 3; kk++)
+		for (; kk < 1; kk++)
 		{
 			const wchar_t src[200] = { 0 };
-			concatw(src, L"C:/test/namesheaders/", test_filenames[kk]);
+			concatw(src, L"D:/Dropbox/Personal/Programmering/Compression/test/", test_filenames[kk]);
 
 			const wchar_t* dst = L"C:/test/unp";
 
@@ -608,8 +608,8 @@ void testarchive() {
 	wchar_t* source_dir =
 	    //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"c:/test/test13wequal";
-		//L"c:/test/test13";
-	    L"c:/test/47";
+		L"c:/test/test13";
+	   //L"c:/test/47";
 	
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

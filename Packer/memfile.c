@@ -99,7 +99,10 @@ const wchar_t* getMemName(memfile* m) {
 
 void freeMem(memfile* mf) {
 	if (mf != NULL) {
-		free(mf->block);		
+		//printf("\n Now trying to free mem %ls", mf->name);
+		if (mf->block != NULL) {
+			free(mf->block);
+		}
 		free(mf);
 	}
 }

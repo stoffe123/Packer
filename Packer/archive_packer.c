@@ -7,16 +7,53 @@
 #include <stdio.h>
 #include <tchar.h> 
 #include <strsafe.h>
-#include "seq_packer.h"  
+#include <string.h>
+#include <conio.h>
+#include <process.h>
+#include <inttypes.h>
+
 #include "common_tools.h"
 #include "multi_packer.h"
 #include "packer_commons.h"
 #include "block_packer.h"
-#include "everyOtherEncoder.h"
-#include <inttypes.h>
 #include "file_tools.h"
 #include "block_packer.h"
 #include "archive_packer.h"
+
+
+// for semiseparated threaded pack
+typedef struct blob_t {
+	wchar_t filename[500];
+	wchar_t packedFilename[500];
+	packProfile profile;
+	HANDLE  handle;
+} blob_t;
+
+__declspec(thread) static blob_t blobs[5000];
+
+__declspec(thread) static HANDLE blobMutex;
+
+HANDLE lockBlobMutex() {
+	WaitForSingleObject(blobMutex, INFINITE);
+}
+
+HANDLE releaseBlobMutex() {
+	ReleaseMutex(blobMutex);
+}
+
+void threadBlockPack(void* pMyID)
+{
+	lockBlobMutex();
+	blob_t* bc = (blob_t*)pMyID;
+	packProfile profile = bc->profile;
+	wchar_t* blobFilename = bc->filename;
+	wcscpy(bc->packedFilename, blobFilename);
+	wcscat(bc->packedFilename, L"_packed");
+	releaseBlobMutex();
+	printf("\n Starting THREAD blockack for file %ls", blobFilename);
+	block_pack(blobFilename, bc-> packedFilename, profile);	
+	printf("\n THREAD blobkpack FOR %ls FINISHED!", blobFilename);
+}
 
 #pragma comment(lib, "User32.lib")
 
@@ -340,18 +377,28 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 	wchar_t ext[50] = { 0 };
 	wchar_t next_ext[50] = { 0 };
 
-	const wchar_t blobFilename[100] = { 0 };
-	get_temp_filew(blobFilename, L"archivepack_blob");
-	FILE* blobFile = openWrite(blobFilename);	
+	const wchar_t blobFilename[200] = { 0 };
+	const wchar_t name[200] = { 0 };
+	
+	
 	uint64_t blobSizes[1000] = { 0 };
 	uint64_t blobCount = 0;
 	bool breakAndCreateBlob;
+	FILE* blobFile = NULL;
 	for (int i = 0; i < count; i++) {
 		breakAndCreateBlob = false;
+		
+		
 		if (fileList[i].equalSizeNumber == UINT64_MAX) {
 			wchar_t* filename = fileList[i].name;
-			printf("\n%ls of size: %lld", filename, fileList[i].size);
 			getFileExtension(ext, filename);
+			if (i == 0) {
+				wcscpy(name, L"archivepacker_semisepblob_");
+				wcscat(name, ext);
+				get_temp_filew(blobFilename, name);
+				blobFile = openWrite(blobFilename);
+			}
+			printf("\n%ls of size: %lld", filename, fileList[i].size);
 			appendFileToFile(blobFile, filename);
 			getFileExtension(next_ext, fileList[i + 1].name);
 			breakAndCreateBlob = !equalsw(next_ext, ext);
@@ -359,17 +406,45 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 		if (breakAndCreateBlob || (i == count - 1)) {
 			//pack and flush file and start over
 			fclose(blobFile);
-			blockPackAndReplace(blobFilename, profile);
-			uint64_t size = getFileSizeFromName(blobFilename);
-			printf("\n writing blob nr %llu size as %llu", blobCount, size);
-			fwrite(&size, sizeof(uint64_t), 1, out);
-			appendFileToFile(out, blobFilename);
-			blobSizes[blobCount++] = getFileSizeFromName(blobFilename);
-			printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);
+
+			//TODO get the right profile depending on ext
+			lockBlobMutex();		
+			wcscpy(blobs[blobCount].filename, blobFilename);
+			blobs[blobCount].profile = profile;
+			releaseBlobMutex();
+					
+		
+			printf("\n writing blob nr %llu", blobCount);
+			blobCount++;
+			//printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);	
 			if (i < count - 1) {
-				blobFile = openWrite(blobFilename); // start over
+				wcscpy(name, L"archivepacker_semisepblob_");
+				wcscat(name, next_ext);
+				get_temp_filew(blobFilename, name);
+				blobFile = openWrite(blobFilename);
 			}
 		}
+	}
+	for (int i = 0; i < blobCount; i++) {
+		HANDLE handle = _beginthread(threadBlockPack, 0, &blobs[i]);
+
+		lockBlobMutex();
+		blobs[i].handle = handle;
+		releaseBlobMutex();
+	}
+	for (int i = 0; i < blobCount; i++) {
+		WaitForSingleObject(blobs[i].handle, INFINITE);
+		lockBlobMutex();
+		blob_t blob = blobs[i];
+		
+		uint64_t size = getFileSizeFromName(blobs[i].packedFilename);
+		releaseBlobMutex();
+
+		fwrite(&size, sizeof(uint64_t), 1, out);
+		appendFileToFile(out, blobs[i].packedFilename);
+		_wremove(blobs[i].packedFilename);
+		_wremove(blobs[i].filename);
+
 	}
 	fclose(out);
 }

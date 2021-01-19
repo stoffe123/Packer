@@ -20,7 +20,7 @@ void releaseTempfileMutex() {
 
 
 bool testPack(memfile* src, memfile* tmp, const wchar_t* kind, int limit) {
-	wprintf(L"\n testPack of %s to %s with kind %s", getMemName(src), getMemName(tmp), kind);
+	//wprintf(L"\n testPack of %s to %s with kind %s", getMemName(src), getMemName(tmp), kind);
 	uint64_t size_org = getMemSize(src);
 	uint64_t size_packed = getMemSize(tmp);
 	double packed_ratio = ((double)size_packed / (double)size_org) * 100.0;

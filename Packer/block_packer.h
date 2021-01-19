@@ -20,6 +20,8 @@ void blockUnpackAndReplace(wchar_t* src);
 
 void blockPackAndReplace(const wchar_t* src, packProfile profile);
 
+void blockPackToExistingFile(const wchar_t* src, FILE* utfil, packProfile profile);
+
 void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile);
 
 void block_unpack_file(FILE* infil, const wchar_t* dst);

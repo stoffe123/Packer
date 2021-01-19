@@ -72,12 +72,11 @@ distanceProfile = {
 .sizeMinForCanonical = 300,
 .sizeMaxForSuperslim = 16384 };
 
-static uint64_t read_size;
+__declspec(thread)  static uint64_t read_size;
 
-static blockChunk_t blockChunks[1000];
+__declspec(thread) static blockChunk_t blockChunks[5000];
 
-HANDLE blockchunkMutex;
-
+__declspec(thread) static HANDLE blockchunkMutex;
 
 
 HANDLE lockBlockchunkMutex() {
@@ -139,7 +138,7 @@ append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 //----------------------------------------------------------------------------------------
 
 
-void block_pack_file_internal(FILE* infil, const wchar_t* dst, packProfile profile, bool closeInfil) {
+void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, packProfile profile, bool closeInfil) {
 	uint64_t src_size = getSizeLeftToRead(infil);
 	printf("\n Entering block_pack_file_internal sizelefttoread=%d" , src_size);
 	uint64_t chunkSize, chunkNumber = 0;
@@ -181,7 +180,11 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, packProfile profi
 		fclose(infil);	
 	}
 
-	FILE* utfil = openWrite(dst);
+	bool closeAfter = false;
+	if (utfil == NULL) {
+		utfil = openWrite(dst);
+		closeAfter = true;
+	}
 	for (int i = 0; i < chunkNumber; i++) {
 		WaitForSingleObject(blockChunks[i].handle, INFINITE);
 		lockBlockchunkMutex();
@@ -197,18 +200,25 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, packProfile profi
 		freeMem(blockChunk.unpacked);
 		releaseBlockchunkMutex();
 	}	
-	fclose(utfil);
+	if (closeAfter) {
+		fclose(utfil);
+	}
 }
 
 
 void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
-	block_pack_file_internal(infil, dst, profile, false);
+	block_pack_file_internal(infil, dst, NULL, profile, false);
 }
 
 
 void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	FILE* infil = openRead(src);
-	block_pack_file_internal(infil, dst, profile, true);	
+	block_pack_file_internal(infil, dst, NULL, profile, true);
+}
+
+void blockPackToExistingFile(const wchar_t* src, FILE* utfil, packProfile profile) {
+	FILE* infil = openRead(src);
+	block_pack_file_internal(infil, NULL, utfil, profile, true);
 }
 
 
