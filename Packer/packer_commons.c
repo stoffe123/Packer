@@ -74,7 +74,7 @@ memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
 bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
 	
-	wprintf(L"\n PackAndTest %s with kind=%s src.size=%d", getMemName(src), kind, getMemSize(src));
+	//wprintf(L"\n PackAndTest %s with kind=%s src.size=%d", getMemName(src), kind, getMemSize(src));
 
 	memfile* packedName = NULL;
 	

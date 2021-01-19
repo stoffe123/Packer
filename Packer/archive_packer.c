@@ -368,6 +368,12 @@ uint64_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 	return blobCount;
 }
 
+void getNewBlobFilename(wchar_t* blobFilename, wchar_t* name, wchar_t* ext) {
+	wcscpy(name, L"archivepacker_semisepblob_");
+	wcscat(name, ext);
+	get_temp_filew(blobFilename, name);
+}
+
 void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t dirInfo) {
 
 	file_t* fileList = dirInfo.fileList;
@@ -379,9 +385,7 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 
 	const wchar_t blobFilename[200] = { 0 };
 	const wchar_t name[200] = { 0 };
-	
-	
-	uint64_t blobSizes[1000] = { 0 };
+
 	uint64_t blobCount = 0;
 	bool breakAndCreateBlob;
 	FILE* blobFile = NULL;
@@ -393,9 +397,7 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 			wchar_t* filename = fileList[i].name;
 			getFileExtension(ext, filename);
 			if (i == 0) {
-				wcscpy(name, L"archivepacker_semisepblob_");
-				wcscat(name, ext);
-				get_temp_filew(blobFilename, name);
+				getNewBlobFilename(blobFilename, name, ext);
 				blobFile = openWrite(blobFilename);
 			}
 			printf("\n%ls of size: %lld", filename, fileList[i].size);
@@ -418,9 +420,7 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 			blobCount++;
 			//printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);	
 			if (i < count - 1) {
-				wcscpy(name, L"archivepacker_semisepblob_");
-				wcscat(name, next_ext);
-				get_temp_filew(blobFilename, name);
+				getNewBlobFilename(blobFilename, name, next_ext);
 				blobFile = openWrite(blobFilename);
 			}
 		}
