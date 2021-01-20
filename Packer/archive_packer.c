@@ -24,7 +24,6 @@
 // for semiseparated threaded pack
 typedef struct blob_t {
 	wchar_t filename[500];
-	wchar_t packedFilename[500];
 	packProfile profile;
 	HANDLE  handle;
 } blob_t;
@@ -46,13 +45,12 @@ void threadBlockPack(void* pMyID)
 	lockBlobMutex();
 	blob_t* bc = (blob_t*)pMyID;
 	packProfile profile = bc->profile;
-	wchar_t* blobFilename = bc->filename;
-	wcscpy(bc->packedFilename, blobFilename);
-	wcscat(bc->packedFilename, L"_packed");
+	wchar_t* filename = bc->filename;
+	
 	releaseBlobMutex();
-	printf("\n Starting THREAD blockack for file %ls", blobFilename);
-	block_pack(blobFilename, bc-> packedFilename, profile);	
-	printf("\n THREAD blobkpack FOR %ls FINISHED!", blobFilename);
+	printf("\n Starting THREAD blockack for file %ls", filename);
+	blockPackAndReplace(filename, profile);	
+	printf("\n THREAD blobkpack FOR %ls FINISHED!", filename);
 }
 
 #pragma comment(lib, "User32.lib")
@@ -432,19 +430,18 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 		blobs[i].handle = handle;
 		releaseBlobMutex();
 	}
+
 	for (int i = 0; i < blobCount; i++) {
 		WaitForSingleObject(blobs[i].handle, INFINITE);
 		lockBlobMutex();
-		blob_t blob = blobs[i];
-		
-		uint64_t size = getFileSizeFromName(blobs[i].packedFilename);
+		wchar_t* filename = blobs[i].filename;
+	
+		uint64_t size = getFileSizeFromName(filename);
 		releaseBlobMutex();
 
 		fwrite(&size, sizeof(uint64_t), 1, out);
-		appendFileToFile(out, blobs[i].packedFilename);
-		_wremove(blobs[i].packedFilename);
-		_wremove(blobs[i].filename);
-
+		appendFileToFile(out, filename);
+		_wremove(filename);
 	}
 	fclose(out);
 }
