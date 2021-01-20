@@ -91,7 +91,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 93000);
 	profile->sizeMaxForSuperslim = doFuzz(profile->sizeMaxForSuperslim, best.sizeMaxForSuperslim, 10, 100000);
 
-	profile->archiveType = doFuzz(profile->archiveType, best.archiveType, 0, 2);		
+	//profile->archiveType = doFuzz(profile->archiveType, best.archiveType, 0, 2);		
 
 }
 
@@ -585,19 +585,19 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 94,
-			.twobyte_ratio = 72,
-			.recursive_limit = 133,
-			.twobyte_threshold_max = 9779,
-			.twobyte_threshold_divide = 3019,
-			.twobyte_threshold_min = 774,
-			.seqlenMinLimit3 = 189,
-			.blockSizeMinus = 104,
+			.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
 			.winsize = 160000,
-			.sizeMaxForCanonicalHeaderPack = 86,
-			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 539,
-			.sizeMaxForSuperslim = 49265,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
 			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
@@ -608,7 +608,7 @@ void testarchive() {
 	wchar_t* source_dir =
 	    L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"c:/test/test13wequal";
-		//L"c:/test/test13";
+		//L"c:/test/test6";
 	   //L"c:/test/47";
 	
 	unsigned long long best_size = 0;

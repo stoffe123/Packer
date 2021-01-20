@@ -40,17 +40,29 @@ HANDLE releaseBlobMutex() {
 	ReleaseMutex(blobMutex);
 }
 
-void threadBlockPack(void* pMyID)
+void threadBlockPack(void* arg)
 {
 	lockBlobMutex();
-	blob_t* bc = (blob_t*)pMyID;
+	blob_t* bc = (blob_t*)arg;
 	packProfile profile = bc->profile;
-	wchar_t* filename = bc->filename;
-	
+	wchar_t* filename = bc->filename;	
 	releaseBlobMutex();
-	printf("\n Starting THREAD blockack for file %ls", filename);
+
+	printf("\n Starting THREAD blockpack for file %ls", filename);
 	blockPackAndReplace(filename, profile);	
-	printf("\n THREAD blobkpack FOR %ls FINISHED!", filename);
+	printf("\n THREAD blockpack FOR %ls FINISHED!", filename);
+}
+
+void threadBlockUnPack(void* arg)
+{
+	lockBlobMutex();
+	blob_t* bc = (blob_t*)arg;
+	wchar_t* filename = bc->filename;
+	releaseBlobMutex();
+
+	printf("\n Starting THREAD block unpack for file %ls", filename);
+	blockUnpackAndReplace(filename);
+	printf("\n THREAD block unpack FOR %ls FINISHED!", filename);
 }
 
 #pragma comment(lib, "User32.lib")
@@ -412,8 +424,13 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 			wcscpy(blobs[blobCount].filename, blobFilename);
 			blobs[blobCount].profile = profile;
 			releaseBlobMutex();
+
+			HANDLE handle = _beginthread(threadBlockPack, 0, &blobs[blobCount]);
+
+			lockBlobMutex();
+			blobs[blobCount].handle = handle;
+			releaseBlobMutex();
 					
-		
 			printf("\n writing blob nr %llu", blobCount);
 			blobCount++;
 			//printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);	
@@ -422,13 +439,6 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 				blobFile = openWrite(blobFilename);
 			}
 		}
-	}
-	for (int i = 0; i < blobCount; i++) {
-		HANDLE handle = _beginthread(threadBlockPack, 0, &blobs[i]);
-
-		lockBlobMutex();
-		blobs[i].handle = handle;
-		releaseBlobMutex();
 	}
 
 	for (int i = 0; i < blobCount; i++) {
@@ -663,24 +673,44 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	const wchar_t masterFilename[200] = { 0 };
 	get_temp_filew(masterFilename, L"archive_unpack_semisep_master");
 
-	FILE* masterFile = openWrite(masterFilename);
-
-
-	for (uint64_t blobNr = 0; blobNr < nrOfBlobs; blobNr++) {
+	// Create blob array
+	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t size;
 		fread(&size, sizeof(uint64_t), 1, in);
-		
+
 		const wchar_t blobFilename[200] = { 0 };
 		get_temp_filew(blobFilename, L"archive_unpack_blob_semisep");
-				
-		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", blobNr, size);
+
+		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
+
+		lockBlobMutex();
+		wcscpy(blobs[i].filename, blobFilename);
+		releaseBlobMutex();
+
 		copyFileChunkToFile(in, blobFilename, size);
-		blockUnpackNameToFile(blobFilename, masterFile);
-		_wremove(blobFilename);
+		//blockUnpackNameToFile(blobFilename, masterFile);		
+
+		HANDLE handle = _beginthread(threadBlockUnPack, 0, &blobs[i]);
+		lockBlobMutex();
+		blobs[i].handle = handle;
+		releaseBlobMutex();
 	}
-	fclose(masterFile);
 	fclose(in);
-	masterFile = openRead(masterFilename);
+
+	// Add unpacked files together
+	FILE* out = openWrite(masterFilename);
+	for (uint64_t i = 0; i < nrOfBlobs; i++) {
+		WaitForSingleObject(blobs[i].handle, INFINITE);
+		lockBlobMutex();
+		wchar_t* filename = blobs[i].filename;
+		releaseBlobMutex();
+
+		appendFileToFile(out, filename);
+		_wremove(filename);
+	}
+	fclose(out);
+
+	FILE* masterFile = openRead(masterFilename);
 	file_t* filenames = dirInfo.fileList;
 
 	//TODO DRY this with code below
