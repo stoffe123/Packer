@@ -240,6 +240,7 @@ bool memsEqual(memfile* m1, memfile* m2) {
 	uint8_t* m2_block = m2->block;
 	for (int i = 0; i < m1->size; i++) {
 		if (m1->block[i] != m2_block[i]) {
+			printf("\n mems not equal in position %d", i);
 			return false;
 		}
 	}

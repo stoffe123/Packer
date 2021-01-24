@@ -13,18 +13,20 @@
 
 #define VERBOSE false
 
+#define LIMIT_24_BIT 16777216
+
 /* Sequence packer */
 
 /* Global variables used in compressor */
 
 __declspec(thread) static const wchar_t* src_name;
 
-__declspec(thread) static size_t absolute_end, buffer_endpos;
-
 __declspec(thread) static bool separate_files = false;
 
+__declspec(thread) static uint8_t lastChMinus2, lastChMinus1;
+
 __declspec(thread) static uint32_t nextChar[BLOCK_SIZE * 2],
-lastChar[256],
+lastChar[LIMIT_24_BIT],
 distances[BLOCK_SIZE],
 distanceFreq[BLOCK_SIZE],
 distancesPos,
@@ -38,7 +40,13 @@ seqlenFreq[BLOCK_SIZE],
 seqlensPos;
 
 
-static void updateNextCharTable(unsigned char ch, uint32_t pos) {
+uint32_t calc24Bit(uint8_t ch, uint8_t ch1, uint8_t ch2) {
+	return ch + 256 * ch1 + 65536 * ch2;
+}
+
+
+uint32_t updateNextCharTable(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint32_t pos) {
+	uint32_t ch = calc24Bit(ch1, ch2, ch3);
 	uint32_t lastPos = lastChar[ch];
 	if (lastPos == INT32_MAX) { // first occurence!
 		lastChar[ch] = pos;
@@ -48,13 +56,10 @@ static void updateNextCharTable(unsigned char ch, uint32_t pos) {
 		assert(pos - lastPos > 0, "pos - lastPos > 0 seqpacker");
 		lastChar[ch] = pos;
 	}
+	return ch;  // for debug
 }
 
-static void display_progress(uint32_t buffer_pos, uint8_t pass) {
-	if (buffer_pos % 48000 == 0 && pass == 2 && !VERBOSE) {
-		printf("*");
-	}
-}
+
 
 void writeMeta(memfile* file, uint64_t c) {
 	if (c > 255) {
@@ -93,7 +98,7 @@ void out_seqlen(uint64_t seqlen) {
 
 void convertMeta(memfile* file, unsigned long distance, pageCoding_t pageCoding) {
 
-	unsigned char pages = pageCoding.pages;
+	uint8_t pages = pageCoding.pages;
 	uint64_t pageMax = calcPageMax(pageCoding);
 	uint64_t useLongRange = pageCoding.useLongRange;
 
@@ -269,7 +274,7 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange, uint64_t startBit
 
 //--------------------------------------------------------------------------------------------------------
 
-seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile profile)
+seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 {
 	rewindMem(infil);
 
@@ -304,6 +309,10 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 
 	seqPackBundle utfil;
 	utfil.main = NULL;
+    uint8_t nrChars = 2, charArray[3] = { 0 };
+	charArray[0] = lastChMinus2;
+	charArray[1] = lastChMinus1;
+
 	if (pass == 2) {
 
 		debug("\nWinsize: %d", winsize);
@@ -314,28 +323,26 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 	}	
 	/* start compression */
 
-	buffer_endpos = size_org;
+	uint64_t buffer_endpos = size_org;
 
-	absolute_end = buffer_endpos;
+	uint64_t absolute_end = buffer_endpos;
+	uint64_t real_absolute_end = buffer_endpos - 2;
 
 	uint64_t offset_max;
-
+	uint8_t* buffer = infil->block;
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
-		uint8_t* buffer = infil->block;
-		unsigned char ch = buffer[buffer_pos];
-		uint64_t buffer_pos_plus1 = (uint64_t)1 + buffer_pos;
-		uint64_t buffer_pos_plus2 = (uint64_t)2 + buffer_pos;
-		unsigned char ch1 = buffer[buffer_pos_plus1];
-		unsigned char ch2 = buffer[buffer_pos_plus2];
-
-
+		
+	    uint8_t ch = buffer[buffer_pos];
+		uint8_t ch1 = buffer[1 + buffer_pos];
+		uint8_t ch2 = buffer[2 + buffer_pos];
 		if (pass == 2) {
-			if ((buffer_endpos - buffer_pos) >= min_seq_len) {
-				if (buffer_pos + winsize > absolute_end - min_seq_len) {
+			if ((buffer_endpos - buffer_pos) >= min_seq_len && (buffer_pos - real_absolute_end > 5)) {
+							
+				if (buffer_pos + winsize > real_absolute_end - min_seq_len) {
 
-					offset_max = (absolute_end - min_seq_len) - buffer_pos;
+					offset_max = (real_absolute_end - min_seq_len) - buffer_pos;
 				}
 				else {
 					offset_max = winsize;
@@ -352,20 +359,18 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 						break;
 					}
 					nextChar_pos += nextCh;
-					if (
-						(ch1 != buffer[buffer_pos_plus1 + offset]) ||
-						(ch2 != buffer[buffer_pos_plus2 + offset]) || offset < 3) {
+					if (offset < 3) {
 						continue;
 					}
 					seq_len = 3;
 
 					while (buffer[buffer_pos + seq_len] == buffer[buffer_pos + offset + seq_len] &&
 						seq_len < offset &&
-						buffer_pos + offset + seq_len < absolute_end - 1)
+						buffer_pos + offset + seq_len < real_absolute_end - 1)
 					{
 						seq_len++;
 					}
-					diff = (buffer_pos + offset + seq_len) - absolute_end;
+					diff = (buffer_pos + offset + seq_len) - real_absolute_end;
 					if ((diff > 0) || ((diff = (buffer_pos + seq_len) - buffer_endpos) > 0)) {
 						if (seq_len <= diff) {
 							continue;
@@ -395,17 +400,36 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 		}
 		/* now we found the longest sequence in the window! */
 		best_offset -= best_seqlen;
-		unsigned char seqlen_min = getSeqlenMin(best_offset, seqlenMinLimit3);
+		uint8_t seqlen_min = getSeqlenMin(best_offset, seqlenMinLimit3);
 
 		if (best_seqlen < seqlen_min)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
-				updateNextCharTable(ch, buffer_pos);
+
+				if (buffer_pos == buffer_endpos - 2) {
+					lastChMinus2 = ch;
+				}
+				if (buffer_pos == buffer_endpos - 1) {
+					lastChMinus1 = ch;
+				}
+				if (buffer_pos <= buffer_endpos - 3) {
+					updateNextCharTable(ch, ch1, ch2, buffer_pos);
+				}
 			}
 			else {
 				fputccLight(ch, utfil.main);
 				//assert(absolute_end < BLOCK_SIZE, "absolute_end < BLOCK_SIZE in seqpacker");
-				updateNextCharTable(ch, absolute_end);
+
+				charArray[nrChars++] = ch;
+				if (nrChars == 3) {
+					uint32_t rss = updateNextCharTable(charArray[0], charArray[1], charArray[2], real_absolute_end);
+					real_absolute_end++;
+					//printf("\n Writing to end: %lu", rss);
+					//printf("\n  %llu, %llu", absolute_end, real_absolute_end);
+					charArray[0] = charArray[1];
+					charArray[1] = charArray[2];
+					nrChars = 2;
+				}
 				buffer[absolute_end++] = ch; // write start to end to wrap-around find sequences					
 				distance++;
 			}
@@ -413,7 +437,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 		}
 		else { // insert code triple instead of the matching sequence!
 			//debug("\n  seqlenmin:%d  offset:%d", seqlen_min, best_offset);
-			assertSmallerOrEqual(buffer_pos + best_offset + best_seqlen + best_seqlen, absolute_end,
+			assertSmallerOrEqual(buffer_pos + best_offset + best_seqlen + best_seqlen, real_absolute_end,
 				"buffer_startpos + best_offset + best_seqlen*2 <= absolute_end in seq_packer.pack_internal");
 
 
@@ -427,7 +451,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 #if VERBOSE
 				printf("\n(%d, %d, %d)  buffer_startpos %d   buffer_endpos %d  seq \"", best_seqlen, best_offset, distance, buffer_pos, buffer_endpos);
 				for (int i = 0; i < best_seqlen; i++) {
-					printf("%d ", buffer[buffer_pos + i]);
+					printf("%x ", buffer[buffer_pos + i]);
 				}
 				printf("\"");
 #endif
@@ -442,9 +466,9 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 	}//end while
 
 #if VERBOSE
-	printf("\nwrap around:\n");
-	for (int i = buffer_endpos; i < absolute_end; i++) {
-		//printf("%c", buffer[i]);
+	printf("\nwraparound:\n");
+	for (int i = buffer_endpos; i < real_absolute_end; i++) {
+		printf("%x ", buffer[i]);
 	}
 	printf("\n\n");
 #endif
@@ -476,7 +500,7 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 			fputccLight(offsetPages, utfil.main);
 			fputccLight(distancePages, utfil.main);
 		}
-		unsigned char packType = 0;
+		uint8_t packType = 0;
 		packType = storeLongRange(packType, useOffsetLongRange, 1);
 		packType = storeLongRange(packType, useDistanceLongRange, 3);
 		packType = storeLongRange(packType, useSeqlenLongRange, 5);
@@ -499,8 +523,10 @@ seqPackBundle pack_internal(memfile* infil, unsigned char pass, packProfile prof
 	}
 }
 
+
+
 void initGlobalArrays() {
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < LIMIT_24_BIT; i++) {
 		lastChar[i] = INT32_MAX;
 	}
 	for (int i = 0; i < BLOCK_SIZE * 2; i++) {
@@ -517,37 +543,41 @@ void initGlobalArrays() {
 	}
 	distancesPos = 0;
 	offsetsPos = 0;
-	seqlensPos = 0;
+	seqlensPos = 0;	
 }
 
-seqPackBundle seq_pack_internal(memfile* m, packProfile profile, bool sep) {
+
+seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool sep) {
 	separate_files = sep;
 	initGlobalArrays();
-	pack_internal(m, 1, profile);
-	seqPackBundle res = pack_internal(m, 2, profile);
+	pack_internal(memToPack, 1, profile);
+
+	seqPackBundle packedBundle = pack_internal(memToPack, 2, profile);
 
 	if (DOUBLE_CHECK_PACK) {
-		wchar_t* name = getMemName(m);
-		wprintf(L"\n ?Double checking the seqpack of: %s", name);
-		memfile* tmp = seqUnpack(res);
-		bool sc = memsEqual(tmp, m);
-		if (!sc) {
-			wprintf(L"\n\n\n ** FAILED to seq pack: %s", name);
-			const wchar_t filename[100] = { 0 };
+		wchar_t* name = getMemName(memToPack);
+		printf("\n Double checking the seqpack of: %ls", name);
+		memfile* unpackedMem = seqUnpack(packedBundle);
+		bool eq = memsEqual(unpackedMem, memToPack);
+		if (!eq) {
+			printf("\n\n\n !!!! FAILED to seq pack: %ls", name);
+			const wchar_t filename[300] = { 0 };
 			if (name[1] != ':') {
 				concatw(filename, L"c:/test/temp_files/", name);
 			}
 			else {
 				wcscpy(filename, name);
 			}
-			memfileToFile(m, filename);
-			printf("\n\n profile used:");
+			memfileToFile(memToPack, filename);
+			memfileToFile(unpackedMem, L"c:/test/temp_files/unpackedmem");
+			printf("\n\n Profile used:");
+			printf("\n ------------------------");
 			printProfile(&profile);
 			exit(1);
 		}
-		freeMem(tmp);
+		freeMem(unpackedMem);
 	}
-	return res;
+	return packedBundle;
 }
 
 seqPackBundle seqPackSep(memfile* mem, packProfile profile) {

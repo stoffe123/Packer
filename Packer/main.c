@@ -53,6 +53,9 @@ int doFuzz(int r, int best, int min, int max) {
 		add = 2;
 	}
 	r = fuzzVal(r, add);
+	if (rand() % 4 == 0) {
+		r = best;
+	}
 	if (r < 0) {
 		r = min;
 	}
@@ -62,9 +65,7 @@ int doFuzz(int r, int best, int min, int max) {
 	if (r > max) {
 		r = max;
 	}
-	if (rand() % 4 == 0) {
-		r = best;
-	}
+	
 	return r;
 }
 
@@ -341,7 +342,7 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/twobytepack_utfil";
+	const wchar_t* src = L"c:/test/book_med.txt";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -353,87 +354,96 @@ void onefile() {
 	int cl = clock();
 
 	packProfile profile = {
-			.rle_ratio = 67,
-			.twobyte_ratio = 97,
-			.recursive_limit = 429,
-			.twobyte_threshold_max = 10502,
-			.twobyte_threshold_divide = 20,
-			.twobyte_threshold_min = 721,
-			.seqlenMinLimit3 = 276,
-			.blockSizeMinus = 108,
-			.winsize = 6633,
-			.sizeMaxForCanonicalHeaderPack = 85,
-			.sizeMinForSeqPack = 3641,
-			.sizeMinForCanonical = 51,
-			.sizeMaxForSuperslim = 6683
+			.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 160000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 
-	 packProfile seqlenProfile = {
-.rle_ratio = 31,
-.twobyte_ratio = 97,
-.recursive_limit = 180,
-.twobyte_threshold_max = 5226,
-.twobyte_threshold_divide = 2233,
-.twobyte_threshold_min = 185,
-.seqlenMinLimit3 = 43,
-.winsize = 78725,
-.sizeMaxForCanonicalHeaderPack = 175,
-.sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 30,
-.sizeMaxForSuperslim = 16384
+	packProfile seqlenProfile = {
+			.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 160000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	},
 
-		offsetProfile = {
-		.rle_ratio = 74,
-		.twobyte_ratio = 95,
-		.recursive_limit = 61,
-		.twobyte_threshold_max = 11404,
-		.twobyte_threshold_divide = 2520,
-		.twobyte_threshold_min = 384,
-		.seqlenMinLimit3 = 82,
-	
-		.winsize = 91812,
-		.sizeMaxForCanonicalHeaderPack = 530,
-		.sizeMinForSeqPack = 2600,
-		.sizeMinForCanonical = 261,
-		.sizeMaxForSuperslim = 16384 },
+	offsetProfile = {
+		.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 160000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
+	},
 
 		distanceProfile = {
-		.rle_ratio = 71,
-		.twobyte_ratio = 100,
-		.recursive_limit = 20,
-		.twobyte_threshold_max = 3641,
-		.twobyte_threshold_divide = 3972,
-		.twobyte_threshold_min = 37,
-		.seqlenMinLimit3 = 35,
-	
-		.winsize = 80403,
-		.sizeMaxForCanonicalHeaderPack = 256,
-		.sizeMinForSeqPack = 2600,
-		.sizeMinForCanonical = 300,
-		.sizeMaxForSuperslim = 16384 };
+	.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 160000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate'
+	};
+
 	uint64_t size_packed;
 	memfile* srcm = getMemfileFromFile(src);
 	
-	seqPackBundle packed = seqPackSep(srcm, profile);
+	//seqPackBundle packed = seqPackSep(srcm, profile);
 	//size_packed = getBundleSize(packed);
-	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
+	memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
 	//memfile* packed = halfbyteRlePack(srcm, 0);
 	//memfile* packed = canonicalEncode(srcm);
 	//memfile* packed = twoBytePack(srcm, profile);
 
 
-	//size_packed = getMemSize(packed);
-	size_packed = getBundleSize(packed);
+	size_packed = getMemSize(packed);
+	
 	printf("\n size_packed %d", size_packed);
+	//memfileToFile(packed.main, L"c:/test/packed.bin");
 	int pack_time = (clock() - cl);
 		
 	cl = clock();
 
 	//memfile* unpacked = twoByteUnpack(packed);
 	//memfile* unpacked = canonicalDecode(packed);
-	//memfile* unpacked = multiUnpack2(packed);
-	memfile* unpacked = seqUnpack(packed);
+	memfile* unpacked = multiUnpack(packed);
+	//memfile* unpacked = seqUnpack(packed);
 	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
 	
 
@@ -443,6 +453,9 @@ void onefile() {
 	
 	wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
+	printf("\n\n Pack time %d", pack_time);
+	printf("\n\n Unpack time %d", unpack_time);
+
 	memfileToFile(unpacked, unpackedFilename);
 	printf("\n\n Comparing files!");
 
@@ -450,6 +463,7 @@ void onefile() {
 		printf("\n ****** SUCCESS ****** (equal)\n");
 	}
 	else {
+		printf("\n Files are not equal!!");
 		exit(1);
 	}
 }//onefile
@@ -458,12 +472,7 @@ void onefile() {
 
 void test16() {
 	
-	wchar_t test_filenames[3][100] = { L"blobs_47/archivepacker_semisepblob_html"
-
-		//L"namesHeaderTest13.bin",
-		//L"namesHeaderWsTodo.bin"
-	};
-	/*
+	
 	wchar_t test_filenames[16][100] = { L"did.csh",
 		
 		L"rel.pdf",
@@ -485,7 +494,7 @@ void test16() {
 		
 			
 	};
-	*/
+
 	
 	packProfile bestProfile, 
 		profile = {
@@ -518,10 +527,10 @@ void test16() {
 		uint64_t totalTime = 0;
 		int kk = 0;
 		bool earlyBreak = true;
-		for (; kk < 1; kk++)
+		for (; kk < 16; kk++)
 		{
 			const wchar_t src[200] = { 0 };
-			concatw(src, L"D:/Dropbox/Personal/Programmering/Compression/test/", test_filenames[kk]);
+			concatw(src, L"D:/Dropbox/Personal/Programmering/Compression/test/test16/", test_filenames[kk]);
 
 			const wchar_t* dst = L"C:/test/unp";
 
@@ -567,6 +576,7 @@ void test16() {
 					printf("\n ****** SUCCESS ****** (equal)\n");
 				}
 				else {
+					printf("\n Files were not equal!");
 					printf("\n profile used:");
 					printProfile(&profile);
 					exit(1);
@@ -606,10 +616,10 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir =
-	    L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+	    //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"c:/test/test13wequal";
 		//L"c:/test/test6";
-	   //L"c:/test/47";
+	   L"c:/test/47";
 	
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

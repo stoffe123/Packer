@@ -268,6 +268,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	//printProfile(&profile);
 	uint64_t source_size = getMemSize(src);
 	printf("\n --------- Multi pack started of file sized %d -------------", source_size);
+
 	uint8_t pack_type = 0;
 
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);

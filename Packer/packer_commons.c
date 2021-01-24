@@ -39,16 +39,18 @@ void doDoubleCheck2(memfile* src, memfile* packedName, const wchar_t* kind) {
 	freeMem(packedName);
 }
 
-void doDoubleCheck(memfile* tmp, memfile* src, const wchar_t* kind) {
-	bool sc = memsEqual(tmp, src);
+void doDoubleCheck(memfile* unpackedMem, memfile* sourceMem, const wchar_t* kind) {
+	bool sc = memsEqual(unpackedMem, sourceMem);
 	if (!sc) {
-		wprintf(L"\n\n\n ** Failed to %s pack: %s", kind, getMemName(src));
-		const wchar_t filename[100] = { 0 };
-		concatw(filename, L"c:/test/temp_files/", getMemName(src));
-		memfileToFile(src, filename);		
+		printf("\n\n\n !!!!! Failed to %ls pack: %ls", kind, getMemName(sourceMem));
+		const wchar_t filename[300] = { 0 };
+		concatw(filename, L"c:/test/temp_files/", getMemName(sourceMem));
+		memfileToFile(sourceMem, filename);	
+		concatw(filename, L"c:/test/temp_files/", getMemName(unpackedMem));
+		memfileToFile(unpackedMem, filename);
 		exit(1);
 	}
-	freeMem(tmp);
+	freeMem(unpackedMem);
 }
 
 memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
@@ -117,19 +119,19 @@ int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfil
 }
 
 void printProfile(packProfile* profile) {
-	printf("\nRLE ratio         %d", profile->rle_ratio);
-	printf("\nTwobyte ratio     %d", profile->twobyte_ratio);
-	printf("\nRecursive limit   %d", profile->recursive_limit);
-	printf("\nTwobyte threshold (max,divide,min): (%d %d %d)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
-	printf("\nSeqlenMin limit3 %d", profile->seqlenMinLimit3);	
+	printf("\nRLE ratio         %llu", profile->rle_ratio);
+	printf("\nTwobyte ratio     %llu", profile->twobyte_ratio);
+	printf("\nRecursive limit   %llu", profile->recursive_limit);
+	printf("\nTwobyte threshold (max,divide,min): (%llu %llu %llu)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
+	printf("\nSeqlenMin limit3 %llu", profile->seqlenMinLimit3);	
 	
-	printf("\nBlock size minus (10k): %d", profile->blockSizeMinus);
-	printf("\nWinsize: %d", profile->winsize);
-	printf("\nSize max for Canonical Header Pack %d", profile->sizeMaxForCanonicalHeaderPack);
-	printf("\nSize min for seqpack %d", profile->sizeMinForSeqPack);
-	printf("\nSize min for canonical %d", profile->sizeMinForCanonical);
-	printf("\nSize max for superslim %d", profile->sizeMaxForSuperslim);
-	printf("\nArchive type %d", profile->archiveType);
+	printf("\nBlock size minus (10k): %llu", profile->blockSizeMinus);
+	printf("\nWinsize: %llu", profile->winsize);
+	printf("\nSize max for Canonical Header Pack %llu", profile->sizeMaxForCanonicalHeaderPack);
+	printf("\nSize min for seqpack %llu", profile->sizeMinForSeqPack);
+	printf("\nSize min for canonical %llu", profile->sizeMinForCanonical);
+	printf("\nSize max for superslim %llu", profile->sizeMaxForSuperslim);
+	printf("\nArchive type %llu", profile->archiveType);
 }
 
 packProfile getPackProfile() {
