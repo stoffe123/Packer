@@ -23,8 +23,6 @@ __declspec(thread) static const wchar_t* src_name;
 
 __declspec(thread) static bool separate_files = false;
 
-__declspec(thread) static uint8_t lastChMinus2, lastChMinus1;
-
 __declspec(thread) static uint32_t nextChar[BLOCK_SIZE * 2],
 lastChar[LIMIT_24_BIT],
 distances[BLOCK_SIZE],
@@ -326,6 +324,10 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 
 	uint64_t offset_max;
 	uint8_t* buffer = infil->block;
+
+	uint8_t lastChMinus2 = buffer[buffer_endpos - 2],
+	        lastChMinus1 = buffer[buffer_endpos - 1];
+
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
@@ -402,12 +404,6 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
 			if (pass == 1) {
 
-				if (buffer_pos == buffer_endpos - 2) {
-					lastChMinus2 = ch;
-				}
-				if (buffer_pos == buffer_endpos - 1) {
-					lastChMinus1 = ch;
-				}
 				if (buffer_pos <= buffer_endpos - 3) {
 					updateNextCharTable(ch, ch1, ch2, buffer_pos);
 				}
