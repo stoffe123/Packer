@@ -45,7 +45,7 @@ uint32_t calc24Bit(uint8_t ch, uint8_t ch1, uint8_t ch2) {
 }
 
 
-uint32_t updateNextCharTable(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint32_t pos) {
+void updateNextCharTable(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint32_t pos) {
 	uint32_t ch = calc24Bit(ch1, ch2, ch3);
 	uint32_t lastPos = lastChar[ch];
 	if (lastPos == INT32_MAX) { // first occurence!
@@ -55,15 +55,14 @@ uint32_t updateNextCharTable(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint32_t pos
 		nextChar[lastPos] = pos - lastPos;
 		assert(pos - lastPos > 0, "pos - lastPos > 0 seqpacker");
 		lastChar[ch] = pos;
-	}
-	return ch;  // for debug
+	}	
 }
 
 
 
 void writeMeta(memfile* file, uint64_t c) {
 	if (c > 255) {
-		printf("\n write_distance called with value > 255 was %d", c);
+		printf("\n write_distance called with value > 255 was %llu", c);
 		exit(1);
 	}
 	//debug("\nwrite_offset:%d", c);
@@ -123,7 +122,7 @@ void convertMeta(memfile* file, unsigned long distance, pageCoding_t pageCoding)
 	}
 	else {  // long range
 		if (!useLongRange) {
-			wprintf(L"\n seqpacker: long range was needed but not set!! distance %d pages %d pagemax %d when packing %s",
+			printf("\n Seqpacker: long range was needed but not set!! distance %llu pages %llu pagemax %llu when packing %ls",
 				distance, pages, pageMax, src_name);
 			exit(1);
 		}
@@ -253,7 +252,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 	syncMemSize(file);
 	uint64_t filesize = getMemSize(file);
 	if (bestSize != filesize) {
-		wprintf(L"\n   comparing %s meta file sizes ... %d %d when seqpacking file %s", metaname, bestSize, filesize, src_name);
+		printf("\n   comparing %s meta file sizes ... %llu %llu when seqpacking file %ls", metaname, bestSize, filesize, src_name);
 		exit(1);
 	}
 	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
@@ -293,8 +292,8 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		superslim = true;
 		seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}
-	debug("\n seqlenMinLimit3=%d", seqlenMinLimit3);
-	debug("\n superslim=%d", superslim);
+	debug("\n seqlenMinLimit3=%llu", seqlenMinLimit3);
+	debug("\n superslim=%llu", superslim);
 
 	uint64_t	offset,
 		winsize = profile.winsize,
@@ -309,14 +308,11 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 
 	seqPackBundle utfil;
 	utfil.main = NULL;
-    uint8_t nrChars = 2, charArray[3] = { 0 };
-	charArray[0] = lastChMinus2;
-	charArray[1] = lastChMinus1;
 
 	if (pass == 2) {
 
-		debug("\nWinsize: %d", winsize);
-		debug("\nmax_seqlen: %d", max_seqlen);
+		debug("\nWinsize: %llu", winsize);
+		debug("\nmax_seqlen: %llu", max_seqlen);
 
 		utfil.main = getMemfile(size_org * 3 + 1000, L"seqpacker_utfilmain");
 
@@ -420,16 +416,12 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 				fputccLight(ch, utfil.main);
 				//assert(absolute_end < BLOCK_SIZE, "absolute_end < BLOCK_SIZE in seqpacker");
 
-				charArray[nrChars++] = ch;
-				if (nrChars == 3) {
-					uint32_t rss = updateNextCharTable(charArray[0], charArray[1], charArray[2], real_absolute_end);
-					real_absolute_end++;
-					//printf("\n Writing to end: %lu", rss);
-					//printf("\n  %llu, %llu", absolute_end, real_absolute_end);
-					charArray[0] = charArray[1];
-					charArray[1] = charArray[2];
-					nrChars = 2;
-				}
+				updateNextCharTable(lastChMinus2, lastChMinus1, ch, real_absolute_end++);
+				//printf("\n Writing to end: %lu", rss);
+				//printf("\n  %llu, %llu", absolute_end, real_absolute_end);
+				lastChMinus2 = lastChMinus1;
+				lastChMinus1 = ch;
+
 				buffer[absolute_end++] = ch; // write start to end to wrap-around find sequences					
 				distance++;
 			}
@@ -476,7 +468,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	if (pass == 2) {
 
 		out_distance(distance);
-		debug("\n distance to first code: %d", distance);
+		debug("\n distance to first code: %llu", distance);
 
 		utfil.seqlens = getMemfile(size_org / 2, L"seqpacker_utfilseqlens");
 		utfil.offsets = getMemfile(size_org / 2, L"seqpacker_utfiloffsets");

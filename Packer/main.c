@@ -595,19 +595,19 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 98,
-			.twobyte_ratio = 78,
-			.recursive_limit = 239,
-			.twobyte_threshold_max = 6465,
-			.twobyte_threshold_divide = 3538,
+			.rle_ratio = 93,
+			.twobyte_ratio = 76,
+			.recursive_limit = 336,
+			.twobyte_threshold_max = 6642,
+			.twobyte_threshold_divide = 3601,
 			.twobyte_threshold_min = 974,
-			.seqlenMinLimit3 = 196,
-			.blockSizeMinus = 31,
+			.seqlenMinLimit3 = 218,
+			.blockSizeMinus = 33,
 			.winsize = 160000,
 			.sizeMaxForCanonicalHeaderPack = 278,
-			.sizeMinForSeqPack = 1890,
-			.sizeMinForCanonical = 562,
-			.sizeMaxForSuperslim = 47393,
+			.sizeMinForSeqPack = 10,
+			.sizeMinForCanonical = 527,
+			.sizeMaxForSuperslim = 56483,
 			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
