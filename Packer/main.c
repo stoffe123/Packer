@@ -85,7 +85,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
-	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 7000000);
+	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 9000000);
 
 	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
 	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
@@ -595,19 +595,19 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 99,
-			.twobyte_ratio = 80,
-			.recursive_limit = 240,
-			.twobyte_threshold_max = 3280,
-			.twobyte_threshold_divide = 2859,
-			.twobyte_threshold_min = 968,
-			.seqlenMinLimit3 = 117,
+			.rle_ratio = 85,
+			.twobyte_ratio = 82,
+			.recursive_limit = 289,
+			.twobyte_threshold_max = 3104,
+			.twobyte_threshold_divide = 2912,
+			.twobyte_threshold_min = 963,
+			.seqlenMinLimit3 = 70,
 			.blockSizeMinus = 0,
-			.winsize = 1450000,
+			.winsize = 2350000,
 			.sizeMaxForCanonicalHeaderPack = 390,
 			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 593,
-			.sizeMaxForSuperslim = 56831,
+			.sizeMinForCanonical = 547,
+			.sizeMaxForSuperslim = 61251,
 			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;

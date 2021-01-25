@@ -219,7 +219,7 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	memfile* out = getEmptyMem(L"archivepacker_names_header_mem");
 	//write names separated by 0
 	int lengthOfDirName = wcslen(dir);
-
+	uint8_t multiByteStr[2000] = { 0 };
 	printf("\n ********* Storing dir names **********\n");
 	for (int i = 0; i < count; i++) {
 		printf("\nCreateNamesHeader: %ls  ,  %llu\n", fileList[i].name, fileList[i].size);
@@ -228,7 +228,8 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 		int j = lengthOfDirName + 1;
 
 		wchar_t cc = fileList[i].name[j];
-		uint8_t multiByteStr[2000] = { 0 };
+	
+		//TODO write to "out" mem directly
 		uint64_t size = wcharToMyCoding(&(fileList[i].name[j]), &multiByteStr);
 
 		// the last byte of the name is special
@@ -472,9 +473,8 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	//used for solid
 	const wchar_t blobFilename[100] = { 0 };
 	FILE* blobFile = NULL;
-	if (solid) {
-	   get_temp_filew(blobFilename, L"archivepack_blob");
-	   blobFile = openWrite(blobFilename);
+	if (solid) {	   
+	   blobFile = openTempFile(blobFilename, L"archivepack_blob");
 	}
 	
 	printf("\n Phase 2 of archive pack count=%lld", count);

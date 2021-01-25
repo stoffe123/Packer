@@ -119,7 +119,7 @@ memfile* unpackAndReplace2(const wchar_t* kind, memfile* src) {
 }
 
 int getPackCandidate2(packCandidate_t* bestCandidate, memfile* m, int packType, uint64_t size) {
-	assert(getMemSize(m) <= BLOCK_SIZE && size <= BLOCK_SIZE, "multi_packer candidate size over BLOCK_SIZE");
+	//assert(getMemSize(m) <= BLOCK_SIZE && size <= BLOCK_SIZE, "multi_packer candidate size over BLOCK_SIZE");
 
 	if (size < bestCandidate->size) {
 		if (bestCandidate->canBeFreed) {

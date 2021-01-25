@@ -7,7 +7,7 @@
 
 //3 bytes can handle block sizes up to 16777216‬
 
-#define BLOCK_SIZE 5500000
+#define BLOCK_SIZE 8000000
 
 //  16777215  is largest number for 24 bits in multipacker.tar
 static bool DOUBLE_CHECK_PACK = false;

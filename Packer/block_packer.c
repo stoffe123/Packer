@@ -143,7 +143,7 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 	printf("\n Entering block_pack_file_internal sizelefttoread=%d" , src_size);
 	uint64_t chunkSize, chunkNumber = 0;
 	do {
-		read_size = BLOCK_SIZE - profile.blockSizeMinus * (uint64_t)10000;
+		read_size = BLOCK_SIZE - (profile.blockSizeMinus + 1) * (uint64_t)10000;
 
 		assert(read_size < 16777215, "too large blocksize must be < 16777215");
 
