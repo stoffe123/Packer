@@ -151,13 +151,24 @@ uint64_t myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
 }
 
 
-void substring(const wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
+void substring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 {
 	// get length of the destination string
 	uint64_t len = n - m;
 
 	// start with m'th char and copy 'len' chars into destination
 	wcsncpy(dst, (src + m), len);
+	dst[len] = 0;
+}
+
+void concatSubstring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
+{
+	// get length of the destination string
+	uint64_t len = n - m;
+	uint64_t last = wcslen(dst) + len;
+	// start with m'th char and copy 'len' chars into destination
+	wcsncpy(dst + wcslen(dst), (src + m), len);
+	dst[last] = 0;
 }
 
 void diffSizes(fileListAndCount_t dirInfo) {
@@ -278,22 +289,26 @@ TODO: extract to file tools
 */
 void createMissingDirs(wchar_t* fullPath, wchar_t* existingDir) {
 	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
-	if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
-		partAfterExistingDir++;
-	}
-	int64_t ind = indexOfChar(partAfterExistingDir, '\\');
-	if (ind == -1) {
-		ind = indexOfChar(partAfterExistingDir, '/');
-	}
-	if (ind > 0) {
-		const wchar_t dirToCreate[2000] = { 0 };
-		substring(dirToCreate, partAfterExistingDir, 0, ind + 1);
-		const wchar_t dirToCreateFullPath[2000] = { 0 };
-		concatw(dirToCreateFullPath, existingDir, dirToCreate);
+	
+	const wchar_t dirToCreateFullPath[2000];
+	int res;
+	wcscpy(dirToCreateFullPath, existingDir);
+	while (true) {
+		if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
+			partAfterExistingDir++;
+		}
+		int64_t ind = indexOfChar(partAfterExistingDir, '\\');
+		if (ind == -1) {
+			ind = indexOfChar(partAfterExistingDir, '/');
+		}
+		if (ind <= 0) {
+			break;
+		}			
+		concatSubstring(dirToCreateFullPath, partAfterExistingDir, 0, ind + 1);
 
-		int res = _wmkdir(dirToCreateFullPath);
-		//if res = err  etc
-		createMissingDirs(fullPath, dirToCreateFullPath);
+		res = _wmkdir(dirToCreateFullPath);
+		partAfterExistingDir += (ind + 1);
+		//if res = err  the dir already existed which is fine
 	}
 }
 
@@ -651,7 +666,7 @@ void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, bool
 	for (int i = 0; i < dirInfo.count; i++) {
 	
 		createMissingDirs(filenames[i].name, dir);
-		printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
+		//printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
 		uint64_t equalIndex = filenames[i].equalSizeNumber;
 		if (equalIndex != UINT64_MAX) {
 			printf("\n  OOOOOOOOOOOOOOOOOOOOOOOOO EQUAL FOUND!!");

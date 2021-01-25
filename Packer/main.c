@@ -85,14 +85,14 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
-	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 160000);
+	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 7000000);
 
 	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
 	profile->sizeMinForCanonical = doFuzz(profile->sizeMinForCanonical, best.sizeMinForCanonical, 10, 700);
 	profile->sizeMinForSeqPack = doFuzz(profile->sizeMinForSeqPack, best.sizeMinForSeqPack, 10, 93000);
 	profile->sizeMaxForSuperslim = doFuzz(profile->sizeMaxForSuperslim, best.sizeMaxForSuperslim, 10, 100000);
 
-	//profile->archiveType = doFuzz(profile->archiveType, best.archiveType, 0, 2);		
+	profile->archiveType = doFuzz(profile->archiveType, best.archiveType, 0, 2);		
 
 }
 
@@ -595,19 +595,19 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 97,
-			.twobyte_ratio = 69,
-			.recursive_limit = 305,
-			.twobyte_threshold_max = 6095,
-			.twobyte_threshold_divide = 3840,
-			.twobyte_threshold_min = 862,
-			.seqlenMinLimit3 = 210,
-			.blockSizeMinus = 33,
-			.winsize = 160000,
-			.sizeMaxForCanonicalHeaderPack = 289,
-			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 527,
-			.sizeMaxForSuperslim = 56483,
+			.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 800000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
 			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
@@ -616,10 +616,10 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir =
-	    //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+	    L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"c:/test/test13wequal";
 		//L"c:/test/test6";
-	   L"c:/test/47";
+	  //L"c:/test/47";
 	
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
