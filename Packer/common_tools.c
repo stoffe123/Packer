@@ -142,14 +142,6 @@ void get_randw(const wchar_t* s) {
 	int_to_stringw(s, filename_count++);
 }
 
-void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
-	
-	wchar_t number[40] = { 0 };
-	get_randw(number);
-	concat3w(dst, TEMP_DIRW, s, number);
-
-}
-
 void concat(const char* dst, const char* s1, const char* s2) {
 	const size_t s1_length = strlen(s1);
 	strcpy(dst, s1);

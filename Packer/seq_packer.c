@@ -279,7 +279,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	bool superslim = false;
 	uint64_t size_org = getMemSize(infil);
 	assert(size_org > 0, "size_org negative in seqpacker");
-	assert(size_org < BLOCK_SIZE, "size_org larger than BLOCK_SIZE in seqpacker");
+	assert(size_org <= BLOCK_SIZE, "size_org larger than BLOCK_SIZE in seqpacker");
 	reallocMem(infil, size_org * 3);
 	int64_t seqlenMinLimit3 = profile.seqlenMinLimit3;
 	if (seqlenMinLimit3 > 255) {

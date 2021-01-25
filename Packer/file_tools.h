@@ -41,4 +41,8 @@ void copyFile(wchar_t* src, wchar_t* dst);
 
 void createMissingDirs(wchar_t* fullPath, wchar_t* existingDir);
 
+void get_temp_filew(const wchar_t* dst, const wchar_t* s);
+
+FILE* openTempFile(const wchar_t* dst, const wchar_t* s);
+
 #endif

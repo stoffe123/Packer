@@ -73,8 +73,6 @@ void int_to_stringw(const wchar_t* dst, int64_t i);
 
 void get_randw(const wchar_t* dst);
 
-void get_temp_filew(const wchar_t* dst, const wchar_t* s);
-
 void toUni(const wchar_t* dst, const char* string);
 
 bool equals(const char* s1, const char* s2);

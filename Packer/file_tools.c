@@ -347,3 +347,14 @@ void createMissingDirs(wchar_t* fullPath, wchar_t* existingDir) {
 	}
 }
 
+void get_temp_filew(const wchar_t* dst, const wchar_t* s) {
+	wchar_t number[40];
+	get_randw(number);
+	concat3w(dst, TEMP_DIRW, s, number);
+}
+
+FILE* openTempFile(const wchar_t* dst, const wchar_t* s) {
+	get_temp_filew(dst, s);
+	return openWrite(dst);
+}
+

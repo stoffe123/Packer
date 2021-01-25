@@ -633,9 +633,6 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 
 	uint64_t nrOfBlobs = determineNumberOfBlobs(dirInfo);
 
-	const wchar_t masterFilename[200] = { 0 };
-	get_temp_filew(masterFilename, L"archive_unpack_semisep_master");
-
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t size;
@@ -661,7 +658,9 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	fclose(in);
 
 	// Add unpacked files together
-	FILE* out = openWrite(masterFilename);
+	const wchar_t masterFilename[200] = { 0 };	
+	FILE* out = openTempFile(masterFilename, L"archive_unpack_semisep_master");
+
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		WaitForSingleObject(blobs[i].handle, INFINITE);
 		lockBlobMutex();

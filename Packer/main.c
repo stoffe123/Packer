@@ -595,20 +595,20 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 98,
-			.twobyte_ratio = 78,
-			.recursive_limit = 239,
-			.twobyte_threshold_max = 6465,
-			.twobyte_threshold_divide = 3538,
-			.twobyte_threshold_min = 974,
-			.seqlenMinLimit3 = 196,
-			.blockSizeMinus = 31,
-			.winsize = 950000,
-			.sizeMaxForCanonicalHeaderPack = 278,
-			.sizeMinForSeqPack = 1890,
-			.sizeMinForCanonical = 562,
-			.sizeMaxForSuperslim = 47393,
-			.archiveType = 0 // 0 solid, 1 semiseparate 2 separate
+			.rle_ratio = 99,
+			.twobyte_ratio = 80,
+			.recursive_limit = 240,
+			.twobyte_threshold_max = 3280,
+			.twobyte_threshold_divide = 2859,
+			.twobyte_threshold_min = 968,
+			.seqlenMinLimit3 = 117,
+			.blockSizeMinus = 0,
+			.winsize = 1450000,
+			.sizeMaxForCanonicalHeaderPack = 390,
+			.sizeMinForSeqPack = 10,
+			.sizeMinForCanonical = 593,
+			.sizeMaxForSuperslim = 56831,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
 	copyProfile(&profile, &bestProfile);
