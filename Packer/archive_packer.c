@@ -251,11 +251,7 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 				size++;
 			}
 		}
-		memWrite(&multiByteStr, size, out);
-
-		//wprintf(L"\n");
-		//use 8-bit size and special value for 16-bit size
-		
+		memWrite(&multiByteStr, size, out);		
 	}
 	//memfileToFile(out, L"c:/test/memmm"); myExit();
 	return out;
