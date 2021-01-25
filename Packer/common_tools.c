@@ -271,3 +271,25 @@ void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos) {
 	*bytes |= ((uint64_t)byte << (8 * pos)); // Set the new byte
 }
 
+
+
+void substring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
+{
+	// get length of the destination string
+	uint64_t len = n - m;
+
+	// start with m'th char and copy 'len' chars into destination
+	wcsncpy(dst, (src + m), len);
+	dst[len] = 0;
+}
+
+void concatSubstring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
+{
+	// get length of the destination string
+	uint64_t len = n - m;
+	uint64_t last = wcslen(dst) + len;
+	// start with m'th char and copy 'len' chars into destination
+	wcsncpy(dst + wcslen(dst), (src + m), len);
+	dst[last] = 0;
+}
+

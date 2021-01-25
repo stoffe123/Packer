@@ -89,5 +89,9 @@ uint8_t getByteAtPos(uint64_t bytes, int pos);
 
 void setByteAtPos(uint64_t* bytes, uint8_t byte, int pos);
 
+void substring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n);
+
+void concatSubstring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n);
+
 
 #endif

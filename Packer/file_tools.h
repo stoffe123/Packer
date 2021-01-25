@@ -39,4 +39,6 @@ uint64_t getSizeLeftToRead(const FILE* f);
 
 void copyFile(wchar_t* src, wchar_t* dst);
 
+void createMissingDirs(wchar_t* fullPath, wchar_t* existingDir);
+
 #endif

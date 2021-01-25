@@ -316,3 +316,34 @@ uint64_t getFileSizeFromName(wchar_t* name) {
 	return res;
 }
 
+/*
+creates the dirs in fullPath
+that are not in existingDir(which should be a prefix of fullPath)
+
+TODO: extract to file tools
+*/
+void createMissingDirs(wchar_t* fullPath, wchar_t* existingDir) {
+	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
+
+	const wchar_t dirToCreateFullPath[2000];
+	int res;
+	wcscpy(dirToCreateFullPath, existingDir);
+	while (true) {
+		if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
+			partAfterExistingDir++;
+		}
+		int64_t ind = indexOfChar(partAfterExistingDir, '\\');
+		if (ind == -1) {
+			ind = indexOfChar(partAfterExistingDir, '/');
+		}
+		if (ind <= 0) {
+			break;
+		}
+		concatSubstring(dirToCreateFullPath, partAfterExistingDir, 0, ind + 1);
+
+		res = _wmkdir(dirToCreateFullPath);
+		partAfterExistingDir += (ind + 1);
+		//if res = err  the dir already existed which is fine
+	}
+}
+

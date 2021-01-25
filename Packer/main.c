@@ -603,12 +603,12 @@ void testarchive() {
 			.twobyte_threshold_min = 974,
 			.seqlenMinLimit3 = 196,
 			.blockSizeMinus = 31,
-			.winsize = 800000,
+			.winsize = 950000,
 			.sizeMaxForCanonicalHeaderPack = 278,
 			.sizeMinForSeqPack = 1890,
 			.sizeMinForCanonical = 562,
 			.sizeMaxForSuperslim = 47393,
-			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
+			.archiveType = 0 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
 	copyProfile(&profile, &bestProfile);

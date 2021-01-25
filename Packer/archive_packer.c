@@ -150,27 +150,6 @@ uint64_t myCodingToWchar(FILE* in, wchar_t* wcharBuf) {
 	return UINT64_MAX;
 }
 
-
-void substring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
-{
-	// get length of the destination string
-	uint64_t len = n - m;
-
-	// start with m'th char and copy 'len' chars into destination
-	wcsncpy(dst, (src + m), len);
-	dst[len] = 0;
-}
-
-void concatSubstring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
-{
-	// get length of the destination string
-	uint64_t len = n - m;
-	uint64_t last = wcslen(dst) + len;
-	// start with m'th char and copy 'len' chars into destination
-	wcsncpy(dst + wcslen(dst), (src + m), len);
-	dst[last] = 0;
-}
-
 void diffSizes(fileListAndCount_t dirInfo) {
 	file_t* fileList = dirInfo.fileList;
 	uint64_t last = 0;
@@ -279,37 +258,6 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	}
 	//memfileToFile(out, L"c:/test/memmm"); myExit();
 	return out;
-}
-
-/*
-creates the dirs in fullPath
-that are not in existingDir(which should be a prefix of fullPath)
-
-TODO: extract to file tools 
-*/
-void createMissingDirs(wchar_t* fullPath, wchar_t* existingDir) {
-	wchar_t* partAfterExistingDir = fullPath + wcslen(existingDir);
-	
-	const wchar_t dirToCreateFullPath[2000];
-	int res;
-	wcscpy(dirToCreateFullPath, existingDir);
-	while (true) {
-		if (partAfterExistingDir[0] == '\\' || partAfterExistingDir[0] == '/') {
-			partAfterExistingDir++;
-		}
-		int64_t ind = indexOfChar(partAfterExistingDir, '\\');
-		if (ind == -1) {
-			ind = indexOfChar(partAfterExistingDir, '/');
-		}
-		if (ind <= 0) {
-			break;
-		}			
-		concatSubstring(dirToCreateFullPath, partAfterExistingDir, 0, ind + 1);
-
-		res = _wmkdir(dirToCreateFullPath);
-		partAfterExistingDir += (ind + 1);
-		//if res = err  the dir already existed which is fine
-	}
 }
 
 void tmpDirNameOf(const wchar_t* tmpBlocked, const wchar_t* name, const wchar_t* dir) {
