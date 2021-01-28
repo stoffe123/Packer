@@ -228,12 +228,12 @@ void testmeta() {
 			concat_int(src, src, kk + 101);			
 			const wchar_t* unpackedFilename = L"C:/test/unp";
 			const wchar_t* packed_name = L"c:/test/packed.bin";
-			long long size_org = getFileSizeFromName(src);
+			long long size_org = getFileSizeByName(src);
 			printf("\n Packing %s      length:%d", src, size_org);
 			int cl = clock();
 			//multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
 				
-			long long size_packed = getFileSizeFromName(packed_name);
+			long long size_packed = getFileSizeByName(packed_name);
 			acc_size_packed += size_packed;
 			if (isEarlyBreak(best_size, acc_size_packed, totalTime, timeLimit)) {
 				earlyBreak = true;
@@ -254,13 +254,13 @@ void testmeta() {
 
 			concat(src, metaDir, "offsets");
 			concat_int(src, src, kk + 101);
-			size_org = getFileSizeFromName(src);
+			size_org = getFileSizeByName(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 			
 			//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 			int pack_time = (clock() - cl);
 		
-			size_packed = getFileSizeFromName(packed_name);
+			size_packed = getFileSizeByName(packed_name);
 			acc_size_packed += size_packed;
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
 				earlyBreak = true;
@@ -280,13 +280,13 @@ void testmeta() {
 
 			concat(src, metaDir, "distances");
 			concat_int(src, src, kk + 101);
-			size_org = getFileSizeFromName(src);
+			size_org = getFileSizeByName(src);
 			printf("\n Packing... %s with length:%d", src, size_org);
 
 			//multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
 			pack_time = (clock() - cl);
 
-			size_packed = getFileSizeFromName(packed_name);
+			size_packed = getFileSizeByName(packed_name);
 			acc_size_packed += size_packed;
 			
 			if (isEarlyBreak(best_size, acc_size_packed, before_suite, timeLimit)) {
@@ -338,16 +338,138 @@ void testmeta() {
 
 //-------------------------------------------------------------------------------------------
 
+void blockpack_onefile() {
+
+	int before_suite = clock();
+
+	const wchar_t* src =
+
+		L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/En händig man på turne.mpg";
+	    //L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/Documentary The Story of Bryan Adams.avi";
+		//L"c:/test/book_med.txt";
+	
+	const wchar_t* unpacked = L"C:/test/unp";
+
+	const wchar_t* packed = L"c:/test/packed.bin";
+
+	uint64_t size_org = getFileSizeByName(src);
+
+	printf("\n Packing... %ls with length:%llu", src, size_org);
+
+	
+	packProfile profile = {
+			.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 500,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 100000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
+	};
+
+	packProfile seqlenProfile = {
+			.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 160000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
+	},
+
+		offsetProfile = {
+			.rle_ratio = 98,
+				.twobyte_ratio = 78,
+				.recursive_limit = 239,
+				.twobyte_threshold_max = 6465,
+				.twobyte_threshold_divide = 3538,
+				.twobyte_threshold_min = 974,
+				.seqlenMinLimit3 = 196,
+				.blockSizeMinus = 31,
+				.winsize = 160000,
+				.sizeMaxForCanonicalHeaderPack = 278,
+				.sizeMinForSeqPack = 1890,
+				.sizeMinForCanonical = 562,
+				.sizeMaxForSuperslim = 47393,
+				.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
+	},
+
+		distanceProfile = {
+	.rle_ratio = 98,
+			.twobyte_ratio = 78,
+			.recursive_limit = 239,
+			.twobyte_threshold_max = 6465,
+			.twobyte_threshold_divide = 3538,
+			.twobyte_threshold_min = 974,
+			.seqlenMinLimit3 = 196,
+			.blockSizeMinus = 31,
+			.winsize = 160000,
+			.sizeMaxForCanonicalHeaderPack = 278,
+			.sizeMinForSeqPack = 1890,
+			.sizeMinForCanonical = 562,
+			.sizeMaxForSuperslim = 47393,
+			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate'
+	};
+	
+	int cl = clock();
+
+	block_pack(src, packed, profile);
+	int pack_time = (clock() - cl);
+
+
+	uint64_t size_packed = getFileSizeByName(packed);
+
+
+	printf("\n size_packed %llu", size_packed);
+
+
+	cl = clock();
+	block_unpack(packed, unpacked);
+	int unpack_time = (clock() - cl);
+	//printf("\n Unpacking finished time it took: %d", unpack_time);
+	printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+
+	wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
+
+	printf("\n\n Pack time %d", pack_time);
+	printf("\n\n Unpack time %d", unpack_time);
+
+	
+	printf("\n\n Comparing files!");
+
+	if (filesEqual(src, unpacked)) {
+		printf("\n ****** SUCCESS ****** (equal)\n");
+	}
+	else {
+		printf("\n Files are not equal!!");
+		exit(1);
+	}
+}//onefile
+
 void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"c:/test/book_med.txt";
+	const wchar_t* src = L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/En händig man på turne.mpg";
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 
-	long long size_org = getFileSizeFromName(src);
+	long long size_org = getFileSizeByName(src);
 
 	wprintf(L"\n Packing... %s with length:%d", src, size_org);
 
@@ -434,7 +556,7 @@ void onefile() {
 
 	size_packed = getMemSize(packed);
 	
-	printf("\n size_packed %d", size_packed);
+	printf("\n size_packed %llu", size_packed);
 	//memfileToFile(packed.main, L"c:/test/packed.bin");
 	int pack_time = (clock() - cl);
 		
@@ -536,9 +658,9 @@ void test16() {
 
 			const wchar_t* packed_name = L"c:/test/packed.bin";
 
-			uint64_t size_org = getFileSizeFromName(src);
+			uint64_t size_org = getFileSizeByName(src);
 			printf("\n------------------------------------------------");
-			wprintf(L"\n Packing... %s with length:%d", src, size_org);
+			wprintf(L"\n Packing... %s with length:%llu", src, size_org);
 
 			uint64_t beforePack = clock();
 
@@ -548,8 +670,8 @@ void test16() {
 			uint64_t pack_time = (clock() - beforePack);
 			totalTime += pack_time;
 			//printf("\n Packing finished time it took: %d", pack_time);
-			uint64_t size_packed = getFileSizeFromName(packed_name);
-			printf("\n packed size %d", size_packed);
+			uint64_t size_packed = getFileSizeByName(packed_name);
+			printf("\n packed size %llu", size_packed);
 			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 			acc_size_packed += size_packed;
@@ -559,7 +681,7 @@ void test16() {
 			}
 			acc_size_org += size_org;
 
-			printf("\n Accumulated size %lu kb", acc_size_packed / 1024);
+			printf("\n Accumulated size %llu kb", acc_size_packed / 1024);
 
 			uint64_t beforeUnpack = clock();
 			if (unpack) {
@@ -569,7 +691,7 @@ void test16() {
 				uint64_t unpack_time = (clock() - beforeUnpack);
 				totalTime += unpack_time;
 				//printf("\n Unpacking finished time it took: %d", unpack_time);
-				printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+				printf("\nTimes %llu/%llu/%llu", pack_time, unpack_time, pack_time + unpack_time);
 
 				printf("\n\n Comparing files!");
 				if (filesEqual(src, dst)) {
@@ -633,7 +755,7 @@ void testarchive() {
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
 		int pack_time = (clock() - cl);
-		uint64_t acc_size_packed = getFileSizeFromName(packed_name);
+		uint64_t acc_size_packed = getFileSizeByName(packed_name);
 
 		printf("\n Accumulated size %lu kb", (int)(acc_size_packed / 1024));
 
@@ -654,8 +776,8 @@ void testarchive() {
 			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
 		}
 		else {
-			printf("\n Too long time %lld", totalTime);
-			printf("\n size was %lld", acc_size_packed);
+			printf("\n Too long time %llu", totalTime);
+			printf("\n size was %llu", acc_size_packed);
 			printProfile(&profile);
 			printf("\n --------------------");
 			printf("\n Current best profile, size %d", (int)best_size);
@@ -678,6 +800,6 @@ int main()
 	srand((unsigned)time(&t));
 	//testmeta();
     //test16();
-	testarchive();
-    //onefile();
+	//testarchive();
+    blockpack_onefile();
 }

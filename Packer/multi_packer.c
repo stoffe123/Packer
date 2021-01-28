@@ -269,6 +269,11 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 	uint64_t source_size = getMemSize(src);
 	printf("\n --------- Multi pack started of file sized %d -------------", source_size);
 
+	if (source_size > BLOCK_SIZE) {
+		printf("\n Can't multiPack file because it is larger than BLOCK_SIZE size was: %lld", source_size);
+		myExit();
+	}
+
 	uint8_t pack_type = 0;
 
 	bool canonicalHeaderCase = (profile.sizeMinForCanonical == INT64_MAX);

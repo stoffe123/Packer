@@ -254,8 +254,8 @@ static int compareEndings(const wchar_t* s1, const wchar_t* s2) {
 			return -res;
 		}
 	}
-	uint64_t size1 = getFileSizeFromName(s1);
-	uint64_t size2 = getFileSizeFromName(s2);
+	uint64_t size1 = getFileSizeByName(s1);
+	uint64_t size2 = getFileSizeByName(s2);
 	if (size1 < size2) {
 		return 1;
 	}

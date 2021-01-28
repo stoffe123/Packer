@@ -65,7 +65,7 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 				//wprintf(L"\nstoreDirectoryFilenames: %d %s", j, sPath);
 				wcscpy(f.fileList[f.count].name, sPath);  // use filelist name instead of sPath all the way!
 				if (storeSizes) {
-					f.fileList[f.count].size = getFileSizeFromName(sPath);
+					f.fileList[f.count].size = getFileSizeByName(sPath);
 				} // if not solid the size of the packed file is written later anyway...
 				f.count++;
 
@@ -149,7 +149,7 @@ bool dirsEqual(const wchar_t* dir1, const wchar_t* dir2) {
 	uint64_t count2 = dirStruct.count;
 
 	if (count != count2) {
-		printf("\n dirs_equal: number of files differed... %lld %lld", count, count2);
+		printf("\n dirs_equal: number of files differed... %llu %llu", count, count2);
 		return false;
 	}
 	quickSort(fileList1, count);
@@ -301,7 +301,7 @@ uint64_t getSizeLeftToRead(const FILE* f) {
 }
 
 
-uint64_t getFileSizeFromName(wchar_t* name) {
+uint64_t getFileSizeByName(wchar_t* name) {
 	FILE* f;
 	errno_t err = _wfopen_s(&f, name, L"rb");
 	if (err != 0) {

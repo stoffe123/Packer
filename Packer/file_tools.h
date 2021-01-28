@@ -31,7 +31,7 @@ void copyTheRest(FILE* source_file, wchar_t* dest_filename);
 
 void appendFileToFile(FILE* main_file, wchar_t* append_filename);
 
-uint64_t getFileSizeFromName(wchar_t* name);
+uint64_t getFileSizeByName(wchar_t* name);
 
 uint64_t getFileSize(const FILE* f);
 

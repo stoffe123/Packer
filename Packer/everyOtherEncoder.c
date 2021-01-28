@@ -80,7 +80,7 @@ void everyOtherDecode(const wchar_t* src, const wchar_t* dest) {
 		myExit();
 		return;
 	}
-	uint64_t size = getFileSizeFromName(src);
+	uint64_t size = getFileSizeByName(src);
 	uint64_t pos1 = 0, pos2 = size / 2;
 
 	// start with pos2

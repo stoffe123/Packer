@@ -14,6 +14,8 @@
 #include <process.h>
 #include <inttypes.h>
 
+#define BLOCK_PACK_MAX_THREADS 35
+
 typedef struct blockChunk_t {
 	memfile* packed;
 	memfile* unpacked;
@@ -137,11 +139,32 @@ append_to_tar(FILE* utfil, memfile* src, uint32_t size, uint8_t packType) {
 
 //----------------------------------------------------------------------------------------
 
+void writeBlock(uint64_t i, FILE* utfil) {
+	WaitForSingleObject(blockChunks[i].handle, INFINITE);
+	lockBlockchunkMutex();
+	blockChunk_t blockChunk = blockChunks[i];
+	uint32_t size = blockChunk.size;
+	uint8_t packType = blockChunk.packType;
+	releaseBlockchunkMutex();
+
+	append_to_tar(utfil, blockChunk.packed, size, packType);
+
+	lockBlockchunkMutex();
+	freeMem(blockChunk.packed);
+	freeMem(blockChunk.unpacked);
+	releaseBlockchunkMutex();
+}
 
 void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, packProfile profile, bool closeInfil) {
 	uint64_t src_size = getSizeLeftToRead(infil);
-	printf("\n Entering block_pack_file_internal sizelefttoread=%d" , src_size);
+	uint64_t writtenCount = 0;
+	printf("\n Entering block_pack_file_internal sizelefttoread=%llu" , src_size);
 	uint64_t chunkSize, chunkNumber = 0;
+	bool closeAfter = false;
+	if (utfil == NULL) {
+		utfil = openWrite(dst);
+		closeAfter = true;
+	}
 	do {
 		read_size = BLOCK_SIZE - (profile.blockSizeMinus + 1) * (uint64_t)10000;
 
@@ -164,7 +187,7 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		blockChunks[chunkNumber].profile = profile;
 		releaseBlockchunkMutex();
 
-		printf("\n STARTING THREAD FOR MULTIPACK %" PRId64, chunkNumber);
+		printf("\n STARTING THREAD FOR MULTIPACK %llu", chunkNumber);
 		HANDLE handle = _beginthread(threadMultiPack, 0, &blockChunks[chunkNumber]);
 
 		lockBlockchunkMutex();
@@ -174,31 +197,18 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		if (chunkSize < read_size) {
 			size = 0;
 		}		
+		if (chunkNumber >= BLOCK_PACK_MAX_THREADS) {
+			writtenCount = chunkNumber - BLOCK_PACK_MAX_THREADS;
+			writeBlock(writtenCount, utfil);			
+		}
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
 	if (closeInfil) {
 		fclose(infil);	
 	}
-
-	bool closeAfter = false;
-	if (utfil == NULL) {
-		utfil = openWrite(dst);
-		closeAfter = true;
-	}
-	for (int i = 0; i < chunkNumber; i++) {
-		WaitForSingleObject(blockChunks[i].handle, INFINITE);
-		lockBlockchunkMutex();
-		blockChunk_t blockChunk = blockChunks[i];
-		uint32_t size = blockChunk.size;
-		uint8_t packType = blockChunk.packType;
-		releaseBlockchunkMutex();
-
-		append_to_tar(utfil, blockChunk.packed, size, packType);
-
-		lockBlockchunkMutex();		
-		freeMem(blockChunk.packed);
-		freeMem(blockChunk.unpacked);
-		releaseBlockchunkMutex();
+	
+	for (writtenCount++; writtenCount < chunkNumber; writtenCount++) {
+		writeBlock(writtenCount, utfil);
 	}	
 	if (closeAfter) {
 		fclose(utfil);

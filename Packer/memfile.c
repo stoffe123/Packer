@@ -127,7 +127,7 @@ void rewindMem(memfile* m) {
 }
 
 memfile* getMemfileFromFile(const wchar_t* filename) {
-	uint64_t fileSize = getFileSizeFromName(filename);	
+	uint64_t fileSize = getFileSizeByName(filename);	
 	memfile* m = getMemfile(fileSize + 1, filename);
 	FILE* infil = openRead(filename);
 	uint64_t size = fread(getBlock(m), 1, fileSize, infil);

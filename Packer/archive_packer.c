@@ -406,7 +406,7 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 		lockBlobMutex();
 		wchar_t* filename = blobs[i].filename;
 	
-		uint64_t size = getFileSizeFromName(filename);
+		uint64_t size = getFileSizeByName(filename);
 		releaseBlobMutex();
 
 		fwrite(&size, sizeof(uint64_t), 1, out);
@@ -440,7 +440,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 				tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
 			
 				block_pack(fileList[i].name, tmpBlocked, profile);
-				fileList[i].size = getFileSizeFromName(tmpBlocked);
+				fileList[i].size = getFileSizeByName(tmpBlocked);
 			//}
 			//else {
 			//	fileList[i].size = 0;
