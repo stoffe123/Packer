@@ -366,7 +366,7 @@ void blockpack_onefile() {
 			.twobyte_threshold_min = 974,
 			.seqlenMinLimit3 = 196,
 			.blockSizeMinus = 31,
-			.winsize = 100000,
+			.winsize = 1000000,
 			.sizeMaxForCanonicalHeaderPack = 278,
 			.sizeMinForSeqPack = 1890,
 			.sizeMinForCanonical = 562,

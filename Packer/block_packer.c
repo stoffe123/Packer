@@ -14,7 +14,7 @@
 #include <process.h>
 #include <inttypes.h>
 
-#define BLOCK_PACK_MAX_THREADS 35
+#define BLOCK_PACK_MAX_THREADS 17
 
 typedef struct blockChunk_t {
 	memfile* packed;
@@ -98,7 +98,7 @@ void threadMultiPack(void* pMyID)
 
 	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, prof, seqlenProfile,
 		offsetProfile, distanceProfile);
-
+	freeMem(bc->unpacked);
 	lockBlockchunkMutex();
 	bc->packType = packType;
 	bc->size = getMemSize(bc->packed);
@@ -149,9 +149,8 @@ void writeBlock(uint64_t i, FILE* utfil) {
 
 	append_to_tar(utfil, blockChunk.packed, size, packType);
 
-	lockBlockchunkMutex();
+	lockBlockchunkMutex();	
 	freeMem(blockChunk.packed);
-	freeMem(blockChunk.unpacked);
 	releaseBlockchunkMutex();
 }
 
@@ -197,9 +196,10 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		if (chunkSize < read_size) {
 			size = 0;
 		}		
-		if (chunkNumber >= BLOCK_PACK_MAX_THREADS) {
-			writtenCount = chunkNumber - BLOCK_PACK_MAX_THREADS;
-			writeBlock(writtenCount, utfil);			
+		if (chunkNumber >= BLOCK_PACK_MAX_THREADS) {		
+			if (chunkNumber > BLOCK_PACK_MAX_THREADS * 4 || chunkNumber % 2 == 0) {
+				writeBlock(writtenCount++, utfil);
+			}
 		}
 		
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
@@ -207,8 +207,8 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		fclose(infil);	
 	}
 	
-	for (writtenCount++; writtenCount < chunkNumber; writtenCount++) {
-		writeBlock(writtenCount, utfil);
+	while (writtenCount < chunkNumber) {
+		writeBlock(writtenCount++, utfil);
 	}	
 	if (closeAfter) {
 		fclose(utfil);
