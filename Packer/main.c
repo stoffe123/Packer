@@ -358,7 +358,7 @@ void blockpack_onefile() {
 
 	
 	packProfile profile = {
-			.rle_ratio = 98,
+			.rle_ratio = 75,
 			.twobyte_ratio = 78,
 			.recursive_limit = 500,
 			.twobyte_threshold_max = 6465,
@@ -800,6 +800,6 @@ int main()
 	srand((unsigned)time(&t));
 	//testmeta();
     //test16();
-	//testarchive();
-    blockpack_onefile();
+	testarchive();
+    //blockpack_onefile();
 }

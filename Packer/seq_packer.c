@@ -93,7 +93,7 @@ void out_seqlen(uint64_t seqlen) {
 	}
 }
 
-void convertMeta(memfile* file, unsigned long distance, pageCoding_t pageCoding) {
+void convertMeta(memfile* file, uint64_t distance, pageCoding_t pageCoding) {
 
 	uint8_t pages = pageCoding.pages;
 	uint64_t pageMax = calcPageMax(pageCoding);
@@ -120,7 +120,7 @@ void convertMeta(memfile* file, unsigned long distance, pageCoding_t pageCoding)
 	}
 	else {  // long range
 		if (!useLongRange) {
-			printf("\n Seqpacker: long range was needed but not set!! distance %llu pages %llu pagemax %llu when packing %ls",
+			printf("\n Seqpacker: long range was needed but not set!! distance %llu pages %d pagemax %llu when packing %ls",
 				distance, pages, pageMax, src_name);
 			exit(1);
 		}
@@ -250,7 +250,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 	syncMemSize(file);
 	uint64_t filesize = getMemSize(file);
 	if (bestSize != filesize) {
-		printf("\n   comparing %s meta file sizes ... %llu %llu when seqpacking file %ls", metaname, bestSize, filesize, src_name);
+		printf("\n   comparing %ls meta file sizes ... %u %llu when seqpacking file %ls", metaname, bestSize, filesize, src_name);
 		exit(1);
 	}
 	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
@@ -291,7 +291,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}
 	debug("\n seqlenMinLimit3=%llu", seqlenMinLimit3);
-	debug("\n superslim=%llu", superslim);
+	debug("\n superslim=%d", superslim);
 
 	uint64_t	offset,
 		winsize = profile.winsize,
@@ -310,7 +310,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	if (pass == 2) {
 
 		debug("\nWinsize: %llu", winsize);
-		debug("\nmax_seqlen: %llu", max_seqlen);
+		debug("\nmax_seqlen: %d", max_seqlen);
 
 		utfil.main = getMemfile(size_org * 3 + 1000, L"seqpacker_utfilmain");
 
@@ -338,13 +338,13 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		if (pass == 2) {
 			if ((buffer_endpos - buffer_pos) >= min_seq_len && (buffer_pos - real_absolute_end > 5)) {
 							
-				if (buffer_pos + winsize > real_absolute_end - min_seq_len) {
+			//	if (buffer_pos + winsize > real_absolute_end - min_seq_len) {
 
 					offset_max = (real_absolute_end - min_seq_len) - buffer_pos;
-				}
-				else {
-					offset_max = winsize;
-				}
+				//}
+				//else {
+			//		offset_max = winsize;
+			//	}
 
 				offset = 0;
 				int32_t nextChar_pos = buffer_pos, nextCh;
