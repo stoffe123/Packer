@@ -314,7 +314,7 @@ void quickSort(file_t* f, uint64_t size)
 }
 
 
-void writeDynamicSize(uint64_t s, FILE* out) {
+void writeDynamicSize16or32(uint64_t s, FILE* out) {
 	uint16_t new_s;
 	if (s < 65535) {
 		new_s = (uint16_t)s;

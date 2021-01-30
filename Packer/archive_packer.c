@@ -302,8 +302,10 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uin
 		exit(1);
 	}
 	//max size of header is UINT32_max
-	writeDynamicSize(headerSizesPackedSize, out);
-	writeDynamicSize(headerNamesPackedSize, out);
+	writeDynamicSize16or32(headerSizesPackedSize, out);
+
+	//TODO  not needed since you know number of files from before
+	writeDynamicSize16or32(headerNamesPackedSize, out);
 		
 	append_mem_to_file(out, sizesHeader);
 	append_mem_to_file(out, namesHeader);

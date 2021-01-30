@@ -717,19 +717,19 @@ void testarchive() {
 	
 	packProfile bestProfile,
 		profile = {
-			.rle_ratio = 85,
-			.twobyte_ratio = 82,
-			.recursive_limit = 289,
-			.twobyte_threshold_max = 3104,
-			.twobyte_threshold_divide = 2912,
-			.twobyte_threshold_min = 963,
-			.seqlenMinLimit3 = 70,
-			.blockSizeMinus = 0,
+			.rle_ratio = 72,
+			.twobyte_ratio = 78,
+			.recursive_limit = 151,
+			.twobyte_threshold_max = 9280,
+			.twobyte_threshold_divide = 3319,
+			.twobyte_threshold_min = 951,
+			.seqlenMinLimit3 = 146,
+			.blockSizeMinus = 101,
 			.winsize = 2350000,
-			.sizeMaxForCanonicalHeaderPack = 390,
-			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 547,
-			.sizeMaxForSuperslim = 61251,
+			.sizeMaxForCanonicalHeaderPack = 227,
+			.sizeMinForSeqPack = 11145,
+			.sizeMinForCanonical = 472,
+			.sizeMaxForSuperslim = 29023,
 			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
 	};
 	uint64_t time_limit = 1000;
@@ -738,9 +738,9 @@ void testarchive() {
     wchar_t* destDir = L"c:\\test\\archiveunp\\";
 	
 	wchar_t* source_dir =
-	    L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+	    //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"c:/test/test13wequal";
-		//L"c:/test/test6";
+		L"c:/test/test13";
 	  //L"c:/test/47";
 	
 	unsigned long long best_size = 0;
