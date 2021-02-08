@@ -23,17 +23,17 @@ __declspec(thread) static const wchar_t* src_name;
 
 __declspec(thread) static bool separate_files = false;
 
-__declspec(thread) static uint32_t nextChar[BLOCK_SIZE * 2],
+__declspec(thread) static uint32_t *nextChar,
 lastChar[LIMIT_24_BIT],
-distances[BLOCK_SIZE],
+*distances,
 distanceFreq[BLOCK_SIZE],
 distancesPos,
 
-offsets[BLOCK_SIZE],
+*offsets,
 offsetFreq[BLOCK_SIZE],
 offsetsPos,
 
-seqlens[BLOCK_SIZE],
+*seqlens,
 seqlenFreq[BLOCK_SIZE],
 seqlensPos;
 
@@ -153,7 +153,7 @@ uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqT
 
 	// 2 bytes
 	for (int i = lowestSpecial; i <= pagesMax; i++) {
-
+		//printf("\n i=%d", i);
 		size += (freqTable[i] * (uint64_t)2);
 		freqs += freqTable[i];
 
@@ -513,21 +513,22 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 
 
 
-void initGlobalArrays() {
+void initGlobalArrays(uint64_t size) {
+
+	size += 10;
+	
+	nextChar = calloc(size * 2, sizeof(uint32_t));
+	distances = calloc(size, sizeof(uint32_t));
+	offsets = calloc(size, sizeof(uint32_t));
+	seqlens =  calloc(size, sizeof(uint32_t));
+	
 	for (int i = 0; i < LIMIT_24_BIT; i++) {
 		lastChar[i] = INT32_MAX;
-	}
-	for (int i = 0; i < BLOCK_SIZE * 2; i++) {
-		nextChar[i] = 0;
-	}
-
+	}		
 	for (int i = 0; i < BLOCK_SIZE; i++) {
-		distances[i] = 0;
-		distanceFreq[i] = 0;
-		offsets[i] = 0;
-		offsetFreq[i] = 0;
-		seqlens[i] = 0;
 		seqlenFreq[i] = 0;
+		distanceFreq[i] = 0;
+		offsetFreq[i] = 0;
 	}
 	distancesPos = 0;
 	offsetsPos = 0;
@@ -537,7 +538,7 @@ void initGlobalArrays() {
 
 seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool sep) {
 	separate_files = sep;
-	initGlobalArrays();
+	initGlobalArrays(getMemSize(memToPack));
 	pack_internal(memToPack, 1, profile);
 
 	seqPackBundle packedBundle = pack_internal(memToPack, 2, profile);
@@ -564,6 +565,13 @@ seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool se
 			exit(1);
 		}
 		freeMem(unpackedMem);
+
+		free(nextChar);
+		free(distances);
+
+		free(offsets);
+
+		free(seqlens);
 	}
 	return packedBundle;
 }
