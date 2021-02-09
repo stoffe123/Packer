@@ -636,17 +636,13 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		uint64_t size;
 		fread(&size, sizeof(uint64_t), 1, in);
 
-		const wchar_t blobFilename[200] = { 0 };
-		get_temp_filew(blobFilename, L"archive_unpack_blob_semisep");
-
 		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
-
+		
 		lockBlobMutex();
-		wcscpy(blobs[i].filename, blobFilename);
+		get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");		
 		releaseBlobMutex();
 
-		copyFileChunkToFile(in, blobFilename, size);
-		//blockUnpackNameToFile(blobFilename, masterFile);		
+		copyFileChunkToFile(in, blobs[i].filename, size);
 
 		HANDLE handle = _beginthread(threadBlockUnPack, 0, &blobs[i]);
 		lockBlobMutex();
