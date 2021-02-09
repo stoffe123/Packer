@@ -19,6 +19,8 @@
 
 /* Global variables used in compressor */
 
+__declspec(thread) static uint64_t sourceSize, freqAlloc;
+
 __declspec(thread) static const wchar_t* src_name;
 
 __declspec(thread) static bool separate_files = false;
@@ -26,21 +28,24 @@ __declspec(thread) static bool separate_files = false;
 __declspec(thread) static uint32_t *nextChar,
 lastChar[LIMIT_24_BIT],
 *distances,
-distanceFreq[BLOCK_SIZE],
+*distanceFreq,
 distancesPos,
 
 *offsets,
-offsetFreq[BLOCK_SIZE],
+*offsetFreq,
 offsetsPos,
 
 *seqlens,
-seqlenFreq[BLOCK_SIZE],
+*seqlenFreq,
 seqlensPos;
 
 
 uint32_t calc24Bit(uint8_t ch, uint8_t ch1, uint8_t ch2) {
 	return ch + 256 * ch1 + 65536 * ch2;
 }
+
+
+
 
 
 void updateNextCharTable(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint32_t pos) {
@@ -96,7 +101,7 @@ void out_seqlen(uint64_t seqlen) {
 void convertMeta(memfile* file, uint64_t distance, pageCoding_t pageCoding) {
 
 	uint8_t pages = pageCoding.pages;
-	uint64_t pageMax = calcPageMax(pageCoding);
+	uint64_t pageMax = calcPageMax(pageCoding, sourceSize * 2);
 	uint64_t useLongRange = pageCoding.useLongRange;
 
 	if (distance <= pageMax) {
@@ -207,7 +212,7 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 	}
 
 	//determine highest meta value
-	uint64_t highestValue = BLOCK_SIZE - 1;
+	uint64_t highestValue = freqAlloc - 1;
 	while (highestValue > 0 && freqs[highestValue] == 0) {
 		highestValue--;
 	}
@@ -512,24 +517,22 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 }
 
 
+void initGlobalArrays() {
 
-void initGlobalArrays(uint64_t size) {
+	nextChar = calloc(sourceSize * 2, sizeof(uint32_t));
+	distances = calloc(sourceSize, sizeof(uint32_t));
+	offsets = calloc(sourceSize, sizeof(uint32_t));
+	seqlens =  calloc(sourceSize, sizeof(uint32_t));
 
-	size += 10;
+	freqAlloc = math_max(sourceSize * 2, 65536);
 	
-	nextChar = calloc(size * 2, sizeof(uint32_t));
-	distances = calloc(size, sizeof(uint32_t));
-	offsets = calloc(size, sizeof(uint32_t));
-	seqlens =  calloc(size, sizeof(uint32_t));
-	
+	distanceFreq = calloc(freqAlloc, sizeof(uint32_t));
+	offsetFreq = calloc(freqAlloc, sizeof(uint32_t));
+	seqlenFreq = calloc(freqAlloc, sizeof(uint32_t));
+
 	for (int i = 0; i < LIMIT_24_BIT; i++) {
 		lastChar[i] = INT32_MAX;
 	}		
-	for (int i = 0; i < BLOCK_SIZE; i++) {
-		seqlenFreq[i] = 0;
-		distanceFreq[i] = 0;
-		offsetFreq[i] = 0;
-	}
 	distancesPos = 0;
 	offsetsPos = 0;
 	seqlensPos = 0;	
@@ -537,11 +540,21 @@ void initGlobalArrays(uint64_t size) {
 
 
 seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool sep) {
+	sourceSize = getMemSize(memToPack);
 	separate_files = sep;
-	initGlobalArrays(getMemSize(memToPack));
+	initGlobalArrays();
 	pack_internal(memToPack, 1, profile);
 
 	seqPackBundle packedBundle = pack_internal(memToPack, 2, profile);
+
+	
+	free(offsetFreq);
+	free(distanceFreq);
+	free(seqlenFreq);
+	free(nextChar);
+	free(distances);
+	free(offsets);
+	free(seqlens);
 
 	if (DOUBLE_CHECK_PACK) {
 		wchar_t* name = getMemName(memToPack);
@@ -562,16 +575,10 @@ seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool se
 			printf("\n\n Profile used:");
 			printf("\n ------------------------");
 			printProfile(&profile);
+			freeMem(unpackedMem);
 			exit(1);
 		}
 		freeMem(unpackedMem);
-
-		free(nextChar);
-		free(distances);
-
-		free(offsets);
-
-		free(seqlens);
 	}
 	return packedBundle;
 }
