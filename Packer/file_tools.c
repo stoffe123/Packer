@@ -240,7 +240,7 @@ void copyFileChunkToFile(FILE* source_file, wchar_t* dest_filename, uint64_t siz
 	FILE* out = openWrite(dest_filename);
 	//printf("\n starting  ..");
 	uint8_t ch;
-	for (int i = 0; i < size_to_copy; i++) {
+	for (uint64_t i = 0; i < size_to_copy; i++) {
 		size_t bytes_got = fread(&ch, 1, 1, source_file);
 		if (bytes_got == 0) {
 			break;

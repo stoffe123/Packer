@@ -322,17 +322,15 @@ uint64_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 
 	bool breakAndCreateBlob;
 	for (int i = 0; i < count; i++) {
-		wchar_t* filename = fileList[i].name;
-		//printf("\n%ls of size: %lld", filename, fileList[i].size);
-		getFileExtension(ext, filename);
-		if (i == count - 1) {
-			breakAndCreateBlob = true;
+		breakAndCreateBlob = false;
+		if (fileList[i].equalSizeNumber == UINT64_MAX && i < count - 1) {
+				wchar_t* filename = fileList[i].name;
+				//printf("\n%ls of size: %lld", filename, fileList[i].size);
+				getFileExtension(ext, filename);
+				getFileExtension(next_ext, fileList[i + 1].name);
+				breakAndCreateBlob = !equalsw(next_ext, ext);			
 		}
-		else {
-			getFileExtension(next_ext, fileList[i + 1].name);
-			breakAndCreateBlob = !equalsw(next_ext, ext);
-		}
-		if (breakAndCreateBlob) {
+		if (breakAndCreateBlob || (i == count - 1)) {
 			//pack and flush file and start over	
 			blobCount++;					
 		}
@@ -374,8 +372,10 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 			}
 			printf("\n%ls of size: %lld", filename, fileList[i].size);
 			appendFileToFile(blobFile, filename);
-			getFileExtension(next_ext, fileList[i + 1].name);
-			breakAndCreateBlob = !equalsw(next_ext, ext);
+			if (i < count - 1) {
+				getFileExtension(next_ext, fileList[i + 1].name);
+				breakAndCreateBlob = !equalsw(next_ext, ext);
+			}
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
 			//pack and flush file and start over
@@ -403,15 +403,16 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 		}
 	}
 
-	for (int i = 0; i < blobCount; i++) {
+	for (uint64_t i = 0; i < blobCount; i++) {
 		WaitForSingleObject(blobs[i].handle, INFINITE);
 		lockBlobMutex();
 		wchar_t* filename = blobs[i].filename;
 	
 		uint64_t size = getFileSizeByName(filename);
 		releaseBlobMutex();
-
-		fwrite(&size, sizeof(uint64_t), 1, out);
+		if (i < blobCount - 1) {
+			fwrite(&size, sizeof(uint64_t), 1, out);
+		}
 		appendFileToFile(out, filename);
 		_wremove(filename);
 	}
@@ -634,7 +635,12 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t size;
-		fread(&size, sizeof(uint64_t), 1, in);
+		if (i < nrOfBlobs - 1) {
+			fread(&size, sizeof(uint64_t), 1, in);
+		}
+		else {
+			size = UINT64_MAX;
+		}
 
 		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
 		
