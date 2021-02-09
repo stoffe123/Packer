@@ -302,10 +302,10 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uin
 		exit(1);
 	}
 	//max size of header is UINT32_max
-	writeDynamicSize16or32(headerSizesPackedSize, out);
+	writeDynamicSize16or64(headerSizesPackedSize, out);
 
 	//TODO  not needed since you know number of files from before
-	writeDynamicSize16or32(headerNamesPackedSize, out);
+	writeDynamicSize16or64(headerNamesPackedSize, out);
 		
 	append_mem_to_file(out, sizesHeader);
 	append_mem_to_file(out, namesHeader);
@@ -411,7 +411,7 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 		uint64_t size = getFileSizeByName(filename);
 		releaseBlobMutex();
 		if (i < blobCount - 1) {
-			fwrite(&size, sizeof(uint64_t), 1, out);
+			writeDynamicSize32or64(size, out);			
 		}
 		appendFileToFile(out, filename);
 		_wremove(filename);
@@ -636,13 +636,13 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t size;
 		if (i < nrOfBlobs - 1) {
-			fread(&size, sizeof(uint64_t), 1, in);
+			size = readDynamicSize32or64(in);
 		}
 		else {
 			size = UINT64_MAX;
 		}
 
-		printf("\narchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
+		printf("\n ArchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
 		
 		lockBlobMutex();
 		get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");		
@@ -689,8 +689,8 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	fread(&archiveType, 1, 1, in);
 	printf("\n Archive type: %d", archiveType);
 	
-	uint64_t headerSizesPackedSize = readDynamicSize(in);
-	uint64_t headerNamesPackedSize = readDynamicSize(in); 
+	uint64_t headerSizesPackedSize = readDynamicSize16or64(in);
+	uint64_t headerNamesPackedSize = readDynamicSize16or64(in); 
 				
 	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize, archiveType);
 	readPackedNamesHeader(in, dir, headerNamesPackedSize, &fileList);	

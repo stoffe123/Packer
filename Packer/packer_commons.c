@@ -314,20 +314,33 @@ void quickSort(file_t* f, uint64_t size)
 }
 
 
-void writeDynamicSize16or32(uint64_t s, FILE* out) {
+void writeDynamicSize16or64(uint64_t s, FILE* out) {
 	uint16_t new_s;
-	if (s < 65535) {
+	if (s < UINT16_MAX) {
 		new_s = (uint16_t)s;
 		fwrite(&new_s, sizeof(uint16_t), 1, out);
 	}
 	else {
-		new_s = 65535;
+		new_s = UINT16_MAX;
 		fwrite(&new_s, sizeof(uint16_t), 1, out);
 		fwrite(&s, sizeof(uint64_t), 1, out);
 	}
 }
 
-uint64_t readDynamicSize(FILE* in) {
+void writeDynamicSize32or64(uint64_t s, FILE* out) {
+	uint32_t new_s;
+	if (s < UINT32_MAX) {
+		new_s = (uint32_t)s;
+		fwrite(&new_s, sizeof(uint32_t), 1, out);
+	}
+	else {
+		new_s = UINT32_MAX;
+		fwrite(&new_s, sizeof(uint32_t), 1, out);
+		fwrite(&s, sizeof(uint64_t), 1, out);
+	}
+}
+
+uint64_t readDynamicSize16or64(FILE* in) {
 	uint16_t new_s;
 	fread(&new_s, sizeof(uint16_t), 1, in);
 	if (new_s < 65535) {
@@ -337,5 +350,17 @@ uint64_t readDynamicSize(FILE* in) {
 	fread(&res, sizeof(uint64_t), 1, in);
 	return res;
 }
+
+uint64_t readDynamicSize32or64(FILE* in) {
+	uint32_t new_s;
+	fread(&new_s, sizeof(uint32_t), 1, in);
+	if (new_s < UINT32_MAX) {
+		return (uint64_t)new_s;
+	}
+	uint64_t res;
+	fread(&res, sizeof(uint64_t), 1, in);
+	return res;
+}
+
 
 

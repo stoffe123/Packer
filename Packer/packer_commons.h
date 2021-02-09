@@ -68,8 +68,12 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 
 memfile* unpackByKind(const wchar_t* kind, memfile* tmp);
 
-void writeDynamicSize16or32(uint64_t s, FILE* out);
+void writeDynamicSize16or64(uint64_t s, FILE* out);
 
-uint64_t readDynamicSize(FILE* in);
+void writeDynamicSize32or64(uint64_t s, FILE* out);
+
+uint64_t readDynamicSize16or64(FILE* in);
+
+uint64_t readDynamicSize32or64(FILE* in);
 
 #endif
