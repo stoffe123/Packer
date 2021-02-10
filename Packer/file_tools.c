@@ -40,7 +40,7 @@ fileListAndCount_t storeDirectoryFilenamesInternal(const wchar_t* sDir, fileList
 				wsprintf(sPath, L"%s%s", sDir, fdFile.cFileName);
 			}
 			else {*/
-			wsprintf(sPath, L"%s\\%s", sDir, fdFile.cFileName);
+			wsprintf(sPath, L"%s/%s", sDir, fdFile.cFileName);
 			//}
 
 			//Is the entity a File or Folder? 

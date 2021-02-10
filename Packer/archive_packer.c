@@ -311,14 +311,17 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uin
 	append_mem_to_file(out, namesHeader);
 }
 
-uint64_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
+uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
 	uint64_t blobCount = 0;
+	
+	uint64_t* res = calloc(count + 1, sizeof(uint64_t));
 
 	wchar_t ext[20] = { 0 };
 	wchar_t next_ext[20] = { 0 };
+	int noOfFilesInBlobCount = 0;
 
 	bool breakAndCreateBlob;
 	for (int i = 0; i < count; i++) {
@@ -328,19 +331,30 @@ uint64_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 				//printf("\n%ls of size: %lld", filename, fileList[i].size);
 				getFileExtension(ext, filename);
 				getFileExtension(next_ext, fileList[i + 1].name);
-				breakAndCreateBlob = !equalsw(next_ext, ext);			
+				breakAndCreateBlob = !equalsw(next_ext, ext);	
+				if (!breakAndCreateBlob) {
+					noOfFilesInBlobCount++;
+				}
 		}
-		if (breakAndCreateBlob || (i == count - 1)) {
-			//pack and flush file and start over	
-			blobCount++;					
+		if (breakAndCreateBlob || (i == count - 1)) {						
+			printf("\n BLOB nr %d FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
+			blobCount++;	
+			if (noOfFilesInBlobCount == 0) {
+				res[blobCount] = i;
+			}
+			else {
+				res[blobCount] = UINT64_MAX;
+			}
+			noOfFilesInBlobCount = 0;			
 		}
 	}
-	return blobCount;
+	res[0] = blobCount;
+	return res;
 }
 
 void getNewBlobFilename(wchar_t* blobFilename, wchar_t* name, wchar_t* ext) {
 	wcscpy(name, L"archivepacker_semisepblob_");
-	wcscat(name, ext);
+	//wcscat(name, ext);   // an extension can contain a slash and that makes havoc !! 
 	get_temp_filew(blobFilename, name);
 }
 
@@ -355,6 +369,7 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 
 	const wchar_t blobFilename[200] = { 0 };
 	const wchar_t name[200] = { 0 };
+	int noOfFilesInBlobCount = 0;
 
 	uint64_t blobCount = 0;
 	bool breakAndCreateBlob;
@@ -375,6 +390,9 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 			if (i < count - 1) {
 				getFileExtension(next_ext, fileList[i + 1].name);
 				breakAndCreateBlob = !equalsw(next_ext, ext);
+				if (!breakAndCreateBlob) {
+					noOfFilesInBlobCount++;
+				}
 			}
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
@@ -395,6 +413,8 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 					
 			printf("\n writing blob nr %llu", blobCount);
 			blobCount++;
+			printf("\n BLOB FOUND NOoFfILES=%d", noOfFilesInBlobCount);
+			noOfFilesInBlobCount = 0;
 			//printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);	
 			if (i < count - 1) {
 				getNewBlobFilename(blobFilename, name, next_ext);
@@ -560,7 +580,13 @@ void readNamesHeader(FILE* in, wchar_t* dir, fileListAndCount_t* dirInfo) {
 		}
 		*/
 		wcscpy(filenames[i].name, dir);
-		wcscat(filenames[i].name, temp_wstr);
+		wchar_t* lastAdd = temp_wstr;
+		if (dir[wcslen(dir) - 1] == '/' || dir[wcslen(dir) - 1] == '\\') {
+			if (temp_wstr[0] == '/' || temp_wstr[0] == '\\') {
+				lastAdd++;
+			}
+		}
+		wcscat(filenames[i].name, lastAdd);
 		printf("\n result: %ls %llu", filenames[i].name, filenames[i].size);
 	
 		i++;
@@ -630,7 +656,14 @@ void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, bool
 
 void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
 
-	uint64_t nrOfBlobs = determineNumberOfBlobs(dirInfo);
+	uint64_t* blobsInfoArr  = determineNumberOfBlobs(dirInfo);
+	uint64_t nrOfBlobs = blobsInfoArr[0];
+	file_t* filenames = dirInfo.fileList;
+
+	for (int i = 0; i < dirInfo.count; i++) {
+
+		createMissingDirs(filenames[i].name, dir);
+	}
 
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
@@ -643,9 +676,15 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		}
 
 		printf("\n ArchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
-		
+
 		lockBlobMutex();
-		get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");		
+		if (blobsInfoArr[i + 1] < UINT64_MAX) {
+			wchar_t* filename = filenames[blobsInfoArr[i + 1]].name;	
+			wcscpy(blobs[i].filename, filename);
+		}
+		else {
+			get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");
+		}
 		releaseBlobMutex();
 
 		copyFileChunkToFile(in, blobs[i].filename, size);
@@ -667,16 +706,44 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		wchar_t* filename = blobs[i].filename;
 		releaseBlobMutex();
 
-		appendFileToFile(out, filename);
-		_wremove(filename);
+		//don't add if blob contains just one file!
+		if (blobsInfoArr[i + 1] == UINT64_MAX) {
+			printf("\n Blob nr %llu appending normally (>1 file)", i);
+			appendFileToFile(out, filename);
+			_wremove(filename);
+		}
 	}
 	fclose(out);
 
 	FILE* masterFile = openRead(masterFilename);
-	file_t* filenames = dirInfo.fileList;
 
-	//TODO DRY this with code below
-	createArchiveFiles(masterFile, dirInfo, dir, false);
+	
+	for (int i = 0; i < dirInfo.count; i++) {
+
+		
+		//printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
+		uint64_t equalIndex = filenames[i].equalSizeNumber;
+		if (equalIndex != UINT64_MAX) {
+			printf("\n  OOOOOOOOOOOOOOOOOOOOOOOOO EQUAL FOUND!!");
+			copyFile(filenames[equalIndex].name, filenames[i].name);
+		}
+		else {
+			
+			bool justOneFile = false;
+			for (int k = 0; k < nrOfBlobs; k++) {
+				if (blobsInfoArr[k + 1] == i) {
+					justOneFile = true;
+					break;
+				}
+			}
+			if (!justOneFile) {
+
+				copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
+			}
+			
+		}
+	}
+	free(blobsInfoArr);
 	_wremove(masterFilename);
 }
 
