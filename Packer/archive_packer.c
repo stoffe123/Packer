@@ -25,6 +25,7 @@
 typedef struct blob_t {
 	wchar_t filename[500];
 	packProfile profile;
+	uint64_t singleFileIndex;
 	HANDLE  handle;
 } blob_t;
 
@@ -211,8 +212,25 @@ uint64_t findEqualFileIndex(fileListAndCount_t dirInfo, uint64_t index) {
 	return UINT64_MAX;
 }
 
-memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {	
+void identifyEqualFiles(wchar_t* dir, fileListAndCount_t dirInfo) {
+	file_t* fileList = dirInfo.fileList;
+	uint64_t count = dirInfo.count;
+			
+	printf("\n ********* identifyEqualFiles **********\n");
+	for (int i = 0; i < count; i++) {
+		printf("\nIdentifyEqualFiles: %ls  ,  %llu\n", fileList[i].name, fileList[i].size);
 
+		uint64_t index = findEqualFileIndex(dirInfo, i);
+		if (index <= EQUALFILE_POINTER_MAX) {			
+			fileList[i].equalSizeNumber = index;
+		}
+		else {
+			fileList[i].equalSizeNumber = UINT64_MAX;			
+		}
+	}
+}
+
+memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {	
 
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
@@ -236,17 +254,15 @@ memfile* createNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	    // 0 = normal end
 	    // 1-31  means a pointer to an equal file follows on the next byte
 	    // 1 = 0-255 , 2 = 256-511 , 3 = 512-767  etc
-		uint64_t index = findEqualFileIndex(dirInfo, i);
+		uint64_t index = fileList[i].equalSizeNumber;
 
-		if (index <= EQUALFILE_POINTER_MAX) {
+		if (index < UINT64_MAX) {
 			//TODO support for higher indexes by paging
 			printf("\n FOUND EQUAL FILE NR %llu", index);
 			multiByteStr[size++] = (uint8_t)(index / 256 + 1);
-			multiByteStr[size++] = (uint8_t)(index % 256);
-			fileList[i].equalSizeNumber = index;
+			multiByteStr[size++] = (uint8_t)(index % 256);		
 		}
-		else {
-			fileList[i].equalSizeNumber = UINT64_MAX;
+		else {			
 			if (i < (count - 1)) {
 				size++;
 			}
@@ -358,7 +374,7 @@ void getNewBlobFilename(wchar_t* blobFilename, wchar_t* name, wchar_t* ext) {
 	get_temp_filew(blobFilename, name);
 }
 
-void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t dirInfo) {
+void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCount_t dirInfo, wchar_t* dir) {
 
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
@@ -374,10 +390,9 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 	uint64_t blobCount = 0;
 	bool breakAndCreateBlob;
 	FILE* blobFile = NULL;
-	for (int i = 0; i < count; i++) {
+	for (uint64_t i = 0; i < count; i++) {
 		breakAndCreateBlob = false;
-		
-		
+				
 		if (fileList[i].equalSizeNumber == UINT64_MAX) {
 			wchar_t* filename = fileList[i].name;
 			getFileExtension(ext, filename);
@@ -412,8 +427,16 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 			releaseBlobMutex();
 					
 			printf("\n writing blob nr %llu", blobCount);
-			blobCount++;
 			printf("\n BLOB FOUND NOoFfILES=%d", noOfFilesInBlobCount);
+			if (noOfFilesInBlobCount == 0) {
+				// get the single file in this blob				
+				blobs[blobCount].singleFileIndex = i;
+				printf("\n BLOB IDENTIFIED AS SINGLE POINTING TO FILE %ls", fileList[i].name);
+			}
+			else {
+				blobs[blobCount].singleFileIndex = UINT64_MAX;
+			}
+			blobCount++;
 			noOfFilesInBlobCount = 0;
 			//printf("\n Blob nr %lld has size %lld and for extension '%ls'", blobCount - 1, blobSizes[blobCount - 1], ext);	
 			if (i < count - 1) {
@@ -423,15 +446,31 @@ void archivePackSemiSeparated(FILE* out, packProfile profile, fileListAndCount_t
 		}
 	}
 
+	//wait for all threads
 	for (uint64_t i = 0; i < blobCount; i++) {
 		WaitForSingleObject(blobs[i].handle, INFINITE);
-		lockBlobMutex();
-		wchar_t* filename = blobs[i].filename;
-	
-		uint64_t size = getFileSizeByName(filename);
-		releaseBlobMutex();
-		if (i < blobCount - 1) {
-			writeDynamicSize32or64(size, out);			
+	}
+
+	//write sizes of single files
+	for (uint64_t i = 0; i < blobCount; i++) {
+		uint64_t ind = blobs[i].singleFileIndex;
+		//for single blobs store blob size in fileList to save space
+		if (ind < UINT64_MAX) {
+			fileList[ind].size = getFileSizeByName(blobs[i].filename);
+		}
+    }
+
+	// write headers now that we have adjusted the sizes!
+	FILE* out = openWrite(dest);
+	writeArchiveHeader(out, dirInfo, dir, TYPE_SEMISEPARATED);
+
+	//flush all files to big blob
+	for (uint64_t i = 0; i < blobCount; i++) {		
+		wchar_t* filename = blobs[i].filename;		
+
+		if (i < blobCount - 1 && blobs[i].singleFileIndex == UINT64_MAX) {
+			    uint64_t size = getFileSizeByName(filename);
+				writeDynamicSize32or64(size, out);			
 		}
 		appendFileToFile(out, filename);
 		_wremove(filename);
@@ -448,10 +487,9 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	fileListAndCount_t dirInfo = storeDirectoryFilenames(dir, archiveType != TYPE_SEPARATED);
 	file_t* fileList = dirInfo.fileList;
 	int64_t count = dirInfo.count;
-
 	
 	printf("\n Count = %lld", count);
-
+	
 	if (archiveType == TYPE_SEPARATED) {
 		
 		//pack all files and put them in TEMP_DIR
@@ -473,15 +511,15 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	}
 	else {
 		quickSortCompareEndings(fileList, count);
-	}
-	
-	FILE* out = openWrite(dest);
-	writeArchiveHeader(out, dirInfo, dir, archiveType);
+	}		
+	identifyEqualFiles(dir, dirInfo);
 
 	if (archiveType == TYPE_SEMISEPARATED) {
-		archivePackSemiSeparated(out, profile, dirInfo);		
+		archivePackSemiSeparated(dest, profile, dirInfo, dir);		
 		return;
 	}
+	FILE* out = openWrite(dest);
+	writeArchiveHeader(out, dirInfo, dir, archiveType);
 
 	//_wremove(headerPackedFilename1);
 	//Write contents of files	
@@ -654,33 +692,41 @@ void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, bool
 	}
 }
 
+uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex, file_t* filenames, FILE *in) {
+	if (i == nrOfBlobs - 1) {
+		return UINT64_MAX;
+	}
+	else if (singeBlobFileIndex == UINT64_MAX) {
+		return readDynamicSize32or64(in);
+	}
+	else {
+		return filenames[singeBlobFileIndex].size;
+	}
+}
+
 void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
 
-	uint64_t* blobsInfoArr  = determineNumberOfBlobs(dirInfo);
-	uint64_t nrOfBlobs = blobsInfoArr[0];
+	uint64_t *blobsInfoArr  = determineNumberOfBlobs(dirInfo),
+	         nrOfBlobs = blobsInfoArr[0], 
+		     count = dirInfo.count;
 	file_t* filenames = dirInfo.fileList;
 
-	for (int i = 0; i < dirInfo.count; i++) {
+	for (uint64_t i = 0; i < count; i++) {
 
 		createMissingDirs(filenames[i].name, dir);
 	}
 
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
-		uint64_t size;
-		if (i < nrOfBlobs - 1) {
-			size = readDynamicSize32or64(in);
-		}
-		else {
-			size = UINT64_MAX;
-		}
+		uint64_t singleBlobFileIndex = blobsInfoArr[i + 1];
+		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);		
 
 		printf("\n ArchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
 
 		lockBlobMutex();
-		if (blobsInfoArr[i + 1] < UINT64_MAX) {
-			wchar_t* filename = filenames[blobsInfoArr[i + 1]].name;	
-			wcscpy(blobs[i].filename, filename);
+		if (singleBlobFileIndex < UINT64_MAX) {
+			//single blob			
+			wcscpy(blobs[i].filename, filenames[singleBlobFileIndex].name);
 		}
 		else {
 			get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");
@@ -718,7 +764,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	FILE* masterFile = openRead(masterFilename);
 
 	
-	for (int i = 0; i < dirInfo.count; i++) {
+	for (int i = 0; i < count; i++) {
 
 		
 		//printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
