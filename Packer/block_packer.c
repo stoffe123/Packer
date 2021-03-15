@@ -19,10 +19,7 @@
 typedef struct blockChunk_t {
 	memfile* packed;
 	memfile* unpacked;
-	packProfile profile;
-	packProfile seqlenProfile;
-	packProfile offsetProfile;
-	packProfile distanceProfile;
+	completePackProfile profile;
 	uint64_t size;
 	uint16_t packType;
 	uint64_t chunkSize;
@@ -109,8 +106,8 @@ void threadMultiPack(void* pMyID)
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
 	releaseBlockchunkMutex();
 
-	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, bc->profile, bc->seqlenProfile,
-		bc->offsetProfile, bc->distanceProfile);
+	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, bc->profile.main, bc->profile.seqlen,
+		bc->profile.offset, bc->profile.distance);
 	freeMem(bc->unpacked);
 	lockBlockchunkMutex();
 	bc->packType = packType;
@@ -199,11 +196,8 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, comp
 		blockChunks[chunkNumber].chunkSize = chunkSize;
 		blockChunks[chunkNumber].unpacked = chunk;
 		blockChunks[chunkNumber].packed = getMemfile(chunkSize, L"blockpacker_packedchunk");
-		blockChunks[chunkNumber].profile = profile;
-		blockChunks[chunkNumber].seqlenProfile = prof.seqlen;
-		blockChunks[chunkNumber].offsetProfile = prof.offset;
-		blockChunks[chunkNumber].distanceProfile = prof.distance;
-
+		blockChunks[chunkNumber].profile = prof;
+		
 		releaseBlockchunkMutex();
 
 		printf("\n STARTING THREAD FOR MULTIPACK %llu", chunkNumber);

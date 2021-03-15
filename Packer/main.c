@@ -372,7 +372,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"pack";
+	const wchar_t* ext = L"txt";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -722,7 +722,7 @@ void testarchive() {
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
 	 //L"c:/test/test16";
-	  //L"c:/test/47";
+	 // L"c:/test/47";
 
 	unsigned long long best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

@@ -287,6 +287,12 @@ void concatSubstring(wchar_t* dst, const wchar_t* src, uint64_t m, uint64_t n)
 
 bool equalsIgnoreCase(const wchar_t* str1, const wchar_t* str2)
 {
+	if (wcslen(str1) != wcslen(str2)) {
+		return false;
+	}
+	if (wcslen(str1) == 0) {
+		return true;
+	}
 	return equalsw(_wcslwr(str1), _wcslwr(str2));
 }
 
