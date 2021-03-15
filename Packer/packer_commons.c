@@ -118,21 +118,40 @@ int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfil
 	return packType;
 }
 
-void printProfile(packProfile* profile) {
-	printf("\nRLE ratio         %llu", profile->rle_ratio);
-	printf("\nTwobyte ratio     %llu", profile->twobyte_ratio);
-	printf("\nRecursive limit   %llu", profile->recursive_limit);
-	printf("\nTwobyte threshold (max,divide,min): (%llu %llu %llu)", profile->twobyte_threshold_max, profile->twobyte_threshold_divide, profile->twobyte_threshold_min);
-	printf("\nSeqlenMin limit3 %llu", profile->seqlenMinLimit3);	
-	
-	printf("\nBlock size minus (10k): %llu", profile->blockSizeMinus);
-	printf("\nWinsize: %llu", profile->winsize);
-	printf("\nSize max for Canonical Header Pack %llu", profile->sizeMaxForCanonicalHeaderPack);
-	printf("\nSize min for seqpack %llu", profile->sizeMinForSeqPack);
-	printf("\nSize min for canonical %llu", profile->sizeMinForCanonical);
-	printf("\nSize max for superslim %llu", profile->sizeMaxForSuperslim);
-	printf("\nArchive type %llu", profile->archiveType);
+
+
+char* profileToString(packProfile* profile) {
+	char msg[4096];
+	sprintf(msg, "\n.rle_ratio = %llu,\n"
+		                 ".twobyte_ratio = %llu,\n"
+		                 ".recursive_limit = %llu,"
+	"\n.twobyte_threshold_max = %llu,"
+	"\n.twobyte_threshold_divide = %llu,"
+	"\n.twobyte_threshold_min = %llu,"
+	"\n.seqlenMinLimit3 = %llu,"
+	"\n.blockSizeMinus = %llu,"	
+	"\n.sizeMaxForCanonicalHeaderPack = %llu,"
+	"\n.sizeMinForSeqPack = %llu,"
+	"\n.sizeMinForCanonical = %llu,"
+	"\n.sizeMaxForSuperslim = %llu\n"	
+	 , profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
+		 profile->twobyte_threshold_divide, profile->twobyte_threshold_min, profile->seqlenMinLimit3, profile->blockSizeMinus,
+		 profile->sizeMaxForCanonicalHeaderPack, profile->sizeMinForSeqPack, profile->sizeMinForCanonical, 
+		 profile->sizeMaxForSuperslim);
+	return msg;
 }
+
+void printProfile(packProfile* profile) {
+	char* msg = profileToString(profile);
+	printf(msg);	
+}
+
+void fprintProfile(FILE* file, packProfile* profile) {
+	char* msg = profileToString(profile);
+	fprintf(file, msg);	
+}
+
+
 
 packProfile getPackProfile() {
 	packProfile profile = {
@@ -155,6 +174,15 @@ packProfile getPackProfile() {
 	return profile;
 }
 
+completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen, packProfile offset, packProfile distance) {
+	completePackProfile res;
+	res.main = main;
+	res.seqlen = seqlen;
+	res.offset = offset;
+	res.distance = distance;
+	return res;
+}
+
 void copyProfile(packProfile* src, packProfile* dst) {
 	
 	dst->rle_ratio = src->rle_ratio;
@@ -172,6 +200,15 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->sizeMinForCanonical = src->sizeMinForCanonical;
 	dst->sizeMaxForSuperslim = src->sizeMaxForSuperslim;
 	dst->archiveType = src->archiveType;
+}
+
+completePackProfile cloneCompleteProfile(completePackProfile src) {
+	completePackProfile dst;
+	copyProfile(&src.main, &dst.main);
+	copyProfile(&src.seqlen, &dst.seqlen);
+	copyProfile(&src.offset, &dst.offset);
+	copyProfile(&src.distance, &dst.distance);
+	return dst;
 }
 
 value_freq_t find_best_code(unsigned long* char_freq) {

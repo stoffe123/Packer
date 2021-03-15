@@ -42,6 +42,12 @@ typedef struct packProfile {
 	int64_t archiveType;
 } packProfile;
 
+typedef struct completePackProfile {
+	packProfile main;
+	packProfile seqlen;
+	packProfile offset;
+	packProfile distance;
+} completePackProfile;
 
 void lockTempfileMutex();
 
@@ -53,9 +59,13 @@ void quickSortOnSizes(file_t* f, uint64_t size);
 
 void printProfile(packProfile*);
 
+void fprintProfile(FILE* file, packProfile* profile);
+
 bool testPack(memfile* src, memfile* tmp, const wchar_t* packerName, int limit);
 
 void copyProfile(packProfile* source, packProfile* dest);
+
+completePackProfile cloneCompleteProfile(completePackProfile src);
 
 value_freq_t find_best_code(unsigned long* char_freq);
 
@@ -75,5 +85,7 @@ void writeDynamicSize32or64(uint64_t s, FILE* out);
 uint64_t readDynamicSize16or64(FILE* in);
 
 uint64_t readDynamicSize32or64(FILE* in);
+
+completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen, packProfile offset, packProfile distance);
 
 #endif

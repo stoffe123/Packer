@@ -79,6 +79,8 @@ bool equals(const char* s1, const char* s2);
 
 bool equalsw(const wchar_t* s1, const wchar_t* s2);
 
+bool equalsIgnoreCase(const wchar_t* str1, const wchar_t* str2);
+
 void substringAfterLast(const wchar_t* dst, const wchar_t* s, const wchar_t* find);
 
 void myExit();

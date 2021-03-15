@@ -19,12 +19,13 @@
 #include "file_tools.h"
 #include "block_packer.h"
 #include "archive_packer.h"
+#include "profileFactory.h"
 
 
 // for semiseparated threaded pack
 typedef struct blob_t {
 	wchar_t filename[500];
-	packProfile profile;
+	completePackProfile profile;
 	uint64_t singleFileIndex;
 	HANDLE  handle;
 } blob_t;
@@ -45,12 +46,12 @@ void threadBlockPack(void* arg)
 {
 	lockBlobMutex();
 	blob_t* bc = (blob_t*)arg;
-	packProfile profile = bc->profile;
+	completePackProfile profile = bc->profile;
 	wchar_t* filename = bc->filename;	
 	releaseBlobMutex();
 
 	printf("\n Starting THREAD blockpack for file %ls", filename);
-	blockPackAndReplace(filename, profile);	
+	blockPackAndReplaceFull(filename, profile);	
 	printf("\n THREAD blockpack FOR %ls FINISHED!", filename);
 }
 
@@ -347,7 +348,7 @@ uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 				//printf("\n%ls of size: %lld", filename, fileList[i].size);
 				getFileExtension(ext, filename);
 				getFileExtension(next_ext, fileList[i + 1].name);
-				breakAndCreateBlob = !equalsw(next_ext, ext);	
+				breakAndCreateBlob = !equalsIgnoreCase(next_ext, ext);
 				if (!breakAndCreateBlob) {
 					noOfFilesInBlobCount++;
 				}
@@ -404,7 +405,7 @@ void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCou
 			appendFileToFile(blobFile, filename);
 			if (i < count - 1) {
 				getFileExtension(next_ext, fileList[i + 1].name);
-				breakAndCreateBlob = !equalsw(next_ext, ext);
+				breakAndCreateBlob = !equalsIgnoreCase(next_ext, ext);
 				if (!breakAndCreateBlob) {
 					noOfFilesInBlobCount++;
 				}
@@ -417,7 +418,7 @@ void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCou
 			//TODO get the right profile depending on ext
 			lockBlobMutex();		
 			wcscpy(blobs[blobCount].filename, blobFilename);
-			blobs[blobCount].profile = profile;
+			blobs[blobCount].profile = getProfileForExtension(ext);
 			releaseBlobMutex();
 
 			HANDLE handle = _beginthread(threadBlockPack, 0, &blobs[blobCount]);
@@ -444,8 +445,9 @@ void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCou
 				blobFile = openWrite(blobFilename);
 			}
 		}
+	
 	}
-
+	//myExit();
 	//wait for all threads
 	for (uint64_t i = 0; i < blobCount; i++) {
 		WaitForSingleObject(blobs[i].handle, INFINITE);

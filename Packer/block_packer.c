@@ -20,6 +20,9 @@ typedef struct blockChunk_t {
 	memfile* packed;
 	memfile* unpacked;
 	packProfile profile;
+	packProfile seqlenProfile;
+	packProfile offsetProfile;
+	packProfile distanceProfile;
 	uint64_t size;
 	uint16_t packType;
 	uint64_t chunkSize;
@@ -27,52 +30,63 @@ typedef struct blockChunk_t {
 } blockChunk_t;
 
 
-//meta testsuit 1170029  / 33s
-static packProfile seqlenProfile = {
-.rle_ratio = 31,
-.twobyte_ratio = 97,
-.recursive_limit = 180,
-.twobyte_threshold_max = 5226,
-.twobyte_threshold_divide = 2233,
-.twobyte_threshold_min = 185,
-.seqlenMinLimit3 = 43,
+completePackProfile getCompletePackProfileWithDefaults(packProfile prof) {
 
-.winsize = 78725,
-.sizeMaxForCanonicalHeaderPack = 175,
-.sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 30,
-.sizeMaxForSuperslim = 16384
-},
+	completePackProfile res;
+	res.main = prof;
 
-offsetProfile = {
-.rle_ratio = 74,
-.twobyte_ratio = 95,
-.recursive_limit = 61,
-.twobyte_threshold_max = 11404,
-.twobyte_threshold_divide = 2520,
-.twobyte_threshold_min = 384,
-.seqlenMinLimit3 = 82,
+	//meta testsuit 1170029  / 33s
+	packProfile defaultSeqlenProfile = {
+		 .rle_ratio = 31,
+		 .twobyte_ratio = 97,
+		 .recursive_limit = 180,
+		 .twobyte_threshold_max = 5226,
+		 .twobyte_threshold_divide = 2233,
+		 .twobyte_threshold_min = 185,
+		 .seqlenMinLimit3 = 43,
 
-.winsize = 91812,
-.sizeMaxForCanonicalHeaderPack = 530,
-.sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 261,
-.sizeMaxForSuperslim = 16384 },
+		 .winsize = 78725,
+		 .sizeMaxForCanonicalHeaderPack = 175,
+		 .sizeMinForSeqPack = 2600,
+		 .sizeMinForCanonical = 30,
+		 .sizeMaxForSuperslim = 16384
+	   },
 
-distanceProfile = {
-.rle_ratio = 71,
-.twobyte_ratio = 100,
-.recursive_limit = 20,
-.twobyte_threshold_max = 3641,
-.twobyte_threshold_divide = 3972,
-.twobyte_threshold_min = 37,
-.seqlenMinLimit3 = 35,
+		defaultOffsetProfile = {
+		.rle_ratio = 74,
+		.twobyte_ratio = 95,
+		.recursive_limit = 61,
+		.twobyte_threshold_max = 11404,
+		.twobyte_threshold_divide = 2520,
+		.twobyte_threshold_min = 384,
+		.seqlenMinLimit3 = 82,
 
-.winsize = 80403,
-.sizeMaxForCanonicalHeaderPack = 256,
-.sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 300,
-.sizeMaxForSuperslim = 16384 };
+		.winsize = 91812,
+		.sizeMaxForCanonicalHeaderPack = 530,
+		.sizeMinForSeqPack = 2600,
+		.sizeMinForCanonical = 261,
+		.sizeMaxForSuperslim = 16384 },
+
+		defaultDistanceProfile = {
+		.rle_ratio = 71,
+		.twobyte_ratio = 100,
+		.recursive_limit = 20,
+		.twobyte_threshold_max = 3641,
+		.twobyte_threshold_divide = 3972,
+		.twobyte_threshold_min = 37,
+		.seqlenMinLimit3 = 35,
+
+		.winsize = 80403,
+		.sizeMaxForCanonicalHeaderPack = 256,
+		.sizeMinForSeqPack = 2600,
+		.sizeMinForCanonical = 300,
+		.sizeMaxForSuperslim = 16384 };
+
+	res.seqlen = defaultSeqlenProfile;
+	res.offset = defaultOffsetProfile;
+	res.distance = defaultDistanceProfile;
+	return res;
+}
 
 __declspec(thread)  static uint64_t read_size;
 
@@ -93,11 +107,10 @@ void threadMultiPack(void* pMyID)
 {
 	lockBlockchunkMutex();
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
-	packProfile prof = bc->profile;
 	releaseBlockchunkMutex();
 
-	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, prof, seqlenProfile,
-		offsetProfile, distanceProfile);
+	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, bc->profile, bc->seqlenProfile,
+		bc->offsetProfile, bc->distanceProfile);
 	freeMem(bc->unpacked);
 	lockBlockchunkMutex();
 	bc->packType = packType;
@@ -113,9 +126,9 @@ void threadMultiPack(void* pMyID)
 void threadMultiUnpack(void* pMyID)
 {
 	lockBlockchunkMutex();
-	blockChunk_t* bc = (blockChunk_t*)pMyID;		
+	blockChunk_t* bc = (blockChunk_t*)pMyID;
 	releaseBlockchunkMutex();
-	
+
 	bc->unpacked = multiUnpackWithPackType(bc->packed, bc->packType);
 	wprintf(L"\n THREAD MULTIUNPACK FOR %s FINISHED!", getMemName(bc->packed));
 }
@@ -149,15 +162,18 @@ void writeBlock(uint64_t i, FILE* utfil) {
 
 	append_to_tar(utfil, blockChunk.packed, size, packType);
 
-	lockBlockchunkMutex();	
+	lockBlockchunkMutex();
 	freeMem(blockChunk.packed);
 	releaseBlockchunkMutex();
 }
 
-void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, packProfile profile, bool closeInfil) {
+void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, completePackProfile prof, bool closeInfil) {
+
+	packProfile profile = prof.main;
+
 	uint64_t src_size = getSizeLeftToRead(infil);
 	uint64_t writtenCount = 0;
-	printf("\n Entering block_pack_file_internal sizelefttoread=%llu" , src_size);
+	printf("\n Entering block_pack_file_internal sizelefttoread=%llu", src_size);
 	uint64_t chunkSize, chunkNumber = 0;
 	bool closeAfter = false;
 	if (utfil == NULL) {
@@ -176,7 +192,7 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		}
 		printf("\n Real blocksize used %" PRId64, read_size);
 		memfile* chunk = getMemfile(read_size, L"blockpackfile_chunk");
-		copy_chunk_to_mem(infil, chunk, read_size);		
+		copy_chunk_to_mem(infil, chunk, read_size);
 		chunkSize = getMemSize(chunk);
 
 		lockBlockchunkMutex();
@@ -184,6 +200,10 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		blockChunks[chunkNumber].unpacked = chunk;
 		blockChunks[chunkNumber].packed = getMemfile(chunkSize, L"blockpacker_packedchunk");
 		blockChunks[chunkNumber].profile = profile;
+		blockChunks[chunkNumber].seqlenProfile = prof.seqlen;
+		blockChunks[chunkNumber].offsetProfile = prof.offset;
+		blockChunks[chunkNumber].distanceProfile = prof.distance;
+
 		releaseBlockchunkMutex();
 
 		printf("\n STARTING THREAD FOR MULTIPACK %llu", chunkNumber);
@@ -195,40 +215,51 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, pack
 		uint32_t size = getMemSize(blockChunks[chunkNumber].packed);
 		if (chunkSize < read_size) {
 			size = 0;
-		}		
-		if (chunkNumber >= BLOCK_PACK_MAX_THREADS) {		
+		}
+		if (chunkNumber >= BLOCK_PACK_MAX_THREADS) {
 			if (chunkNumber > BLOCK_PACK_MAX_THREADS * 4 || chunkNumber % 2 == 0) {
 				writeBlock(writtenCount++, utfil);
 			}
 		}
-		
+
 	} while (blockChunks[chunkNumber++].chunkSize == read_size);
 	if (closeInfil) {
-		fclose(infil);	
+		fclose(infil);
 	}
-	
+
 	while (writtenCount < chunkNumber) {
 		writeBlock(writtenCount++, utfil);
-	}	
+	}
 	if (closeAfter) {
 		fclose(utfil);
 	}
 }
 
+void block_pack_file_internal2(FILE* infil, const wchar_t* dst, FILE* utfil, packProfile prof, bool closeInfil) {
+	completePackProfile compProf = getCompletePackProfileWithDefaults(prof);
+	block_pack_file_internal(infil, dst, utfil, compProf, closeInfil);
+}
 
 void block_pack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
-	block_pack_file_internal(infil, dst, NULL, profile, false);
+	block_pack_file_internal2(infil, dst, NULL, profile, false);
 }
 
 
 void block_pack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
 	FILE* infil = openRead(src);
-	block_pack_file_internal(infil, dst, NULL, profile, true);
+	block_pack_file_internal2(infil, dst, NULL, profile, true);
 }
+
+
+void blockPackFull(const wchar_t* src, const wchar_t* dst, completePackProfile pp) {
+	FILE* infil = openRead(src);
+	block_pack_file_internal(infil, dst, NULL, pp, true);
+}
+
 
 void blockPackToExistingFile(const wchar_t* src, FILE* utfil, packProfile profile) {
 	FILE* infil = openRead(src);
-	block_pack_file_internal(infil, NULL, utfil, profile, true);
+	block_pack_file_internal2(infil, NULL, utfil, profile, true);
 }
 
 
@@ -244,20 +275,20 @@ void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, co
 	while (true) {
 
 		uint8_t packType;
-		if (fread(&packType, 1, 1, infil) == 0) {			
+		if (fread(&packType, 1, 1, infil) == 0) {
 			break;
 		}
 		memfile* tmp = getEmptyMem(L"blockpacker_unpacktmp");
-		if (isKthBitSet(packType, 4)) {					
-			copy_the_rest_to_mem(infil, tmp);					
+		if (isKthBitSet(packType, 4)) {
+			copy_the_rest_to_mem(infil, tmp);
 		}
 		else {
 			uint32_t size = 0;
 			//3 bytes can handle block sizes up to 16777216‬
 			//note that these are the sizes of the compressed chunks!
 			checkAlloc(tmp, size);
-			fread(&size, 3, 1, infil);			
-			copy_chunk_to_mem(infil, tmp, size);		
+			fread(&size, 3, 1, infil);
+			copy_chunk_to_mem(infil, tmp, size);
 		}
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].packType = packType;
@@ -273,16 +304,16 @@ void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, co
 		releaseBlockchunkMutex();
 
 		chunkNumber++;
-	}	
+	}
 	fclose(infil);
 	if (dst != NULL) {
 		utfil = openWrite(dst);
 	}
 	for (int i = 0; i < chunkNumber; i++) {
 		WaitForSingleObject(blockChunks[i].handle, INFINITE);
-		
+
 		append_mem_to_file(utfil, blockChunks[i].unpacked);
-		
+
 		lockBlockchunkMutex();
 		freeMem(blockChunks[i].unpacked);
 		freeMem(blockChunks[i].packed);
@@ -309,7 +340,7 @@ void blockUnpackNameToFile(const wchar_t* src, FILE* utfil) {
 void block_unpack(const wchar_t* src, const wchar_t* dst) {
 
 	FILE* infil = openRead(src);
-	block_unpack_file(infil, dst);	
+	block_unpack_file(infil, dst);
 }
 
 
@@ -326,6 +357,14 @@ void blockPackAndReplace(const wchar_t* src, packProfile profile) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"blockpacker_packandreplace");
 	block_pack(src, tmp, profile);
+	myRename(tmp, src);
+}
+
+
+void blockPackAndReplaceFull(const wchar_t* src, completePackProfile prof) {
+	const wchar_t tmp[100] = { 0 };
+	get_temp_filew(tmp, L"blockpacker_packandreplace");
+	blockPackFull(src, tmp, prof);
 	myRename(tmp, src);
 }
 

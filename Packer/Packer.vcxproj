@@ -158,6 +158,7 @@
     <ClCompile Include="memfile.c" />
     <ClCompile Include="multi_packer.c" />
     <ClCompile Include="packer_commons.c" />
+    <ClCompile Include="profileFactory.c" />
     <ClCompile Include="RLE_packer_advanced.c" />
     <ClCompile Include="RLE_simple_packer.c" />
     <ClCompile Include="RLE_simple_unpacker.c" />
@@ -186,6 +187,7 @@
     <ClInclude Include="memfile.h" />
     <ClInclude Include="packer_commons.h" />
     <ClInclude Include="multi_packer.h" />
+    <ClInclude Include="profileFactory.h" />
     <ClInclude Include="RLE_packer_advanced.h" />
     <ClInclude Include="RLE_simple_packer.h" />
     <ClInclude Include="RLE_simple_packer_commons.h" />
