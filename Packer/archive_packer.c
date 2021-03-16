@@ -375,7 +375,7 @@ void getNewBlobFilename(wchar_t* blobFilename, wchar_t* name, wchar_t* ext) {
 	get_temp_filew(blobFilename, name);
 }
 
-void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCount_t dirInfo, wchar_t* dir) {
+void archivePackSemiSeparated(wchar_t* dest, completePackProfile profile, fileListAndCount_t dirInfo, wchar_t* dir) {
 
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
@@ -418,7 +418,7 @@ void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCou
 			//TODO get the right profile depending on ext
 			lockBlobMutex();		
 			wcscpy(blobs[blobCount].filename, blobFilename);
-			blobs[blobCount].profile = getProfileForExtension(ext);
+			blobs[blobCount].profile = getProfileForExtensionOrDefault(ext, profile);
 			releaseBlobMutex();
 
 			HANDLE handle = _beginthread(threadBlockPack, 0, &blobs[blobCount]);
@@ -480,10 +480,10 @@ void archivePackSemiSeparated(wchar_t* dest, packProfile profile, fileListAndCou
 	fclose(out);
 }
 
-void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile) {
+void archivePackInternal(wchar_t* dir, const wchar_t* dest, completePackProfile profile) {
 
 	//archiveType   0 = solid   1 = semi-separated   2 = separated
-	printf("\n Starting archive pack for %ls archiveType %lld", dir, profile.archiveType);
+	printf("\n Starting archive pack for %ls", dir);
 	uint8_t archiveType = TYPE_SEMISEPARATED; // .archiveType;
 	bool solid = (archiveType == TYPE_SOLID);
 	fileListAndCount_t dirInfo = storeDirectoryFilenames(dir, archiveType != TYPE_SEPARATED);
@@ -491,74 +491,10 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, packProfile profile)
 	int64_t count = dirInfo.count;
 	
 	printf("\n Count = %lld", count);
-	
-	if (archiveType == TYPE_SEPARATED) {
 		
-		//pack all files and put them in TEMP_DIR
-		for (int i = 0; i < count; i++) {
-			printf("\n Non-solid case packing %ls of size: %lld", fileList[i].name, fileList[i].size);
-			//TODO do this after writearchiveheader
-			//if (fileList[i].equalSizeNumber == UINT64_MAX) {
-				const wchar_t tmpBlocked[500] = { 0 };
-				tmpDirNameOf(tmpBlocked, fileList[i].name, dir);
-			
-				block_pack(fileList[i].name, tmpBlocked, profile);
-				fileList[i].size = getFileSizeByName(tmpBlocked);
-			//}
-			//else {
-			//	fileList[i].size = 0;
-			//}
-		}
-		quickSortOnSizes(fileList, count);
-	}
-	else {
-		quickSortCompareEndings(fileList, count);
-	}		
+	quickSortCompareEndings(fileList, count);		
 	identifyEqualFiles(dir, dirInfo);
-
-	if (archiveType == TYPE_SEMISEPARATED) {
-		archivePackSemiSeparated(dest, profile, dirInfo, dir);		
-		return;
-	}
-	FILE* out = openWrite(dest);
-	writeArchiveHeader(out, dirInfo, dir, archiveType);
-
-	//_wremove(headerPackedFilename1);
-	//Write contents of files	
-
-	//used for non-solid
-	const wchar_t tmpBlockedFilename[1000] = { 0 }; //put here for perfomance
-	
-	//used for solid
-	const wchar_t blobFilename[100] = { 0 };
-	FILE* blobFile = NULL;
-	if (solid) {	   
-	   blobFile = openTempFile(blobFilename, L"archivepack_blob");
-	}
-	
-	printf("\n Phase 2 of archive pack count=%lld", count);
-	for (int i = 0; i < count; i++) {
-		if (fileList[i].equalSizeNumber == UINT64_MAX) {
-			const wchar_t* filename = fileList[i].name;
-			printf("\n Appending %ls with size %lld", filename, fileList[i].size);
-			if (solid) {
-				appendFileToFile(blobFile, filename);
-			}
-			else {
-				tmpDirNameOf(tmpBlockedFilename, filename, dir);
-				appendFileToFile(out, tmpBlockedFilename);
-				_wremove(tmpBlockedFilename);
-			}
-		}
-	}
-	if (solid) {
-		fclose(blobFile);
-		blockPackAndReplace(blobFilename, profile);
-		appendFileToFile(out, blobFilename);
-		_wremove(blobFilename);
-	}
-	fclose(out);	
-	free(fileList);
+	archivePackSemiSeparated(dest, profile, dirInfo, dir);		
 }
 
 
@@ -835,7 +771,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 }
 
 
-void archive_pack(const wchar_t* dir, const wchar_t* dest, packProfile profile) {
+void archive_pack(const wchar_t* dir, const wchar_t* dest, completePackProfile profile) {
     archivePackInternal(dir, dest, profile);			
 }
 

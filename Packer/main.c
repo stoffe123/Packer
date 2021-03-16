@@ -694,25 +694,10 @@ void test16() {
 
 void testarchive() {
 
-	packProfile bestProfile,
-		profile = {
-			.rle_ratio = 81,
-			.twobyte_ratio = 90,
-			.recursive_limit = 252,
-			.twobyte_threshold_max = 2090,
-			.twobyte_threshold_divide = 3433,
-			.twobyte_threshold_min = 1000,
-			.seqlenMinLimit3 = 55,
-			.blockSizeMinus = 16,
-			.winsize = 0,
-			.sizeMaxForCanonicalHeaderPack = 513,
-			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 347,
-			.sizeMaxForSuperslim = 61652,
-			.archiveType = 1 // 0 solid, 1 semiseparate 2 separate
-	};
+	completePackProfile profile = getProfileForExtension("gjkrigjrigj");
+	completePackProfile bestProfile = cloneCompleteProfile(profile);
 	uint64_t time_limit = 1000;
-	copyProfile(&profile, &bestProfile);
+	
 
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
@@ -721,10 +706,10 @@ void testarchive() {
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
-	 L"c:/test/test16";
-	// L"c:/test/47";
+	 //L"c:/test/test16";
+	L"c:/test/47";
 
-	uint64_t best_size = 0;
+	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
 
@@ -754,18 +739,18 @@ void testarchive() {
 				printf("\n => dirs not equal, exiting!");
 				exit(1);
 			}
-			best_size = presentResult(false, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
+			if (acc_size_packed < bestSize) {
+				bestSize = acc_size_packed;
+				bestProfile = cloneCompleteProfile(profile);
+				printf("\a");
+				printResultToFile(acc_size_packed, profile, "_default_");
+			}
 		}
 		else {
 			printf("\n Too long time %llu", totalTime);
 			printf("\n size was %llu", acc_size_packed);
-			printProfile(&profile);
-			printf("\n --------------------");
-			printf("\n Current best profile, size %d", (int)best_size);
-			printf("\n --------------------");
-			printProfile(&bestProfile);
 		}
-		fuzzProfile(&profile, bestProfile);
+		fuzzCompleteProfile(&profile, bestProfile);
 		printf("\n\n Now doing a new try with this new profile: ");
 		printProfile(&profile);
 		printf("\n\n");
@@ -781,6 +766,6 @@ int main()
 	srand((unsigned)time(&t));
 	//testmeta();
 	//test16();
-    //testarchive();
+    testarchive();
 	blockpack_onefile();
 }

@@ -24,24 +24,7 @@
 
 completePackProfile getProfileForExtension(wchar_t* ext);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackProfile def);
 
 
 

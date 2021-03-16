@@ -17,8 +17,7 @@
 #include "file_tools.h"
 #include "profileFactory.h"
 
-
-completePackProfile getProfileForExtension(wchar_t* ext) {
+completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackProfile def) {
 
 	if (equalsIgnoreCase(ext, L"xmi")) {
 
@@ -1388,71 +1387,78 @@ completePackProfile getProfileForExtension(wchar_t* ext) {
 
 	else if (equalsIgnoreCase(ext, L"pdf")) {
 
-	//Size: 1397694
+		//Size: 1397694
 
-	packProfile mainProfile = {
-	.rle_ratio = 74,
-	.twobyte_ratio = 51,
-	.recursive_limit = 485,
-	.twobyte_threshold_max = 3922,
-	.twobyte_threshold_divide = 2957,
-	.twobyte_threshold_min = 840,
-	.seqlenMinLimit3 = 226,
-	.blockSizeMinus = 0,
-	.sizeMaxForCanonicalHeaderPack = 486,
-	.sizeMinForSeqPack = 12903,
-	.sizeMinForCanonical = 338,
-	.sizeMaxForSuperslim = 64070
-	},
-		seqlenProfile = {
-	   .rle_ratio = 25,
-	   .twobyte_ratio = 100,
-	   .recursive_limit = 69,
-	   .twobyte_threshold_max = 1358,
-	   .twobyte_threshold_divide = 3178,
-	   .twobyte_threshold_min = 191,
-	   .seqlenMinLimit3 = 95,
-	   .blockSizeMinus = 63,
-	   .sizeMaxForCanonicalHeaderPack = 291,
-	   .sizeMinForSeqPack = 10,
-	   .sizeMinForCanonical = 204,
-	   .sizeMaxForSuperslim = 10
-	},
-		offsetProfile = {
-	   .rle_ratio = 96,
-	   .twobyte_ratio = 72,
-	   .recursive_limit = 58,
-	   .twobyte_threshold_max = 13000,
-	   .twobyte_threshold_divide = 1130,
-	   .twobyte_threshold_min = 616,
-	   .seqlenMinLimit3 = 113,
-	   .blockSizeMinus = 0,
-	   .sizeMaxForCanonicalHeaderPack = 651,
-	   .sizeMinForSeqPack = 10,
-	   .sizeMinForCanonical = 370,
-	   .sizeMaxForSuperslim = 10434
-	},
-		distanceProfile = {
-	   .rle_ratio = 87,
-	   .twobyte_ratio = 94,
-	   .recursive_limit = 42,
-	   .twobyte_threshold_max = 7302,
-	   .twobyte_threshold_divide = 3253,
-	   .twobyte_threshold_min = 525,
-	   .seqlenMinLimit3 = 49,
-	   .blockSizeMinus = 44,
-	   .sizeMaxForCanonicalHeaderPack = 338,
-	   .sizeMinForSeqPack = 6525,
-	   .sizeMinForCanonical = 465,
-	   .sizeMaxForSuperslim = 10
-	};
-	return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
-}
+		packProfile mainProfile = {
+		.rle_ratio = 74,
+		.twobyte_ratio = 51,
+		.recursive_limit = 485,
+		.twobyte_threshold_max = 3922,
+		.twobyte_threshold_divide = 2957,
+		.twobyte_threshold_min = 840,
+		.seqlenMinLimit3 = 226,
+		.blockSizeMinus = 0,
+		.sizeMaxForCanonicalHeaderPack = 486,
+		.sizeMinForSeqPack = 12903,
+		.sizeMinForCanonical = 338,
+		.sizeMaxForSuperslim = 64070
+		},
+			seqlenProfile = {
+		   .rle_ratio = 25,
+		   .twobyte_ratio = 100,
+		   .recursive_limit = 69,
+		   .twobyte_threshold_max = 1358,
+		   .twobyte_threshold_divide = 3178,
+		   .twobyte_threshold_min = 191,
+		   .seqlenMinLimit3 = 95,
+		   .blockSizeMinus = 63,
+		   .sizeMaxForCanonicalHeaderPack = 291,
+		   .sizeMinForSeqPack = 10,
+		   .sizeMinForCanonical = 204,
+		   .sizeMaxForSuperslim = 10
+		},
+			offsetProfile = {
+		   .rle_ratio = 96,
+		   .twobyte_ratio = 72,
+		   .recursive_limit = 58,
+		   .twobyte_threshold_max = 13000,
+		   .twobyte_threshold_divide = 1130,
+		   .twobyte_threshold_min = 616,
+		   .seqlenMinLimit3 = 113,
+		   .blockSizeMinus = 0,
+		   .sizeMaxForCanonicalHeaderPack = 651,
+		   .sizeMinForSeqPack = 10,
+		   .sizeMinForCanonical = 370,
+		   .sizeMaxForSuperslim = 10434
+		},
+			distanceProfile = {
+		   .rle_ratio = 87,
+		   .twobyte_ratio = 94,
+		   .recursive_limit = 42,
+		   .twobyte_threshold_max = 7302,
+		   .twobyte_threshold_divide = 3253,
+		   .twobyte_threshold_min = 525,
+		   .seqlenMinLimit3 = 49,
+		   .blockSizeMinus = 44,
+		   .sizeMaxForCanonicalHeaderPack = 338,
+		   .sizeMinForSeqPack = 6525,
+		   .sizeMinForCanonical = 465,
+		   .sizeMaxForSuperslim = 10
+		};
+		return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
+	}
 
 
 	// -------------------------------------------------------------------------
 	// Default profile for the rest
 	// -------------------------------------------------------------------------
+
+	return def;
+
+}
+
+
+completePackProfile getProfileForExtension(wchar_t* ext) {
 
 	packProfile mainProfile = {
 		 .rle_ratio = 85,
@@ -1509,6 +1515,8 @@ completePackProfile getProfileForExtension(wchar_t* ext) {
 		.sizeMinForCanonical = 300,
 		.sizeMaxForSuperslim = 16384 };
 
-	return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
+	completePackProfile prof = getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
+
+	return getProfileForExtensionOrDefault(ext, prof);
 
 }
