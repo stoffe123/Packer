@@ -329,67 +329,66 @@ completePackProfile getProfileForExtension(wchar_t* ext) {
 	}
 	else if (equalsIgnoreCase(ext, L"prx")) {
 
-		//Size: 5804991
+		//Size: 5804502
 
 		packProfile mainProfile = {
-		.rle_ratio = 78,
-		.twobyte_ratio = 93,
-		.recursive_limit = 595,
-		.twobyte_threshold_max = 10200,
-		.twobyte_threshold_divide = 2206,
-		.twobyte_threshold_min = 979,
-		.seqlenMinLimit3 = 24,
-		.blockSizeMinus = 0,
-		.sizeMaxForCanonicalHeaderPack = 395,
-		.sizeMinForSeqPack = 11995,
-		.sizeMinForCanonical = 603,
-		.sizeMaxForSuperslim = 70061
+		.rle_ratio = 81,
+		.twobyte_ratio = 90,
+		.recursive_limit = 622,
+		.twobyte_threshold_max = 10679,
+		.twobyte_threshold_divide = 1738,
+		.twobyte_threshold_min = 891,
+		.seqlenMinLimit3 = 10,
+		.blockSizeMinus = 13,
+		.sizeMaxForCanonicalHeaderPack = 439,
+		.sizeMinForSeqPack = 16045,
+		.sizeMinForCanonical = 700,
+		.sizeMaxForSuperslim = 76593
 		},
 			seqlenProfile = {
-		   .rle_ratio = 13,
-		   .twobyte_ratio = 100,
-		   .recursive_limit = 660,
-		   .twobyte_threshold_max = 8652,
-		   .twobyte_threshold_divide = 2395,
-		   .twobyte_threshold_min = 198,
-		   .seqlenMinLimit3 = 195,
-		   .blockSizeMinus = 135,
-		   .sizeMaxForCanonicalHeaderPack = 400,
-		   .sizeMinForSeqPack = 3237,
-		   .sizeMinForCanonical = 602,
-		   .sizeMaxForSuperslim = 37958
+		   .rle_ratio = 12,
+		   .twobyte_ratio = 97,
+		   .recursive_limit = 691,
+		   .twobyte_threshold_max = 7567,
+		   .twobyte_threshold_divide = 1552,
+		   .twobyte_threshold_min = 3,
+		   .seqlenMinLimit3 = 173,
+		   .blockSizeMinus = 55,
+		   .sizeMaxForCanonicalHeaderPack = 412,
+		   .sizeMinForSeqPack = 4497,
+		   .sizeMinForCanonical = 444,
+		   .sizeMaxForSuperslim = 48939
 		},
 			offsetProfile = {
-		   .rle_ratio = 93,
-		   .twobyte_ratio = 75,
-		   .recursive_limit = 262,
-		   .twobyte_threshold_max = 10373,
-		   .twobyte_threshold_divide = 1078,
-		   .twobyte_threshold_min = 937,
-		   .seqlenMinLimit3 = 78,
-		   .blockSizeMinus = 24,
-		   .sizeMaxForCanonicalHeaderPack = 509,
-		   .sizeMinForSeqPack = 28953,
-		   .sizeMinForCanonical = 395,
-		   .sizeMaxForSuperslim = 7256
+		   .rle_ratio = 98,
+		   .twobyte_ratio = 97,
+		   .recursive_limit = 319,
+		   .twobyte_threshold_max = 12560,
+		   .twobyte_threshold_divide = 1822,
+		   .twobyte_threshold_min = 1000,
+		   .seqlenMinLimit3 = 66,
+		   .blockSizeMinus = 0,
+		   .sizeMaxForCanonicalHeaderPack = 716,
+		   .sizeMinForSeqPack = 38287,
+		   .sizeMinForCanonical = 309,
+		   .sizeMaxForSuperslim = 17205
 		},
 			distanceProfile = {
-		   .rle_ratio = 27,
+		   .rle_ratio = 48,
 		   .twobyte_ratio = 78,
-		   .recursive_limit = 317,
-		   .twobyte_threshold_max = 6695,
-		   .twobyte_threshold_divide = 3004,
-		   .twobyte_threshold_min = 814,
-		   .seqlenMinLimit3 = 213,
-		   .blockSizeMinus = 49,
-		   .sizeMaxForCanonicalHeaderPack = 702,
-		   .sizeMinForSeqPack = 27624,
-		   .sizeMinForCanonical = 633,
-		   .sizeMaxForSuperslim = 4775
+		   .recursive_limit = 287,
+		   .twobyte_threshold_max = 3368,
+		   .twobyte_threshold_divide = 3301,
+		   .twobyte_threshold_min = 957,
+		   .seqlenMinLimit3 = 206,
+		   .blockSizeMinus = 56,
+		   .sizeMaxForCanonicalHeaderPack = 590,
+		   .sizeMinForSeqPack = 9535,
+		   .sizeMinForCanonical = 578,
+		   .sizeMaxForSuperslim = 10
 		};
 		return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
 	}
-
 	else if (equalsIgnoreCase(ext, L"mp3")) {
 
 		//Size: 2135790
@@ -640,62 +639,63 @@ completePackProfile getProfileForExtension(wchar_t* ext) {
 	}
 	else if (equalsIgnoreCase(ext, L"tis")) {
 
-		//Size: 17346786
+		//Size: 17341237
+
 		packProfile mainProfile = {
-		.rle_ratio = 85,
-		.twobyte_ratio = 80,
-		.recursive_limit = 370,
-		.twobyte_threshold_max = 1168,
-		.twobyte_threshold_divide = 2956,
-		.twobyte_threshold_min = 909,
+		.rle_ratio = 82,
+		.twobyte_ratio = 76,
+		.recursive_limit = 335,
+		.twobyte_threshold_max = 3,
+		.twobyte_threshold_divide = 2846,
+		.twobyte_threshold_min = 938,
 		.seqlenMinLimit3 = 26,
-		.blockSizeMinus = 9,
-		.sizeMaxForCanonicalHeaderPack = 407,
-		.sizeMinForSeqPack = 17024,
-		.sizeMinForCanonical = 700,
-		.sizeMaxForSuperslim = 67031
+		.blockSizeMinus = 10,
+		.sizeMaxForCanonicalHeaderPack = 460,
+		.sizeMinForSeqPack = 31886,
+		.sizeMinForCanonical = 678,
+		.sizeMaxForSuperslim = 60023
 		},
 			seqlenProfile = {
-		   .rle_ratio = 31,
-		   .twobyte_ratio = 97,
-		   .recursive_limit = 180,
-		   .twobyte_threshold_max = 5226,
-		   .twobyte_threshold_divide = 2233,
-		   .twobyte_threshold_min = 185,
-		   .seqlenMinLimit3 = 43,
+		   .rle_ratio = 35,
+		   .twobyte_ratio = 86,
+		   .recursive_limit = 223,
+		   .twobyte_threshold_max = 5983,
+		   .twobyte_threshold_divide = 1866,
+		   .twobyte_threshold_min = 71,
+		   .seqlenMinLimit3 = 33,
 		   .blockSizeMinus = 0,
-		   .sizeMaxForCanonicalHeaderPack = 175,
-		   .sizeMinForSeqPack = 2600,
-		   .sizeMinForCanonical = 30,
-		   .sizeMaxForSuperslim = 16384
+		   .sizeMaxForCanonicalHeaderPack = 252,
+		   .sizeMinForSeqPack = 6950,
+		   .sizeMinForCanonical = 14,
+		   .sizeMaxForSuperslim = 9959
 		},
 			offsetProfile = {
-		   .rle_ratio = 74,
-		   .twobyte_ratio = 95,
-		   .recursive_limit = 61,
-		   .twobyte_threshold_max = 11404,
-		   .twobyte_threshold_divide = 2520,
-		   .twobyte_threshold_min = 384,
-		   .seqlenMinLimit3 = 82,
+		   .rle_ratio = 57,
+		   .twobyte_ratio = 90,
+		   .recursive_limit = 146,
+		   .twobyte_threshold_max = 10917,
+		   .twobyte_threshold_divide = 2168,
+		   .twobyte_threshold_min = 536,
+		   .seqlenMinLimit3 = 81,
 		   .blockSizeMinus = 0,
-		   .sizeMaxForCanonicalHeaderPack = 530,
-		   .sizeMinForSeqPack = 2600,
-		   .sizeMinForCanonical = 261,
-		   .sizeMaxForSuperslim = 16384
+		   .sizeMaxForCanonicalHeaderPack = 455,
+		   .sizeMinForSeqPack = 4133,
+		   .sizeMinForCanonical = 386,
+		   .sizeMaxForSuperslim = 31399
 		},
 			distanceProfile = {
-		   .rle_ratio = 71,
+		   .rle_ratio = 62,
 		   .twobyte_ratio = 100,
-		   .recursive_limit = 20,
-		   .twobyte_threshold_max = 3641,
-		   .twobyte_threshold_divide = 3972,
-		   .twobyte_threshold_min = 37,
-		   .seqlenMinLimit3 = 35,
+		   .recursive_limit = 10,
+		   .twobyte_threshold_max = 5407,
+		   .twobyte_threshold_divide = 3941,
+		   .twobyte_threshold_min = 8,
+		   .seqlenMinLimit3 = 25,
 		   .blockSizeMinus = 0,
-		   .sizeMaxForCanonicalHeaderPack = 256,
-		   .sizeMinForSeqPack = 2600,
-		   .sizeMinForCanonical = 300,
-		   .sizeMaxForSuperslim = 16384
+		   .sizeMaxForCanonicalHeaderPack = 428,
+		   .sizeMinForSeqPack = 10,
+		   .sizeMinForCanonical = 270,
+		   .sizeMaxForSuperslim = 17054
 		};
 		return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
 	}
@@ -1200,62 +1200,62 @@ completePackProfile getProfileForExtension(wchar_t* ext) {
 
 	else if (equalsIgnoreCase(ext, L"exe")) {
 
-		//Size: 14693484
+		//Size: 14693481
 
 		packProfile mainProfile = {
-		.rle_ratio = 64,
+		.rle_ratio = 70,
 		.twobyte_ratio = 100,
-		.recursive_limit = 686,
-		.twobyte_threshold_max = 12582,
-		.twobyte_threshold_divide = 2449,
-		.twobyte_threshold_min = 781,
+		.recursive_limit = 670,
+		.twobyte_threshold_max = 11333,
+		.twobyte_threshold_divide = 2846,
+		.twobyte_threshold_min = 860,
 		.seqlenMinLimit3 = 191,
 		.blockSizeMinus = 171,
-		.sizeMaxForCanonicalHeaderPack = 232,
-		.sizeMinForSeqPack = 13280,
-		.sizeMinForCanonical = 355,
-		.sizeMaxForSuperslim = 76916
+		.sizeMaxForCanonicalHeaderPack = 122,
+		.sizeMinForSeqPack = 8919,
+		.sizeMinForCanonical = 415,
+		.sizeMaxForSuperslim = 78918
 		},
 			seqlenProfile = {
-		   .rle_ratio = 16,
-		   .twobyte_ratio = 75,
-		   .recursive_limit = 473,
-		   .twobyte_threshold_max = 9636,
-		   .twobyte_threshold_divide = 2219,
-		   .twobyte_threshold_min = 151,
-		   .seqlenMinLimit3 = 243,
-		   .blockSizeMinus = 178,
+		   .rle_ratio = 10,
+		   .twobyte_ratio = 71,
+		   .recursive_limit = 411,
+		   .twobyte_threshold_max = 9749,
+		   .twobyte_threshold_divide = 2355,
+		   .twobyte_threshold_min = 184,
+		   .seqlenMinLimit3 = 251,
+		   .blockSizeMinus = 161,
 		   .sizeMaxForCanonicalHeaderPack = 558,
 		   .sizeMinForSeqPack = 360,
-		   .sizeMinForCanonical = 519,
+		   .sizeMinForCanonical = 457,
 		   .sizeMaxForSuperslim = 10
 		},
 			offsetProfile = {
 		   .rle_ratio = 100,
-		   .twobyte_ratio = 56,
-		   .recursive_limit = 77,
-		   .twobyte_threshold_max = 12125,
-		   .twobyte_threshold_divide = 2491,
-		   .twobyte_threshold_min = 909,
-		   .seqlenMinLimit3 = 78,
-		   .blockSizeMinus = 20,
-		   .sizeMaxForCanonicalHeaderPack = 80,
-		   .sizeMinForSeqPack = 1683,
-		   .sizeMinForCanonical = 299,
-		   .sizeMaxForSuperslim = 16274
+		   .twobyte_ratio = 61,
+		   .recursive_limit = 14,
+		   .twobyte_threshold_max = 13000,
+		   .twobyte_threshold_divide = 2811,
+		   .twobyte_threshold_min = 853,
+		   .seqlenMinLimit3 = 77,
+		   .blockSizeMinus = 26,
+		   .sizeMaxForCanonicalHeaderPack = 186,
+		   .sizeMinForSeqPack = 10,
+		   .sizeMinForCanonical = 281,
+		   .sizeMaxForSuperslim = 13867
 		},
 			distanceProfile = {
 		   .rle_ratio = 22,
 		   .twobyte_ratio = 55,
-		   .recursive_limit = 70,
+		   .recursive_limit = 45,
 		   .twobyte_threshold_max = 6425,
-		   .twobyte_threshold_divide = 2091,
-		   .twobyte_threshold_min = 544,
-		   .seqlenMinLimit3 = 148,
-		   .blockSizeMinus = 169,
+		   .twobyte_threshold_divide = 1794,
+		   .twobyte_threshold_min = 596,
+		   .seqlenMinLimit3 = 128,
+		   .blockSizeMinus = 183,
 		   .sizeMaxForCanonicalHeaderPack = 727,
-		   .sizeMinForSeqPack = 21773,
-		   .sizeMinForCanonical = 447,
+		   .sizeMinForSeqPack = 18309,
+		   .sizeMinForCanonical = 431,
 		   .sizeMaxForSuperslim = 24235
 		};
 		return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
@@ -1386,6 +1386,68 @@ completePackProfile getProfileForExtension(wchar_t* ext) {
 		return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
 	}
 
+	else if (equalsIgnoreCase(ext, L"pdf")) {
+
+	//Size: 1397694
+
+	packProfile mainProfile = {
+	.rle_ratio = 74,
+	.twobyte_ratio = 51,
+	.recursive_limit = 485,
+	.twobyte_threshold_max = 3922,
+	.twobyte_threshold_divide = 2957,
+	.twobyte_threshold_min = 840,
+	.seqlenMinLimit3 = 226,
+	.blockSizeMinus = 0,
+	.sizeMaxForCanonicalHeaderPack = 486,
+	.sizeMinForSeqPack = 12903,
+	.sizeMinForCanonical = 338,
+	.sizeMaxForSuperslim = 64070
+	},
+		seqlenProfile = {
+	   .rle_ratio = 25,
+	   .twobyte_ratio = 100,
+	   .recursive_limit = 69,
+	   .twobyte_threshold_max = 1358,
+	   .twobyte_threshold_divide = 3178,
+	   .twobyte_threshold_min = 191,
+	   .seqlenMinLimit3 = 95,
+	   .blockSizeMinus = 63,
+	   .sizeMaxForCanonicalHeaderPack = 291,
+	   .sizeMinForSeqPack = 10,
+	   .sizeMinForCanonical = 204,
+	   .sizeMaxForSuperslim = 10
+	},
+		offsetProfile = {
+	   .rle_ratio = 96,
+	   .twobyte_ratio = 72,
+	   .recursive_limit = 58,
+	   .twobyte_threshold_max = 13000,
+	   .twobyte_threshold_divide = 1130,
+	   .twobyte_threshold_min = 616,
+	   .seqlenMinLimit3 = 113,
+	   .blockSizeMinus = 0,
+	   .sizeMaxForCanonicalHeaderPack = 651,
+	   .sizeMinForSeqPack = 10,
+	   .sizeMinForCanonical = 370,
+	   .sizeMaxForSuperslim = 10434
+	},
+		distanceProfile = {
+	   .rle_ratio = 87,
+	   .twobyte_ratio = 94,
+	   .recursive_limit = 42,
+	   .twobyte_threshold_max = 7302,
+	   .twobyte_threshold_divide = 3253,
+	   .twobyte_threshold_min = 525,
+	   .seqlenMinLimit3 = 49,
+	   .blockSizeMinus = 44,
+	   .sizeMaxForCanonicalHeaderPack = 338,
+	   .sizeMinForSeqPack = 6525,
+	   .sizeMinForCanonical = 465,
+	   .sizeMaxForSuperslim = 10
+	};
+	return getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
+}
 
 
 	// -------------------------------------------------------------------------

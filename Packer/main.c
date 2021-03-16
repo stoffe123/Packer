@@ -107,7 +107,7 @@ void fuzzCompleteProfile(completePackProfile* prof, completePackProfile best) {
 
 
 unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned long long acc_size, unsigned long long acc_size_org,
-	unsigned long long best_size, packProfile profile, packProfile* best) {
+	uint64_t best_size, packProfile profile, packProfile* best) {
 	if (!earlyBreak) {
 		double size_kb = (double)acc_size / (double)1024;
 		printf("\n\n **** ALL SUCCEEDED ****\n %.0f kb   (%llu)", size_kb, acc_size);
@@ -372,7 +372,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"txt";
+	const wchar_t* ext = L"mark";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -717,14 +717,14 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
-	 //L"c:/test/test16";
-	 // L"c:/test/47";
+	 L"c:/test/test16";
+	// L"c:/test/47";
 
-	unsigned long long best_size = 0;
+	uint64_t best_size = 0;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 	while (true) {
 
@@ -781,6 +781,6 @@ int main()
 	srand((unsigned)time(&t));
 	//testmeta();
 	//test16();
-    testarchive();
+    //testarchive();
 	blockpack_onefile();
 }
