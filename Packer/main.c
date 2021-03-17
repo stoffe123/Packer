@@ -694,7 +694,7 @@ void test16() {
 
 void testarchive() {
 
-	completePackProfile profile = getProfileForExtension("gjkrigjrigj");
+	completePackProfile profile = getProfileForExtension(L"gjkrigjrigj");
 	completePackProfile bestProfile = cloneCompleteProfile(profile);
 	uint64_t time_limit = 1000;
 	
@@ -702,12 +702,12 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
 	 //L"c:/test/test16";
-	L"c:/test/47";
+	//L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";

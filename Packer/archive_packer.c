@@ -297,12 +297,8 @@ memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 		headerNamesPackProfile, headerNamesPackProfile);
 }
 
-void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uint8_t archiveType) {
+void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir) {
 
-	bool solid = (archiveType == 0);
-	if (archiveType == TYPE_SEPARATED) {
-		diffSizes(dirInfo);
-	}	
 	memfile* sizesHeader = createPackedSizesHeader(dir, dirInfo);
 	memfile* namesHeader = createPackedNamesHeader(dir, dirInfo);	
 
@@ -311,17 +307,8 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir, uin
 	printf("\n Archive header sizes packed to %lld", headerSizesPackedSize);		
 	printf("\n Archive header names packed to %lld", headerNamesPackedSize);
 	printf("\n Total packed header size is  %lld", headerNamesPackedSize + headerSizesPackedSize);
-	printf("\n NOW WRITING ARCHIVETYPE %d", archiveType);
-	//fwrite(&archiveType, 1, 1, out);
 
-	if (headerNamesPackedSize > UINT32_MAX || headerSizesPackedSize > UINT32_MAX) {
-		printf("\n\n Archivepacker header too big!");
-		exit(1);
-	}
-	//max size of header is UINT32_max
 	writeDynamicSize16or64(headerSizesPackedSize, out);
-
-	//TODO  not needed since you know number of files from before
 	writeDynamicSize16or64(headerNamesPackedSize, out);
 		
 	append_mem_to_file(out, sizesHeader);
@@ -464,7 +451,7 @@ void archivePackSemiSeparated(wchar_t* dest, completePackProfile profile, fileLi
 
 	// write headers now that we have adjusted the sizes!
 	FILE* out = openWrite(dest);
-	writeArchiveHeader(out, dirInfo, dir, TYPE_SEMISEPARATED);
+	writeArchiveHeader(out, dirInfo, dir);
 
 	//flush all files to big blob
 	for (uint64_t i = 0; i < blobCount; i++) {		
@@ -482,11 +469,8 @@ void archivePackSemiSeparated(wchar_t* dest, completePackProfile profile, fileLi
 
 void archivePackInternal(wchar_t* dir, const wchar_t* dest, completePackProfile profile) {
 
-	//archiveType   0 = solid   1 = semi-separated   2 = separated
 	printf("\n Starting archive pack for %ls", dir);
-	uint8_t archiveType = TYPE_SEMISEPARATED; // .archiveType;
-	bool solid = (archiveType == TYPE_SOLID);
-	fileListAndCount_t dirInfo = storeDirectoryFilenames(dir, archiveType != TYPE_SEPARATED);
+	fileListAndCount_t dirInfo = storeDirectoryFilenames(dir, true);
 	file_t* fileList = dirInfo.fileList;
 	int64_t count = dirInfo.count;
 	
@@ -498,7 +482,7 @@ void archivePackInternal(wchar_t* dir, const wchar_t* dest, completePackProfile 
 }
 
 
-fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
+fileListAndCount_t readSizesHeader(memfile* in) {
 	fileListAndCount_t dirInfo;	
 	rewindMem(in);	
 	uint64_t count = getMemSize(in) / 8;
@@ -517,9 +501,6 @@ fileListAndCount_t readSizesHeader(memfile* in, int archiveType) {
 		}
 	}
 	dirInfo.count = count;
-	if (archiveType == TYPE_SEPARATED) {
-		unDiffSizes(dirInfo);
-	}
 	return dirInfo;
 }
 
@@ -570,7 +551,7 @@ void readNamesHeader(FILE* in, wchar_t* dir, fileListAndCount_t* dirInfo) {
 }
 
 
-fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize, int archiveType) {
+fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 	
 	printf("\n Read packed sizes Header size: %d", headerSize);
 		
@@ -579,7 +560,7 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize, int arch
 	memfile* headerUnpacked = multiUnpack(headerPackedMem);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	
-	fileListAndCount_t res =  readSizesHeader(headerUnpacked, archiveType);
+	fileListAndCount_t res =  readSizesHeader(headerUnpacked);
 
 	return res;
 }
@@ -733,17 +714,14 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 
 void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 
-	printf("\n *** Archive Unpack *** ");		
-	uint8_t archiveType = TYPE_SEMISEPARATED;
+	printf("\n *** Archive Unpack *** ");			
 
 	FILE* in = openRead(src);	
-	//fread(&archiveType, 1, 1, in);
-	printf("\n Archive type: %d", archiveType);
 	
 	uint64_t headerSizesPackedSize = readDynamicSize16or64(in);
 	uint64_t headerNamesPackedSize = readDynamicSize16or64(in); 
 				
-	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize, archiveType);
+	fileListAndCount_t fileList = readPackedSizesHeader(in, headerSizesPackedSize);
 	readPackedNamesHeader(in, dir, headerNamesPackedSize, &fileList);	
 
 	printf("\n Unpacked and read headers successfully! Now unpacking files...");
@@ -751,23 +729,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	file_t* filenames = fileList.fileList;
 	int64_t count = fileList.count;
 	const wchar_t blockUnpackFilename[200] = { 0 };
-
-	if (archiveType == TYPE_SEMISEPARATED) {
-		archiveUnpackSemiSeparated(in, fileList, dir);
-		return;
-	}
-	else if (archiveType == TYPE_SOLID) {
-		get_temp_filew(blockUnpackFilename, L"blockunpacksolidblob");
-		block_unpack_file(in, blockUnpackFilename);
-		fclose(in);
-		in = openRead(blockUnpackFilename);
-	}
-	createArchiveFiles(in, fileList, dir, archiveType == TYPE_SEPARATED);
-	fclose(in);
-	free(filenames);
-	if (archiveType == TYPE_SOLID) {
-		_wremove(blockUnpackFilename);
-	}
+	archiveUnpackSemiSeparated(in, fileList, dir);			
 }
 
 
