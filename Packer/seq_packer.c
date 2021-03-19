@@ -174,7 +174,7 @@ uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqT
 }
 
 
-uint64_t calcUseLongRange(uint64_t pageMax, uint64_t highestDistance) {
+uint64_t calcLongRange(uint64_t pageMax, uint64_t highestDistance) {
 	if (pageMax >= highestDistance) {
 		return 0;
 	}
@@ -233,11 +233,11 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 		//calc pageMax without using longRange to see if longRange could be skipped	
 		pageCoding.useLongRange = false;
 		uint64_t pageMax = calcPageMax(pageCoding);
-		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
+		pageCoding.useLongRange = calcLongRange(pageMax, highestValue);
 
 		pageMax = calcPageMax(pageCoding);
 		//update now that pageMax has changed
-		pageCoding.useLongRange = calcUseLongRange(pageMax, highestValue);
+		pageCoding.useLongRange = calcLongRange(pageMax, highestValue);
 
 		uint32_t size = calcMetaSize(pageCoding, pageMax, freqs, metaValuesCount);
 		if (size < bestSize) {

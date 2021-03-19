@@ -349,7 +349,7 @@ void testmeta() {
 void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
 	FILE* utfil = openWrite(L"c:/test/best.txt");
 	fprintf(utfil, "else if (equalsIgnoreCase(ext, L\"%ls\")) {", ext);
-	fprintf(utfil, "\n\n//Size: %llu", size);
+	fprintf(utfil, "\n\n//Size: %.3f", (float)(size)/1000.0);
 	fprintf(utfil, "\n\npackProfile mainProfile = {");
 	fprintProfile(utfil, &profile.main);
 	fprintf(utfil, "},");
@@ -372,7 +372,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"mark";
+	const wchar_t* ext = L"fdt";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -743,7 +743,7 @@ void testarchive() {
 				bestSize = acc_size_packed;
 				bestProfile = cloneCompleteProfile(profile);
 				printf("\a");
-				printResultToFile(acc_size_packed, profile, "_default_");
+				printResultToFile(acc_size_packed, profile, L"_default_");
 			}
 		}
 		else {
