@@ -44,10 +44,6 @@ uint32_t calc24Bit(uint8_t ch, uint8_t ch1, uint8_t ch2) {
 	return ch + 256 * ch1 + 65536 * ch2;
 }
 
-
-
-
-
 void updateNextCharTable(uint8_t ch1, uint8_t ch2, uint8_t ch3, uint32_t pos) {
 	uint32_t ch = calc24Bit(ch1, ch2, ch3);
 	uint32_t lastPos = lastChar[ch];
@@ -130,20 +126,28 @@ void convertMeta(memfile* file, uint64_t distance, pageCoding_t pageCoding) {
 			exit(1);
 		}
 		distance -= (pageMax + 1);
-
+		uint8_t highestByte = 0;
 		if (useLongRange >= 3) {
-			writeMeta(file, distance / 65536);
+			highestByte = distance / 65536;
+			if (highestByte > 0) {
+				writeMeta(file, highestByte);
+			}
 			distance %= 65536;
 		}
 		if (useLongRange >= 2) {
 			writeMeta(file, distance / 256);
 		}
 		writeMeta(file, distance % 256);
-		writeMeta(file, 255);
+		if (useLongRange >= 3 && highestByte == 0) {
+			writeMeta(file, 254);
+		}
+		else {
+			writeMeta(file, 255);
+		}
 	}
 }
 
-uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqTable, int32_t pos)
+uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqTable, int32_t valuesCount)
 {
 	uint64_t lowestSpecial = getLowestSpecial(pageCoding);
 	uint64_t size = 0;
@@ -154,21 +158,23 @@ uint64_t calcMetaSize(pageCoding_t pageCoding, uint64_t pagesMax, int32_t* freqT
 		size += freqTable[i];
 
 	}
-	uint64_t freqs = size;
+	uint64_t frequencyOfLows = size;
 
 	// 2 bytes
 	for (int i = lowestSpecial; i <= pagesMax; i++) {
 		//printf("\n i=%d", i);
 		size += (freqTable[i] * (uint64_t)2);
-		freqs += freqTable[i];
+		frequencyOfLows += freqTable[i];
 
 	}
 	// long ranges
-	uint64_t longRangeFreq = pos - freqs;
+	uint64_t longRangeFreq = valuesCount - frequencyOfLows;
 	if (pageCoding.useLongRange == 0 && longRangeFreq > 0) {
 		wprintf(L"\n seqpacker.calcMetaSize: useLongRange == 0 && longRangeFreq > 0 when packing %s", src_name);
 		exit(1);
 	}
+
+	// this is not working now
 	size += (longRangeFreq * (pageCoding.useLongRange + 1));
 	return size;
 }
@@ -254,10 +260,14 @@ pageCoding_t createMetaFile(const wchar_t* metaname, memfile* file) {
 	}
 	syncMemSize(file);
 	uint64_t filesize = getMemSize(file);
+
+	/*  
+	//can't compare now when longrange are divided into two groups with useLongRange = 3
 	if (bestSize != filesize) {
 		printf("\n   comparing %ls meta file sizes ... %u %llu when seqpacking file %ls", metaname, bestSize, filesize, src_name);
 		exit(1);
 	}
+	*/
 	//wprintf(L"\n %s pages %d useLongrange %d", metaname, bestPageCoding.pages, bestPageCoding.useLongRange);
 
 	return bestPageCoding;

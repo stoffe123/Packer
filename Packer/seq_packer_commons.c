@@ -16,15 +16,20 @@ unsigned char getSeqlenMin(uint64_t best_offset, int seqlenMinLimit3) {
 
 
 uint64_t getLastByte(uint64_t longRange) {
-	return longRange ? 254 : 255;
+	if (longRange == 0) {
+		return 255;
+	}
+	if (longRange >= 3) {
+		return 253;
+	}
+	return 254;
 }
-
 uint64_t getLowestSpecial(pageCoding_t pageCoding) {
 	return getLastByte(pageCoding.useLongRange) + 1 - pageCoding.pages;
 }
 
 uint64_t calcPageMax(pageCoding_t coding) {
-	return 	coding.pages * (uint64_t)256 + ((coding.useLongRange ? 254 : 255) - coding.pages);
+	return 	coding.pages * (uint64_t)256 + getLastByte(coding.useLongRange) - coding.pages;
 }
 
 uint64_t getBundleSize(seqPackBundle b) {

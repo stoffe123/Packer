@@ -8,7 +8,7 @@
 //3 bytes can handle block sizes up to 16,777,216‬
 
 //8,000,000   8 MB block size, that can be reduced with profile value block_size_minus
-#define BLOCK_SIZE 8000000
+#define BLOCK_SIZE 16770000
 
 //  16777215  is largest number for 24 bits in multipacker.tar
 static bool DOUBLE_CHECK_PACK = false;

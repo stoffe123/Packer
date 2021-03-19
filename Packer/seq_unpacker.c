@@ -68,6 +68,10 @@ uint64_t getMeta(pageCoding_t pageCoding, meta_kind_t kind) {
 			offset += readMeta(kind) * (uint64_t)65536;
 		}
 	}
+	else if (useLongRange >= 3 && offset == 254) {
+		offset = readMeta(kind) + pageMax + 1;		
+		offset += readMeta(kind) * (uint64_t)256;		
+	}
 	else {
 		if (offset >= lowestSpecial && offset <= lastByte) {
 			uint64_t page = lastByte - offset;

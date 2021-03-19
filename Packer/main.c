@@ -372,7 +372,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"fdt";
+	const wchar_t* ext = L"tis";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -443,14 +443,17 @@ void onefile() {
 
 	int before_suite = clock();
 
-	const wchar_t* src = L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/En händig man på turne.mpg";
+	const wchar_t* src =
+		//L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/En händig man på turne.mpg";
+		L"c:/test/book.txt";
+
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
 	const wchar_t* packed_name = L"c:/test/packed.bin";
 
-	long long size_org = getFileSizeByName(src);
+	uint64_t size_org = getFileSizeByName(src);
 
-	wprintf(L"\n Packing... %s with length:%d", src, size_org);
+	printf(L"\n Packing... %ls with length:%llu", src, size_org);
 
 	int cl = clock();
 
@@ -525,15 +528,14 @@ void onefile() {
 	uint64_t size_packed;
 	memfile* srcm = getMemfileFromFile(src);
 
-	//seqPackBundle packed = seqPackSep(srcm, profile);
-	//size_packed = getBundleSize(packed);
-	memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
+	seqPackBundle packed = seqPackSep(srcm, profile);
+	size_packed = getBundleSize(packed);
+	
+	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
 	//memfile* packed = halfbyteRlePack(srcm, 0);
 	//memfile* packed = canonicalEncode(srcm);
 	//memfile* packed = twoBytePack(srcm, profile);
-
-
-	size_packed = getMemSize(packed);
+	//size_packed = getMemSize(packed);
 
 	printf("\n size_packed %llu", size_packed);
 	//memfileToFile(packed.main, L"c:/test/packed.bin");
@@ -543,8 +545,8 @@ void onefile() {
 
 	//memfile* unpacked = twoByteUnpack(packed);
 	//memfile* unpacked = canonicalDecode(packed);
-	memfile* unpacked = multiUnpack(packed);
-	//memfile* unpacked = seqUnpack(packed);
+	//memfile* unpacked = multiUnpack(packed);
+	memfile* unpacked = seqUnpack(packed);
 	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
 
 
@@ -706,7 +708,7 @@ void testarchive() {
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
-	 //L"c:/test/test16";
+	 //L"c:/test/test13";
 	//L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
@@ -766,6 +768,7 @@ int main()
 	srand((unsigned)time(&t));
 	//testmeta();
 	//test16();
+	//onefile();
     testarchive();
 	blockpack_onefile();
 }
