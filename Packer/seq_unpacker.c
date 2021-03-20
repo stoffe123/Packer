@@ -177,7 +177,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	assert(buf_size == BLOCK_SIZE * 4, "buf_size was not equal to BLOCK_SIZE*4 in seq_unpacker");
 	reallocMem(mf_arr.main, buf_size);
 	buf = mf_arr.main->block;
-	debug("\n packed_file_end %d", packed_file_end);
+	debug("\n packed_file_end %llu", packed_file_end);
 
 	unsigned char packType = read_byte_from_file();
 	bool superslim = isKthBitSet(packType, 7);
@@ -185,7 +185,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	if (!superslim) {
 		seqlenMinLimit3 = read_byte_from_file();
 	}
-	
+
 
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;
@@ -278,13 +278,13 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 		}
 	}
 	uint64_t size_out = buf_size - ((uint64_t)buf_pos + 1) - size_wraparound;
-	debug("Writing outfile from %d to %d", buf_pos + 1, buf_pos + 1 + size_out);
+	debug("Writing outfile from %llu to %llu", buf_pos + 1, buf_pos + 1 + size_out);
 	memfile* utfil = getMemfile(size_out, L"sequnpacker_utfil");
 	memWrite(&buf[buf_pos + 1], size_out, utfil);
 
 	setSize(mf_arr.main, infil_orgsize);
 
-	debug("\n seqlenMinLimit3=%d", seqlenMinLimit3);
+	debug("\n seqlenMinLimit3=%llu", seqlenMinLimit3);
 	debug("\n superslim=%d", superslim);
 
 	return utfil;

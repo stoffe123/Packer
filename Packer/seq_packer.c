@@ -284,6 +284,24 @@ uint64_t storeLongRange(uint64_t packType, uint64_t longRange, uint64_t startBit
 	return packType;
 }
 
+int64_t calcPointsWon(uint64_t seqlen, uint64_t offset, packProfile profile) {
+
+	//how much the meta data files will be compressed in %
+	uint8_t factor = profile.metaCompressionFactor;
+	seqlen *= 100;
+	if (offset < profile.offsetLimit1) {
+		return seqlen - factor;
+	}
+	if (offset < profile.offsetLimit2) {
+		return seqlen - 2 * factor;;
+	}
+	if (offset < profile.offsetLimit3) {
+		return seqlen - 3 * factor;
+	
+	}
+	return seqlen - 4 * factor;
+}
+
 //--------------------------------------------------------------------------------------------------------
 
 seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
@@ -313,7 +331,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		best_offset = 0,
 		min_seq_len = 3;
 
-	int64_t  best_seqlen, seq_len;
+	int64_t  best_seqlen, seq_len, bestBytesWon;
 	uint64_t distance = 1; // point one byte past the beginning!
 	uint32_t buffer_pos = 0;
 	debug("\n Seq_packer pass: %d", pass);
@@ -346,6 +364,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
+		bestBytesWon = 40;
 		
 	    uint8_t ch = buffer[buffer_pos];
 		uint8_t ch1 = buffer[1 + buffer_pos];
@@ -394,18 +413,21 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 						}
 					}
 					//check if better than the best!
+					
+					int64_t bytesWon = calcPointsWon(seq_len, offset, profile);				
+					if (bytesWon > bestBytesWon) { //&& (offset - seq_len) <= longest_offset) {
+					
 
-					if (seq_len > best_seqlen) { //&& (offset - seq_len) <= longest_offset) {
-						/*
-						if (offset >= offsetPagesMax && seq_len < 6) {
-							continue;
-						}
-						*/
-						best_seqlen = seq_len;
-						best_offset = offset;
-						if (best_seqlen >= max_seqlen) {
-							best_seqlen = max_seqlen;
-							break;
+						uint8_t seqlen_min = getSeqlenMin(offset - seq_len, seqlenMinLimit3);
+						if (seq_len >= seqlen_min) {
+
+							best_seqlen = seq_len;
+							bestBytesWon = bytesWon;
+							best_offset = offset;
+							if (best_seqlen >= max_seqlen) {
+								best_seqlen = max_seqlen;
+								break;
+							}
 						}
 					}
 				}

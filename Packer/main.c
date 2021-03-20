@@ -85,7 +85,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
-	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 255);
+	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 1000);
 	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 9000000);
 
 	profile->sizeMaxForCanonicalHeaderPack = doFuzz(profile->sizeMaxForCanonicalHeaderPack, best.sizeMaxForCanonicalHeaderPack, 80, 1200);
@@ -94,6 +94,12 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->sizeMaxForSuperslim = doFuzz(profile->sizeMaxForSuperslim, best.sizeMaxForSuperslim, 10, 100000);
 
 	profile->archiveType = doFuzz(profile->archiveType, best.archiveType, 0, 2);
+
+	profile->metaCompressionFactor = doFuzz(profile->metaCompressionFactor, best.metaCompressionFactor, 1, 200);
+
+	profile->offsetLimit1 = doFuzz(profile->offsetLimit1, best.offsetLimit1, 90, 256);
+	profile->offsetLimit2 = doFuzz(profile->offsetLimit2, best.offsetLimit2, 700, 2000);
+	profile->offsetLimit3 = doFuzz(profile->offsetLimit3, best.offsetLimit3, 60000, 80000);
 
 }
 
@@ -372,7 +378,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"tis";
+	const wchar_t* ext = L"pdf";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -406,7 +412,7 @@ void blockpack_onefile() {
 
 
 		cl = clock();
-		/*
+	/*
 		block_unpack(packed, unpacked);
 		int unpack_time = (clock() - cl);
 		//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -428,6 +434,7 @@ void blockpack_onefile() {
 			exit(1);
 		}
 		*/
+		
 		if (size_packed < bestSize) {
 			bestSize = size_packed;
 			bestProfile = cloneCompleteProfile(profile);			
@@ -445,7 +452,7 @@ void onefile() {
 
 	const wchar_t* src =
 		//L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/En händig man på turne.mpg";
-		L"c:/test/book.txt";
+		L"c:/test/pazera.exe";
 
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
@@ -571,128 +578,7 @@ void onefile() {
 	}
 }//onefile
 
-//---------------------------------------------------------------------------------------
 
-void test16() {
-
-
-	wchar_t test_filenames[16][100] = { L"did.csh",
-
-		L"rel.pdf",
-		L"book.txt",
-		L"repeatchar.txt",
-		L"oneseq.txt",
-		L"empty.txt",
-		L"onechar.txt",
-		L"book_med.txt",
-
-		L"voc.wav",
-		L"tob.pdf",
-		L"pazera.exe",
-		L"amb.dll",
-		L"bad.cdg",
-		L"bad.mp3",
-		L"nex.doc",
-		L"aft.htm"
-
-
-	};
-
-
-	packProfile bestProfile,
-		profile = {
-	  .rle_ratio = 90,
-			.twobyte_ratio = 79,
-			.recursive_limit = 10,
-			.twobyte_threshold_max = 8721,
-			.twobyte_threshold_divide = 1383,
-			.twobyte_threshold_min = 1000,
-			.seqlenMinLimit3 = 188,
-
-			.blockSizeMinus = 155,
-			.winsize = 97340,
-			.sizeMaxForCanonicalHeaderPack = 400,
-			.sizeMinForSeqPack = 10,
-			.sizeMinForCanonical = 15,
-			.sizeMaxForSuperslim = 26384
-	};
-
-	copyProfile(&profile, &bestProfile);
-	uint64_t timeLimit = 39;
-	bool unpack = true;
-	unsigned long long best_size = 0; // 44127835; // (43094 kb)
-	while (true)
-	{
-
-		unsigned long long acc_size_packed = 0,
-			acc_size_org = 0;
-
-		uint64_t totalTime = 0;
-		int kk = 0;
-		bool earlyBreak = true;
-		for (; kk < 16; kk++)
-		{
-			const wchar_t src[200] = { 0 };
-			concatw(src, L"D:/Dropbox/Personal/Programmering/Compression/test/test16/", test_filenames[kk]);
-
-			const wchar_t* dst = L"C:/test/unp";
-
-			const wchar_t* packed_name = L"c:/test/packed.bin";
-
-			uint64_t size_org = getFileSizeByName(src);
-			printf("\n------------------------------------------------");
-			wprintf(L"\n Packing... %s with length:%llu", src, size_org);
-
-			uint64_t beforePack = clock();
-
-			block_pack(src, packed_name, profile);
-			//seq_pack_separate(src, "c:/test/", profile);
-
-			uint64_t pack_time = (clock() - beforePack);
-			totalTime += pack_time;
-			//printf("\n Packing finished time it took: %d", pack_time);
-			uint64_t size_packed = getFileSizeByName(packed_name);
-			printf("\n packed size %llu", size_packed);
-			wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
-
-			acc_size_packed += size_packed;
-			if (isEarlyBreak(best_size, acc_size_packed, totalTime, timeLimit)) {
-				earlyBreak = true;
-				break;
-			}
-			acc_size_org += size_org;
-
-			printf("\n Accumulated size %llu kb", acc_size_packed / 1024);
-
-			uint64_t beforeUnpack = clock();
-			if (unpack) {
-				block_unpack(packed_name, dst);
-				//seq_unpack_separate("main", dst, "c:/test/");
-
-				uint64_t unpack_time = (clock() - beforeUnpack);
-				totalTime += unpack_time;
-				//printf("\n Unpacking finished time it took: %d", unpack_time);
-				printf("\nTimes %llu/%llu/%llu", pack_time, unpack_time, pack_time + unpack_time);
-
-				printf("\n\n Comparing files!");
-				if (filesEqual(src, dst)) {
-					printf("\n ****** SUCCESS ****** (equal)\n");
-				}
-				else {
-					printf("\n Files were not equal!");
-					printf("\n profile used:");
-					printProfile(&profile);
-					exit(1);
-				}
-			}
-			earlyBreak = isEarlyBreak(best_size, acc_size_packed, totalTime, timeLimit);
-		}//end for
-		best_size = presentResult(earlyBreak, totalTime, acc_size_packed, acc_size_org, best_size, profile, &bestProfile);
-		fuzzProfile(&profile, bestProfile);
-	}//end while true
-}//end test suit 16
-
-//-----------------------------------------------------------------------------------------
 
 void testarchive() {
 
@@ -708,7 +594,7 @@ void testarchive() {
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
-	 //L"c:/test/test13";
+	// L"c:/test/test13";
 	//L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
@@ -770,5 +656,5 @@ int main()
 	//test16();
 	//onefile();
     testarchive();
-	blockpack_onefile();
+    blockpack_onefile();
 }

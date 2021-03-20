@@ -54,11 +54,18 @@ static packProfile profile = {
 .twobyte_threshold_max = 5,
 .twobyte_threshold_divide = 12233,
 .twobyte_threshold_min = 5,
-.seqlenMinLimit3 = 43,
+.seqlenMinLimit3 = 234,
 .winsize = 1000,
 .sizeMaxForCanonicalHeaderPack = 260,
 .sizeMinForSeqPack = 9,
-.sizeMinForCanonical = INT64_MAX };
+.sizeMinForCanonical = INT64_MAX,
+.metaCompressionFactor = 70,
+    .offsetLimit1 = 250,
+    .offsetLimit2 = 1018,
+    .offsetLimit3 = 66000
+
+
+};
 
 /***************************************************************************
 *                            TYPE DEFINITIONS
@@ -630,7 +637,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
         fputcc(cl[i].codeLen, headerFile);
     }
     rewindMem(headerFile);
-    memfile* packedFilename = getMemfile(300, L"canicalHeaderPacked");
+    memfile* packedFilename = getMemfile(300, L"canicalHeaderPacked");    
     int packType = multiPackAndReturnPackType(headerFile, packedFilename, profile, profile, profile, profile);
     uint64_t orgSize = getMemSize(headerFile);
     uint64_t packedSize = getMemSize(packedFilename);
@@ -639,7 +646,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
 
     memfile* fileToRead;
     if (packedSize <= 2 || packedSize >= 256) {
-        printf("\n canonical header pack was too large %d original %d => using store", packedSize, orgSize);
+        printf("\n canonical header pack was too large %llu original %llu => using store", packedSize, orgSize);
         packedSize = 0; // flag for store      
         fileToRead = headerFile;
     }

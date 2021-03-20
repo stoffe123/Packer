@@ -63,7 +63,7 @@ void threadBlockUnPack(void* arg)
 	releaseBlobMutex();
 
 	printf("\n Starting THREAD block unpack for file %ls", filename);
-	blockUnpackAndReplace(filename);
+	blockUnpackAndReplace(filename, bc->profile);
 	printf("\n THREAD block unpack FOR %ls FINISHED!", filename);
 }
 
@@ -284,6 +284,8 @@ memfile* createPackedSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	
 	memfile* sizesHeader = createSizesHeader(dir, dirInfo);
 
+	//TODO .. create a full profile and place in profileFactory
+
 	return multiPackAndStorePackType(sizesHeader, headerSizesPackProfile, headerSizesPackProfile,
 		headerSizesPackProfile, headerSizesPackProfile);
 }
@@ -293,6 +295,9 @@ memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	memfile* namesHeader = createNamesHeader(dir, dirInfo);
 	//memfileToFile(namesHeader, L"c:/test/namesheaders/namesHeader.bin");
 	//myExit();
+
+	  //TODO .. create a full profile and place in profileFactory
+
 	return multiPackAndStorePackType(namesHeader, headerNamesPackProfile, headerNamesPackProfile,
 		headerNamesPackProfile, headerNamesPackProfile);
 }
@@ -320,7 +325,7 @@ uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
 	uint64_t blobCount = 0;
-	
+
 	uint64_t* res = calloc(count + 1, sizeof(uint64_t));
 
 	wchar_t ext[20] = { 0 };
@@ -331,25 +336,25 @@ uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 	for (int i = 0; i < count; i++) {
 		breakAndCreateBlob = false;
 		if (fileList[i].equalSizeNumber == UINT64_MAX && i < count - 1) {
-				wchar_t* filename = fileList[i].name;
-				//printf("\n%ls of size: %lld", filename, fileList[i].size);
-				getFileExtension(ext, filename);
-				getFileExtension(next_ext, fileList[i + 1].name);
-				breakAndCreateBlob = !equalsIgnoreCase(next_ext, ext);
-				if (!breakAndCreateBlob) {
-					noOfFilesInBlobCount++;
-				}
+			wchar_t* filename = fileList[i].name;
+			//printf("\n%ls of size: %lld", filename, fileList[i].size);
+			getFileExtension(ext, filename);
+			getFileExtension(next_ext, fileList[i + 1].name);
+			breakAndCreateBlob = !equalsIgnoreCase(next_ext, ext);
+			if (!breakAndCreateBlob) {
+				noOfFilesInBlobCount++;
+			}
 		}
-		if (breakAndCreateBlob || (i == count - 1)) {						
+		if (breakAndCreateBlob || (i == count - 1)) {
 			printf("\n BLOB nr %d FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
-			blobCount++;	
+			blobCount++;
 			if (noOfFilesInBlobCount == 0) {
 				res[blobCount] = i;
 			}
 			else {
 				res[blobCount] = UINT64_MAX;
 			}
-			noOfFilesInBlobCount = 0;			
+			noOfFilesInBlobCount = 0;
 		}
 	}
 	res[0] = blobCount;
@@ -591,25 +596,6 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 }
 
 
-void createArchiveFiles(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, bool unpackFiles) {
-	file_t* filenames = dirInfo.fileList;
-	for (int i = 0; i < dirInfo.count; i++) {
-	
-		createMissingDirs(filenames[i].name, dir);
-		//printf("\n Reading: %ls sized:%" PRId64, filenames[i].name, filenames[i].size);
-		uint64_t equalIndex = filenames[i].equalSizeNumber;
-		if (equalIndex != UINT64_MAX) {
-			printf("\n  OOOOOOOOOOOOOOOOOOOOOOOOO EQUAL FOUND!!");
-			copyFile(filenames[equalIndex].name, filenames[i].name);
-		}
-		else {
-			copyFileChunkToFile(in, filenames[i].name, filenames[i].size);
-			if (unpackFiles) {
-				blockUnpackAndReplace(filenames[i].name);
-			}
-		}
-	}
-}
 
 uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex, file_t* filenames, FILE *in) {
 	if (i == nrOfBlobs - 1) {
@@ -625,9 +611,9 @@ uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex
 
 void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
 
-	uint64_t *blobsInfoArr  = determineNumberOfBlobs(dirInfo),
-	         nrOfBlobs = blobsInfoArr[0], 
-		     count = dirInfo.count;
+	uint64_t* blobsInfoArr = determineNumberOfBlobs(dirInfo),
+		nrOfBlobs = blobsInfoArr[0],
+		count = dirInfo.count;
 	file_t* filenames = dirInfo.fileList;
 
 	for (uint64_t i = 0; i < count; i++) {
@@ -638,7 +624,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t singleBlobFileIndex = blobsInfoArr[i + 1];
-		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);		
+		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);
 
 		printf("\n ArchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
 

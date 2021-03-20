@@ -8,7 +8,7 @@
 //3 bytes can handle block sizes up to 16,777,216‬
 
 //8,000,000   8 MB block size, that can be reduced with profile value block_size_minus
-#define BLOCK_SIZE 16770000
+#define BLOCK_SIZE 16777000
 
 //  16777215  is largest number for 24 bits in multipacker.tar
 static bool DOUBLE_CHECK_PACK = false;
@@ -41,6 +41,11 @@ typedef struct packProfile {
 	int64_t sizeMinForCanonical;
 	int64_t sizeMaxForSuperslim;
 	int64_t archiveType;
+
+	int64_t metaCompressionFactor;  //1-120
+	int64_t offsetLimit1;
+	int64_t offsetLimit2;
+	int64_t offsetLimit3;
 } packProfile;
 
 typedef struct completePackProfile {

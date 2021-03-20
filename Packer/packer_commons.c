@@ -83,7 +83,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	int limit = 100;
 	
 	if (equalsw(kind, L"multi")) {
-		packedName = multiPackAndStorePackType(src, profile, seqlensProfile, offsetsProfile, distancesProfile);		
+		packedName = multiPackAndStorePackType(src, profile, seqlensProfile, offsetsProfile, distancesProfile);
 	}
 	else if (equalsw(kind, L"rle simple")) {
 		packedName = RleSimplePack(src, profile);
@@ -92,7 +92,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	else if (equalsw(kind, L"twobyte")) {
 		packedName = twoBytePack(src, profile);
 		limit = profile.twobyte_ratio;
-	}	
+	}
 	else {
 		wprintf(L"\n kind=%s not found in packer_commons.packAndTest", kind);
 		exit(1);
@@ -108,8 +108,8 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	return under_limit;
 }
 
-int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile, 
-	packProfile offsetProfile, 
+int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile,
+	packProfile offsetProfile,
 	packProfile distancesProfile, int packType, int bit) {
 	bool succ = packAndTest(L"multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
 	if (succ) {
@@ -117,6 +117,7 @@ int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfil
 	}
 	return packType;
 }
+
 
 
 
@@ -133,11 +134,20 @@ char* profileToString(packProfile* profile) {
 	"\n.sizeMaxForCanonicalHeaderPack = %llu,"
 	"\n.sizeMinForSeqPack = %llu,"
 	"\n.sizeMinForCanonical = %llu,"
-	"\n.sizeMaxForSuperslim = %llu\n"	
+	"\n.sizeMaxForSuperslim = %llu,"	
+	"\n.metaCompressionFactor = %llu,"
+	"\n.offsetLimit1 = %llu,"
+	"\n.offsetLimit2 = %llu,"
+	"\n.offsetLimit3 = %llu\n"
 	 , profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
-		 profile->twobyte_threshold_divide, profile->twobyte_threshold_min, profile->seqlenMinLimit3, profile->blockSizeMinus,
+		 profile->twobyte_threshold_divide, profile->twobyte_threshold_min, 
+		profile->seqlenMinLimit3,
+		profile->blockSizeMinus,
 		 profile->sizeMaxForCanonicalHeaderPack, profile->sizeMinForSeqPack, profile->sizeMinForCanonical, 
-		 profile->sizeMaxForSuperslim);
+		 profile->sizeMaxForSuperslim, profile->metaCompressionFactor, 
+		profile->offsetLimit1,
+		profile->offsetLimit2,
+		profile->offsetLimit3);
 	return msg;
 }
 
@@ -169,7 +179,11 @@ packProfile getPackProfile() {
 	.sizeMinForSeqPack = 300,
 	.sizeMinForCanonical = 40,
 	.sizeMaxForSuperslim = 16384,
-	.archiveType = 0
+	.archiveType = 0,
+	.metaCompressionFactor = 70,
+	.offsetLimit1 = 255,
+	.offsetLimit2 = 1018,
+	.offsetLimit3 = 66600
 	};
 	return profile;
 }
@@ -200,6 +214,11 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->sizeMinForCanonical = src->sizeMinForCanonical;
 	dst->sizeMaxForSuperslim = src->sizeMaxForSuperslim;
 	dst->archiveType = src->archiveType;
+
+	dst->metaCompressionFactor = src->metaCompressionFactor;
+	dst->offsetLimit1 = src->offsetLimit1;
+	dst->offsetLimit2 = src->offsetLimit2;
+	dst->offsetLimit3 = src->offsetLimit3;
 }
 
 completePackProfile cloneCompleteProfile(completePackProfile src) {
