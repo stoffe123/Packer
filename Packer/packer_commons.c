@@ -73,9 +73,7 @@ memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
 }
 
 
-//TODO keep refactor use completePackProfile
-bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 	
 	//wprintf(L"\n PackAndTest %s with kind=%s src.size=%d", getMemName(src), kind, getMemSize(src));
 
@@ -83,17 +81,16 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	
 	int limit = 100;
 	
-	if (equalsw(kind, L"multi")) {
-		completePackProfile comp = getCompletePackProfile(profile, seqlensProfile, offsetsProfile, distancesProfile);		
+	if (equalsw(kind, L"multi")) {	
 		packedName = multiPackAndStorePackType(src, comp);
 	}
 	else if (equalsw(kind, L"rle simple")) {
-		packedName = RleSimplePack(src, profile);
-		limit = profile.rle_ratio;
+		packedName = RleSimplePack(src, comp.main);
+		limit = comp.main.rle_ratio;
 	}
 	else if (equalsw(kind, L"twobyte")) {
-		packedName = twoBytePack(src, profile);
-		limit = profile.twobyte_ratio;
+		packedName = twoBytePack(src, comp.main);
+		limit = comp.main.twobyte_ratio;
 	}
 	else {
 		wprintf(L"\n kind=%s not found in packer_commons.packAndTest", kind);
@@ -113,7 +110,8 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile,
 	packProfile distancesProfile, int packType, int bit) {
-	bool succ = packAndTest(L"multi", src, profile, seqlenProfile, offsetProfile, distancesProfile);
+	completePackProfile comp = getCompletePackProfile(profile, seqlenProfile, offsetProfile, distancesProfile);
+	bool succ = packAndTest(L"multi", src, comp);
 	if (succ) {
 		return setKthBit(packType, bit);
 	}
