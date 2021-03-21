@@ -80,8 +80,7 @@ packProfile getPackProfile();
 
 void doDoubleCheck(memfile* src, memfile* packedName, const wchar_t* kind);
 
-bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp);
 
 memfile* unpackByKind(const wchar_t* kind, memfile* tmp);
 
