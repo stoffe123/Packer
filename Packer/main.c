@@ -57,7 +57,7 @@ int doFuzz(int r, int best, int min, int max) {
 	if (rand() % 4 == 0) {
 		r = best;
 	}
-	if (r < 0) {
+	if (r < min) {
 		r = min;
 	}
 	if (r < min) {
@@ -101,7 +101,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->offsetLimit2 = doFuzz(profile->offsetLimit2, best.offsetLimit2, 700, 2000);
 	profile->offsetLimit3 = doFuzz(profile->offsetLimit3, best.offsetLimit3, 60000, 80000);
 
-	profile->bytesWonMin = doFuzz(profile->bytesWonMin, best.bytesWonMin, 0, 300);
+	profile->bytesWonMin = doFuzz(profile->bytesWonMin, best.bytesWonMin, -400, 400);
 
 }
 
@@ -380,7 +380,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"tis";
+	const wchar_t* ext = L"resx";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -592,12 +592,12 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
 	// L"c:/test/test13";
-	//L"c:/test/47";
+	L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -657,6 +657,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    //testarchive();
+    testarchive();
     blockpack_onefile();
 }

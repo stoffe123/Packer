@@ -11,23 +11,13 @@
 #include "common_tools.h"
 #include "canonical.h"
 
-uint8_t multiPackFiles(const wchar_t* , const wchar_t* , packProfile profile, packProfile seqlenProfile,
-	packProfile offsetProfile, packProfile distancesProfile);
+// PACK
 
-memfile* multiUnpackAndReplace(memfile* src);
-
-memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType);
-
-void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
+uint8_t multiPackFiles(const wchar_t*, const wchar_t*, completePackProfile profile);
 
 void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfile seqlenProfile,
 	packProfile offsetProfile, packProfile distancesProfile);
 
-bool isHalfByteRlePacked(int packType);
-
-int packTypeForHalfbyteRlePack(int kind);
-
-int packTypeRlePlusTwobyte();
 
 uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
@@ -35,19 +25,40 @@ uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, packProfile profi
 memfile* multiPack2(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
 
+
+memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
+	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+
+// UNPACK
+
+
+memfile* multiUnpackAndReplace(memfile* src);
+
+memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType);
+
+void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
+
 memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type);
 
 memfile* multiUnpack(memfile* m);
 
-memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead);
+
+void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead);
+
+
+
+// MISC
+
+bool isHalfByteRlePacked(int packType);
+
+int packTypeForHalfbyteRlePack(int kind);
+
+int packTypeRlePlusTwobyte();
 
 int getHalfbyteKindFromPackType(int packType);
 
 bool isHalfByteRlePacked(int packType);
 
-memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead);
-
-void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead);
 
 #endif

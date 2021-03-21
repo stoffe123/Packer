@@ -529,14 +529,13 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	return dst;
 }
 
-uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
+uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfile profile) {	
 
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
 
-	uint8_t pt = multiPackInternal(srcm, dstm, profile, seqlensProfile, offsetsProfile, 
-		distancesProfile, false);
+	uint8_t pt = multiPackInternal(srcm, dstm, profile.main, profile.seqlen, profile.offset, 
+		profile.distance, false);
 
 	freeMem(srcm);
 	memfileToFile(dstm, dst);
