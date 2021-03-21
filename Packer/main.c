@@ -19,13 +19,6 @@
 
 #define CMP_N 128
 
-void print_string_rep(unsigned char* tt) {
-	printf("\n");
-	for (int i = 0; i < CMP_N; i++) {
-		printf(", ", tt[i]);
-	}
-}
-
 int fuzz(int i) {
 	do {
 		if (rand() % 2 == 0) {
@@ -120,7 +113,7 @@ unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned 
 		double size_kb = (double)acc_size / (double)1024;
 		printf("\n\n **** ALL SUCCEEDED ****\n %.0f kb   (%llu)", size_kb, acc_size);
 		double time_sec = (double)total_time / 1000.0;
-		printf("\n\Time %.0fs  (%d)", time_sec, total_time);
+		printf("\n\Time %.0fs  (%u)", time_sec, total_time);
 		if (acc_size_org > 0) {
 			double pack_ratio = (double)acc_size / (double)acc_size_org;
 			printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
@@ -146,11 +139,11 @@ unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned 
 
 bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t totalTime, uint64_t seconds) {
 	if ((best_size > 0 && acc_size_packed > best_size)) {
-		printf("\n early break because of too big size.. size had become: %d", acc_size_packed);
+		printf("\n early break because of too big size.. size had become: %u", acc_size_packed);
 		return true;
 	}
 	if (totalTime > (seconds * 1000)) {
-		printf("\n early break because of too big time, time was %d", totalTime);
+		printf("\n early break because of too big time, time was %u", totalTime);
 		return true;
 	}
 	return false;
@@ -246,7 +239,7 @@ void testmeta() {
 			const wchar_t* unpackedFilename = L"C:/test/unp";
 			const wchar_t* packed_name = L"c:/test/packed.bin";
 			long long size_org = getFileSizeByName(src);
-			printf("\n Packing %s      length:%d", src, size_org);
+			printf("\n Packing %s      length:%u", src, size_org);
 			int cl = clock();
 			//multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
 
@@ -272,7 +265,7 @@ void testmeta() {
 			concat(src, metaDir, "offsets");
 			concat_int(src, src, kk + 101);
 			size_org = getFileSizeByName(src);
-			printf("\n Packing... %s with length:%d", src, size_org);
+			printf("\n Packing... %s with length:%u", src, size_org);
 
 			//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 			int pack_time = (clock() - cl);
@@ -298,7 +291,7 @@ void testmeta() {
 			concat(src, metaDir, "distances");
 			concat_int(src, src, kk + 101);
 			size_org = getFileSizeByName(src);
-			printf("\n Packing... %s with length:%d", src, size_org);
+			printf("\n Packing... %s with length:%u", src, size_org);
 
 			//multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
 			pack_time = (clock() - cl);
@@ -314,7 +307,7 @@ void testmeta() {
 
 			//if (unpack) multi_unpack(packed_name, unpackedFilename);
 
-			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
+			printf("\n Accumulated size %u kb", acc_size_packed / 1024);
 			cl = clock();
 
 			int unpack_time = (clock() - cl);
@@ -592,12 +585,12 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
 	// L"c:/test/test13";
-	L"c:/test/47";
+	//L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
