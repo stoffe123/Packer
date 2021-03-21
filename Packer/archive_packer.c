@@ -286,8 +286,8 @@ memfile* createPackedSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 
 	//TODO .. create a full profile and place in profileFactory
 
-	return multiPackAndStorePackType(sizesHeader, headerSizesPackProfile, headerSizesPackProfile,
-		headerSizesPackProfile, headerSizesPackProfile);
+	completePackProfile comp = getCompletePackProfile2(headerSizesPackProfile);
+	return multiPackAndStorePackType(sizesHeader, comp);
 }
 
 memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
@@ -298,8 +298,8 @@ memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 
 	  //TODO .. create a full profile and place in profileFactory
 
-	return multiPackAndStorePackType(namesHeader, headerNamesPackProfile, headerNamesPackProfile,
-		headerNamesPackProfile, headerNamesPackProfile);
+	completePackProfile comp = getCompletePackProfile2(headerNamesPackProfile);
+	return multiPackAndStorePackType(namesHeader, comp);
 }
 
 void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir) {

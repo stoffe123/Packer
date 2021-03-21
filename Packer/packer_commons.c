@@ -73,6 +73,7 @@ memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
 }
 
 
+//TODO keep refactor use completePackProfile
 bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
 	
@@ -83,7 +84,8 @@ bool packAndTest(const wchar_t* kind, memfile* src, packProfile profile,
 	int limit = 100;
 	
 	if (equalsw(kind, L"multi")) {
-		packedName = multiPackAndStorePackType(src, profile, seqlensProfile, offsetsProfile, distancesProfile);
+		completePackProfile comp = getCompletePackProfile(profile, seqlensProfile, offsetsProfile, distancesProfile);		
+		packedName = multiPackAndStorePackType(src, comp);
 	}
 	else if (equalsw(kind, L"rle simple")) {
 		packedName = RleSimplePack(src, profile);
@@ -198,6 +200,10 @@ completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen,
 	res.offset = offset;
 	res.distance = distance;
 	return res;
+}
+
+completePackProfile getCompletePackProfile2(packProfile main) {
+	return getCompletePackProfile(main, main, main, main);
 }
 
 void copyProfile(packProfile* src, packProfile* dst) {

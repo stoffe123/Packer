@@ -95,4 +95,6 @@ uint64_t readDynamicSize32or64(FILE* in);
 
 completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen, packProfile offset, packProfile distance);
 
+completePackProfile getCompletePackProfile2(packProfile main);
+
 #endif

@@ -22,12 +22,11 @@ void multi_packw(const wchar_t*, const wchar_t*, completePackProfile profile);
 
 uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile);
 
-memfile* multiPack2(memfile* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+//not used at the moment
+memfile* multiPack(memfile* src, completePackProfile profile);
 
 
-memfile* multiPackAndStorePackType(memfile* src, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile);
 
 // UNPACK
 
