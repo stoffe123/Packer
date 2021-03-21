@@ -106,8 +106,7 @@ void threadMultiPack(void* pMyID)
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
 	releaseBlockchunkMutex();
 
-	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, bc->profile.main, bc->profile.seqlen,
-		bc->profile.offset, bc->profile.distance);
+	uint8_t packType = multiPackAndReturnPackType(bc->unpacked, bc->packed, bc->profile);
 	freeMem(bc->unpacked);
 	lockBlockchunkMutex();
 	bc->packType = packType;

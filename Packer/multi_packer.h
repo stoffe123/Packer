@@ -13,14 +13,14 @@
 
 // PACK
 
+//not used at the moment
 uint8_t multiPackFiles(const wchar_t*, const wchar_t*, completePackProfile profile);
 
-void multi_packw(const wchar_t*, const wchar_t*, packProfile profile, packProfile seqlenProfile,
-	packProfile offsetProfile, packProfile distancesProfile);
+//not used at the moment
+void multi_packw(const wchar_t*, const wchar_t*, completePackProfile profile);
 
 
-uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);
+uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile);
 
 memfile* multiPack2(memfile* src, packProfile profile,
 	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile);

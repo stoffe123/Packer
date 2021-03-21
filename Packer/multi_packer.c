@@ -550,9 +550,8 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfi
 	return pt;
 }
 
-uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile) {
-	return multiPackInternal(src, dst, profile, seqlensProfile, offsetsProfile, distancesProfile, false);
+uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile) {
+	return multiPackInternal2(src, dst, profile, false);
 
 }
 
@@ -575,13 +574,12 @@ void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw) {
 	freeMem(dstm);
 }
 
-void multi_packw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile, packProfile seqlenProfile,
-	packProfile offsetProfile, packProfile distancesProfile) {
+void multi_packw(const wchar_t* srcw, const wchar_t* dstw, completePackProfile profile) {
 
 	memfile* srcm = getMemfileFromFile(srcw);
 	memfile* dstm = getEmptyMem(L"multi_packw_dstm");
 	
-	multiPackInternal(srcm, dstm, profile, seqlenProfile, offsetProfile, distancesProfile, true);
+	multiPackInternal2(srcm, dstm, profile, true);
 	memfileToFile(dstm, dstw);
 	freeMem(srcm);
 	freeMem(dstm);
