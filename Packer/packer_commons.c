@@ -138,7 +138,8 @@ char* profileToString(packProfile* profile) {
 	"\n.metaCompressionFactor = %llu,"
 	"\n.offsetLimit1 = %llu,"
 	"\n.offsetLimit2 = %llu,"
-	"\n.offsetLimit3 = %llu\n"
+	"\n.offsetLimit3 = %llu,"
+	"\n.bytesWonMin = %llu\n"
 	 , profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
 		 profile->twobyte_threshold_divide, profile->twobyte_threshold_min, 
 		profile->seqlenMinLimit3,
@@ -147,7 +148,8 @@ char* profileToString(packProfile* profile) {
 		 profile->sizeMaxForSuperslim, profile->metaCompressionFactor, 
 		profile->offsetLimit1,
 		profile->offsetLimit2,
-		profile->offsetLimit3);
+		profile->offsetLimit3,
+		profile->bytesWonMin);
 	return msg;
 }
 
@@ -183,7 +185,8 @@ packProfile getPackProfile() {
 	.metaCompressionFactor = 70,
 	.offsetLimit1 = 255,
 	.offsetLimit2 = 1018,
-	.offsetLimit3 = 66600
+	.offsetLimit3 = 66600,
+	.bytesWonMin = 40
 	};
 	return profile;
 }
@@ -219,6 +222,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->offsetLimit1 = src->offsetLimit1;
 	dst->offsetLimit2 = src->offsetLimit2;
 	dst->offsetLimit3 = src->offsetLimit3;
+	dst->bytesWonMin = src->bytesWonMin;
 }
 
 completePackProfile cloneCompleteProfile(completePackProfile src) {

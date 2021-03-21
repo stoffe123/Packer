@@ -46,6 +46,7 @@ typedef struct packProfile {
 	int64_t offsetLimit1;
 	int64_t offsetLimit2;
 	int64_t offsetLimit3;
+	int64_t bytesWonMin;
 } packProfile;
 
 typedef struct completePackProfile {

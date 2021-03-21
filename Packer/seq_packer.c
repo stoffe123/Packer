@@ -364,7 +364,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	while (buffer_pos < buffer_endpos) {
 
 		best_seqlen = 0;
-		bestBytesWon = 40;
+		bestBytesWon = profile.bytesWonMin;
 		
 	    uint8_t ch = buffer[buffer_pos];
 		uint8_t ch1 = buffer[1 + buffer_pos];

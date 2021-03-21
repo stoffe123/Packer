@@ -101,6 +101,8 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->offsetLimit2 = doFuzz(profile->offsetLimit2, best.offsetLimit2, 700, 2000);
 	profile->offsetLimit3 = doFuzz(profile->offsetLimit3, best.offsetLimit3, 60000, 80000);
 
+	profile->bytesWonMin = doFuzz(profile->bytesWonMin, best.bytesWonMin, 0, 300);
+
 }
 
 
@@ -378,7 +380,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"pdf";
+	const wchar_t* ext = L"tis";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -655,6 +657,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    testarchive();
+    //testarchive();
     blockpack_onefile();
 }
