@@ -269,7 +269,7 @@ uint8_t multiPackInternal2(memfile* src, memfile* dst, completePackProfile comp,
 
 	//printProfile(&profile);
 	uint64_t source_size = getMemSize(src);
-	printf("\n --------- Multi pack started of file sized %d -------------", source_size);
+	printf("\n --------- Multi pack started of file sized %lld -------------", source_size);
 
 	if (source_size > BLOCK_SIZE) {
 		printf("\n Can't multiPack file because it is larger than BLOCK_SIZE size was: %lld", source_size);
@@ -432,7 +432,7 @@ uint8_t multiPackInternal2(memfile* src, memfile* dst, completePackProfile comp,
 			mb.main = before_seqpack;
 		}
 	}
-	printf("\nWinner is %ls packtype %lld  packed %lld > %lld", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
+	printf("\nWinner is %ls packtype %d  packed %lld > %llu", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
 	pack_type = bestCandidate.packType;	
 	if (bestCandidate.filename != mb.main) {
 		freeMem(mb.main);
@@ -454,11 +454,6 @@ uint8_t multiPackInternal2(memfile* src, memfile* dst, completePackProfile comp,
 
 	//printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
-}
-
-uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile, packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile, bool storePackType) {
-	completePackProfile comp = getCompletePackProfile(profile, seqlensProfile, offsetsProfile, distancesProfile);
-	return multiPackInternal2(src, dst, comp, storePackType);
 }
 
 memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType) {
@@ -541,8 +536,7 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfi
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
 
-	uint8_t pt = multiPackInternal(srcm, dstm, profile.main, profile.seqlen, profile.offset, 
-		profile.distance, false);
+	uint8_t pt = multiPackInternal2(srcm, dstm, profile, false);
 
 	freeMem(srcm);
 	memfileToFile(dstm, dst);
