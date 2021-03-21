@@ -254,7 +254,7 @@ bool belowRatio(uint64_t packedSize, uint64_t orgSize, int ratio) {
 									   kind 2 =>  bit 1 = 1   bit 2 = 0
  */
 
-uint8_t multiPackInternal2(memfile* src, memfile* dst, completePackProfile comp, bool storePackType) {
+uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, bool storePackType) {
 
 
 	packProfile profile = comp.main, seqlensProfile = comp.seqlen, offsetsProfile = comp.offset, distancesProfile = comp.distance;
@@ -536,7 +536,7 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfi
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
 
-	uint8_t pt = multiPackInternal2(srcm, dstm, profile, false);
+	uint8_t pt = multiPackInternal(srcm, dstm, profile, false);
 
 	freeMem(srcm);
 	memfileToFile(dstm, dst);
@@ -545,13 +545,13 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfi
 }
 
 uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile) {
-	return multiPackInternal2(src, dst, profile, false);
+	return multiPackInternal(src, dst, profile, false);
 
 }
 
 memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile) {
 	memfile* dst = getEmptyMem(L"multipacker.multipackstorepacktype");
-	multiPackInternal2(src, dst, profile, true);
+	multiPackInternal(src, dst, profile, true);
 	return dst;
 }
 
@@ -572,7 +572,7 @@ void multi_packw(const wchar_t* srcw, const wchar_t* dstw, completePackProfile p
 	memfile* srcm = getMemfileFromFile(srcw);
 	memfile* dstm = getEmptyMem(L"multi_packw_dstm");
 	
-	multiPackInternal2(srcm, dstm, profile, true);
+	multiPackInternal(srcm, dstm, profile, true);
 	memfileToFile(dstm, dstw);
 	freeMem(srcm);
 	freeMem(dstm);
@@ -580,7 +580,7 @@ void multi_packw(const wchar_t* srcw, const wchar_t* dstw, completePackProfile p
 
 memfile* multiPack(memfile* src, completePackProfile profile) {
 	memfile* dst = getEmptyMem(L"multipack2_dst");
-	multiPackInternal2(src, dst, profile, true);
+	multiPackInternal(src, dst, profile, true);
 	return dst;
 }
 

@@ -11,7 +11,12 @@
 #include "common_tools.h"
 #include "canonical.h"
 
+
 // PACK
+
+uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile);
+
+memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile);
 
 //not used at the moment
 uint8_t multiPackFiles(const wchar_t*, const wchar_t*, completePackProfile profile);
@@ -19,17 +24,12 @@ uint8_t multiPackFiles(const wchar_t*, const wchar_t*, completePackProfile profi
 //not used at the moment
 void multi_packw(const wchar_t*, const wchar_t*, completePackProfile profile);
 
-
-uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile);
-
 //not used at the moment
 memfile* multiPack(memfile* src, completePackProfile profile);
 
 
-memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile);
 
 // UNPACK
-
 
 memfile* multiUnpackAndReplace(memfile* src);
 
