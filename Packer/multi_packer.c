@@ -254,8 +254,10 @@ bool belowRatio(uint64_t packedSize, uint64_t orgSize, int ratio) {
 									   kind 2 =>  bit 1 = 1   bit 2 = 0
  */
 
-uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
-	packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile, bool storePackType) {
+uint8_t multiPackInternal2(memfile* src, memfile* dst, completePackProfile comp, bool storePackType) {
+
+
+	packProfile profile = comp.main, seqlensProfile = comp.seqlen, offsetsProfile = comp.offset, distancesProfile = comp.distance;
 	static int metacount = 101;
 	rewindMem(src);
 	rewindMem(dst);
@@ -430,7 +432,7 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 			mb.main = before_seqpack;
 		}
 	}
-	wprintf(L"\nWinner is %s packtype %d  packed %d > %d", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
+	printf("\nWinner is %ls packtype %lld  packed %lld > %lld", getMemName(bestCandidate.filename), bestCandidate.packType, source_size, bestCandidate.size);
 	pack_type = bestCandidate.packType;	
 	if (bestCandidate.filename != mb.main) {
 		freeMem(mb.main);
@@ -452,6 +454,11 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile,
 
 	//printf("\n ---------------  returning multipack -----------------");
 	return pack_type;
+}
+
+uint8_t multiPackInternal(memfile* src, memfile* dst, packProfile profile, packProfile seqlensProfile, packProfile offsetsProfile, packProfile distancesProfile, bool storePackType) {
+	completePackProfile comp = getCompletePackProfile(profile, seqlensProfile, offsetsProfile, distancesProfile);
+	return multiPackInternal2(src, dst, comp, storePackType);
 }
 
 memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType) {
