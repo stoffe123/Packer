@@ -26,52 +26,6 @@ typedef struct blockChunk_t {
 	HANDLE  handle;
 } blockChunk_t;
 
-__declspec(thread) static packProfile dummyProfile = {
-	 .rle_ratio = 31,
-		 .twobyte_ratio = 97,
-		 .recursive_limit = 180,
-		 .twobyte_threshold_max = 5226,
-		 .twobyte_threshold_divide = 2233,
-		 .twobyte_threshold_min = 185,
-		 .seqlenMinLimit3 = 43,
-
-		 .winsize = 78725,
-		 .sizeMaxForCanonicalHeaderPack = 175,
-		 .sizeMinForSeqPack = 2600,
-		 .sizeMinForCanonical = 30,
-		 .sizeMaxForSuperslim = 16384
-},
-
-defaultOffsetProfile = {
-.rle_ratio = 74,
-.twobyte_ratio = 95,
-.recursive_limit = 61,
-.twobyte_threshold_max = 11404,
-.twobyte_threshold_divide = 2520,
-.twobyte_threshold_min = 384,
-.seqlenMinLimit3 = 82,
-
-.winsize = 91812,
-.sizeMaxForCanonicalHeaderPack = 530,
-.sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 261,
-.sizeMaxForSuperslim = 16384 },
-
-defaultDistanceProfile = {
-.rle_ratio = 71,
-.twobyte_ratio = 100,
-.recursive_limit = 20,
-.twobyte_threshold_max = 3641,
-.twobyte_threshold_divide = 3972,
-.twobyte_threshold_min = 37,
-.seqlenMinLimit3 = 35,
-
-.winsize = 80403,
-.sizeMaxForCanonicalHeaderPack = 256,
-.sizeMinForSeqPack = 2600,
-.sizeMinForCanonical = 300,
-.sizeMaxForSuperslim = 16384 };
-
 
 completePackProfile getCompletePackProfileWithDefaults(packProfile prof) {
 
@@ -171,7 +125,7 @@ void threadMultiUnpack(void* pMyID)
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
 	releaseBlockchunkMutex();
 
-	bc->unpacked = multiUnpackWithPackType(bc->packed, bc->packType, dummyProfile);
+	bc->unpacked = multiUnpackWithPackType(bc->packed, bc->packType, bc->profile.main);
 	wprintf(L"\n THREAD MULTIUNPACK FOR %s FINISHED!", getMemName(bc->packed));
 }
 
