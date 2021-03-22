@@ -258,7 +258,7 @@ bool belowRatio(uint64_t packedSize, uint64_t orgSize, int ratio) {
 uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, bool storePackType) {
 
 
-	packProfile profile = comp.main, seqlensProfile = comp.seqlen, offsetsProfile = comp.offset, distancesProfile = comp.distance;
+	packProfile profile = comp.main;
 	static int metacount = 101;
 	rewindMem(src);
 	rewindMem(dst);
