@@ -652,6 +652,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    //testarchive();
+    testarchive();
     blockpack_onefile();
 }

@@ -34,6 +34,12 @@ typedef struct wchar100_t {
 	wchar_t s[100];
 } wchar100_t;
 
+typedef struct blobsInfo_t {
+	wchar100_t* extList;
+	uint64_t* sizesList;
+	uint64_t count;
+} blobsInfo_t;
+
 __declspec(thread) static blob_t blobs[5000];
 
 __declspec(thread) static HANDLE blobMutex;
@@ -359,7 +365,7 @@ wchar100_t* fetchExtensions(fileListAndCount_t dirInfo) {
 	return res;
 }
 
-uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
+blobsInfo_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
@@ -400,8 +406,11 @@ uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 			noOfFilesInBlobCount = 0;
 		}
 	}
-	res[0] = blobCount;
-	return res;
+	blobsInfo_t blobsInfo;
+	blobsInfo.count = blobCount;
+	blobsInfo.sizesList = res;
+	blobsInfo.extList = fetchExtensions(dirInfo);
+	return blobsInfo;
 }
 
 void getNewBlobFilename(wchar_t* blobFilename, wchar_t* name, wchar_t* ext) {
@@ -654,12 +663,13 @@ uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex
 
 void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, packProfile profile) {
 
-	uint64_t* blobsInfoArr = determineNumberOfBlobs(dirInfo),
-		nrOfBlobs = blobsInfoArr[0],
+	blobsInfo_t blobsInfo = determineNumberOfBlobs(dirInfo);
+	uint64_t* blobsInfoArr = blobsInfo.sizesList;
+	uint64_t nrOfBlobs = blobsInfo.count,
 		count = dirInfo.count;
 	file_t* filenames = dirInfo.fileList;
 
-	wchar100_t* extList = fetchExtensions(dirInfo);
+	wchar100_t* extList = blobsInfo.extList;
 
 	for (uint64_t i = 0; i < count; i++) {
 
