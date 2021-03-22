@@ -330,41 +330,6 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir) {
 	append_mem_to_file(out, namesHeader);
 }
 
-wchar100_t* fetchExtensions(fileListAndCount_t dirInfo) {
-
-	file_t* fileList = dirInfo.fileList;
-	uint64_t count = dirInfo.count;
-	uint64_t blobCount = 0;
-
-	wchar100_t* res = calloc(count + 1, sizeof(wchar100_t));
-	if (res == NULL) {
-		printf("\n Out of memory in archive_packer.fetchExtensions");
-		myExit();
-		return;
-	}
-
-	wchar_t ext[20] = { 0 };
-	wchar_t next_ext[20] = { 0 };
-	
-	bool breakAndCreateBlob;
-	for (int i = 0; i < count; i++) {
-		breakAndCreateBlob = false;
-		if (fileList[i].equalSizeNumber == UINT64_MAX && i < count - 1) {
-			wchar_t* filename = fileList[i].name;
-			//printf("\n%ls of size: %lld", filename, fileList[i].size);
-			getFileExtension(ext, filename);
-			getFileExtension(next_ext, fileList[i + 1].name);
-			breakAndCreateBlob = !equalsIgnoreCase(next_ext, ext);
-			
-		}
-		if (breakAndCreateBlob || (i == count - 1)) {
-			wcscpy(res[blobCount].s, ext);
-			blobCount++;			
-		}
-	}
-	return res;
-}
-
 blobsInfo_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 
 	file_t* fileList = dirInfo.fileList;
@@ -372,7 +337,8 @@ blobsInfo_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 	uint64_t blobCount = 0;
 
 	uint64_t* res = calloc(count + 1, sizeof(uint64_t));
-	if (res == NULL) {
+	wchar100_t* extList = calloc(count, sizeof(wchar100_t));
+	if (res == NULL || extList == NULL) {
 		printf("\n Out of memory in archive_packer.determineNumberOfBlobs");
 		myExit();
 		return;
@@ -396,6 +362,7 @@ blobsInfo_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
 			printf("\n BLOB nr %llu FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
+			wcscpy(extList[blobCount].s, ext);
 			blobCount++;
 			if (noOfFilesInBlobCount == 0) {
 				res[blobCount] = i;
@@ -409,7 +376,7 @@ blobsInfo_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 	blobsInfo_t blobsInfo;
 	blobsInfo.count = blobCount;
 	blobsInfo.sizesList = res;
-	blobsInfo.extList = fetchExtensions(dirInfo);
+	blobsInfo.extList = extList;
 	return blobsInfo;
 }
 
