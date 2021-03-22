@@ -375,7 +375,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"pack";
+	const wchar_t* ext = L"fdt";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -612,7 +612,7 @@ void testarchive() {
 
 		cl = clock();
 
-		archive_unpack(packed_name, destDir);
+		archive_unpack(packed_name, destDir, profile.main);
 
 		uint64_t totalTime = clock() - before_suite;
 		if (totalTime < (time_limit * 1000)) {
@@ -652,6 +652,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    testarchive();
+    //testarchive();
     blockpack_onefile();
 }

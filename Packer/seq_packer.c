@@ -316,12 +316,12 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	reallocMem(infil, size_org * 3);
 	int64_t seqlenMinLimit3 = profile.seqlenMinLimit3;
 	if (seqlenMinLimit3 > 255) {
-		printf("\n WARNING!!!  seqlenMinLimit3 was over 255. Doing % 256 on it!");
-		seqlenMinLimit3 %= 256;
+		printf("\n ERROR!!!  seqlenMinLimit3 was over 255");
+		myExit();
+		return;
 	}
 	if (size_org < profile.sizeMaxForSuperslim) {
 		superslim = true;
-		seqlenMinLimit3 = SUPERSLIM_SEQLEN_MIN_LIMIT3;
 	}
 	debug("\n seqlenMinLimit3=%llu", seqlenMinLimit3);
 	debug("\n superslim=%d", superslim);
@@ -418,7 +418,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 					if (bytesWon > bestBytesWon) { //&& (offset - seq_len) <= longest_offset) {
 					
 
-						uint8_t seqlen_min = getSeqlenMin(offset - seq_len, seqlenMinLimit3, profile);
+						uint8_t seqlen_min = getSeqlenMin(offset - seq_len, profile);
 						if (seq_len >= seqlen_min) {
 
 							best_seqlen = seq_len;
@@ -435,7 +435,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		}
 		/* now we found the longest sequence in the window! */
 		best_offset -= best_seqlen;
-		uint8_t seqlen_min = getSeqlenMin(best_offset, seqlenMinLimit3, profile);
+		uint8_t seqlen_min = getSeqlenMin(best_offset, profile);
 
 		if (best_seqlen < seqlen_min)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
@@ -534,12 +534,6 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		}
 		if (superslim) {
 			packType = setKthBit(packType, 7);
-		}
-		if (!superslim) {
-			fputccLight(seqlenMinLimit3, utfil.main);
-		}
-		else {
-			printf("\n superslim used!");
 		}
 		fputccLight(packType, utfil.main);
 		syncMemSize(utfil.main);

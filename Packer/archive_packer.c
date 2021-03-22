@@ -30,6 +30,10 @@ typedef struct blob_t {
 	HANDLE  handle;
 } blob_t;
 
+typedef struct wchar100_t {
+	wchar_t s[100];
+} wchar100_t;
+
 __declspec(thread) static blob_t blobs[5000];
 
 __declspec(thread) static HANDLE blobMutex;
@@ -320,6 +324,41 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir) {
 	append_mem_to_file(out, namesHeader);
 }
 
+wchar100_t* fetchExtensions(fileListAndCount_t dirInfo) {
+
+	file_t* fileList = dirInfo.fileList;
+	uint64_t count = dirInfo.count;
+	uint64_t blobCount = 0;
+
+	wchar100_t* res = calloc(count + 1, sizeof(wchar100_t));
+	if (res == NULL) {
+		printf("\n Out of memory in archive_packer.fetchExtensions");
+		myExit();
+		return;
+	}
+
+	wchar_t ext[20] = { 0 };
+	wchar_t next_ext[20] = { 0 };
+	
+	bool breakAndCreateBlob;
+	for (int i = 0; i < count; i++) {
+		breakAndCreateBlob = false;
+		if (fileList[i].equalSizeNumber == UINT64_MAX && i < count - 1) {
+			wchar_t* filename = fileList[i].name;
+			//printf("\n%ls of size: %lld", filename, fileList[i].size);
+			getFileExtension(ext, filename);
+			getFileExtension(next_ext, fileList[i + 1].name);
+			breakAndCreateBlob = !equalsIgnoreCase(next_ext, ext);
+			
+		}
+		if (breakAndCreateBlob || (i == count - 1)) {
+			wcscpy(res[blobCount].s, ext);
+			blobCount++;			
+		}
+	}
+	return res;
+}
+
 uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 
 	file_t* fileList = dirInfo.fileList;
@@ -327,7 +366,11 @@ uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 	uint64_t blobCount = 0;
 
 	uint64_t* res = calloc(count + 1, sizeof(uint64_t));
-
+	if (res == NULL) {
+		printf("\n Out of memory in archive_packer.determineNumberOfBlobs");
+		myExit();
+		return;
+	}
 	wchar_t ext[20] = { 0 };
 	wchar_t next_ext[20] = { 0 };
 	int noOfFilesInBlobCount = 0;
@@ -346,7 +389,7 @@ uint64_t* determineNumberOfBlobs(fileListAndCount_t dirInfo) {
 			}
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
-			printf("\n BLOB nr %d FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
+			printf("\n BLOB nr %llu FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
 			blobCount++;
 			if (noOfFilesInBlobCount == 0) {
 				res[blobCount] = i;
@@ -609,12 +652,14 @@ uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex
 	}
 }
 
-void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir) {
+void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, packProfile profile) {
 
 	uint64_t* blobsInfoArr = determineNumberOfBlobs(dirInfo),
 		nrOfBlobs = blobsInfoArr[0],
 		count = dirInfo.count;
 	file_t* filenames = dirInfo.fileList;
+
+	wchar100_t* extList = fetchExtensions(dirInfo);
 
 	for (uint64_t i = 0; i < count; i++) {
 
@@ -637,6 +682,9 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 			get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");
 		}
 		releaseBlobMutex();
+
+		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s, getCompletePackProfileSimple(profile));
+		blobs[i].profile = comp;
 
 		copyFileChunkToFile(in, blobs[i].filename, size);
 
@@ -698,7 +746,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	_wremove(masterFilename);
 }
 
-void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
+void archiveUnpackInternal(const wchar_t* src, wchar_t* dir, packProfile profile) {
 
 	printf("\n *** Archive Unpack *** ");			
 
@@ -715,7 +763,7 @@ void archiveUnpackInternal(const wchar_t* src, wchar_t* dir) {
 	file_t* filenames = fileList.fileList;
 	int64_t count = fileList.count;
 	const wchar_t blockUnpackFilename[200] = { 0 };
-	archiveUnpackSemiSeparated(in, fileList, dir);			
+	archiveUnpackSemiSeparated(in, fileList, dir, profile);			
 }
 
 
@@ -723,8 +771,8 @@ void archive_pack(const wchar_t* dir, const wchar_t* dest, completePackProfile p
     archivePackInternal(dir, dest, profile);			
 }
 
-void archive_unpack(const wchar_t* src, wchar_t* dir) {
-	archiveUnpackInternal(src, dir);	
+void archive_unpack(const wchar_t* src, wchar_t* dir, packProfile profile) {
+	archiveUnpackInternal(src, dir, profile);	
 }
 
 
