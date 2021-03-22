@@ -257,6 +257,17 @@ bool belowRatio(uint64_t packedSize, uint64_t orgSize, int ratio) {
 
 uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, bool storePackType) {
 
+	
+	int64_t seqlenMinLimit4 = comp.main.seqlenMinLimit4;	
+	comp.seqlen.seqlenMinLimit4 = seqlenMinLimit4;	
+	comp.offset.seqlenMinLimit4 = seqlenMinLimit4;	
+	comp.distance.seqlenMinLimit4 = seqlenMinLimit4;
+
+	fixPackProfile(&comp.main);
+	fixPackProfile(&comp.seqlen);
+	fixPackProfile(&comp.offset);
+	fixPackProfile(&comp.distance);
+
 
 	packProfile profile = comp.main;
 	static int metacount = 101;
@@ -365,16 +376,19 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, 
 			// ---------- Pack the meta files (seqlens/offsets) recursively
 			if (seqlens_size > profile.recursive_limit) {
 			
-				pack_type = MultiPackAndTest(mb.seqlens, comp, pack_type, 1);
+				completePackProfile c2 = getCompletePackProfile(comp.seqlen, comp.seqlen, comp.offset, comp.distance);
+				pack_type = MultiPackAndTest(mb.seqlens, c2, pack_type, 1);
 				
 			}
 			if (offsets_size > profile.recursive_limit) {
 
-				pack_type = MultiPackAndTest(mb.offsets, comp, pack_type, 2);				
+				completePackProfile c2 = getCompletePackProfile(comp.offset, comp.seqlen, comp.offset, comp.distance);
+				pack_type = MultiPackAndTest(mb.offsets, c2, pack_type, 2);				
 			}
 			if (distances_size > profile.recursive_limit) {
 
-				pack_type = MultiPackAndTest(mb.distances, comp, pack_type, 3);				
+				completePackProfile c2 = getCompletePackProfile(comp.distance, comp.seqlen, comp.offset, comp.distance);
+				pack_type = MultiPackAndTest(mb.distances, c2, pack_type, 3);				
 			}
 			seqlens_size = getMemSize(mb.seqlens);
 			offsets_size = getMemSize(mb.offsets);

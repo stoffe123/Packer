@@ -98,11 +98,11 @@ static packProfile headerSizesPackProfile = {
 			.sizeMinForSeqPack = 1241,
 			.sizeMinForCanonical = 20,
 			.sizeMaxForSuperslim = 23550,
-			.metaCompressionFactor = 56,
-			.offsetLimit1 = 247,
-			.offsetLimit2 = 1119,
-			.offsetLimit3 = 64743,
-			.bytesWonMin = 75
+			  .metaCompressionFactor = 56,
+	   .offsetLimit1 = 247,
+	   .offsetLimit2 = 1119,
+	   .offsetLimit3 = 64743,
+	   .bytesWonMin = 75
 };
 
 //19855 bytes on headernames test suit
@@ -122,11 +122,11 @@ static packProfile headerNamesPackProfile = {
 			.sizeMinForSeqPack = 7114,
 			.sizeMinForCanonical = 54,
 			.sizeMaxForSuperslim = 35825,
-			.metaCompressionFactor = 56,
-			.offsetLimit1 = 247,
-			.offsetLimit2 = 1119,
-			.offsetLimit3 = 64743,
-			.bytesWonMin = 75
+			  .metaCompressionFactor = 56,
+	   .offsetLimit1 = 247,
+	   .offsetLimit2 = 1119,
+	   .offsetLimit3 = 64743,
+	   .bytesWonMin = 75
 };
 
 uint64_t wcharToMyCoding(wchar_t* wcharBuf, uint8_t* codedBuf) {

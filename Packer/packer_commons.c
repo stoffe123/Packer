@@ -196,6 +196,23 @@ completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen,
 	res.seqlen = seqlen;
 	res.offset = offset;
 	res.distance = distance;
+
+	
+	int64_t seqlenMinLimit4 = res.main.seqlenMinLimit4;
+
+	res.seqlen.seqlenMinLimit4 = seqlenMinLimit4;
+
+	
+	res.offset.seqlenMinLimit4 = seqlenMinLimit4;
+
+	
+	res.distance.seqlenMinLimit4 = seqlenMinLimit4;
+
+	fixPackProfile(&res.main);
+	fixPackProfile(&res.seqlen);
+	fixPackProfile(&res.offset);
+	fixPackProfile(&res.distance);
+
 	return res;
 }
 

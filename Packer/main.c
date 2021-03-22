@@ -97,7 +97,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->offsetLimit3 = doFuzz(profile->offsetLimit3, best.offsetLimit3, 60000, 80000);
 
 	profile->bytesWonMin = doFuzz(profile->bytesWonMin, best.bytesWonMin, -400, 400);
-
+	
 }
 
 
@@ -106,6 +106,23 @@ void fuzzCompleteProfile(completePackProfile* prof, completePackProfile best) {
 	fuzzProfile(&(prof->offset), best.offset);
 	fuzzProfile(&(prof->seqlen), best.seqlen);
 	fuzzProfile(&(prof->distance), best.distance);
+
+	
+	int64_t seqlenMinLimit4 = prof->main.seqlenMinLimit4;
+
+	prof->seqlen.seqlenMinLimit4 = seqlenMinLimit4;
+
+	
+	prof->offset.seqlenMinLimit4 = seqlenMinLimit4;
+
+	
+	prof->distance.seqlenMinLimit4 = seqlenMinLimit4;
+
+	fixPackProfile(&(prof->main));
+	fixPackProfile(&(prof->seqlen));
+	fixPackProfile(&(prof->offset));
+	fixPackProfile(&(prof->distance));
+
 }
 
 
@@ -375,7 +392,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"fdt";
+	const wchar_t* ext = L"pdf";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -590,9 +607,9 @@ void testarchive() {
 		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
-		//L"c:/test/all";
-	// L"c:/test/test13";
-	L"c:/test/47";
+		L"c:/test/all";
+	 //L"c:/test/test1";
+	//L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -652,6 +669,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    testarchive();
+   testarchive();
     blockpack_onefile();
 }

@@ -4,6 +4,9 @@
 
 #include "packer_commons.h"
 
+static uint64_t SUPERSLIM_SIZELIMIT = 16384;
+static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 222;
+
 typedef struct seqPackBundle {
 	memfile* main;
 	memfile* seqlens;
@@ -20,7 +23,7 @@ typedef enum {
     SEQLEN, OFFSET, DISTANCE    
 } meta_kind_t;
 
-unsigned char getSeqlenMin(uint64_t best_offset, packProfile profile);
+unsigned char getSeqlenMin(uint64_t best_offset, uint8_t seqlenMinLimit3, packProfile profile);
 
 uint64_t getBundleSize(seqPackBundle b);
 
