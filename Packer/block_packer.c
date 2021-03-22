@@ -258,7 +258,7 @@ void blockPackToExistingFile(const wchar_t* src, FILE* utfil, packProfile profil
 
 // ----------------------------------------------------------------
 
-void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, const wchar_t* dst) {
+void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, const wchar_t* dst, packProfile profile) {
 	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
 	if (infil == NULL) {
@@ -286,6 +286,9 @@ void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, co
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].packType = packType;
 		blockChunks[chunkNumber].packed = tmp;
+		completePackProfile comp = getCompletePackProfileSimple(profile);
+		blockChunks[chunkNumber].profile = comp;
+
 		printf("\n STARTING THREAD FOR MULTIUNPACK %" PRId64, chunkNumber);
 		releaseBlockchunkMutex();
 
@@ -337,15 +340,15 @@ void blockPackAndReplaceFull(const wchar_t* src, completePackProfile prof) {
 // UNPACK
 
 void block_unpack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
-	block_unpack_file_internal(infil, NULL, NULL, dst);
+	block_unpack_file_internal(infil, NULL, NULL, dst, profile);
 }
 
 void blockUnpackFileToFile(FILE* infil, FILE* utfil, packProfile profile) {
-	block_unpack_file_internal(infil, NULL, utfil, NULL);
+	block_unpack_file_internal(infil, NULL, utfil, NULL, profile);
 }
 
 void blockUnpackNameToFile(const wchar_t* src, FILE* utfil, packProfile profile) {
-	block_unpack_file_internal(NULL, src, utfil, NULL);
+	block_unpack_file_internal(NULL, src, utfil, NULL, profile);
 }
 
 
