@@ -4,7 +4,6 @@
 
 #include "packer_commons.h"
 
-static uint64_t SUPERSLIM_SIZELIMIT = 16384;
 static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 111;
 static uint64_t SEQLEN_MIN_LIMIT4 = 65360;
 

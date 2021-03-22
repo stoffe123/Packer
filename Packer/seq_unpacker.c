@@ -15,7 +15,7 @@
 __declspec(thread) static size_t  seqlens_pos, offsets_pos, distances_pos, packed_file_end;
 
 __declspec(thread) static uint8_t* buf;
-__declspec(thread)                  static memfile* offsets, * seqlens, * distances;
+__declspec(thread) static memfile* offsets, * seqlens, * distances;
 __declspec(thread) static uint64_t buf_size = BLOCK_SIZE * 4, buf_pos, size_wraparound;
 
 __declspec(thread) static  bool separate_files = true;
