@@ -151,7 +151,7 @@ uint64_t getRange(uint64_t packType, uint64_t startBit) {
 
 //------------------------------------------------------------------------------
 
-memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
+memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep, packProfile profile)
 {
 	wprintf(L"\n starting seq_unpack of %s", getMemName(mf_arr.main));
 	separate_files = sep;
@@ -215,9 +215,9 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 
 	debug(" \n pages=(%d, %d, %d)", offset_pages, seqlen_pages, distance_pages);
 
-	debug("\n buf_pos after wraparound %d", buf_pos);
+	debug("\n buf_pos after wraparound %llu", buf_pos);
 
-	debug("\n distance to first code: %d", lastDistance);
+	debug("\n distance to first code: %llu", lastDistance);
 
 	if (VERBOSE) {
 		printf("\nwrap around:\n");
@@ -238,7 +238,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 			uint64_t seqlen = get_seqlen(seqlenPageCoding);
 			uint64_t offset = get_offset(offsetPageCoding);
 
-			seqlen += getSeqlenMin(offset, seqlenMinLimit3);
+			seqlen += getSeqlenMin(offset, seqlenMinLimit3, profile);
 
 			uint64_t match_index = buf_pos + offset + seqlen;
 #if VERBOSE
@@ -290,8 +290,8 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep)
 	return utfil;
 }
 
-memfile* seqUnpack(seqPackBundle m) {
-	return seq_unpack_internal(m, true);
+memfile* seqUnpack(seqPackBundle m, packProfile profile) {
+	return seq_unpack_internal(m, true, profile);
 }
 
 

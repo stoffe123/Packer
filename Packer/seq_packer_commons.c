@@ -7,11 +7,11 @@
 #include "memfile.h"
 
 
-unsigned char getSeqlenMin(uint64_t best_offset, int seqlenMinLimit3) {
+unsigned char getSeqlenMin(uint64_t best_offset, int seqlenMinLimit3, packProfile profile) {
 	if (best_offset < (uint64_t)2 * seqlenMinLimit3) {
 		return 3;
 	}
-	return (best_offset >= SEQLEN_MIN_LIMIT4) ? 5 : 4;
+	return (best_offset >= profile.seqlenMinLimit4) ? 5 : 4;
 }
 
 

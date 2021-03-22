@@ -550,7 +550,7 @@ void onefile() {
 	//memfile* unpacked = twoByteUnpack(packed);
 	//memfile* unpacked = canonicalDecode(packed);
 	//memfile* unpacked = multiUnpack(packed);
-	memfile* unpacked = seqUnpack(packed);
+	memfile* unpacked = seqUnpack(packed, profile);
 	//memfile* unpacked = halfbyteRleUnpack(packed, 0);
 
 

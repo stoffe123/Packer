@@ -502,7 +502,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	}
 	memfile* seq_dst;
 	if (seqPacked) {		
-		seq_dst = seqUnpack(mb);				
+		seq_dst = seqUnpack(mb, profile);				
 		freBundle(mb);		
 	}
 	else {

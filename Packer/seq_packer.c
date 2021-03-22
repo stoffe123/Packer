@@ -418,7 +418,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 					if (bytesWon > bestBytesWon) { //&& (offset - seq_len) <= longest_offset) {
 					
 
-						uint8_t seqlen_min = getSeqlenMin(offset - seq_len, seqlenMinLimit3);
+						uint8_t seqlen_min = getSeqlenMin(offset - seq_len, seqlenMinLimit3, profile);
 						if (seq_len >= seqlen_min) {
 
 							best_seqlen = seq_len;
@@ -435,7 +435,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		}
 		/* now we found the longest sequence in the window! */
 		best_offset -= best_seqlen;
-		uint8_t seqlen_min = getSeqlenMin(best_offset, seqlenMinLimit3);
+		uint8_t seqlen_min = getSeqlenMin(best_offset, seqlenMinLimit3, profile);
 
 		if (best_seqlen < seqlen_min)
 		{       /* no sequence found, move window 1 byte forward and read one more byte */
@@ -591,7 +591,7 @@ seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool se
 	if (DOUBLE_CHECK_PACK) {
 		wchar_t* name = getMemName(memToPack);
 		printf("\n Double checking the seqpack of: %ls", name);
-		memfile* unpackedMem = seqUnpack(packedBundle);
+		memfile* unpackedMem = seqUnpack(packedBundle, profile);
 		bool eq = memsEqual(unpackedMem, memToPack);
 		if (!eq) {
 			printf("\n\n\n !!!! FAILED to seq pack: %ls", name);

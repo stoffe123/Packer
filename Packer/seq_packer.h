@@ -8,6 +8,6 @@
 
 seqPackBundle seqPackSep(memfile* mem, packProfile profile);
 
-memfile* seqUnpack(seqPackBundle m);
+memfile* seqUnpack(seqPackBundle m, packProfile profile);
 
 #endif
