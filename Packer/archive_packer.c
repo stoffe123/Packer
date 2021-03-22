@@ -336,7 +336,7 @@ blobsInfo_t fetchBlobsInfo(fileListAndCount_t dirInfo) {
 	uint64_t count = dirInfo.count;
 	uint64_t blobCount = 0;
 
-	uint64_t* res = calloc(count + 1, sizeof(uint64_t));
+	uint64_t* res = calloc(count, sizeof(uint64_t));
 	wchar100_t* extList = calloc(count, sizeof(wchar100_t));
 	if (res == NULL || extList == NULL) {
 		printf("\n Out of memory in archive_packer.determineNumberOfBlobs");
@@ -362,14 +362,18 @@ blobsInfo_t fetchBlobsInfo(fileListAndCount_t dirInfo) {
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
 			printf("\n BLOB nr %llu FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
+			
 			wcscpy(extList[blobCount].s, ext);
-			blobCount++;
+
 			if (noOfFilesInBlobCount == 0) {
 				res[blobCount] = i;
 			}
 			else {
 				res[blobCount] = UINT64_MAX;
 			}
+
+			blobCount++;
+			
 			noOfFilesInBlobCount = 0;
 		}
 	}
@@ -645,7 +649,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
-		uint64_t singleBlobFileIndex = blobsInfoArr[i + 1];
+		uint64_t singleBlobFileIndex = blobsInfoArr[i];
 		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);
 
 		printf("\n ArchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
@@ -660,7 +664,8 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		}
 		releaseBlobMutex();
 
-		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s, getCompletePackProfileSimple(profile));
+		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s, 
+			getCompletePackProfileSimple(profile));
 		blobs[i].profile = comp;
 
 		copyFileChunkToFile(in, blobs[i].filename, size);
@@ -683,7 +688,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		releaseBlobMutex();
 
 		//don't add if blob contains just one file!
-		if (blobsInfoArr[i + 1] == UINT64_MAX) {
+		if (blobsInfoArr[i] == UINT64_MAX) {
 			printf("\n Blob nr %llu appending normally (>1 file)", i);
 			appendFileToFile(out, filename);
 			_wremove(filename);
@@ -707,7 +712,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 			
 			bool justOneFile = false;
 			for (int k = 0; k < nrOfBlobs; k++) {
-				if (blobsInfoArr[k + 1] == i) {
+				if (blobsInfoArr[k] == i) {
 					justOneFile = true;
 					break;
 				}
@@ -720,6 +725,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		}
 	}
 	free(blobsInfoArr);
+	free(extList);
 	_wremove(masterFilename);
 }
 
