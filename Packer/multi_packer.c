@@ -105,7 +105,7 @@ uint8_t tar(memfile* outFile, seqPackBundle mf_arr, uint8_t packType, bool store
 }
 
 int packAndTest2(wchar_t* kind, memfile* src, packProfile profile, int pt, int bit) {
-	completePackProfile comp = getCompletePackProfile2(profile);
+	completePackProfile comp = getCompletePackProfileSimple(profile);
 	bool succ = packAndTest(kind, src, comp);
 	if (succ) {
 		pt = setKthBit(pt, bit);

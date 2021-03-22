@@ -197,7 +197,7 @@ completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen,
 	return res;
 }
 
-completePackProfile getCompletePackProfile2(packProfile main) {
+completePackProfile getCompletePackProfileSimple(packProfile main) {
 	return getCompletePackProfile(main, main, main, main);
 }
 

@@ -638,7 +638,7 @@ static void WriteHeader(canonical_list_t* cl, bit_file_t* bfp)
     }
     rewindMem(headerFile);
     memfile* packedFilename = getMemfile(300, L"canicalHeaderPacked");    
-    completePackProfile comp = getCompletePackProfile2(profile);
+    completePackProfile comp = getCompletePackProfileSimple(profile);
     int packType = multiPackAndReturnPackType(headerFile, packedFilename, comp);
     uint64_t orgSize = getMemSize(headerFile);
     uint64_t packedSize = getMemSize(packedFilename);

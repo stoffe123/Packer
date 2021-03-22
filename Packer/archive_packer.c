@@ -286,7 +286,7 @@ memfile* createPackedSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 
 	//TODO .. create a full profile and place in profileFactory
 
-	completePackProfile comp = getCompletePackProfile2(headerSizesPackProfile);
+	completePackProfile comp = getCompletePackProfileSimple(headerSizesPackProfile);
 	return multiPackAndStorePackType(sizesHeader, comp);
 }
 
@@ -298,7 +298,7 @@ memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 
 	  //TODO .. create a full profile and place in profileFactory
 
-	completePackProfile comp = getCompletePackProfile2(headerNamesPackProfile);
+	completePackProfile comp = getCompletePackProfileSimple(headerNamesPackProfile);
 	return multiPackAndStorePackType(namesHeader, comp);
 }
 
