@@ -330,7 +330,7 @@ void writeArchiveHeader(FILE* out, fileListAndCount_t dirInfo, wchar_t* dir) {
 	append_mem_to_file(out, namesHeader);
 }
 
-blobsInfo_t determineNumberOfBlobs(fileListAndCount_t dirInfo) {
+blobsInfo_t fetchBlobsInfo(fileListAndCount_t dirInfo) {
 
 	file_t* fileList = dirInfo.fileList;
 	uint64_t count = dirInfo.count;
@@ -630,7 +630,7 @@ uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex
 
 void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, packProfile profile) {
 
-	blobsInfo_t blobsInfo = determineNumberOfBlobs(dirInfo);
+	blobsInfo_t blobsInfo = fetchBlobsInfo(dirInfo);
 	uint64_t* blobsInfoArr = blobsInfo.sizesList;
 	uint64_t nrOfBlobs = blobsInfo.count,
 		count = dirInfo.count;
