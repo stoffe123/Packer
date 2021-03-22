@@ -107,10 +107,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 	return under_limit;
 }
 
-int MultiPackAndTest(memfile* src, packProfile profile, packProfile seqlenProfile,
-	packProfile offsetProfile,
-	packProfile distancesProfile, int packType, int bit) {
-	completePackProfile comp = getCompletePackProfile(profile, seqlenProfile, offsetProfile, distancesProfile);
+int MultiPackAndTest(memfile* src, completePackProfile comp, int packType, int bit) {	
 	bool succ = packAndTest(L"multi", src, comp);
 	if (succ) {
 		return setKthBit(packType, bit);

@@ -365,19 +365,16 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, 
 			// ---------- Pack the meta files (seqlens/offsets) recursively
 			if (seqlens_size > profile.recursive_limit) {
 			
-				pack_type = MultiPackAndTest(mb.seqlens, seqlensProfile, seqlensProfile, 
-					offsetsProfile, distancesProfile, pack_type, 1);
+				pack_type = MultiPackAndTest(mb.seqlens, comp, pack_type, 1);
 				
 			}
 			if (offsets_size > profile.recursive_limit) {
 
-				pack_type = MultiPackAndTest(mb.offsets, offsetsProfile, seqlensProfile, 
-					offsetsProfile, distancesProfile, pack_type, 2);				
+				pack_type = MultiPackAndTest(mb.offsets, comp, pack_type, 2);				
 			}
 			if (distances_size > profile.recursive_limit) {
 
-				pack_type = MultiPackAndTest(mb.distances, distancesProfile, seqlensProfile, 
-					offsetsProfile, distancesProfile, pack_type, 3);				
+				pack_type = MultiPackAndTest(mb.distances, comp, pack_type, 3);				
 			}
 			seqlens_size = getMemSize(mb.seqlens);
 			offsets_size = getMemSize(mb.offsets);

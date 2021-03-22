@@ -96,4 +96,6 @@ completePackProfile getCompletePackProfile(packProfile main, packProfile seqlen,
 
 completePackProfile getCompletePackProfile2(packProfile main);
 
+int MultiPackAndTest(memfile* src, completePackProfile comp, int packType, int bit);
+
 #endif

@@ -373,7 +373,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"resx";
+	const wchar_t* ext = L"pack";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -585,12 +585,12 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
 		//L"c:/test/all";
 	// L"c:/test/test13";
-	//L"c:/test/47";
+	L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
