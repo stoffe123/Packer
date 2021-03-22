@@ -28,7 +28,7 @@ bool testPack(memfile* src, memfile* tmp, const wchar_t* kind, int limit) {
 	return packed_ratio < (double)limit;
 }
 
-void doDoubleCheck2(memfile* src, memfile* packedName, const wchar_t* kind) {
+void doubleCheckPack(memfile* src, memfile* packedName, const wchar_t* kind) {
 	if (DOUBLE_CHECK_PACK) {		
 		wprintf(L"\n ?Double check of %s pack of %s", kind, getMemName(src));
 		memfile* tmp = unpackByKind(kind, packedName);
@@ -99,7 +99,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 
 	bool under_limit = testPack(src, packedName, kind, limit);
 	if (under_limit) {
-		doDoubleCheck2(src, packedName, kind);
+		doubleCheckPack(src, packedName, kind);
 	}
 	else {
 		freeMem(packedName);
