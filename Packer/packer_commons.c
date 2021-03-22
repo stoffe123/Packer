@@ -28,10 +28,10 @@ bool testPack(memfile* src, memfile* tmp, const wchar_t* kind, int limit) {
 	return packed_ratio < (double)limit;
 }
 
-void doubleCheckPack(memfile* src, memfile* packedMem, const wchar_t* kind) {
+void doubleCheckPack(memfile* src, memfile* packedMem, const wchar_t* kind, packProfile profile) {
 	if (DOUBLE_CHECK_PACK) {		
 		wprintf(L"\n ?Double check of %s pack of %s", kind, getMemName(src));
-		memfile* tmp = unpackByKind(kind, packedMem);
+		memfile* tmp = unpackByKind(kind, packedMem, profile);
 		doDoubleCheck(tmp, src, kind);
 	}
 	//has to fre src 
@@ -53,9 +53,9 @@ void doDoubleCheck(memfile* unpackedMem, memfile* sourceMem, const wchar_t* kind
 	freeMem(unpackedMem);
 }
 
-memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename) {
+memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename, packProfile profile) {
 	if (equalsw(kind, L"multi")) {
-		return multiUnpack(packedFilename);
+		return multiUnpack(packedFilename, profile);
 	}
 	if (equalsw(kind, L"rle simple")) {
 		return RleSimpleUnpack(packedFilename);
@@ -99,7 +99,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 
 	bool under_limit = testPack(src, packedMem, kind, limit);
 	if (under_limit) {
-		doubleCheckPack(src, packedMem, kind);
+		doubleCheckPack(src, packedMem, kind, comp.main);
 	}
 	else {
 		freeMem(packedMem);

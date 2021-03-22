@@ -82,7 +82,7 @@ void doDoubleCheck(memfile* src, memfile* packedMem, const wchar_t* kind);
 
 bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp);
 
-memfile* unpackByKind(const wchar_t* kind, memfile* tmp);
+memfile* unpackByKind(const wchar_t* kind, memfile* tmp, packProfile profile);
 
 void writeDynamicSize16or64(uint64_t s, FILE* out);
 

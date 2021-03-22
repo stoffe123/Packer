@@ -113,8 +113,8 @@ int packAndTest2(wchar_t* kind, memfile* src, packProfile profile, int pt, int b
 	return pt;
 }
 
-memfile* unpackAndReplace2(const wchar_t* kind, memfile* src) {
-	memfile* tmp = unpackByKind(kind, src);
+memfile* unpackAndReplace2(const wchar_t* kind, memfile* src, packProfile profile) {
+	memfile* tmp = unpackByKind(kind, src, profile);
 	freeMem(src);
 	return tmp;
 }
@@ -454,14 +454,14 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, 
 	return pack_type;
 }
 
-memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType) {
-	memfile* res = multiUnpackWithPackType(src, packType);
+memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType, packProfile profile) {
+	memfile* res = multiUnpackWithPackType(src, packType, profile);
 	freeMem(src);
 	return res;
 }
 
-memfile* multiUnpackAndReplace(memfile* src) {
-	memfile* res = multiUnpack(src);
+memfile* multiUnpackAndReplace(memfile* src, packProfile profile) {
+	memfile* res = multiUnpack(src, profile);
 	freeMem(src);
 	return res;
 }
@@ -469,7 +469,7 @@ memfile* multiUnpackAndReplace(memfile* src) {
 // ------------------------------------------------------------------
 
 //TODO: instead have pack_type = -1 signaling to read pack type from file
-memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile) {
+memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile, packProfile profile) {
 	rewindMem(in);
 	memfile* dst;
 	
@@ -486,18 +486,18 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	seqPackBundle mb = untar(in, pack_type);
 	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
-		mb.main = unpackAndReplace2(L"canonical", mb.main); 
+		mb.main = unpackAndReplace2(L"canonical", mb.main, profile); 
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
 		if (isKthBitSet(pack_type, 1)) {
-			mb.seqlens = multiUnpackAndReplace(mb.seqlens);
+			mb.seqlens = multiUnpackAndReplace(mb.seqlens, profile);
 		}
 		if (isKthBitSet(pack_type, 2)) {
-			mb.offsets = multiUnpackAndReplace(mb.offsets);
+			mb.offsets = multiUnpackAndReplace(mb.offsets, profile);
 		}
 		if (isKthBitSet(pack_type, 3)) {
-			mb.distances = multiUnpackAndReplace(mb.distances);
+			mb.distances = multiUnpackAndReplace(mb.distances, profile);
 		}
 	}
 	memfile* seq_dst;
@@ -509,7 +509,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 		seq_dst = mb.main;		
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
-		seq_dst = unpackAndReplace2(L"twobyte", seq_dst);
+		seq_dst = unpackAndReplace2(L"twobyte", seq_dst, profile);
 	}
 	if (isHalfByteRlePacked(pack_type)) {
 		
@@ -529,47 +529,12 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	return dst;
 }
 
-uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfile profile) {	
-
-	memfile* srcm = getMemfileFromFile(src);
-	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
-
-	uint8_t pt = multiPackInternal(srcm, dstm, profile, false);
-
-	freeMem(srcm);
-	memfileToFile(dstm, dst);
-	freeMem(dstm);
-	return pt;
-}
-
-uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile) {
-	return multiPackInternal(src, dst, profile, false);
-
-}
-
-memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile) {
-	memfile* dst = getEmptyMem(L"multipacker.multipackstorepacktype");
-	multiPackInternal(src, dst, profile, true);
-	return dst;
-}
-
-memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type) {
-	return multiUnpackInternal(m, pack_type, false);
-}
-
-void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw) {
-	memfile* srcm = getMemfileFromFile(srcw);	
-	memfile* dstm = multiUnpackInternal(srcm, 0, true);
-	memfileToFile(dstm, dstw);
-	freeMem(srcm);
-	freeMem(dstm);
-}
 
 void multi_packw(const wchar_t* srcw, const wchar_t* dstw, completePackProfile profile) {
 
 	memfile* srcm = getMemfileFromFile(srcw);
 	memfile* dstm = getEmptyMem(L"multi_packw_dstm");
-	
+
 	multiPackInternal(srcm, dstm, profile, true);
 	memfileToFile(dstm, dstw);
 	freeMem(srcm);
@@ -582,18 +547,55 @@ memfile* multiPack(memfile* src, completePackProfile profile) {
 	return dst;
 }
 
-memfile* multiUnpack(memfile* m) {
-	return multiUnpackInternal(m, 0, true);
+
+uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfile profile) {	
+
+	memfile* srcm = getMemfileFromFile(src);
+	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
+
+	uint8_t pt = multiPackInternal(srcm, dstm, profile, false, profile);
+
+	freeMem(srcm);
+	memfileToFile(dstm, dst);
+	freeMem(dstm);
+	return pt;
 }
 
-memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead) {
+uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile) {
+	return multiPackInternal(src, dst, profile, false, profile);
+
+}
+
+memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile) {
+	memfile* dst = getEmptyMem(L"multipacker.multipackstorepacktype");
+	multiPackInternal(src, dst, profile, true, profile);
+	return dst;
+}
+
+memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type, packProfile profile) {
+	return multiUnpackInternal(m, pack_type, false, profile);
+}
+
+void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile) {
+	memfile* srcm = getMemfileFromFile(srcw);	
+	memfile* dstm = multiUnpackInternal(srcm, 0, true, profile);
+	memfileToFile(dstm, dstw);
+	freeMem(srcm);
+	freeMem(dstm);
+}
+
+memfile* multiUnpack(memfile* m, packProfile profile) {
+	return multiUnpackInternal(m, 0, true, profile);
+}
+
+memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead, packProfile profile) {
 	memfile* src = getEmptyMem(L"multiunpackblock_src");
 	copy_chunk_to_mem(in, src, bytesToRead);
-	return multiUnpack(src);
+	return multiUnpack(src, profile);
 }
 
-void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead) {
-	memfile* dstMem = multiUnpackBlock(in, bytesToRead);
+void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead, packProfile profile) {
+	memfile* dstMem = multiUnpackBlock(in, bytesToRead, profile);
 	FILE* dstFile = openWrite(dstFilename);
 	append_mem_to_file(dstFile, dstMem);
 	fclose(dstFile);

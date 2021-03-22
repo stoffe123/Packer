@@ -724,7 +724,7 @@ static int ReadHeader(canonical_list_t* cl, bit_file_t* bfp)
     }    
       
     if (size > 0) {
-        file = multiUnpackAndReplaceWithPackType(file, packType);
+        file = multiUnpackAndReplaceWithPackType(file, packType, profile);
     }    
     assert(getMemSize(file) == 257, "\n canonical.c header unpacked had wrong size not 257");
     rewindMem(file);

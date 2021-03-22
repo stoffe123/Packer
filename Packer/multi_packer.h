@@ -31,19 +31,19 @@ memfile* multiPack(memfile* src, completePackProfile profile);
 
 // UNPACK
 
-memfile* multiUnpackAndReplace(memfile* src);
+memfile* multiUnpackAndReplace(memfile* src, packProfile profile);
 
-memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType);
+memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType, packProfile profile);
 
-void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw);
+void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile);
 
-memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type);
+memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type, packProfile profile);
 
-memfile* multiUnpack(memfile* m);
+memfile* multiUnpack(memfile* m, packProfile profile);
 
-memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead);
+memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead, packProfile profile);
 
-void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead);
+void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead, packProfile profile);
 
 
 
