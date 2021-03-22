@@ -78,7 +78,7 @@ value_freq_t find_best_code(unsigned long* char_freq);
 
 packProfile getPackProfile();
 
-void doDoubleCheck(memfile* src, memfile* packedName, const wchar_t* kind);
+void doDoubleCheck(memfile* src, memfile* packedMem, const wchar_t* kind);
 
 bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp);
 

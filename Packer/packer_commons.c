@@ -28,15 +28,15 @@ bool testPack(memfile* src, memfile* tmp, const wchar_t* kind, int limit) {
 	return packed_ratio < (double)limit;
 }
 
-void doubleCheckPack(memfile* src, memfile* packedName, const wchar_t* kind) {
+void doubleCheckPack(memfile* src, memfile* packedMem, const wchar_t* kind) {
 	if (DOUBLE_CHECK_PACK) {		
 		wprintf(L"\n ?Double check of %s pack of %s", kind, getMemName(src));
-		memfile* tmp = unpackByKind(kind, packedName);
+		memfile* tmp = unpackByKind(kind, packedMem);
 		doDoubleCheck(tmp, src, kind);
 	}
 	//has to fre src 
-	deepCopyMem(packedName, src);
-	freeMem(packedName);
+	deepCopyMem(packedMem, src);
+	freeMem(packedMem);
 }
 
 void doDoubleCheck(memfile* unpackedMem, memfile* sourceMem, const wchar_t* kind) {
@@ -77,19 +77,19 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 	
 	//wprintf(L"\n PackAndTest %s with kind=%s src.size=%d", getMemName(src), kind, getMemSize(src));
 
-	memfile* packedName = NULL;
+	memfile* packedMem = NULL;
 	
 	int limit = 100;
 	
 	if (equalsw(kind, L"multi")) {	
-		packedName = multiPackAndStorePackType(src, comp);
+		packedMem = multiPackAndStorePackType(src, comp);
 	}
 	else if (equalsw(kind, L"rle simple")) {
-		packedName = RleSimplePack(src, comp.main);
+		packedMem = RleSimplePack(src, comp.main);
 		limit = comp.main.rle_ratio;
 	}
 	else if (equalsw(kind, L"twobyte")) {
-		packedName = twoBytePack(src, comp.main);
+		packedMem = twoBytePack(src, comp.main);
 		limit = comp.main.twobyte_ratio;
 	}
 	else {
@@ -97,12 +97,12 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 		exit(1);
 	}
 
-	bool under_limit = testPack(src, packedName, kind, limit);
+	bool under_limit = testPack(src, packedMem, kind, limit);
 	if (under_limit) {
-		doubleCheckPack(src, packedName, kind);
+		doubleCheckPack(src, packedMem, kind);
 	}
 	else {
-		freeMem(packedName);
+		freeMem(packedMem);
 	}
 	return under_limit;
 }
