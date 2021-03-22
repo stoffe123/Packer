@@ -127,6 +127,7 @@ char* profileToString(packProfile* profile) {
 	"\n.twobyte_threshold_divide = %lld,"
 	"\n.twobyte_threshold_min = %lld,"
 	"\n.seqlenMinLimit3 = %lld,"
+	"\n.seqlenMinLimit4 = %lld,"
 	"\n.blockSizeMinus = %lld,"	
 	"\n.sizeMaxForCanonicalHeaderPack = %lld,"
 	"\n.sizeMinForSeqPack = %lld,"
@@ -140,6 +141,7 @@ char* profileToString(packProfile* profile) {
 	 , profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
 		 profile->twobyte_threshold_divide, profile->twobyte_threshold_min, 
 		profile->seqlenMinLimit3,
+		profile->seqlenMinLimit4,
 		profile->blockSizeMinus,
 		 profile->sizeMaxForCanonicalHeaderPack, profile->sizeMinForSeqPack, profile->sizeMinForCanonical, 
 		 profile->sizeMaxForSuperslim, profile->metaCompressionFactor, 
@@ -171,7 +173,7 @@ packProfile getPackProfile() {
 	.twobyte_threshold_divide = 27,
 	.twobyte_threshold_min = 3150,
 	.seqlenMinLimit3 = 128,
-	
+	.seqlenMinLimit4 = 65360,
 	.blockSizeMinus = 139,
 	.winsize = 95536,
 	.sizeMaxForCanonicalHeaderPack = 256,
@@ -210,6 +212,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
 	dst->seqlenMinLimit3 = src->seqlenMinLimit3;
+	dst->seqlenMinLimit4 = src->seqlenMinLimit4;
 	
 	dst->blockSizeMinus = src->blockSizeMinus;
 	dst->winsize = src->winsize;

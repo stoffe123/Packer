@@ -78,6 +78,8 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
+	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 30000, 90000);
+
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 1000);
 	profile->winsize = doFuzz(profile->winsize, best.winsize, 5000, 9000000);
 
