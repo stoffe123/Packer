@@ -63,7 +63,7 @@ void threadBlockUnPack(void* arg)
 	releaseBlobMutex();
 
 	printf("\n Starting THREAD block unpack for file %ls", filename);
-	blockUnpackAndReplace(filename, bc->profile);
+	blockUnpackAndReplace(filename, bc->profile.main);
 	printf("\n THREAD block unpack FOR %ls FINISHED!", filename);
 }
 

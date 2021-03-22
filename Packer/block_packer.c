@@ -317,33 +317,6 @@ void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, co
 	}
 }
 
-void block_unpack_file(FILE* infil, const wchar_t* dst) {
-	block_unpack_file_internal(infil, NULL, NULL, dst);
-}
-
-void blockUnpackFileToFile(FILE* infil, FILE* utfil) {
-	block_unpack_file_internal(infil, NULL, utfil, NULL);
-}
-
-void blockUnpackNameToFile(const wchar_t* src, FILE* utfil) {
-	block_unpack_file_internal(NULL, src, utfil, NULL);
-}
-
-
-void block_unpack(const wchar_t* src, const wchar_t* dst) {
-
-	FILE* infil = openRead(src);
-	block_unpack_file(infil, dst);
-}
-
-
-void blockUnpackAndReplace(wchar_t* src) {
-	const wchar_t tmp[100] = { 0 };
-	get_temp_filew(tmp, L"blockpacker_unpackandreplace");
-	block_unpack(src, tmp);
-	myRename(tmp, src);
-}
-
 
 
 void blockPackAndReplace(const wchar_t* src, packProfile profile) {
@@ -360,6 +333,37 @@ void blockPackAndReplaceFull(const wchar_t* src, completePackProfile prof) {
 	blockPackFull(src, tmp, prof);
 	myRename(tmp, src);
 }
+
+// UNPACK
+
+void block_unpack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
+	block_unpack_file_internal(infil, NULL, NULL, dst);
+}
+
+void blockUnpackFileToFile(FILE* infil, FILE* utfil, packProfile profile) {
+	block_unpack_file_internal(infil, NULL, utfil, NULL);
+}
+
+void blockUnpackNameToFile(const wchar_t* src, FILE* utfil, packProfile profile) {
+	block_unpack_file_internal(NULL, src, utfil, NULL);
+}
+
+
+void block_unpack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
+
+	FILE* infil = openRead(src);
+	block_unpack_file(infil, dst, profile);
+}
+
+
+void blockUnpackAndReplace(wchar_t* src, packProfile profile) {
+	const wchar_t tmp[100] = { 0 };
+	get_temp_filew(tmp, L"blockpacker_unpackandreplace");
+	block_unpack(src, tmp, profile);
+	myRename(tmp, src);
+}
+
+
 
 
 
