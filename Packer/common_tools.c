@@ -207,6 +207,15 @@ void toUni(const wchar_t* dst, const char* str) {
 	MultiByteToWideChar(CP_ACP, 0, str, -1, dst, 500);	
 }
 
+bool equalsNormalAndUni(char* s1, wchar_t* s2) {
+	wchar_t* s1w;
+	s1w = malloc(wcslen(s2) * sizeof(wchar_t));
+	toUni(s1w, s1);
+	bool res = equalsw(s1w, s2);
+	free(s1w);
+	return res;
+}
+
 void deleteAllFilesInDir(const wchar_t* sDir) {
 	WIN32_FIND_DATA fdFile;
 	HANDLE hFind = NULL;

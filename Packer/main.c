@@ -367,8 +367,8 @@ void testmeta() {
 
 
 void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
-	FILE* utfil = openWrite(L"c:/test/best.txt");
-	fprintf(utfil, "#%ls", ext);
+	FILE* utfil = _wfopen(L"c:/test/best.txt", L"a");
+	fprintf(utfil, "\n#%ls", ext);
 	fprintf(utfil, "\n%llu", size);	
 	fprintProfile2(utfil, &profile.main);	
 	fprintProfile2(utfil, &profile.seqlen);	
@@ -387,6 +387,10 @@ void blockpack_onefile() {
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
 
+	
+	completePackProfile profile = fetchProfileFromFile(ext);
+	
+
 	int before_suite = clock();
 	const wchar_t* unpacked = L"C:/test/unp";
 
@@ -396,10 +400,10 @@ void blockpack_onefile() {
 
 	printf("\n Packing... %ls with length:%llu", src, size_org);
 
-	completePackProfile profile = getProfileForExtension(ext);
+	//completePackProfile profile = getProfileForExtension(ext);
 	completePackProfile bestProfile = cloneCompleteProfile(profile);
 
-	uint64_t bestSize = UINT64_MAX;
+	uint64_t bestSize = profile.size;
 
 	while (true) {
 

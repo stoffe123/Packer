@@ -28,4 +28,6 @@ completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackPr
 
 fixPackProfile(packProfile* prof);
 
+completePackProfile fetchProfileFromFile(wchar_t* ext);
+
 #endif
