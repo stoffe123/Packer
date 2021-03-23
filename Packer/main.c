@@ -366,17 +366,6 @@ void testmeta() {
 }//end test_meta
 
 
-void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
-	FILE* utfil = _wfopen(L"c:/test/best.txt", L"a");
-	fprintf(utfil, "\n#%ls", ext);
-	fprintf(utfil, "\n%llu", size);	
-	fprintProfile2(utfil, &profile.main);	
-	fprintProfile2(utfil, &profile.seqlen);	
-	fprintProfile2(utfil, &profile.offset);		
-	fprintProfile2(utfil, &profile.distance);	
-	fclose(utfil);
-}
-
 
 //-------------------------------------------------------------------------------------------
 
@@ -447,7 +436,7 @@ void blockpack_onefile() {
 			bestSize = size_packed;
 			bestProfile = cloneCompleteProfile(profile);			
 			printf("\a");
-			printResultToFile(size_packed, profile, ext);
+			updateExtensionInFile(size_packed, profile, ext);
 		}
 		fuzzCompleteProfile(&profile, bestProfile);		
 	}//end while true
@@ -639,7 +628,7 @@ void testarchive() {
 				bestSize = acc_size_packed;
 				bestProfile = cloneCompleteProfile(profile);
 				printf("\a");
-				printResultToFile(acc_size_packed, profile, L"_default_");
+				updateExtensionInFile(acc_size_packed, profile, L"_default_");
 			}
 		}
 		else {

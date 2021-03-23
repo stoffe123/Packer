@@ -71,6 +71,24 @@ packProfile readProfileFromLine(FILE* file) {
 	return p;
 }
 
+
+void removeExtensionFromFile(wchar_t* ext) {
+
+}
+
+
+void updateExtensionInFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
+	    removeExtensionFromFile(ext);
+		FILE* utfil = _wfopen(L"c:/test/best.txt", L"a");
+		fprintf(utfil, "\n#%ls", ext);
+		fprintf(utfil, "\n%llu", size);
+		fprintProfile2(utfil, &profile.main);
+		fprintProfile2(utfil, &profile.seqlen);
+		fprintProfile2(utfil, &profile.offset);
+		fprintProfile2(utfil, &profile.distance);
+		fclose(utfil);
+}
+
 completePackProfile fetchProfileFromFile(wchar_t* ext) {
 
 	FILE* file = openRead(L"c:/test/best.txt");
