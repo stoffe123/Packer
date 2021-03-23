@@ -55,6 +55,7 @@ typedef struct completePackProfile {
 	packProfile seqlen;
 	packProfile offset;
 	packProfile distance;
+	uint64_t size;
 } completePackProfile;
 
 void lockTempfileMutex();
@@ -68,6 +69,8 @@ void quickSortOnSizes(file_t* f, uint64_t size);
 void printProfile(packProfile*);
 
 void fprintProfile(FILE* file, packProfile* profile);
+
+char* profileToString2(packProfile* profile);
 
 bool testPack(memfile* src, memfile* tmp, const wchar_t* packerName, int limit);
 

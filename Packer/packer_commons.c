@@ -152,6 +152,23 @@ char* profileToString(packProfile* profile) {
 	return msg;
 }
 
+char* profileToString2(packProfile* profile) {
+	char msg[4096];
+	sprintf(msg, "\n%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld",
+		profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
+		profile->twobyte_threshold_divide, profile->twobyte_threshold_min,
+		profile->seqlenMinLimit3,
+		profile->seqlenMinLimit4,
+		profile->blockSizeMinus,
+		profile->sizeMaxForCanonicalHeaderPack, profile->sizeMinForSeqPack, profile->sizeMinForCanonical,
+		profile->sizeMaxForSuperslim, profile->metaCompressionFactor,
+		profile->offsetLimit1,
+		profile->offsetLimit2,
+		profile->offsetLimit3,
+		profile->bytesWonMin);
+	return msg;
+}
+
 void printProfile(packProfile* profile) {
 	char* msg = profileToString(profile);
 	printf(msg);	
@@ -160,6 +177,11 @@ void printProfile(packProfile* profile) {
 void fprintProfile(FILE* file, packProfile* profile) {
 	char* msg = profileToString(profile);
 	fprintf(file, msg);	
+}
+
+void fprintProfile2(FILE* file, packProfile* profile) {
+	char* msg = profileToString2(profile);
+	fprintf(file, msg);
 }
 
 

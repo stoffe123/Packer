@@ -310,7 +310,7 @@ void testmeta() {
 			concat(src, metaDir, "distances");
 			concat_int(src, src, kk + 101);
 			size_org = getFileSizeByName(src);
-			printf("\n Packing... %s with length:%u", src, size_org);
+			printf("\n Packing... %s with length:%d", src, size_org);
 
 			//multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
 			pack_time = (clock() - cl);
@@ -326,7 +326,7 @@ void testmeta() {
 
 			//if (unpack) multi_unpack(packed_name, unpackedFilename);
 
-			printf("\n Accumulated size %u kb", acc_size_packed / 1024);
+			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
 			cl = clock();
 
 			int unpack_time = (clock() - cl);
@@ -368,22 +368,12 @@ void testmeta() {
 
 void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
 	FILE* utfil = openWrite(L"c:/test/best.txt");
-	fprintf(utfil, "else if (equalsIgnoreCase(ext, L\"%ls\")) {", ext);
-	fprintf(utfil, "\n\n//Size: %.3f", (float)(size)/1000.0);
-	fprintf(utfil, "\n\npackProfile mainProfile = {");
-	fprintProfile(utfil, &profile.main);
-	fprintf(utfil, "},");
-	fprintf(utfil, "\n seqlenProfile = {");
-	fprintProfile(utfil, &profile.seqlen);
-	fprintf(utfil, "},");
-	fprintf(utfil, "\n offsetProfile = {");
-	fprintProfile(utfil, &profile.offset);
-	fprintf(utfil, "},");
-	fprintf(utfil, "\n distanceProfile = {");
-	fprintProfile(utfil, &profile.distance);
-	fprintf(utfil, "};");
-	fprintf(utfil, "\nreturn getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);");
-	fprintf(utfil, "\n}");
+	fprintf(utfil, "#%ls", ext);
+	fprintf(utfil, "\n%llu", size);	
+	fprintProfile2(utfil, &profile.main);	
+	fprintProfile2(utfil, &profile.seqlen);	
+	fprintProfile2(utfil, &profile.offset);		
+	fprintProfile2(utfil, &profile.distance);	
 	fclose(utfil);
 }
 
@@ -392,7 +382,7 @@ void printResultToFile(uint64_t size, completePackProfile profile, wchar_t* ext)
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"tis";
+	const wchar_t* ext = L"xmi";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
@@ -604,10 +594,10 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 		//L"D:/Dropbox/Misc/Download";
 		//L"c:/test/testallequal";
-		//L"c:/test/all";
+		L"c:/test/all";
 	 //L"c:/test/test1";
 	//L"c:/test/47";
 
@@ -669,6 +659,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-   testarchive();
+   //testarchive();
     blockpack_onefile();
 }
