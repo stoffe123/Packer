@@ -597,6 +597,7 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 		
 	memfile* headerPackedMem = getEmptyMem(L"archiveunpack_headersizespacked");
 	copy_chunk_to_mem(in, headerPackedMem, headerSize);
+	completePackProfile headerSizesPackProfile = getProfileForExtension(L"__headerSizesProfile__");
 	memfile* headerUnpacked = multiUnpack(headerPackedMem, headerSizesPackProfile);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	
@@ -619,6 +620,7 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 
 
 	//TODO should pack to memfile instead
+	completePackProfile headerNamesPackProfile = getProfileForExtension(L"__headerNamesProfile__");
 	multiUnpackBlockToFile(in, headerUnpacked, headerSize, headerNamesPackProfile);
 	
 	//everyOtherDecode(headerUnpacked1, headerUnpacked);

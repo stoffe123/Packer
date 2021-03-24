@@ -53,7 +53,7 @@ void doDoubleCheck(memfile* unpackedMem, memfile* sourceMem, const wchar_t* kind
 	freeMem(unpackedMem);
 }
 
-memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename, packProfile profile) {
+memfile* unpackByKind(const wchar_t* kind, memfile* packedFilename, completePackProfile profile) {
 	if (equalsw(kind, L"multi")) {
 		return multiUnpack(packedFilename, profile);
 	}

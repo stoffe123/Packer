@@ -468,13 +468,13 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, 
 	return pack_type;
 }
 
-memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType, packProfile profile) {
+memfile* multiUnpackAndReplaceWithPackType(memfile* src, uint8_t packType, completePackProfile profile) {
 	memfile* res = multiUnpackWithPackType(src, packType, profile);
 	freeMem(src);
 	return res;
 }
 
-memfile* multiUnpackAndReplace(memfile* src, packProfile profile) {
+memfile* multiUnpackAndReplace(memfile* src, completePackProfile profile) {
 	memfile* res = multiUnpack(src, profile);
 	freeMem(src);
 	return res;
@@ -483,7 +483,7 @@ memfile* multiUnpackAndReplace(memfile* src, packProfile profile) {
 // ------------------------------------------------------------------
 
 //TODO: instead have pack_type = -1 signaling to read pack type from file
-memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile, packProfile profile) {
+memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFromFile, completePackProfile profile) {
 	rewindMem(in);
 	memfile* dst;
 	
@@ -500,10 +500,12 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	seqPackBundle mb = untar(in, pack_type);
 	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
-		mb.main = unpackAndReplaceWithKind(L"canonical", mb.main, profile); 
+		mb.main = unpackAndReplaceWithKind(L"canonical", mb.main, profile.main); 
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
+
+		//TODO change here to have same system as in packer
 		if (isKthBitSet(pack_type, 1)) {
 			mb.seqlens = multiUnpackAndReplace(mb.seqlens, profile);
 		}
@@ -516,14 +518,14 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	}
 	memfile* seq_dst;
 	if (seqPacked) {		
-		seq_dst = seqUnpack(mb, profile);				
+		seq_dst = seqUnpack(mb, profile.main);				
 		freBundle(mb);		
 	}
 	else {
 		seq_dst = mb.main;		
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
-		seq_dst = unpackAndReplaceWithKind(L"twobyte", seq_dst, profile);
+		seq_dst = unpackAndReplaceWithKind(L"twobyte", seq_dst, profile.main);
 	}
 	if (isHalfByteRlePacked(pack_type)) {
 		
@@ -587,11 +589,11 @@ memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile) {
 	return dst;
 }
 
-memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type, packProfile profile) {
+memfile* multiUnpackWithPackType(memfile* m, uint8_t pack_type, completePackProfile profile) {
 	return multiUnpackInternal(m, pack_type, false, profile);
 }
 
-void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile) {
+void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw, completePackProfile profile) {
 	memfile* srcm = getMemfileFromFile(srcw);	
 	memfile* dstm = multiUnpackInternal(srcm, 0, true, profile);
 	memfileToFile(dstm, dstw);
@@ -599,17 +601,17 @@ void multi_unpackw(const wchar_t* srcw, const wchar_t* dstw, packProfile profile
 	freeMem(dstm);
 }
 
-memfile* multiUnpack(memfile* m, packProfile profile) {
+memfile* multiUnpack(memfile* m, completePackProfile profile) {
 	return multiUnpackInternal(m, 0, true, profile);
 }
 
-memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead, packProfile profile) {
+memfile* multiUnpackBlock(FILE* in, uint64_t bytesToRead, completePackProfile profile) {
 	memfile* src = getEmptyMem(L"multiunpackblock_src");
 	copy_chunk_to_mem(in, src, bytesToRead);
 	return multiUnpack(src, profile);
 }
 
-void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead, packProfile profile) {
+void multiUnpackBlockToFile(FILE* in, wchar_t* dstFilename, uint64_t bytesToRead, completePackProfile profile) {
 	memfile* dstMem = multiUnpackBlock(in, bytesToRead, profile);
 	FILE* dstFile = openWrite(dstFilename);
 	append_mem_to_file(dstFile, dstMem);

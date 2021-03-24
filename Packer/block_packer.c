@@ -125,7 +125,7 @@ void threadMultiUnpack(void* pMyID)
 	blockChunk_t* bc = (blockChunk_t*)pMyID;
 	releaseBlockchunkMutex();
 
-	bc->unpacked = multiUnpackWithPackType(bc->packed, bc->packType, bc->profile.main);
+	bc->unpacked = multiUnpackWithPackType(bc->packed, bc->packType, bc->profile);
 	wprintf(L"\n THREAD MULTIUNPACK FOR %s FINISHED!", getMemName(bc->packed));
 }
 
