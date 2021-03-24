@@ -208,11 +208,11 @@ void toUni(const wchar_t* dst, const char* str) {
 }
 
 bool equalsNormalAndUni(char* s1, wchar_t* s2) {
-	wchar_t* s1w;
-	s1w = malloc(wcslen(s2) * sizeof(wchar_t));
+	wchar_t s1w[500];
+	//s1w = malloc(wcslen(s2) * sizeof(wchar_t));
 	toUni(s1w, s1);
 	bool res = equalsw(s1w, s2);
-	free(s1w);
+	//free(s1w);
 	return res;
 }
 

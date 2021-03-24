@@ -113,7 +113,7 @@ int packAndTest2(wchar_t* kind, memfile* src, packProfile profile, int pt, int b
 	return pt;
 }
 
-memfile* unpackAndReplaceWithKind(const wchar_t* kind, memfile* src, packProfile profile) {
+memfile* unpackAndReplaceWithKind(const wchar_t* kind, memfile* src, completePackProfile profile) {
 	memfile* tmp = unpackByKind(kind, src, profile);
 	freeMem(src);
 	return tmp;
@@ -269,7 +269,8 @@ uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, 
 	fixPackProfile(&comp.distance);
 
 
-	packProfile profile = comp.main;
+	packProfile profile;
+	copyProfile(&comp.main, &profile);
 	static int metacount = 101;
 	rewindMem(src);
 	rewindMem(dst);
@@ -500,7 +501,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 	seqPackBundle mb = untar(in, pack_type);
 	
 	if (isKthBitSet(pack_type, 0)) { //main was huffman coded
-		mb.main = unpackAndReplaceWithKind(L"canonical", mb.main, profile.main); 
+		mb.main = unpackAndReplaceWithKind(L"canonical", mb.main, profile); 
 	}
 	bool seqPacked = isKthBitSet(pack_type, 7);
 	if (seqPacked) {
@@ -525,7 +526,7 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 		seq_dst = mb.main;		
 	}
 	if (isKthBitSet(pack_type, TWOBYTE_BIT)) {
-		seq_dst = unpackAndReplaceWithKind(L"twobyte", seq_dst, profile.main);
+		seq_dst = unpackAndReplaceWithKind(L"twobyte", seq_dst, profile);
 	}
 	if (isHalfByteRlePacked(pack_type)) {
 		

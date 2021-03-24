@@ -28,7 +28,7 @@ bool testPack(memfile* src, memfile* tmp, const wchar_t* kind, int limit) {
 	return packed_ratio < (double)limit;
 }
 
-void doubleCheckPack(memfile* src, memfile* packedMem, const wchar_t* kind, packProfile profile) {
+void doubleCheckPack(memfile* src, memfile* packedMem, const wchar_t* kind, completePackProfile profile) {
 	if (DOUBLE_CHECK_PACK) {		
 		wprintf(L"\n ?Double check of %s pack of %s", kind, getMemName(src));
 		memfile* tmp = unpackByKind(kind, packedMem, profile);
@@ -78,6 +78,9 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 	//wprintf(L"\n PackAndTest %s with kind=%s src.size=%d", getMemName(src), kind, getMemSize(src));
 
 	memfile* packedMem = NULL;
+
+	packProfile profile;
+	copyProfile(&comp.main, &profile);
 	
 	int limit = 100;
 	
@@ -85,12 +88,12 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 		packedMem = multiPackAndStorePackType(src, comp);
 	}
 	else if (equalsw(kind, L"rle simple")) {
-		packedMem = RleSimplePack(src, comp.main);
-		limit = comp.main.rle_ratio;
+		packedMem = RleSimplePack(src, profile);
+		limit = profile.rle_ratio;
 	}
 	else if (equalsw(kind, L"twobyte")) {
-		packedMem = twoBytePack(src, comp.main);
-		limit = comp.main.twobyte_ratio;
+		packedMem = twoBytePack(src, profile);
+		limit = profile.twobyte_ratio;
 	}
 	else {
 		wprintf(L"\n kind=%s not found in packer_commons.packAndTest", kind);
@@ -99,7 +102,7 @@ bool packAndTest(const wchar_t* kind, memfile* src, completePackProfile comp) {
 
 	bool under_limit = testPack(src, packedMem, kind, limit);
 	if (under_limit) {
-		doubleCheckPack(src, packedMem, kind, comp.main);
+		doubleCheckPack(src, packedMem, kind, comp);
 	}
 	else {
 		freeMem(packedMem);

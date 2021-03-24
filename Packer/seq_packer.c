@@ -613,6 +613,9 @@ seqPackBundle seq_pack_internal(memfile* memToPack, packProfile profile, bool se
 			freeMem(unpackedMem);
 			exit(1);
 		}
+		else {
+			printf("\n Double check succeeded!");
+		}
 		freeMem(unpackedMem);
 	}
 	return packedBundle;
