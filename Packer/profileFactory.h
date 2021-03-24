@@ -28,8 +28,6 @@ completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackPr
 
 fixPackProfile(packProfile* prof);
 
-completePackProfile fetchProfileFromFile(wchar_t* ext);
-
 void updateExtensionInFile(uint64_t size, completePackProfile profile, wchar_t* ext);
 
 #endif

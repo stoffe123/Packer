@@ -392,7 +392,7 @@ void blockpack_onefile() {
 			const wchar_t* ext = array[ii];
 			concatw(src, dir, ext);
 
-			completePackProfile profile = fetchProfileFromFile(ext);
+			completePackProfile profile = getProfileForExtension(ext);
 			printf("\n USING PROFILE ---- >");
 			printCompleteProfile(profile);
 
@@ -453,7 +453,7 @@ void blockpack_onefile() {
 					}
 				
 
-				if (size_packed < bestSize) {
+				if (size_packed < bestSize || bestSize == 0) {
 					bestSize = size_packed;
 					bestProfile = cloneCompleteProfile(profile);
 					printf("\a");
@@ -610,10 +610,10 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 	   //L"D:/Dropbox/Misc/Download";
 	   //L"c:/test/testallequal";
-		L"c:/test/all";
+		//L"c:/test/all";
 	//L"c:/test/test1";
    //L"c:/test/47";
 
@@ -647,7 +647,7 @@ void testarchive() {
 				printf("\n => dirs not equal, exiting!");
 				exit(1);
 			}
-			if (acc_size_packed < bestSize) {
+			if (acc_size_packed < bestSize || bestSize == 0) {
 				bestSize = acc_size_packed;
 				bestProfile = cloneCompleteProfile(profile);
 				printf("\a");
@@ -675,6 +675,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    //testarchive();
+    testarchive();
 	blockpack_onefile();
 }
