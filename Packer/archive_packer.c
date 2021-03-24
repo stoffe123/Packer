@@ -646,7 +646,7 @@ uint64_t getBlobSize(uint64_t i, uint64_t nrOfBlobs, uint64_t singeBlobFileIndex
 	}
 }
 
-void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, packProfile profile) {
+void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* dir, completePackProfile profile) {
 
 	blobsInfo_t blobsInfo = fetchBlobsInfo(dirInfo);
 	uint64_t* blobsInfoArr = blobsInfo.sizesList;
@@ -677,10 +677,9 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 			get_temp_filew(blobs[i].filename, L"archive_unpack_blob_semisep");
 		}
 		releaseBlobMutex();
-
-		//todo change!
+		
 		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s, 
-			getCompletePackProfileSimple(profile));
+			profile);
 		blobs[i].profile = comp;
 
 		copyFileChunkToFile(in, blobs[i].filename, size);
@@ -744,7 +743,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	_wremove(masterFilename);
 }
 
-void archiveUnpackInternal(const wchar_t* src, wchar_t* dir, packProfile profile) {
+void archiveUnpackInternal(const wchar_t* src, wchar_t* dir, completePackProfile profile) {
 
 	printf("\n *** Archive Unpack *** ");			
 
@@ -769,7 +768,7 @@ void archive_pack(const wchar_t* dir, const wchar_t* dest, completePackProfile p
     archivePackInternal(dir, dest, profile);			
 }
 
-void archive_unpack(const wchar_t* src, wchar_t* dir, packProfile profile) {
+void archive_unpack(const wchar_t* src, wchar_t* dir, completePackProfile profile) {
 	archiveUnpackInternal(src, dir, profile);	
 }
 

@@ -635,7 +635,7 @@ void testarchive() {
 
 		cl = clock();
 
-		archive_unpack(packed_name, destDir, profile.main);
+		archive_unpack(packed_name, destDir, profile);
 
 		uint64_t totalTime = clock() - before_suite;
 		if (totalTime < (time_limit * 1000)) {
