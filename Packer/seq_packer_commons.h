@@ -4,8 +4,7 @@
 
 #include "packer_commons.h"
 
-static uint64_t SUPERSLIM_SIZELIMIT = 16384;
-static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 222;
+static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 111;
 
 typedef struct seqPackBundle {
 	memfile* main;
