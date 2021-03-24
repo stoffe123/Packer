@@ -33,8 +33,9 @@ typedef struct packProfile {
 	int64_t twobyte_threshold_max;
 	int64_t twobyte_threshold_divide;
 	int64_t twobyte_threshold_min;
-	int64_t seqlenMinLimit3;
-	int64_t seqlenMinLimit4;
+	//int64_t superSlimSeqlenMinLimit3;
+	int64_t seqlenMinLimit3;	
+	int64_t seqlenMinLimit4;	
 	int64_t blockSizeMinus;
 	int64_t winsize;
 	int64_t sizeMaxForCanonicalHeaderPack;

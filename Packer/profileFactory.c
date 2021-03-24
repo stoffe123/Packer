@@ -86,6 +86,9 @@ void removeExtensionFromFile(wchar_t* ext) {
 		   presence would allow to handle lines longer that sizeof(line) */
 		printf(">>>> %s", line);
 		removeLineFeeds(line);
+		if (strlen(line) == 0) {
+			continue;
+		}
 		if (line[0] == '#') {
 			char* thisExt = line + 1;
 			printf("\n thisExt=%s", thisExt);
@@ -100,8 +103,14 @@ void removeExtensionFromFile(wchar_t* ext) {
 			}
 			else {
 				// just copy this extension normally!
+
+				//copy extension line   #xmi
 				fputs(line, fileOut);
 				fputs("\n", fileOut);
+
+				//copy size line  
+				fgets(line, sizeof(line), file);
+				fputs(line, fileOut);
 
 				fgets(line, sizeof(line), file);
 				fputs(line, fileOut);

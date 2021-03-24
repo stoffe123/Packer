@@ -4,8 +4,6 @@
 
 #include "packer_commons.h"
 
-static uint64_t SUPERSLIM_SEQLEN_MIN_LIMIT3 = 111;
-
 typedef struct seqPackBundle {
 	memfile* main;
 	memfile* seqlens;
