@@ -324,7 +324,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	
 	if (size_org < profile.sizeMaxForSuperslim) {
 		superslim = true;
-		seqlenMinLimit3 = 111; // SUPERSLIM_SEQLEN_MIN_LIMIT3;
+		seqlenMinLimit3 = profile.superSlimSeqlenMinLimit3;
 	}
 	debug("\n seqlenMinLimit3=%llu", seqlenMinLimit3);
 	debug("\n superslim=%d", superslim);

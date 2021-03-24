@@ -126,6 +126,7 @@ char* profileToString(packProfile* profile) {
 	"\n.twobyte_threshold_max = %lld,"
 	"\n.twobyte_threshold_divide = %lld,"
 	"\n.twobyte_threshold_min = %lld,"
+	"\n.superSlimSeqlenMinLimit3 = %lld,"
 	"\n.seqlenMinLimit3 = %lld,"
 	"\n.seqlenMinLimit4 = %lld,"
 	"\n.blockSizeMinus = %lld,"	
@@ -140,6 +141,7 @@ char* profileToString(packProfile* profile) {
 	"\n.bytesWonMin = %lld\n"
 	 , profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
 		 profile->twobyte_threshold_divide, profile->twobyte_threshold_min, 
+		profile->superSlimSeqlenMinLimit3,
 		profile->seqlenMinLimit3,
 		profile->seqlenMinLimit4,
 		profile->blockSizeMinus,
@@ -154,9 +156,10 @@ char* profileToString(packProfile* profile) {
 
 char* profileToString2(packProfile* profile) {
 	char msg[4096];
-	sprintf(msg, "\n%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld",
+	sprintf(msg, "\n%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld",
 		profile->rle_ratio, profile->twobyte_ratio, profile->recursive_limit, profile->twobyte_threshold_max,
 		profile->twobyte_threshold_divide, profile->twobyte_threshold_min,
+		profile->superSlimSeqlenMinLimit3,
 		profile->seqlenMinLimit3,
 		profile->seqlenMinLimit4,
 		profile->blockSizeMinus,
@@ -205,6 +208,7 @@ packProfile getPackProfile() {
 	.twobyte_threshold_max = 10581,
 	.twobyte_threshold_divide = 27,
 	.twobyte_threshold_min = 3150,
+	.superSlimSeqlenMinLimit3 = 111,
 	.seqlenMinLimit3 = 128,
 	.seqlenMinLimit4 = 65360,
 	.blockSizeMinus = 139,
@@ -261,6 +265,7 @@ void copyProfile(packProfile* src, packProfile* dst) {
 	dst->twobyte_threshold_max = src->twobyte_threshold_max;
 	dst->twobyte_threshold_divide = src->twobyte_threshold_divide;
 	dst->twobyte_threshold_min = src->twobyte_threshold_min;
+	dst->superSlimSeqlenMinLimit3 = src->superSlimSeqlenMinLimit3;
 	dst->seqlenMinLimit3 = src->seqlenMinLimit3;
 	dst->seqlenMinLimit4 = src->seqlenMinLimit4;
 	

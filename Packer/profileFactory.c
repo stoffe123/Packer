@@ -59,6 +59,7 @@ packProfile readProfileFromLine(FILE* file) {
 	p.twobyte_threshold_max = getCommaSeparatedInt(line);
 	p.twobyte_threshold_divide = getCommaSeparatedInt(line);
 	p.twobyte_threshold_min = getCommaSeparatedInt(line);
+	p.superSlimSeqlenMinLimit3 = getCommaSeparatedInt(line);
 	p.seqlenMinLimit3 = getCommaSeparatedInt(line);
 	p.seqlenMinLimit4 = getCommaSeparatedInt(line);
 	p.blockSizeMinus = getCommaSeparatedInt(line);
@@ -2191,8 +2192,9 @@ fixPackProfile(packProfile* prof) {
 	if (prof->seqlenMinLimit4 <= prof->seqlenMinLimit3) {
 		prof->seqlenMinLimit4 = 65000;
 	}
-
-
+	if (prof->superSlimSeqlenMinLimit3 == 0) {
+		prof->superSlimSeqlenMinLimit3 = 111;
+	}
 }
 
 

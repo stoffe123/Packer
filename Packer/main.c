@@ -77,6 +77,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
+	profile->superSlimSeqlenMinLimit3 = doFuzz(profile->superSlimSeqlenMinLimit3, best.superSlimSeqlenMinLimit3, 0, 255);
 	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
 	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 30000, 90000);
 
@@ -132,7 +133,7 @@ unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned 
 		double size_kb = (double)acc_size / (double)1024;
 		printf("\n\n **** ALL SUCCEEDED ****\n %.0f kb   (%llu)", size_kb, acc_size);
 		double time_sec = (double)total_time / 1000.0;
-		printf("\n\Time %.0fs  (%u)", time_sec, total_time);
+		printf("\n\Time %.0fs  (%llu)", time_sec, total_time);
 		if (acc_size_org > 0) {
 			double pack_ratio = (double)acc_size / (double)acc_size_org;
 			printf("\nPack Ratio %.2f%%", pack_ratio * (double)100);
@@ -158,11 +159,11 @@ unsigned long long presentResult(bool earlyBreak, uint64_t total_time, unsigned 
 
 bool isEarlyBreak(uint64_t best_size, uint64_t acc_size_packed, uint64_t totalTime, uint64_t seconds) {
 	if ((best_size > 0 && acc_size_packed > best_size)) {
-		printf("\n early break because of too big size.. size had become: %u", acc_size_packed);
+		printf("\n early break because of too big size.. size had become: %llu", acc_size_packed);
 		return true;
 	}
 	if (totalTime > (seconds * 1000)) {
-		printf("\n early break because of too big time, time was %u", totalTime);
+		printf("\n early break because of too big time, time was %llu", totalTime);
 		return true;
 	}
 	return false;
@@ -258,7 +259,7 @@ void testmeta() {
 			const wchar_t* unpackedFilename = L"C:/test/unp";
 			const wchar_t* packed_name = L"c:/test/packed.bin";
 			long long size_org = getFileSizeByName(src);
-			printf("\n Packing %s      length:%u", src, size_org);
+			printf("\n Packing %ls      length:%llu", src, size_org);
 			int cl = clock();
 			//multi_pack(src, packed_name, seqlenProfile, seqlenProfile, offsetProfile, distanceProfile);
 
@@ -284,7 +285,7 @@ void testmeta() {
 			concat(src, metaDir, "offsets");
 			concat_int(src, src, kk + 101);
 			size_org = getFileSizeByName(src);
-			printf("\n Packing... %s with length:%u", src, size_org);
+			printf("\n Packing... %ls with length:%llu", src, size_org);
 
 			//multi_pack(src, packed_name, offsetProfile, seqlenProfile, offsetProfile, distanceProfile);
 			int pack_time = (clock() - cl);
@@ -310,7 +311,7 @@ void testmeta() {
 			concat(src, metaDir, "distances");
 			concat_int(src, src, kk + 101);
 			size_org = getFileSizeByName(src);
-			printf("\n Packing... %s with length:%d", src, size_org);
+			printf("\n Packing... %ls with length:%llu", src, size_org);
 
 			//multi_pack(src, packed_name, distanceProfile, seqlenProfile, offsetProfile, distanceProfile);
 			pack_time = (clock() - cl);
@@ -326,7 +327,7 @@ void testmeta() {
 
 			//if (unpack) multi_unpack(packed_name, unpackedFilename);
 
-			printf("\n Accumulated size %d kb", acc_size_packed / 1024);
+			printf("\n Accumulated size %llu kb", acc_size_packed / 1024);
 			cl = clock();
 
 			int unpack_time = (clock() - cl);
