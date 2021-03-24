@@ -258,7 +258,7 @@ void blockPackToExistingFile(const wchar_t* src, FILE* utfil, packProfile profil
 
 // ----------------------------------------------------------------
 
-void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, const wchar_t* dst, packProfile profile) {
+void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, const wchar_t* dst, completePackProfile profile) {
 	//todo read packtype here and if bit 4 is set don't read size, just read til the end!
 	//will save 16*4 = 64 bytes total in test suit 16
 	if (infil == NULL) {
@@ -286,8 +286,7 @@ void block_unpack_file_internal(FILE* infil, const wchar_t* src, FILE* utfil, co
 		lockBlockchunkMutex();
 		blockChunks[chunkNumber].packType = packType;
 		blockChunks[chunkNumber].packed = tmp;
-		completePackProfile comp = getCompletePackProfileSimple(profile);
-		blockChunks[chunkNumber].profile = comp;
+		blockChunks[chunkNumber].profile = profile;
 
 		printf("\n STARTING THREAD FOR MULTIUNPACK %" PRId64, chunkNumber);
 		releaseBlockchunkMutex();
@@ -339,27 +338,27 @@ void blockPackAndReplaceFull(const wchar_t* src, completePackProfile prof) {
 
 // UNPACK
 
-void block_unpack_file(FILE* infil, const wchar_t* dst, packProfile profile) {
+void block_unpack_file(FILE* infil, const wchar_t* dst, completePackProfile profile) {
 	block_unpack_file_internal(infil, NULL, NULL, dst, profile);
 }
 
-void blockUnpackFileToFile(FILE* infil, FILE* utfil, packProfile profile) {
+void blockUnpackFileToFile(FILE* infil, FILE* utfil, completePackProfile profile) {
 	block_unpack_file_internal(infil, NULL, utfil, NULL, profile);
 }
 
-void blockUnpackNameToFile(const wchar_t* src, FILE* utfil, packProfile profile) {
+void blockUnpackNameToFile(const wchar_t* src, FILE* utfil, completePackProfile profile) {
 	block_unpack_file_internal(NULL, src, utfil, NULL, profile);
 }
 
 
-void block_unpack(const wchar_t* src, const wchar_t* dst, packProfile profile) {
+void block_unpack(const wchar_t* src, const wchar_t* dst, completePackProfile profile) {
 
 	FILE* infil = openRead(src);
 	block_unpack_file(infil, dst, profile);
 }
 
 
-void blockUnpackAndReplace(wchar_t* src, packProfile profile) {
+void blockUnpackAndReplace(wchar_t* src, completePackProfile profile) {
 	const wchar_t tmp[100] = { 0 };
 	get_temp_filew(tmp, L"blockpacker_unpackandreplace");
 	block_unpack(src, tmp, profile);

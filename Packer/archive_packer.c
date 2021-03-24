@@ -73,7 +73,7 @@ void threadBlockUnPack(void* arg)
 	releaseBlobMutex();
 
 	printf("\n Starting THREAD block unpack for file %ls", filename);
-	blockUnpackAndReplace(filename, bc->profile.main);
+	blockUnpackAndReplace(filename, bc->profile);
 	printf("\n THREAD block unpack FOR %ls FINISHED!", filename);
 }
 
@@ -678,6 +678,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		}
 		releaseBlobMutex();
 
+		//todo change!
 		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s, 
 			getCompletePackProfileSimple(profile));
 		blobs[i].profile = comp;

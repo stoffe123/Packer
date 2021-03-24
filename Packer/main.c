@@ -429,7 +429,7 @@ void blockpack_onefile() {
 
 				cl = clock();
 				
-					block_unpack(packed, unpacked, profile.main);
+					block_unpack(packed, unpacked, profile);
 					int unpack_time = (clock() - cl);
 					//printf("\n Unpacking finished time it took: %d", unpack_time);
 					printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
@@ -675,6 +675,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-   testarchive();
+    testarchive();
 	blockpack_onefile();
 }
