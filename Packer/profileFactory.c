@@ -38,8 +38,11 @@ int64_t getCommaSeparatedInt(char* line) {
 	else {
 		strtokPointer = strtok(NULL, ",");
 	}
-	int64_t res = atoi(strtokPointer);
-	printf("\n ¤¤¤¤¤ %lld", res);
+	int64_t res = 0;
+	if (strtokPointer != NULL) {
+		res = atoi(strtokPointer);
+		printf("\n ¤¤¤¤¤ %lld", res);
+	}
 	return res;
 }
 
@@ -73,26 +76,10 @@ packProfile readProfileFromLine(FILE* file) {
 
 
 void removeExtensionFromFile(wchar_t* ext) {
-
-}
-
-
-void updateExtensionInFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
-	    removeExtensionFromFile(ext);
-		FILE* utfil = _wfopen(L"c:/test/best.txt", L"a");
-		fprintf(utfil, "\n#%ls", ext);
-		fprintf(utfil, "\n%llu", size);
-		fprintProfile2(utfil, &profile.main);
-		fprintProfile2(utfil, &profile.seqlen);
-		fprintProfile2(utfil, &profile.offset);
-		fprintProfile2(utfil, &profile.distance);
-		fclose(utfil);
-}
-
-completePackProfile fetchProfileFromFile(wchar_t* ext) {
-
 	FILE* file = openRead(L"c:/test/best.txt");
+	FILE* fileOut = openWrite(L"c:/test/best2.txt");
 	char line[10000];
+	char outbuf[1000];
 
 	while (fgets(line, sizeof(line), file)) {
 		/* note that fgets don't strip the terminating \n, checking its
@@ -104,23 +91,91 @@ completePackProfile fetchProfileFromFile(wchar_t* ext) {
 			printf("\n thisExt=%s", thisExt);
 			if (equalsNormalAndUni(thisExt, ext)) {
 
-				// read the profiles
+				// skip this extension!
+				fgets(line, sizeof(line), file);			
 				fgets(line, sizeof(line), file);
-				removeLineFeeds(line);
-				completePackProfile res;
-				res.size = atoi(line);
-				
-				res.main = readProfileFromLine(file);
-				res.seqlen = readProfileFromLine(file);
-				res.offset = readProfileFromLine(file);
-				res.distance = readProfileFromLine(file);
+				fgets(line, sizeof(line), file);
+				fgets(line, sizeof(line), file);
+				fgets(line, sizeof(line), file);
+			}
+			else {
+				// just copy this extension normally!
+				fputs(line, fileOut);
+				fputs("\n", fileOut);
+
+				fgets(line, sizeof(line), file);
+				fputs(line, fileOut);
+
+				fgets(line, sizeof(line), file);
+				fputs(line, fileOut);
+
+				fgets(line, sizeof(line), file);
+				fputs(line, fileOut);
+
+				fgets(line, sizeof(line), file);
+				fputs(line, fileOut);
+			}
+		}
+	}
+	fclose(file);
+	fclose(fileOut);
+	_wremove(L"c:/test/best.txt");
+	myRename(L"c:/test/best2.txt", L"c:/test/best.txt");
+}
+
+
+void updateExtensionInFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
+	removeExtensionFromFile(ext);
+	FILE* utfil = _wfopen(L"c:/test/best.txt", L"a");
+	fprintf(utfil, "\n#%ls", ext);
+	fprintf(utfil, "\n%llu", size);
+	fprintProfile2(utfil, &profile.main);
+	fprintProfile2(utfil, &profile.seqlen);
+	fprintProfile2(utfil, &profile.offset);
+	fprintProfile2(utfil, &profile.distance);
+	fclose(utfil);
+}
+
+completePackProfile fetchProfileFromFile(wchar_t* ext) {
+
+	FILE* file = openRead(L"c:/test/best.txt");
+	char line[10000];
+	char thisExt[100];
+	completePackProfile res;
+	while (fgets(line, sizeof(line), file)) {
+		/* note that fgets don't strip the terminating \n, checking its
+		   presence would allow to handle lines longer that sizeof(line) */
+		printf(">>>> %s", line);
+		removeLineFeeds(line);
+		if (strlen(line) == 0) {
+			continue;
+		}
+
+		if (line[0] == '#') {
+			strcpy(thisExt, line + 1);
+			printf("\n thisExt=%s", thisExt);
+
+			// read the profiles
+			fgets(line, sizeof(line), file);
+			removeLineFeeds(line);
+
+			res.size = atoi(line);
+
+			res.main = readProfileFromLine(file);
+			res.seqlen = readProfileFromLine(file);
+			res.offset = readProfileFromLine(file);
+			res.distance = readProfileFromLine(file);
+
+			printf("\n comparing to %ls", ext);
+			if (equalsNormalAndUni(thisExt, ext)) {
 				fclose(file);
+				printf("\n Found match!!");
 				return res;
 			}
 		}
 	}
-
 	fclose(file);
+	return getProfileForExtension(ext);
 }
 
 completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackProfile def) {

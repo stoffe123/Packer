@@ -371,15 +371,16 @@ void testmeta() {
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"xmi";
+	const wchar_t* ext = L"csh";
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 	concatw(src, dir, ext);
 
 	
 	completePackProfile profile = fetchProfileFromFile(ext);
+	printf("\n USING PROFILE ---- >");
+	printCompleteProfile(profile);
 	
-
 	int before_suite = clock();
 	const wchar_t* unpacked = L"C:/test/unp";
 
@@ -393,6 +394,10 @@ void blockpack_onefile() {
 	completePackProfile bestProfile = cloneCompleteProfile(profile);
 
 	uint64_t bestSize = profile.size;
+	if (bestSize == 0) {
+		bestSize = UINT64_MAX;
+	}
+	printf("\n BESTSIZE=%llu", bestSize);
 
 	while (true) {
 

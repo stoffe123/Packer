@@ -38,7 +38,7 @@ void reallocMem(memfile* mf, uint64_t newAllocSize) {
 		mf->block = pt;
 	}
 	else {
-		printf("\n out of memory in memfile.c checkAlloc allocSize=%d memfile %s", mf->allocSize, mf->name);
+		printf("\n out of memory in memfile.c checkAlloc allocSize=%llu memfile %ls", mf->allocSize, mf->name);
 		exit(1);
 	}
 }
@@ -109,7 +109,7 @@ void freeMem(memfile* mf) {
 
 uint8_t getCCAtPos(memfile* m, uint64_t pos) {
 	if (pos >= m->size) {
-		printf("\n getCCAtPos out of range! %d memfile %s", pos, m->name);
+		printf("\n getCCAtPos out of range! %llu memfile %ls", pos, m->name);
 		exit(1);
 	}
 	return m->block[pos];

@@ -70,6 +70,10 @@ void printProfile(packProfile*);
 
 void fprintProfile(FILE* file, packProfile* profile);
 
+void fprintProfile2(FILE* file, packProfile* profile);
+
+void printCompleteProfile(completePackProfile prof);
+
 char* profileToString2(packProfile* profile);
 
 bool testPack(memfile* src, memfile* tmp, const wchar_t* packerName, int limit);

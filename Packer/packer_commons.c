@@ -169,7 +169,18 @@ char* profileToString2(packProfile* profile) {
 	return msg;
 }
 
-void printProfile(packProfile* profile) {
+void printCompleteProfile(completePackProfile prof) {
+	printf("\n\n MAIN");
+	printProfile(&prof.main);
+	printf("\n\n SEQLEN");
+	printProfile(&prof.seqlen);
+	printf("\n\n OFFSET");
+	printProfile(&prof.offset);
+	printf("\n\n DISTANCE");
+	printProfile(&prof.distance);
+}
+
+void printProfile(packProfile*  profile) {
 	char* msg = profileToString(profile);
 	printf(msg);	
 }
@@ -274,6 +285,7 @@ completePackProfile cloneCompleteProfile(completePackProfile src) {
 	copyProfile(&src.seqlen, &dst.seqlen);
 	copyProfile(&src.offset, &dst.offset);
 	copyProfile(&src.distance, &dst.distance);
+	dst.size = src.size;
 	return dst;
 }
 
