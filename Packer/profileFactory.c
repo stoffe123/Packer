@@ -185,7 +185,9 @@ completePackProfile fetchProfileFromFile(wchar_t* ext) {
 		}
 	}
 	fclose(file);
-	return getProfileForExtension(ext);
+	completePackProfile ret = getProfileForExtension(ext);
+	ret.size = 0;
+	return ret;
 }
 
 completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackProfile def) {

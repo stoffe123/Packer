@@ -98,7 +98,7 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->offsetLimit3 = doFuzz(profile->offsetLimit3, best.offsetLimit3, 60000, 80000);
 
 	profile->bytesWonMin = doFuzz(profile->bytesWonMin, best.bytesWonMin, -400, 400);
-	
+
 }
 
 
@@ -108,15 +108,15 @@ void fuzzCompleteProfile(completePackProfile* prof, completePackProfile best) {
 	fuzzProfile(&(prof->seqlen), best.seqlen);
 	fuzzProfile(&(prof->distance), best.distance);
 
-	
+
 	int64_t seqlenMinLimit4 = prof->main.seqlenMinLimit4;
 
 	prof->seqlen.seqlenMinLimit4 = seqlenMinLimit4;
 
-	
+
 	prof->offset.seqlenMinLimit4 = seqlenMinLimit4;
 
-	
+
 	prof->distance.seqlenMinLimit4 = seqlenMinLimit4;
 
 	fixPackProfile(&(prof->main));
@@ -281,7 +281,6 @@ void testmeta() {
 				}
 			}
 
-
 			concat(src, metaDir, "offsets");
 			concat_int(src, src, kk + 101);
 			size_org = getFileSizeByName(src);
@@ -372,81 +371,91 @@ void testmeta() {
 
 void blockpack_onefile() {
 
-	const wchar_t* ext = L"csh";
+
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
-	concatw(src, dir, ext);
 
-	
-	completePackProfile profile = fetchProfileFromFile(ext);
-	printf("\n USING PROFILE ---- >");
-	printCompleteProfile(profile);
-	
-	int before_suite = clock();
-	const wchar_t* unpacked = L"C:/test/unp";
-
-	const wchar_t* packed = L"c:/test/packed.bin";
-
-	uint64_t size_org = getFileSizeByName(src);
-
-	printf("\n Packing... %ls with length:%llu", src, size_org);
-
-	//completePackProfile profile = getProfileForExtension(ext);
-	completePackProfile bestProfile = cloneCompleteProfile(profile);
-
-	uint64_t bestSize = profile.size;
-	if (bestSize == 0) {
-		bestSize = UINT64_MAX;
-	}
-	printf("\n BESTSIZE=%llu", bestSize);
+	const wchar_t* array[] = {
+	L"cdg", L"cs", L"csh", L"dll", L"doc", L"exe", L"fdt", L"fdx", L"icc", L"mark", L"mp3", L"nrm",
+	L"pack", L"pdb", L"pdf", L"prx", L"resx", L"rss", L"tii", L"tis", L"txt", L"wav", L"xmi", L"xml"
+	};
 
 	while (true) {
 
-		int cl = clock();
-		
-		blockPackFull(src, packed, profile);
-		int pack_time = (clock() - cl);
+		for (int ii = 0; ii < 24; ii++) {
+			const wchar_t* ext = array[ii];
+			concatw(src, dir, ext);
+
+			completePackProfile profile = fetchProfileFromFile(ext);
+			printf("\n USING PROFILE ---- >");
+			printCompleteProfile(profile);
+
+			int before_suite = clock();
+			const wchar_t* unpacked = L"C:/test/unp";
+
+			const wchar_t* packed = L"c:/test/packed.bin";
+
+			uint64_t size_org = getFileSizeByName(src);
+
+			printf("\n Packing... %ls with length:%llu", src, size_org);
+
+			//completePackProfile profile = getProfileForExtension(ext);
+			completePackProfile bestProfile = cloneCompleteProfile(profile);
+
+			uint64_t bestSize = profile.size;
+			if (bestSize == 0) {
+				bestSize = UINT64_MAX;
+			}
+			printf("\n BESTSIZE=%llu", bestSize);
+
+			for (int kk = 0; kk < 10; kk++) {
+				int cl = clock();
+
+				blockPackFull(src, packed, profile);
+				int pack_time = (clock() - cl);
 
 
-		uint64_t size_packed = getFileSizeByName(packed);
+				uint64_t size_packed = getFileSizeByName(packed);
 
 
-		printf("\n size_packed %llu", size_packed);
+				printf("\n size_packed %llu", size_packed);
 
 
-		cl = clock();
-	/*
-		block_unpack(packed, unpacked);
-		int unpack_time = (clock() - cl);
-		//printf("\n Unpacking finished time it took: %d", unpack_time);
-		printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
+				cl = clock();
+				/*
+					block_unpack(packed, unpacked);
+					int unpack_time = (clock() - cl);
+					//printf("\n Unpacking finished time it took: %d", unpack_time);
+					printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-		wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
+					wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
-		printf("\n\n Pack time %d", pack_time);
-		printf("\n\n Unpack time %d", unpack_time);
+					printf("\n\n Pack time %d", pack_time);
+					printf("\n\n Unpack time %d", unpack_time);
 
 
-		printf("\n\n Comparing files!");
+					printf("\n\n Comparing files!");
 
-		if (filesEqual(src, unpacked)) {
-			printf("\n ****** SUCCESS ****** (equal)\n");
-		}
-		else {
-			printf("\n Files are not equal!!");
-			exit(1);
-		}
-		*/
-		
-		if (size_packed < bestSize) {
-			bestSize = size_packed;
-			bestProfile = cloneCompleteProfile(profile);			
-			printf("\a");
-			updateExtensionInFile(size_packed, profile, ext);
-		}
-		fuzzCompleteProfile(&profile, bestProfile);		
+					if (filesEqual(src, unpacked)) {
+						printf("\n ****** SUCCESS ****** (equal)\n");
+					}
+					else {
+						printf("\n Files are not equal!!");
+						exit(1);
+					}
+					*/
+
+				if (size_packed < bestSize) {
+					bestSize = size_packed;
+					bestProfile = cloneCompleteProfile(profile);
+					printf("\a");
+					updateExtensionInFile(size_packed, profile, ext);
+				}
+				fuzzCompleteProfile(&profile, bestProfile);
+
+			}//end for kk
+		}//end for ii
 	}//end while true
-
 }//onefile
 
 void onefile() {
@@ -540,7 +549,7 @@ void onefile() {
 
 	seqPackBundle packed = seqPackSep(srcm, profile);
 	size_packed = getBundleSize(packed);
-	
+
 	//memfile* packed = multiPack2(srcm, profile, seqlenProfile, offsetProfile, distanceProfile);
 	//memfile* packed = halfbyteRlePack(srcm, 0);
 	//memfile* packed = canonicalEncode(srcm);
@@ -588,17 +597,17 @@ void testarchive() {
 	completePackProfile profile = getProfileForExtension(L"gjkrigjrigj");
 	completePackProfile bestProfile = cloneCompleteProfile(profile);
 	uint64_t time_limit = 1000;
-	
+
 
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		 //L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
-		//L"D:/Dropbox/Misc/Download";
-		//L"c:/test/testallequal";
+		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+	   //L"D:/Dropbox/Misc/Download";
+	   //L"c:/test/testallequal";
 		L"c:/test/all";
-	 //L"c:/test/test1";
-	//L"c:/test/47";
+	//L"c:/test/test1";
+   //L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -659,5 +668,5 @@ int main()
 	//test16();
 	//onefile();
    //testarchive();
-    blockpack_onefile();
+	blockpack_onefile();
 }
