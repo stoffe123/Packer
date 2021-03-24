@@ -41,7 +41,7 @@ int64_t getCommaSeparatedInt(char* line) {
 	int64_t res = 0;
 	if (strtokPointer != NULL) {
 		res = atoi(strtokPointer);
-		printf("\n ¤¤¤¤¤ %lld", res);
+		//printf("\n ¤¤¤¤¤ %lld", res);
 	}
 	return res;
 }
@@ -213,10 +213,15 @@ completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackPr
 	// Default profile for the rest
 	// -------------------------------------------------------------------------
 
+	if (def.size == UINT64_MAX) {
+		def = getProfileForExtension(L"__default__");
+	}
+
+
 	int64_t seqlenMinLimit3 = def.main.seqlenMinLimit3;
 	int64_t seqlenMinLimit4 = def.main.seqlenMinLimit4;
 	int64_t superSlimSeqlenMinLimit3 = def.main.superSlimSeqlenMinLimit3;
-	
+
 	def.seqlen.seqlenMinLimit3 = seqlenMinLimit3;
 	def.seqlen.seqlenMinLimit4 = seqlenMinLimit4;
 	def.seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
@@ -233,7 +238,8 @@ completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackPr
 	fixPackProfile(&def.seqlen);
 	fixPackProfile(&def.offset);
 	fixPackProfile(&def.distance);
-	
+
+
 	def.size = 0;
 	return def;
 }
@@ -252,112 +258,9 @@ fixPackProfile(packProfile* prof) {
 
 completePackProfile getProfileForExtension(wchar_t* ext) {
 
-	packProfile mainProfile = {
-.rle_ratio = 97,
-.twobyte_ratio = 87,
-.recursive_limit = 234,
-.twobyte_threshold_max = 5292,
-.twobyte_threshold_divide = 2642,
-.twobyte_threshold_min = 739,
-.seqlenMinLimit3 = 213,
-.seqlenMinLimit4 = 65360,
-.blockSizeMinus = 0,
-.sizeMaxForCanonicalHeaderPack = 83,
-.sizeMinForSeqPack = 3744,
-.sizeMinForCanonical = 594,
-.sizeMaxForSuperslim = 70177,
-.metaCompressionFactor = 75,
-.offsetLimit1 = 253,
-.offsetLimit2 = 1101,
-.offsetLimit3 = 65340,
-.bytesWonMin = -11
-	},
-		seqlenProfile = {
-	   .rle_ratio = 39,
-	   .twobyte_ratio = 96,
-	   .recursive_limit = 48,
-	   .twobyte_threshold_max = 3860,
-	   .twobyte_threshold_divide = 2041,
-	   .twobyte_threshold_min = 44,
-	   .seqlenMinLimit3 = 214,
-	   .seqlenMinLimit4 = 65360,
-	   .blockSizeMinus = 53,
-	   .sizeMaxForCanonicalHeaderPack = 174,
-	   .sizeMinForSeqPack = 10,
-	   .sizeMinForCanonical = 137,
-	   .sizeMaxForSuperslim = 27490,
-	   .metaCompressionFactor = 56,
-	   .offsetLimit1 = 247,
-	   .offsetLimit2 = 1119,
-	   .offsetLimit3 = 64743,
-	   .bytesWonMin = 75
-	},
-		offsetProfile = {
-	   .rle_ratio = 83,
-	   .twobyte_ratio = 83,
-	   .recursive_limit = 20,
-	   .twobyte_threshold_max = 9024,
-	   .twobyte_threshold_divide = 2657,
-	   .twobyte_threshold_min = 337,
-	   .seqlenMinLimit3 = 223,
-	   .seqlenMinLimit4 = 65360,
-	   .blockSizeMinus = 38,
-	   .sizeMaxForCanonicalHeaderPack = 534,
-	   .sizeMinForSeqPack = 10,
-	   .sizeMinForCanonical = 158,
-	   .sizeMaxForSuperslim = 14120,
-	   .metaCompressionFactor = 52,
-	   .offsetLimit1 = 256,
-	   .offsetLimit2 = 929,
-	   .offsetLimit3 = 64876,
-	   .bytesWonMin = 0
-	},
-		distanceProfile = {
-	   .rle_ratio = 70,
-	   .twobyte_ratio = 86,
-	   .recursive_limit = 20,
-	   .twobyte_threshold_max = 4946,
-	   .twobyte_threshold_divide = 3766,
-	   .twobyte_threshold_min = 69,
-	   .seqlenMinLimit3 = 204,
-	   .seqlenMinLimit4 = 65360,
-	   .blockSizeMinus = 0,
-	   .sizeMaxForCanonicalHeaderPack = 588,
-	   .sizeMinForSeqPack = 10,
-	   .sizeMinForCanonical = 384,
-	   .sizeMaxForSuperslim = 321,
-	   .metaCompressionFactor = 59,
-	   .offsetLimit1 = 256,
-	   .offsetLimit2 = 1101,
-	   .offsetLimit3 = 68153,
-	   .bytesWonMin = -20
-	};
+	completePackProfile def;
+	def.size = UINT64_MAX;   // flag that it is empty
 
-
-	completePackProfile prof = getCompletePackProfile(mainProfile, seqlenProfile, offsetProfile, distanceProfile);
-
-	completePackProfile def = getProfileForExtensionOrDefault(ext, prof);
-
-	int64_t seqlenMinLimit3 = def.main.seqlenMinLimit3;
-	int64_t seqlenMinLimit4 = def.main.seqlenMinLimit4;
-	int64_t superSlimSeqlenMinLimit3 = def.main.superSlimSeqlenMinLimit3;
-
-	def.seqlen.seqlenMinLimit3 = seqlenMinLimit3;
-	def.seqlen.seqlenMinLimit4 = seqlenMinLimit4;
-	def.seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	def.offset.seqlenMinLimit3 = seqlenMinLimit3;
-	def.offset.seqlenMinLimit4 = seqlenMinLimit4;
-	def.offset.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	def.distance.seqlenMinLimit3 = seqlenMinLimit3;
-	def.distance.seqlenMinLimit4 = seqlenMinLimit4;
-	def.distance.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	fixPackProfile(&def.main);
-	fixPackProfile(&def.seqlen);
-	fixPackProfile(&def.offset);
-	fixPackProfile(&def.distance);
-
-	return def;
+	completePackProfile res = getProfileForExtensionOrDefault(ext, def);
+	return res;
 }

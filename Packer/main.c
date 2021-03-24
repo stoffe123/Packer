@@ -629,9 +629,9 @@ void testarchive() {
 		int cl = clock();
 		archive_pack(source_dir, packed_name, profile);
 		int pack_time = (clock() - cl);
-		uint64_t acc_size_packed = getFileSizeByName(packed_name);
+		uint64_t sizePacked = getFileSizeByName(packed_name);
 
-		printf("\n Accumulated size %lu kb", (int)(acc_size_packed / 1024));
+		printf("\n Accumulated size %lu kb", (int)(sizePacked / 1024));
 
 		cl = clock();
 
@@ -647,16 +647,21 @@ void testarchive() {
 				printf("\n => dirs not equal, exiting!");
 				exit(1);
 			}
-			if (acc_size_packed < bestSize || bestSize == 0) {
-				bestSize = acc_size_packed;
+			if (sizePacked < bestSize || bestSize == 0) {
+				bestSize = sizePacked;
 				bestProfile = cloneCompleteProfile(profile);
 				printf("\a");
-				updateExtensionInFile(acc_size_packed, profile, L"_default_");
+				if (equalsw(source_dir, L"c:/test/all")) {
+					updateExtensionInFile(sizePacked, profile, L"__default__");
+				}
+				else {
+					printf("\n  SIZEPACKED = %llu", sizePacked);
+				}
 			}
 		}
 		else {
 			printf("\n Too long time %llu", totalTime);
-			printf("\n size was %llu", acc_size_packed);
+			printf("\n size was %llu", sizePacked);
 		}
 		fuzzCompleteProfile(&profile, bestProfile);
 		printf("\n\n Now doing a new try with this new profile: ");
