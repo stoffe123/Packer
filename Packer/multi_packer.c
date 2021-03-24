@@ -508,13 +508,16 @@ memfile* multiUnpackInternal(memfile* in, uint8_t pack_type, bool readPackTypeFr
 
 		//TODO change here to have same system as in packer
 		if (isKthBitSet(pack_type, 1)) {
-			mb.seqlens = multiUnpackAndReplace(mb.seqlens, profile);
+			completePackProfile c2 = getCompletePackProfile(profile.seqlen, profile.seqlen, profile.offset, profile.distance);
+			mb.seqlens = multiUnpackAndReplace(mb.seqlens, c2);
 		}
 		if (isKthBitSet(pack_type, 2)) {
-			mb.offsets = multiUnpackAndReplace(mb.offsets, profile);
+			completePackProfile c2 = getCompletePackProfile(profile.offset, profile.seqlen, profile.offset, profile.distance);
+			mb.offsets = multiUnpackAndReplace(mb.offsets, c2);
 		}
 		if (isKthBitSet(pack_type, 3)) {
-			mb.distances = multiUnpackAndReplace(mb.distances, profile);
+			completePackProfile c2 = getCompletePackProfile(profile.distance, profile.seqlen, profile.offset, profile.distance);
+			mb.distances = multiUnpackAndReplace(mb.distances, c2);
 		}
 	}
 	memfile* seq_dst;
