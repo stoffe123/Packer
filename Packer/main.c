@@ -109,21 +109,7 @@ void fuzzCompleteProfile(completePackProfile* prof, completePackProfile best) {
 	fuzzProfile(&(prof->distance), best.distance);
 
 
-	int64_t seqlenMinLimit4 = prof->main.seqlenMinLimit4;
-	int64_t seqlenMinLimit3 = prof->main.seqlenMinLimit3;
-	int64_t superSlimSeqlenMinLimit3 = prof->main.superSlimSeqlenMinLimit3;
-
-	prof->seqlen.seqlenMinLimit3 = seqlenMinLimit3;
-	prof->seqlen.seqlenMinLimit4 = seqlenMinLimit4;
-	prof->seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	prof->offset.seqlenMinLimit3 = seqlenMinLimit3;
-	prof->offset.seqlenMinLimit4 = seqlenMinLimit4;
-	prof->offset.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	prof->distance.seqlenMinLimit3 = seqlenMinLimit3;
-	prof->distance.seqlenMinLimit4 = seqlenMinLimit4;
-	prof->distance.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
+	
 
 	fixPackProfile(&(prof->main));
 	fixPackProfile(&(prof->seqlen));
@@ -388,8 +374,8 @@ void blockpack_onefile() {
 
 	while (true) {
 
-		for (int ii = 0; ii < 24; ii++) {
-			const wchar_t* ext = array[ii];
+		
+			const wchar_t* ext = array[rand() % 24];
 			concatw(src, dir, ext);
 
 			completePackProfile profile = getProfileForExtension(ext);
@@ -462,7 +448,7 @@ void blockpack_onefile() {
 				fuzzCompleteProfile(&profile, bestProfile);
 
 			}//end for kk
-		}//end for ii
+		
 	}//end while true
 }//onefile
 
@@ -610,10 +596,10 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 	   //L"D:/Dropbox/Misc/Download";
 	   //L"c:/test/testallequal";
-		//L"c:/test/all";
+		L"c:/test/all";
 	//L"c:/test/test1";
    //L"c:/test/47";
 

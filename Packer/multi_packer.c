@@ -257,12 +257,7 @@ bool belowRatio(uint64_t packedSize, uint64_t orgSize, int ratio) {
 
 uint8_t multiPackInternal(memfile* src, memfile* dst, completePackProfile comp, bool storePackType) {
 
-	
-	int64_t seqlenMinLimit4 = comp.main.seqlenMinLimit4;	
-	comp.seqlen.seqlenMinLimit4 = seqlenMinLimit4;	
-	comp.offset.seqlenMinLimit4 = seqlenMinLimit4;	
-	comp.distance.seqlenMinLimit4 = seqlenMinLimit4;
-
+		
 	fixPackProfile(&comp.main);
 	fixPackProfile(&comp.seqlen);
 	fixPackProfile(&comp.offset);

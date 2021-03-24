@@ -182,21 +182,7 @@ completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackPr
 				fclose(file);
 				printf("\n Found match!!");
 
-				int64_t seqlenMinLimit4 = res.main.seqlenMinLimit4;
-				int64_t seqlenMinLimit3 = res.main.seqlenMinLimit3;
-				int64_t superSlimSeqlenMinLimit3 = res.main.superSlimSeqlenMinLimit3;
-
-				res.seqlen.seqlenMinLimit3 = seqlenMinLimit3;
-				res.seqlen.seqlenMinLimit4 = seqlenMinLimit4;
-				res.seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-				res.offset.seqlenMinLimit3 = seqlenMinLimit3;
-				res.offset.seqlenMinLimit4 = seqlenMinLimit4;
-				res.offset.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-				res.distance.seqlenMinLimit3 = seqlenMinLimit3;
-				res.distance.seqlenMinLimit4 = seqlenMinLimit4;
-				res.distance.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
+				
 
 				fixPackProfile(&(res.main));
 				fixPackProfile(&(res.seqlen));
@@ -218,21 +204,7 @@ completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackPr
 	}
 
 
-	int64_t seqlenMinLimit3 = def.main.seqlenMinLimit3;
-	int64_t seqlenMinLimit4 = def.main.seqlenMinLimit4;
-	int64_t superSlimSeqlenMinLimit3 = def.main.superSlimSeqlenMinLimit3;
-
-	def.seqlen.seqlenMinLimit3 = seqlenMinLimit3;
-	def.seqlen.seqlenMinLimit4 = seqlenMinLimit4;
-	def.seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	def.offset.seqlenMinLimit3 = seqlenMinLimit3;
-	def.offset.seqlenMinLimit4 = seqlenMinLimit4;
-	def.offset.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
-
-	def.distance.seqlenMinLimit3 = seqlenMinLimit3;
-	def.distance.seqlenMinLimit4 = seqlenMinLimit4;
-	def.distance.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
+	
 
 	fixPackProfile(&def.main);
 	fixPackProfile(&def.seqlen);
