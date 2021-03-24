@@ -29,10 +29,14 @@ void copy_the_rest_to_mem(FILE* in, memfile* out) {
 }
 
 void reallocMem(memfile* mf, uint64_t newAllocSize) {
-	assert(newAllocSize >= mf->size, "wrong argument in memfile.reallocMem");	
+	assert(newAllocSize >= mf->size, "wrong argument in memfile.reallocMem");
 	assert(newAllocSize > 0, "size=0 in memfile.c reallocmem");
 	assert(newAllocSize < BLOCK_SIZE * 6, "size was too large in memfile.reallocMem");
-	mf->allocSize = newAllocSize;
+	//assert(newAllocSize > mf->allocSize, "newallocsize was smaller than old");
+	if (newAllocSize <= mf->allocSize) {
+		  return;
+    }
+	mf->allocSize = newAllocSize + 256;
 	uint8_t* pt = realloc(mf->block, mf->allocSize);
 	if (pt != NULL) {
 		mf->block = pt;
@@ -210,7 +214,7 @@ memWrite(uint8_t* arr, uint32_t size, memfile* m) {
 }
 
 memfile* getEmptyMem(const wchar_t* name) {
-	return getMemfile(0, name);
+	return getMemfile(256, name);
 }
 
 void deepCopyMem(memfile* src, memfile* dst) {

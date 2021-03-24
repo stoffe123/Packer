@@ -110,14 +110,20 @@ void fuzzCompleteProfile(completePackProfile* prof, completePackProfile best) {
 
 
 	int64_t seqlenMinLimit4 = prof->main.seqlenMinLimit4;
+	int64_t seqlenMinLimit3 = prof->main.seqlenMinLimit3;
+	int64_t superSlimSeqlenMinLimit3 = prof->main.superSlimSeqlenMinLimit3;
 
+	prof->seqlen.seqlenMinLimit3 = seqlenMinLimit3;
 	prof->seqlen.seqlenMinLimit4 = seqlenMinLimit4;
+	prof->seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
 
-
+	prof->offset.seqlenMinLimit3 = seqlenMinLimit3;
 	prof->offset.seqlenMinLimit4 = seqlenMinLimit4;
+	prof->offset.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
 
-
+	prof->distance.seqlenMinLimit3 = seqlenMinLimit3;
 	prof->distance.seqlenMinLimit4 = seqlenMinLimit4;
+	prof->distance.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
 
 	fixPackProfile(&(prof->main));
 	fixPackProfile(&(prof->seqlen));
@@ -422,13 +428,13 @@ void blockpack_onefile() {
 
 
 				cl = clock();
-				/*
-					block_unpack(packed, unpacked);
+				
+					block_unpack(packed, unpacked, profile.main);
 					int unpack_time = (clock() - cl);
 					//printf("\n Unpacking finished time it took: %d", unpack_time);
 					printf("\nTimes %d/%d/%d", pack_time, unpack_time, pack_time + unpack_time);
 
-					wprintf(L"\n\n   --   RATIO OF PACKED   '%s'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
+					wprintf(L"\n\n   --   RATIO OF PACKED   '%ls'   %.2f%%   --\n\n", src, ((double)size_packed / (double)size_org) * 100.0);
 
 					printf("\n\n Pack time %d", pack_time);
 					printf("\n\n Unpack time %d", unpack_time);
@@ -440,10 +446,12 @@ void blockpack_onefile() {
 						printf("\n ****** SUCCESS ****** (equal)\n");
 					}
 					else {
-						printf("\n Files are not equal!!");
+						printf("\n Files are not equal!! src=%ls", src);
+
+						printCompleteProfile(profile);
 						exit(1);
 					}
-					*/
+				
 
 				if (size_packed < bestSize) {
 					bestSize = size_packed;

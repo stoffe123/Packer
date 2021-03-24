@@ -567,7 +567,7 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfi
 	memfile* srcm = getMemfileFromFile(src);
 	memfile* dstm = getEmptyMem(L"multipackfiles_dstm");
 
-	uint8_t pt = multiPackInternal(srcm, dstm, profile, false, profile);
+	uint8_t pt = multiPackInternal(srcm, dstm, profile, false);
 
 	freeMem(srcm);
 	memfileToFile(dstm, dst);
@@ -576,13 +576,14 @@ uint8_t multiPackFiles(const wchar_t* src, const wchar_t* dst, completePackProfi
 }
 
 uint8_t multiPackAndReturnPackType(memfile* src, memfile* dst, completePackProfile profile) {
-	return multiPackInternal(src, dst, profile, false, profile);
+	return multiPackInternal(src, dst, profile, false);
 
 }
 
 memfile* multiPackAndStorePackType(memfile* src, completePackProfile profile) {
+	//TODO  is it really smart with emptymem since it is going to be filled up real soon!?
 	memfile* dst = getEmptyMem(L"multipacker.multipackstorepacktype");
-	multiPackInternal(src, dst, profile, true, profile);
+	multiPackInternal(src, dst, profile, true);
 	return dst;
 }
 

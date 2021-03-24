@@ -11,7 +11,7 @@
 #define BLOCK_SIZE 16777000
 
 //  16777215  is largest number for 24 bits in multipacker.tar
-static bool DOUBLE_CHECK_PACK = false;
+static bool DOUBLE_CHECK_PACK = true;
 
 typedef struct {
 	uint64_t value;
