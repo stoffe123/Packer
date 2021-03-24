@@ -180,6 +180,28 @@ completePackProfile fetchProfileFromFile(wchar_t* ext) {
 			if (equalsNormalAndUni(thisExt, ext)) {
 				fclose(file);
 				printf("\n Found match!!");
+
+				int64_t seqlenMinLimit4 = res.main.seqlenMinLimit4;
+				int64_t seqlenMinLimit3 = res.main.seqlenMinLimit3;
+				int64_t superSlimSeqlenMinLimit3 = res.main.superSlimSeqlenMinLimit3;
+
+				res.seqlen.seqlenMinLimit3 = seqlenMinLimit3;
+				res.seqlen.seqlenMinLimit4 = seqlenMinLimit4;
+				res.seqlen.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
+
+				res.offset.seqlenMinLimit3 = seqlenMinLimit3;
+				res.offset.seqlenMinLimit4 = seqlenMinLimit4;
+				res.offset.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
+
+				res.distance.seqlenMinLimit3 = seqlenMinLimit3;
+				res.distance.seqlenMinLimit4 = seqlenMinLimit4;
+				res.distance.superSlimSeqlenMinLimit3 = superSlimSeqlenMinLimit3;
+
+				fixPackProfile(&(res.main));
+				fixPackProfile(&(res.seqlen));
+				fixPackProfile(&(res.offset));
+				fixPackProfile(&(res.distance));
+
 				return res;
 			}
 		}
