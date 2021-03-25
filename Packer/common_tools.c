@@ -208,12 +208,16 @@ void toUni(const wchar_t* dst, const char* str) {
 }
 
 bool equalsNormalAndUni(char* s1, wchar_t* s2) {
-	wchar_t s1w[500];
-	//s1w = malloc(wcslen(s2) * sizeof(wchar_t));
-	toUni(s1w, s1);
-	bool res = equalsw(s1w, s2);
-	//free(s1w);
-	return res;
+	int len = strlen(s1);
+	if (wcslen(s2) != len) {
+		return false;
+	}
+	for (int i = 0; i < len; i++) {
+		if (s1[i] != s2[i]) {
+			return false;
+		}
+	}
+	return true;
 }
 
 void deleteAllFilesInDir(const wchar_t* sDir) {

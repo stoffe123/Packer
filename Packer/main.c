@@ -379,8 +379,7 @@ void blockpack_onefile() {
 			concatw(src, dir, ext);
 
 			completePackProfile profile = getProfileForExtension(ext);
-			printf("\n USING PROFILE ---- >");
-			printCompleteProfile(profile);
+		
 
 			int before_suite = clock();
 			const wchar_t* unpacked = L"C:/test/unp";
@@ -394,13 +393,21 @@ void blockpack_onefile() {
 			//completePackProfile profile = getProfileForExtension(ext);
 			completePackProfile bestProfile = cloneCompleteProfile(profile);
 
+			fuzzCompleteProfile(&profile, bestProfile);
+			printf("\n USING PROFILE ---- >");
+			printCompleteProfile(profile);
+
 			uint64_t bestSize = profile.size;
 			if (bestSize == 0) {
 				bestSize = UINT64_MAX;
 			}
 			printf("\n BESTSIZE=%llu", bestSize);
 
-			for (int kk = 0; kk < 10; kk++) {
+			
+
+			int times = (int)(37000000.0 / (float)size_org * 5);
+
+			for (int kk = 0; kk < times; kk++) {
 				int cl = clock();
 
 				blockPackFull(src, packed, profile);
@@ -414,7 +421,7 @@ void blockpack_onefile() {
 
 
 				cl = clock();
-				
+				/*
 					block_unpack(packed, unpacked, profile);
 					int unpack_time = (clock() - cl);
 					//printf("\n Unpacking finished time it took: %d", unpack_time);
@@ -437,7 +444,7 @@ void blockpack_onefile() {
 						printCompleteProfile(profile);
 						exit(1);
 					}
-				
+				*/
 
 				if (size_packed < bestSize || bestSize == 0) {
 					bestSize = size_packed;
@@ -445,7 +452,7 @@ void blockpack_onefile() {
 					printf("\a");
 					updateExtensionInFile(size_packed, profile, ext);
 				}
-				fuzzCompleteProfile(&profile, bestProfile);
+				
 
 			}//end for kk
 		
@@ -613,6 +620,7 @@ void testarchive() {
 		uint64_t before_suite = clock();
 
 		int cl = clock();
+		profile.size = 0;
 		archive_pack(source_dir, packed_name, profile);
 		int pack_time = (clock() - cl);
 		uint64_t sizePacked = getFileSizeByName(packed_name);
@@ -658,8 +666,34 @@ void testarchive() {
 
 //-------------------------------------------------------------------------------
 
+void doUnitTests() {
+	wchar_t* s1 = L"kalle";
+	char* s2 = "pelle";
+
+	assert(!equalsNormalAndUni("pelle", L"kalle"), "test1");
+
+	assert(equalsNormalAndUni("Kalle", L"Kalle"), "test2");
+
+	//assert(!equalsNormalAndUni("kalle", 0), "test3");
+
+	assert(!equalsNormalAndUni("kalle", L""), "test4");
+
+	assert(!equalsNormalAndUni("", L"kalle"), "test5");
+
+	assert(equalsNormalAndUni("", L""), "test6");
+
+	assert(!equalsNormalAndUni("KALLE kalle &/(/&(", L"KALLE kalle & / (/ &("), "test7");	
+
+	assert(equalsNormalAndUni("Olle **", L"Olle **"), "test8");
+
+	assert(!equalsNormalAndUni("Olle", L"olle"), "test9");
+
+	printf("\n ALL UNIT TESTS SUCCEDED! ");
+}
+
 int main()
 {
+	doUnitTests();
 	deleteAllFilesInDir(TEMP_DIRW);
 	time_t t;
 	srand((unsigned)time(&t));
