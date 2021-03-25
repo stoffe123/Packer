@@ -14,6 +14,10 @@
 #include "halfbyte_rle_packer.h"
 #include "profileFactory.h"
 
+
+	
+
+
 //#include "huffman2.h"
 //#include "canonical.h"
 
@@ -692,6 +696,8 @@ void doUnitTests() {
 
 	printf("\n ALL UNIT TESTS SUCCEDED! ");
 }
+
+
 
 int main()
 {

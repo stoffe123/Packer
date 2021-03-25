@@ -188,12 +188,16 @@
     <ClInclude Include="packer_commons.h" />
     <ClInclude Include="multi_packer.h" />
     <ClInclude Include="profileFactory.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="RLE_packer_advanced.h" />
     <ClInclude Include="RLE_simple_packer.h" />
     <ClInclude Include="RLE_simple_packer_commons.h" />
     <ClInclude Include="seq_packer.h" />
     <ClInclude Include="seq_packer_commons.h" />
     <ClInclude Include="Two_byte_packer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Packer.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

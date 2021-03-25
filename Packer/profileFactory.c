@@ -21,6 +21,27 @@
 
 __declspec(thread) static char* strtokPointer;
 
+const wchar_t* getPackProfilesFile() {
+	char cwd[2000];
+	if (getcwd(cwd, sizeof(cwd)) != NULL) {
+		concat(cwd, cwd, "/../packprofiles.txt");
+		wchar_t res[2000];
+		toUni(res, cwd);
+		return res;
+	}
+	else {
+		perror("getcwd() error");
+		return 1;
+	}
+	return;
+}
+
+const wchar_t* getTempFile() {
+	wchar_t filename[200];
+	get_temp_filew(filename, "temppackprofiles");
+	return filename;
+}
+
 
 void removeLineFeeds(char* line) {
 	if (line[strlen(line) - 1] == '\n') {
@@ -77,8 +98,8 @@ packProfile readProfileFromLine(FILE* file) {
 
 
 void removeExtensionFromFile(wchar_t* ext) {
-	FILE* file = openRead(L"c:/test/best.txt");
-	FILE* fileOut = openWrite(L"c:/test/best2.txt");
+	FILE* file = openRead(getPackProfilesFile());
+	FILE* fileOut = openWrite(getTempFile());
 	char line[10000];
 	char outbuf[1000];
 
@@ -128,15 +149,14 @@ void removeExtensionFromFile(wchar_t* ext) {
 		}
 	}
 	fclose(file);
-	fclose(fileOut);
-	_wremove(L"c:/test/best.txt");
-	myRename(L"c:/test/best2.txt", L"c:/test/best.txt");
+	fclose(fileOut);	
+	myRename(getTempFile(), getPackProfilesFile());
 }
 
 
 void updateExtensionInFile(uint64_t size, completePackProfile profile, wchar_t* ext) {
 	removeExtensionFromFile(ext);
-	FILE* utfil = _wfopen(L"c:/test/best.txt", L"a");
+	FILE* utfil = _wfopen(getPackProfilesFile(), L"a");
 	fprintf(utfil, "\n#%ls", ext);
 	fprintf(utfil, "\n%llu", size);
 	fprintProfile2(utfil, &profile.main);
@@ -149,7 +169,7 @@ void updateExtensionInFile(uint64_t size, completePackProfile profile, wchar_t* 
 
 completePackProfile getProfileForExtensionOrDefault(wchar_t* ext, completePackProfile def) {
 
-	FILE* file = openRead(L"c:/test/best.txt");
+	FILE* file = openRead(getPackProfilesFile());
 	char line[10000];
 	char thisExt[100];
 	completePackProfile res;
