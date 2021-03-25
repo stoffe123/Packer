@@ -20,6 +20,7 @@
 #include "block_packer.h"
 #include "archive_packer.h"
 #include "profileFactory.h"
+#include "memfile.h""
 
 
 // for semiseparated threaded pack
@@ -52,6 +53,14 @@ HANDLE releaseBlobMutex() {
 	ReleaseMutex(blobMutex);
 }
 
+completePackProfile getHeaderSizesProfile() {
+	return getProfileForExtension(L"__headersizes__");
+}
+
+completePackProfile getHeaderNamesProfile() {
+	return getProfileForExtension(L"__headernames__");
+}
+
 void threadBlockPack(void* arg)
 {
 	lockBlobMutex();
@@ -80,54 +89,6 @@ void threadBlockUnPack(void* arg)
 #pragma comment(lib, "User32.lib")
 
 #define EQUALFILE_POINTER_MAX  7935
-
-
-static packProfile headerSizesPackProfile = {
-	        .rle_ratio = 100,
-			.twobyte_ratio = 63,
-			.recursive_limit = 10,
-			.twobyte_threshold_max = 7820,
-			.twobyte_threshold_divide = 1130,
-			.twobyte_threshold_min = 989,
-			.seqlenMinLimit3 = 224,
-			.seqlenMinLimit4 = 65000,
-		
-			.blockSizeMinus = 129,
-			.winsize = 119607,
-			.sizeMaxForCanonicalHeaderPack = 359,
-			.sizeMinForSeqPack = 1241,
-			.sizeMinForCanonical = 20,
-			.sizeMaxForSuperslim = 23550,
-			.metaCompressionFactor = 56,
-			.offsetLimit1 = 247,
-			.offsetLimit2 = 1119,
-			.offsetLimit3 = 64743,
-			.bytesWonMin = 75
-};
-
-//19855 bytes on headernames test suit
-static packProfile headerNamesPackProfile = {
-			.rle_ratio = 90,
-			.twobyte_ratio = 87,
-			.recursive_limit = 10,
-			.twobyte_threshold_max = 12072,
-			.twobyte_threshold_divide = 1968,
-			.twobyte_threshold_min = 1000,
-			.seqlenMinLimit3 = 147,
-			.seqlenMinLimit4 = 65000,
-
-			.blockSizeMinus = 155,
-			.winsize = 69045,
-			.sizeMaxForCanonicalHeaderPack = 284,
-			.sizeMinForSeqPack = 7114,
-			.sizeMinForCanonical = 54,
-			.sizeMaxForSuperslim = 35825,
-			.metaCompressionFactor = 56,
-			.offsetLimit1 = 247,
-			.offsetLimit2 = 1119,
-			.offsetLimit3 = 64743,
-			.bytesWonMin = 75
-};
 
 uint64_t wcharToMyCoding(wchar_t* wcharBuf, uint8_t* codedBuf) {
 	uint64_t wcharBufPos = 0;
@@ -306,9 +267,10 @@ memfile* createPackedSizesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	
 	memfile* sizesHeader = createSizesHeader(dir, dirInfo);
 
-	//TODO .. create a full profile and place in profileFactory
+	completePackProfile comp = getHeaderSizesProfile();
 
-	completePackProfile comp = getCompletePackProfileSimple(headerSizesPackProfile);
+	//memfileToFile(sizesHeader, L"c:/test/blobs/__headersizes__");
+
 	return multiPackAndStorePackType(sizesHeader, comp);
 }
 
@@ -318,9 +280,10 @@ memfile* createPackedNamesHeader(wchar_t* dir, fileListAndCount_t dirInfo) {
 	//memfileToFile(namesHeader, L"c:/test/namesheaders/namesHeader.bin");
 	//myExit();
 
-	  //TODO .. create a full profile and place in profileFactory
-
-	completePackProfile comp = getCompletePackProfileSimple(headerNamesPackProfile);
+	completePackProfile comp = getHeaderNamesProfile();
+	
+	//memfileToFile(namesHeader, L"c:/test/blobs/__headernames__");
+	
 	return multiPackAndStorePackType(namesHeader, comp);
 }
 
@@ -440,7 +403,9 @@ void archivePackSemiSeparated(wchar_t* dest, completePackProfile profile, fileLi
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
 			//pack and flush file and start over
-			fclose(blobFile);
+			if (blobFile) {
+				fclose(blobFile);
+			}
 
 			//TODO get the right profile depending on ext
 			lockBlobMutex();		
@@ -597,7 +562,7 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 		
 	memfile* headerPackedMem = getEmptyMem(L"archiveunpack_headersizespacked");
 	copy_chunk_to_mem(in, headerPackedMem, headerSize);
-	completePackProfile headerSizesPackProfile = getProfileForExtension(L"__headerSizesProfile__");
+	completePackProfile headerSizesPackProfile = getHeaderSizesProfile();
 	memfile* headerUnpacked = multiUnpack(headerPackedMem, headerSizesPackProfile);
 	//everyOtherDecode(headerUnpacked1, headerUnpacked2);
 	
@@ -620,7 +585,7 @@ void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileList
 
 
 	//TODO should pack to memfile instead
-	completePackProfile headerNamesPackProfile = getProfileForExtension(L"__headerNamesProfile__");
+	completePackProfile headerNamesPackProfile = getHeaderNamesProfile();
 	multiUnpackBlockToFile(in, headerUnpacked, headerSize, headerNamesPackProfile);
 	
 	//everyOtherDecode(headerUnpacked1, headerUnpacked);

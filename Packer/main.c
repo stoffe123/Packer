@@ -367,7 +367,7 @@ void blockpack_onefile() {
 	const wchar_t* dir = L"c:/test/blobs/";
 	const wchar_t src[4096];
 
-	const wchar_t* array[] = {
+	const wchar_t* array[] = { L"__headersizes__", L"__headernames__",
 	L"cdg", L"cs", L"csh", L"dll", L"doc", L"exe", L"fdt", L"fdx", L"icc", L"mark", L"mp3", L"nrm",
 	L"pack", L"pdb", L"pdf", L"prx", L"resx", L"rss", L"tii", L"tis", L"txt", L"wav", L"xmi", L"xml"
 	};
@@ -375,7 +375,7 @@ void blockpack_onefile() {
 	while (true) {
 
 		
-			const wchar_t* ext = array[rand() % 24];
+			const wchar_t* ext = array[rand() % 26];
 			concatw(src, dir, ext);
 
 			completePackProfile profile = getProfileForExtension(ext);
@@ -393,10 +393,6 @@ void blockpack_onefile() {
 			//completePackProfile profile = getProfileForExtension(ext);
 			completePackProfile bestProfile = cloneCompleteProfile(profile);
 
-			fuzzCompleteProfile(&profile, bestProfile);
-			printf("\n USING PROFILE ---- >");
-			printCompleteProfile(profile);
-
 			uint64_t bestSize = profile.size;
 			if (bestSize == 0) {
 				bestSize = UINT64_MAX;
@@ -408,6 +404,11 @@ void blockpack_onefile() {
 			int times = (int)(37000000.0 / (float)size_org * 5);
 
 			for (int kk = 0; kk < times; kk++) {
+
+				fuzzCompleteProfile(&profile, bestProfile);
+				printf("\n USING PROFILE ---- >");
+				printCompleteProfile(profile);
+
 				int cl = clock();
 
 				blockPackFull(src, packed, profile);
@@ -452,6 +453,7 @@ void blockpack_onefile() {
 					printf("\a");
 					updateExtensionInFile(size_packed, profile, ext);
 				}
+				
 				
 
 			}//end for kk
