@@ -182,7 +182,7 @@ memfile* seq_unpack_internal(seqPackBundle mf_arr, bool sep, packProfile profile
 	unsigned char packType = read_byte_from_file();
 	bool superslim = isKthBitSet(packType, 7);
 		
-	uint64_t seqlenMinLimit3 = superslim ? profile.superSlimSeqlenMinLimit3 : profile.seqlenMinLimit3;
+	int64_t seqlenMinLimit3 = superslim ? profile.superSlimSeqlenMinLimit3 : profile.seqlenMinLimit3;
 	
 	if (isKthBitSet(packType, 0)) {
 		offset_pages = 0;

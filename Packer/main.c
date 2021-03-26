@@ -81,8 +81,8 @@ void fuzzProfile(packProfile* profile, packProfile best) {
 	profile->twobyte_threshold_divide = doFuzz(profile->twobyte_threshold_divide, best.twobyte_threshold_divide, 20, 4000);
 	profile->twobyte_threshold_min = doFuzz(profile->twobyte_threshold_min, best.twobyte_threshold_min, 3, 1000);
 
-	profile->superSlimSeqlenMinLimit3 = doFuzz(profile->superSlimSeqlenMinLimit3, best.superSlimSeqlenMinLimit3, 0, 255);
-	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 255);
+	profile->superSlimSeqlenMinLimit3 = doFuzz(profile->superSlimSeqlenMinLimit3, best.superSlimSeqlenMinLimit3, 0, 1200);
+	profile->seqlenMinLimit3 = doFuzz(profile->seqlenMinLimit3, best.seqlenMinLimit3, 0, 1200);
 	profile->seqlenMinLimit4 = doFuzz(profile->seqlenMinLimit4, best.seqlenMinLimit4, 30000, 90000);
 
 	profile->blockSizeMinus = doFuzz(profile->blockSizeMinus, best.blockSizeMinus, 0, 1000);
@@ -708,6 +708,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    testarchive();
+    //testarchive();
 	blockpack_onefile();
 }

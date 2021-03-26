@@ -309,23 +309,15 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 	rewindMem(infil);
 
 	unsigned int max_seqlen = 65791;
-	bool superslim = false;
+	
 	uint64_t size_org = getMemSize(infil);
 	assert(size_org > 0, "size_org negative in seqpacker");
 	assert(size_org <= BLOCK_SIZE, "size_org larger than BLOCK_SIZE in seqpacker");
 	reallocMem(infil, size_org * 3);
-	int64_t seqlenMinLimit3 = profile.seqlenMinLimit3;
-	if (seqlenMinLimit3 > 255) {
-		printf("\n WARNING!!!  seqlenMinLimit3 was over 255. Doing % 256 on it!");
-		//TODO when releasing, fix this!
-		//seqlenMinLimit3 %= 256;
-		myExit();
-	}
+			
+	bool superslim = (size_org < profile.sizeMaxForSuperslim);
+	int64_t seqlenMinLimit3 = superslim ? profile.superSlimSeqlenMinLimit3 : profile.seqlenMinLimit3;		
 	
-	if (size_org < profile.sizeMaxForSuperslim) {
-		superslim = true;
-		seqlenMinLimit3 = profile.superSlimSeqlenMinLimit3;
-	}
 	debug("\n seqlenMinLimit3=%llu", seqlenMinLimit3);
 	debug("\n superslim=%d", superslim);
 
@@ -536,7 +528,7 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 			packType = setKthBit(packType, 0);
 		}
 		if (superslim) {
-			packType = setKthBit(packType, 7);
+			packType = setKthBit(packType, 7);	
 			printf("\n superslim used!");
 		}
 		fputccLight(packType, utfil.main);
