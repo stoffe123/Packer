@@ -537,11 +537,6 @@ seqPackBundle pack_internal(memfile* infil, uint8_t pass, packProfile profile)
 		}
 		if (superslim) {
 			packType = setKthBit(packType, 7);
-		}
-		if (!superslim) {
-			fputccLight(seqlenMinLimit3, utfil.main);
-		}
-		else {
 			printf("\n superslim used!");
 		}
 		fputccLight(packType, utfil.main);

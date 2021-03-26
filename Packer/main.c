@@ -609,10 +609,10 @@ void testarchive() {
 	wchar_t* destDir = L"c:\\test\\archiveunp\\";
 
 	wchar_t* source_dir =
-		L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
+		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 	   //L"D:/Dropbox/Misc/Download";
 	   //L"c:/test/testallequal";
-		//L"c:/test/all";
+		L"c:/test/all";
 	//L"c:/test/test1";
    //L"c:/test/47";
 
@@ -708,6 +708,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    //testarchive();
+    testarchive();
 	blockpack_onefile();
 }
