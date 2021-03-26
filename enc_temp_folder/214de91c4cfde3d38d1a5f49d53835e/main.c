@@ -658,7 +658,9 @@ void testarchive() {
 				if (equalsw(source_dir, L"c:/test/all")) {
 					updateExtensionInFile(sizePacked, profile, L"__default__");
 				}
-				printf("\n  SIZEPACKED = %llu", sizePacked);
+				
+					printf("\n  SIZEPACKED = %llu", sizePacked);
+				
 			}
 		}
 		else {
