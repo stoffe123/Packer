@@ -556,9 +556,9 @@ void readNamesHeader(FILE* in, wchar_t* dir, fileListAndCount_t* dirInfo) {
 }
 
 
-fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
+fileListAndCount_t readPackedSizesHeader(FILE* in, uint64_t headerSize) {
 	
-	printf("\n Read packed sizes Header size: %d", headerSize);
+	printf("\n Read packed sizes Header size: %llu", headerSize);
 		
 	memfile* headerPackedMem = getEmptyMem(L"archiveunpack_headersizespacked");
 	copy_chunk_to_mem(in, headerPackedMem, headerSize);
@@ -571,9 +571,9 @@ fileListAndCount_t readPackedSizesHeader(FILE* in, uint32_t headerSize) {
 	return res;
 }
 
-void readPackedNamesHeader(FILE* in, wchar_t* dir, uint32_t headerSize, fileListAndCount_t* fileList) {	
+void readPackedNamesHeader(FILE* in, wchar_t* dir, uint64_t headerSize, fileListAndCount_t* fileList) {
 	
-	printf("\n Read packed Names Header size: %d", headerSize);
+	printf("\n Read packed Names Header size: %llu", headerSize);
 
 	//const wchar_t headerUnpacked1[100] = { 0 };
 	//get_temp_filew(headerUnpacked1, L"archiveuntar_headerunpackedhalf");
