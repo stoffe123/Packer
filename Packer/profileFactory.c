@@ -104,14 +104,14 @@ __declspec(thread) static wchar_t* packProfileFilename = L"";
 		while (fgets(line, sizeof(line), file)) {
 			/* note that fgets don't strip the terminating \n, checking its
 			   presence would allow to handle lines longer that sizeof(line) */
-			printf(">>>> %s", line);
+			//printf(">>>> %s", line);
 			removeLineFeeds(line);
 			if (strlen(line) == 0) {
 				continue;
 			}
 			if (line[0] == '#') {
 				char* thisExt = line + 1;
-				printf("\n thisExt=%s", thisExt);
+				//printf("\n thisExt=%s", thisExt);
 				if (equalsNormalAndUni(thisExt, ext)) {
 
 					// skip this extension!
@@ -174,7 +174,7 @@ __declspec(thread) static wchar_t* packProfileFilename = L"";
 		while (fgets(line, sizeof(line), file)) {
 			/* note that fgets don't strip the terminating \n, checking its
 			   presence would allow to handle lines longer that sizeof(line) */
-			printf(">>>> %s", line);
+			//printf(">>>> %s", line);
 			removeLineFeeds(line);
 			if (strlen(line) == 0) {
 				continue;
@@ -182,7 +182,7 @@ __declspec(thread) static wchar_t* packProfileFilename = L"";
 
 			if (line[0] == '#') {
 				strcpy(thisExt, line + 1);
-				printf("\n thisExt=%s", thisExt);
+				//printf("\n thisExt=%s", thisExt);
 
 				// read the profiles
 				fgets(line, sizeof(line), file);
@@ -195,10 +195,10 @@ __declspec(thread) static wchar_t* packProfileFilename = L"";
 				res.offset = readProfileFromLine(file);
 				res.distance = readProfileFromLine(file);
 
-				printf("\n comparing to %ls", ext);
+				//printf("\n comparing to %ls", ext);
 				if (equalsNormalAndUni(thisExt, ext)) {
 					fclose(file);
-					printf("\n Found match!!");
+					//printf("\n Found match!!");
 
 
 

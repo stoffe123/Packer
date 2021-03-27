@@ -177,7 +177,11 @@ void block_pack_file_internal(FILE* infil, const wchar_t* dst, FILE* utfil, comp
 		closeAfter = true;
 	}
 	do {
-		read_size = BLOCK_SIZE - (profile.blockSizeMinus + 1) * (uint64_t)10000;
+		uint64_t minus = (profile.blockSizeMinus + 1) * (uint64_t)10000;
+		if (BLOCK_SIZE < minus) {
+			minus = 100;
+		}
+		read_size = BLOCK_SIZE - minus;	    
 
 		assert(read_size < 16777215, "too large blocksize must be < 16777215");
 

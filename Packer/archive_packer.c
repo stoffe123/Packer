@@ -336,9 +336,9 @@ blobsInfo_t fetchBlobsInfo(fileListAndCount_t dirInfo) {
 			}
 		}
 		if (breakAndCreateBlob || (i == count - 1)) {
-			printf("\n BLOB nr %llu FOUND NOoFfILES=%d", blobCount, noOfFilesInBlobCount);
 			
-			wcscpy(extList[blobCount].s, ext);
+			wcscpy(extList[blobCount].s, (i == count - 1) ? next_ext : ext);			
+			printf("\n BLOB nr %llu FOUND NOoFfILES=%d ext=%ls", blobCount, noOfFilesInBlobCount, extList[blobCount].s);
 
 			if (noOfFilesInBlobCount == 0) {
 				res[blobCount] = i;
@@ -348,7 +348,7 @@ blobsInfo_t fetchBlobsInfo(fileListAndCount_t dirInfo) {
 			}
 
 			blobCount++;
-			
+
 			noOfFilesInBlobCount = 0;
 		}
 	}
@@ -618,6 +618,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	uint64_t nrOfBlobs = blobsInfo.count,
 		count = dirInfo.count;
 	file_t* filenames = dirInfo.fileList;
+	printf("\n archiveUnpackSemiSeparated .nrofBlobs=%llu", nrOfBlobs);
 
 	wchar100_t* extList = blobsInfo.extList;
 
@@ -630,8 +631,9 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t singleBlobFileIndex = blobsInfoArr[i];
 		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);
+		wchar_t* ext = extList[i].s;
 
-		printf("\n ArchiveUnpackSemiSeparated : size of blob nr %llu is %llu", i, size);
+		//printf("\nBlob nr:%llu size:%llu ext:%ls", i, size, ext);
 
 		lockBlobMutex();
 		if (singleBlobFileIndex < UINT64_MAX) {
@@ -643,13 +645,14 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		}
 		releaseBlobMutex();
 		
-		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s, 
+		completePackProfile comp = getProfileForExtensionOrDefault(ext, 
 			profile);
 		blobs[i].profile = comp;
 
 		copyFileChunkToFile(in, blobs[i].filename, size);
 
 		HANDLE handle = _beginthread(threadBlockUnPack, 0, &blobs[i]);
+		//threadBlockUnPack(&blobs[i]);
 		lockBlobMutex();
 		blobs[i].handle = handle;
 		releaseBlobMutex();

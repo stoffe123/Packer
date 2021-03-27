@@ -616,8 +616,8 @@ void testarchive() {
 		//L"D:/Dropbox/Personal/Programmering/Compression/test/ws_todo";
 	   //L"D:/Dropbox/Misc/Download";
 	   //L"c:/test/testallequal";
-		L"c:/test/all";
-	//L"c:/test/test1";
+		//L"c:/test/all";
+	L"c:/test/test16";
    //L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
