@@ -630,8 +630,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 	// Create blob array
 	for (uint64_t i = 0; i < nrOfBlobs; i++) {
 		uint64_t singleBlobFileIndex = blobsInfoArr[i];
-		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);
-		wchar_t* ext = extList[i].s;
+		uint64_t size = getBlobSize(i, nrOfBlobs, singleBlobFileIndex, filenames, in);		
 
 		//printf("\nBlob nr:%llu size:%llu ext:%ls", i, size, ext);
 
@@ -645,7 +644,7 @@ void archiveUnpackSemiSeparated(FILE* in, fileListAndCount_t dirInfo, wchar_t* d
 		}
 		releaseBlobMutex();
 		
-		completePackProfile comp = getProfileForExtensionOrDefault(ext, 
+		completePackProfile comp = getProfileForExtensionOrDefault(extList[i].s,
 			profile);
 		blobs[i].profile = comp;
 

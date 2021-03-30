@@ -475,7 +475,7 @@ void onefile() {
 
 	const wchar_t* src =
 		//L"D:/Dropbox/Misc/Blandat/Blandat misc/Documentary/Music/En händig man på turne.mpg";
-		L"c:/test/pazera.exe";
+		L"c:/test/blockpackfile_chunk";
 
 	const wchar_t* unpackedFilename = L"C:/test/unp";
 
@@ -558,6 +558,8 @@ void onefile() {
 	uint64_t size_packed;
 	memfile* srcm = getMemfileFromFile(src);
 
+	printf("\n pack onefile file=%ls", src);
+
 	seqPackBundle packed = seqPackSep(srcm, profile);
 	size_packed = getBundleSize(packed);
 
@@ -618,7 +620,7 @@ void testarchive() {
 	   //L"c:/test/testallequal";
 		//L"c:/test/all";
 	L"c:/test/test16";
-   //L"c:/test/47";
+  //L"c:/test/47";
 
 	uint64_t bestSize = UINT64_MAX;
 	const wchar_t* packed_name = L"c:/test/packed.bin";
@@ -710,6 +712,6 @@ int main()
 	//testmeta();
 	//test16();
 	//onefile();
-    testarchive();
+   testarchive();
 	blockpack_onefile();
 }

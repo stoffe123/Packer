@@ -52,6 +52,7 @@ seqPackBundle untar(memfile* in, uint8_t packType) {
 		uint32_t offsets_size = 0;
 		uint32_t distances_size = 0;
 
+		//TODO  .. change so you can read any size if you want larger blocksize
 		memRead(&seqlens_size, 3, in);
 		memRead(&offsets_size, 3, in);
 		memRead(&distances_size, 3, in);

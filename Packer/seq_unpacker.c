@@ -95,6 +95,9 @@ uint64_t get_seqlen(pageCoding_t p) {
 }
 
 
+/*
+copy the start to the end but avoid all "code"-chars
+*/
 uint64_t copyWrapAround(uint8_t seqlen_pages, uint8_t offset_pages, uint64_t useLongRange) {
 
 	uint64_t lastByteOffset = getLastByte(useLongRange);
@@ -123,7 +126,7 @@ uint64_t copyWrapAround(uint8_t seqlen_pages, uint8_t offset_pages, uint64_t use
 
 			//skip offset one, two or three bytes	
 			uint64_t offset = buf[--i];
-			if (useLongRange && offset == 255) {
+			if ((useLongRange && offset == 255) || (useLongRange >= 3 && offset == 254)) {
 				i -= 2;
 			}
 			else {
